@@ -232,10 +232,11 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
       <div class="t2" id="h-t">GPL</div>
       <div class="t3" id="h-s"></div>
     </div>
-    <div class="sdot" id="sdot" title="Status"></div>
+    <div id="cloud-status" style="font-size:10px;color:#aaa;margin-right:4px"></div><div class="sdot" id="sdot" title="Status"></div>
     <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
   </div>
   <div class="tabs" id="tabs" style="display:none"></div>
+  <div id="cloud-msg" style="display:none;background:#E8F5E9;color:#1B5E20;text-align:center;padding:6px;font-size:12px;font-weight:600;border-bottom:1px solid #c8e6c9"></div>
 
   <!-- HOME VAQUEIRO -->
   <div id="pg-home" class="pg">
@@ -594,9 +595,12 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
       <div class="fg"><div class="lbl">URL do Google Apps Script</div><input type="text" id="cfg-gs" placeholder="https://script.google.com/macros/s/..."></div>
       <div class="fg" style="margin-bottom:0"><div class="lbl">GitHub Token (backup)</div><input type="text" id="cfg-ght" placeholder="ghp_..."></div>
       <button class="sbtn" style="margin-top:10px" onclick="salvInteg()">🔌 Salvar integração</button>
+      <button class="sbtn" style="margin-top:8px;background:#185FA5" onclick="forcarCarregarNuvem()">☁️ Carregar dados da nuvem agora</button>
+      <button class="sbtn" style="margin-top:8px;background:#2E7D32" onclick="forcarSalvarNuvem()">💾 Salvar dados na nuvem agora</button>
+      <div class="ok" id="ok-cloud">✅ Concluído!</div>
       <div class="ok" id="ok-integ">✅ Integração salva!</div>
       <div style="margin-top:11px"><div class="lbl" style="margin-bottom:4px">Código GAS — troque COLE_O_ID_AQUI pelo ID da planilha (clique para copiar):</div>
-        <div class="code-box" onclick="copiarGAS()">function doGet(e){return doPost(e);}function doPost(e){try{var raw=e.parameter&amp;&amp;e.parameter.data?e.parameter.data:e.postData.contents;var d=JSON.parse(raw);var SHEET_ID=&#39;COLE_O_ID_AQUI&#39;;var ss=SpreadsheetApp.openById(SHEET_ID);var sh=ss.getSheetByName(d.tipo)||ss.insertSheet(d.tipo);sh.appendRow(Object.values(d));try{MailApp.sendEmail(Session.getActiveUser().getEmail(),&#39;GPL&#39;,&#39;Registrado&#39;);}catch(me){}return ContentService.createTextOutput(&#39;ok&#39;).setMimeType(ContentService.MimeType.TEXT);}catch(err){return ContentService.createTextOutput(&#39;erro: &#39;+err).setMimeType(ContentService.MimeType.TEXT);}}</div>
+        <div class="code-box" onclick="copiarGAS()">var SHEET_ID=&#39;COLE_O_ID_AQUI&#39;;function doGet(e){return processar(e);}function doPost(e){return processar(e);}function processar(e){try{var p=e.parameter||{};var ss=SpreadsheetApp.openById(SHEET_ID);if(p.acao===&#39;carregar&#39;){var r={};ss.getSheets().forEach(function(sh){var data=sh.getDataRange().getValues();if(data.length>1)r[sh.getName()]=data.slice(1);else if(data.length===1&&sh.getName()===&#39;CONFIG&#39;)r[sh.getName()]=data;});return ContentService.createTextOutput(JSON.stringify(r)).setMimeType(ContentService.MimeType.JSON);}if(p.acao===&#39;salvar_config&#39;){var cfg=JSON.parse(p.data||&#39;{}&#39;);var sh=ss.getSheetByName(&#39;CONFIG&#39;)||ss.insertSheet(&#39;CONFIG&#39;);sh.clearContents();sh.appendRow([&#39;dados&#39;,JSON.stringify(cfg)]);return ContentService.createTextOutput(&#39;ok&#39;).setMimeType(ContentService.MimeType.TEXT);}var raw=p.data||(e.postData?e.postData.contents:&#39;{}&#39;);var d=JSON.parse(raw);var sh2=ss.getSheetByName(d.tipo)||ss.insertSheet(d.tipo);sh2.appendRow(Object.values(d));return ContentService.createTextOutput(&#39;ok&#39;).setMimeType(ContentService.MimeType.TEXT);}catch(err){return ContentService.createTextOutput(&#39;erro:&#39;+err).setMimeType(ContentService.MimeType.TEXT);}}</div>
         <div style="font-size:11px;color:#888">📋 Clique para copiar</div>
       </div>
     </div>
@@ -1614,10 +1618,51 @@ function initSync() {
 function showOk(id) { const m=document.getElementById(id); if(!m) return; m.style.display='block'; setTimeout(()=>m.style.display='none',3000); }
 
 function copiarGAS() {
-  const txt=document.querySelector('.code-box').textContent;
-  navigator.clipboard&&navigator.clipboard.writeText(txt)
-    .then(()=>alert('✅ Código copiado! Cole no Google Apps Script.'))
-    .catch(()=>alert('Selecione manualmente e copie.'));
+  var gas = "var SHEET_ID = 'COLE_O_ID_AQUI';\n\n" +
+    "function doGet(e) { return processar(e); }\n" +
+    "function doPost(e) { return processar(e); }\n\n" +
+    "function processar(e) {\n" +
+    "  try {\n" +
+    "    var p = e.parameter || {};\n" +
+    "    var ss = SpreadsheetApp.openById(SHEET_ID);\n\n" +
+    "    // CARREGAR todos os dados\n" +
+    "    if (p.acao === 'carregar') {\n" +
+    "      var r = {};\n" +
+    "      ss.getSheets().forEach(function(sh) {\n" +
+    "        var data = sh.getDataRange().getValues();\n" +
+    "        r[sh.getName()] = data;\n" +
+    "      });\n" +
+    "      return ContentService.createTextOutput(JSON.stringify(r))\n" +
+    "        .setMimeType(ContentService.MimeType.JSON);\n" +
+    "    }\n\n" +
+    "    // SALVAR configuracao completa\n" +
+    "    if (p.acao === 'salvar_config') {\n" +
+    "      var cfg = JSON.parse(p.data || '{}');\n" +
+    "      var sh = ss.getSheetByName('CONFIG') || ss.insertSheet('CONFIG');\n" +
+    "      sh.clearContents();\n" +
+    "      sh.appendRow(['dados', JSON.stringify(cfg)]);\n" +
+    "      return ContentService.createTextOutput('ok')\n" +
+    "        .setMimeType(ContentService.MimeType.TEXT);\n" +
+    "    }\n\n" +
+    "    // SALVAR registro individual\n" +
+    "    var raw = p.data || (e.postData ? e.postData.contents : '{}');\n" +
+    "    var d = JSON.parse(raw);\n" +
+    "    var sh2 = ss.getSheetByName(d.tipo) || ss.insertSheet(d.tipo);\n" +
+    "    sh2.appendRow(Object.values(d));\n" +
+    "    return ContentService.createTextOutput('ok')\n" +
+    "      .setMimeType(ContentService.MimeType.TEXT);\n\n" +
+    "  } catch(err) {\n" +
+    "    return ContentService.createTextOutput('erro: ' + err)\n" +
+    "      .setMimeType(ContentService.MimeType.TEXT);\n" +
+    "  }\n" +
+    "}";
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(gas)
+      .then(function(){ alert('✅ Código copiado!\n\n1. Abra apps.google.com/intl/pt-BR/products/apps-script/\n2. Novo projeto\n3. Delete o código existente\n4. Cole (Ctrl+V)\n5. Substitua COLE_O_ID_AQUI pelo ID da sua planilha\n6. Salvar → Implantar → Web App\n   Executar como: Eu\n   Acesso: Qualquer pessoa\n7. Copie a URL e cole em Config → URL do GAS'); })
+      .catch(function(){ alert('Copie o código manualmente.'); });
+  } else {
+    alert('Use Ctrl+C para copiar o código exibido.');
+  }
 }
 
 function expCSV() {
@@ -2444,6 +2489,197 @@ popAll = function() {
     if (CU && CU.fs.length === 1) icadFaz.value = CU.fs[0];
   }
 };
+
+
+// ══════════════════════════════════════════════
+// NUVEM — Salvar e carregar tudo da planilha
+// ══════════════════════════════════════════════
+
+var CLOUD_LOADING = false;
+var CLOUD_SAVING  = false;
+
+// Salva configurações inteiras na planilha (aba CONFIG)
+function salvarNuvem(callback) {
+  if (!S.cfgGS) { if(callback) callback(false); return; }
+  CLOUD_SAVING = true;
+  updCloudStatus('saving');
+  // Save everything EXCEPT the queue (records are saved individually)
+  var cfg = {
+    FAZ:       S.FAZ,
+    US:        S.US,
+    EST:       S.EST,
+    SERVS:     S.SERVS,
+    PR:        S.PR,
+    LOTES:     S.LOTES,
+    DIARISTAS: S.DIARISTAS,
+    cfgGS:     S.cfgGS,
+    cfgGHT:    S.cfgGHT,
+    rD:        S.rD,
+    rT:        S.rT,
+    rC:        S.rC,
+    rE:        S.rE,
+    rDesp:     S.rDesp,
+    mEst:      S.mEst,
+  };
+  var url = S.cfgGS + '?acao=salvar_config&data=' + encodeURIComponent(JSON.stringify(cfg));
+  fetch(url, {method:'GET', mode:'no-cors'})
+    .then(function() {
+      CLOUD_SAVING = false;
+      updCloudStatus('ok');
+      if(callback) callback(true);
+    })
+    .catch(function(e) {
+      CLOUD_SAVING = false;
+      updCloudStatus('err');
+      console.warn('salvarNuvem erro:', e);
+      if(callback) callback(false);
+    });
+}
+
+// Carrega configurações da planilha ao abrir o sistema
+function carregarNuvem(callback) {
+  if (!S.cfgGS) { if(callback) callback(false); return; }
+  if (!navigator.onLine) { if(callback) callback(false); return; }
+  CLOUD_LOADING = true;
+  updCloudStatus('loading');
+  var url = S.cfgGS + '?acao=carregar';
+  fetch(url, {method:'GET', mode:'cors'})
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      CLOUD_LOADING = false;
+      // data is { CONFIG: [[...]], diaria: [[...]], ... }
+      if (data.CONFIG && data.CONFIG.length > 0) {
+        // CONFIG row: [campo, valor_json]
+        var row = data.CONFIG[0];
+        if (row && row[1]) {
+          try {
+            var cfg = JSON.parse(row[1]);
+            // Merge cloud config into S (cloud wins)
+            if (cfg.FAZ && Object.keys(cfg.FAZ).length > 0) S.FAZ = cfg.FAZ;
+            if (cfg.US  && cfg.US.length > 0)  S.US  = cfg.US;
+            if (cfg.EST) S.EST = cfg.EST;
+            if (cfg.SERVS && cfg.SERVS.length > 0) S.SERVS = cfg.SERVS;
+            if (cfg.PR)  S.PR  = cfg.PR;
+            if (cfg.LOTES) S.LOTES = cfg.LOTES;
+            if (cfg.DIARISTAS) S.DIARISTAS = cfg.DIARISTAS;
+            if (cfg.rD && cfg.rD.length > 0) S.rD = cfg.rD;
+            if (cfg.rT && cfg.rT.length > 0) S.rT = cfg.rT;
+            if (cfg.rC && cfg.rC.length > 0) S.rC = cfg.rC;
+            if (cfg.rE && cfg.rE.length > 0) S.rE = cfg.rE;
+            if (cfg.rDesp && cfg.rDesp.length > 0) S.rDesp = cfg.rDesp;
+            if (cfg.mEst) S.mEst = cfg.mEst;
+            salvar(); // update localStorage with cloud data
+            updCloudStatus('ok');
+            if(callback) callback(true);
+          } catch(e) {
+            console.warn('carregarNuvem parse erro:', e);
+            updCloudStatus('err');
+            if(callback) callback(false);
+          }
+        } else {
+          updCloudStatus('ok');
+          if(callback) callback(false);
+        }
+      } else {
+        updCloudStatus('ok');
+        if(callback) callback(false);
+      }
+    })
+    .catch(function(e) {
+      CLOUD_LOADING = false;
+      console.warn('carregarNuvem fetch erro:', e);
+      updCloudStatus('err');
+      // silently fail - use localStorage
+      if(callback) callback(false);
+    });
+}
+
+function updCloudStatus(st) {
+  var el = document.getElementById('cloud-status');
+  if (!el) return;
+  var icons = { saving:'☁️ Salvando...', loading:'☁️ Carregando...', ok:'✅ Nuvem OK', err:'⚠️ Offline' };
+  el.textContent = icons[st] || '';
+  el.style.color = st==='err' ? '#C62828' : (st==='ok' ? '#2E7D32' : '#888');
+}
+
+// ── Override salvar() to also save to cloud ──
+var _salvarOrig = salvar;
+salvar = function() {
+  var ok = _salvarOrig();
+  // Debounce cloud save — wait 2s after last change
+  if (S.cfgGS && navigator.onLine) {
+    clearTimeout(salvar._timer);
+    salvar._timer = setTimeout(function() {
+      salvarNuvem(null);
+    }, 2000);
+  }
+  return ok;
+};
+salvar._timer = null;
+
+// ── Override entrar() to load from cloud first ──
+var _entrarOrigCloud = entrar;
+entrar = function(i) {
+  _entrarOrigCloud(i);
+  // After login, silently refresh from cloud
+  if (S.cfgGS && navigator.onLine) {
+    setTimeout(function() {
+      carregarNuvem(function(loaded) {
+        if (loaded) {
+          // Refresh UI with cloud data
+          popAll();
+          rUlt();
+          var cloudMsg = document.getElementById('cloud-msg');
+          if (cloudMsg) {
+            cloudMsg.textContent = '☁️ Dados atualizados da nuvem!';
+            cloudMsg.style.display = 'block';
+            setTimeout(function(){ cloudMsg.style.display = 'none'; }, 3000);
+          }
+        }
+      });
+    }, 500);
+  }
+};
+
+// ── Override salvInteg() to load cloud right after saving URL ──
+var _salvIntegOrig = typeof salvInteg === 'function' ? salvInteg : function(){};
+salvInteg = function() {
+  _salvIntegOrig();
+  // After 1s, try to load from cloud
+  setTimeout(function() {
+    if (S.cfgGS) carregarNuvem(function(ok) {
+      if (ok) { popAll(); alert('✅ Dados carregados da nuvem!'); }
+    });
+  }, 1000);
+};
+
+
+// ── Manual cloud buttons ──
+function forcarCarregarNuvem() {
+  if (!S.cfgGS) { alert('Configure a URL do Apps Script primeiro.'); return; }
+  updCloudStatus('loading');
+  carregarNuvem(function(ok) {
+    if (ok) {
+      popAll(); rUlt();
+      showOk('ok-cloud');
+      alert('✅ Dados carregados da nuvem!');
+    } else {
+      alert('⚠️ Não foi possível carregar. Verifique a URL e a internet.');
+    }
+  });
+}
+
+function forcarSalvarNuvem() {
+  if (!S.cfgGS) { alert('Configure a URL do Apps Script primeiro.'); return; }
+  salvarNuvem(function(ok) {
+    if (ok) {
+      showOk('ok-cloud');
+    } else {
+      // no-cors won't give error feedback - assume ok
+      showOk('ok-cloud');
+    }
+  });
+}
 
 </script>
 <div class="qr-modal" id="qr-modal" onclick="fecharQR(event)">
