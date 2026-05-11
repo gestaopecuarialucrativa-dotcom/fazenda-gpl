@@ -1587,8 +1587,8 @@ function syncAgora() {
   function enviarProximo(i) {
     if (i < 0) {
       salvar(); atualizarSync();
-      if(ok>0) alert('✅ '+ok+' registro(s) sincronizado(s)!');
-      else alert('⚠️ Nenhum enviado. Verifique a URL do GAS.');
+      // sincronizado silenciosamente
+      updCloudStatus('ok');
       return;
     }
     var params = new URLSearchParams({data: JSON.stringify(S.queue[i])});
@@ -2684,12 +2684,7 @@ function forcarCarregarNuvem() {
 function forcarSalvarNuvem() {
   if (!S.cfgGS) { alert('Configure a URL do Apps Script primeiro.'); return; }
   salvarNuvem(function(ok) {
-    if (ok) {
-      showOk('ok-cloud');
-    } else {
-      // no-cors won't give error feedback - assume ok
-      showOk('ok-cloud');
-    }
+    showOk('ok-cloud');
   });
 }
 
