@@ -297,6 +297,15 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
         <div style="flex:1;min-width:80px"><div class="lbl">Estoque atual</div><input type="number" id="i-cad-estq" placeholder="0" min="0" step="0.5"></div>
         <div style="flex:1;min-width:80px"><div class="lbl">Estoque mínimo</div><input type="number" id="i-cad-min" placeholder="0" min="0" step="0.5"></div>
       </div>
+      <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;align-items:flex-end">
+        <div style="flex:1;min-width:100px">
+          <div class="lbl">Consumo (% do peso vivo)</div>
+          <input type="number" id="i-cad-pct" placeholder="Ex: 0.3" min="0" max="10" step="0.01">
+        </div>
+        <div style="flex:1;min-width:100px;background:#E8F5E9;border-radius:8px;padding:8px;font-size:11px;color:#1B5E20">
+          Animal 400kg × 0,3% = <b>1,2 kg/dia</b>
+        </div>
+      </div>
       <button class="sbtn" style="margin-top:10px" onclick="salvarProduto()">💾 Salvar produto</button>
       <div class="ok" id="ok-prod">✅ Produto salvo!</div>
       <div id="prod-lista" style="margin-top:10px"></div>
@@ -319,15 +328,30 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <div id="pg-med" class="pg">
     <div class="card">
       <div class="stit">💉 Medicamentos / Vacinas</div>
-      <div class="fg"><div class="lbl">Fazenda</div><select id="m-faz"></select></div>
+      <div class="fg"><div class="lbl">Fazenda</div><select id="m-faz" onchange="updMedLote()"></select></div>
       <div class="fg"><div class="lbl">Data</div><input type="date" id="m-data"></div>
-      <div id="vac-l"><div class="ir"><div style="flex:2"><div class="lbl">Produto</div><select class="vp"><option value="">Selecione...</option><option>Vacina aftosa</option><option>Vacina brucelose</option><option>Carrapaticida</option><option>Vermífugo</option><option>Antibiótico</option><option>Outro</option></select></div><div style="flex:1"><div class="lbl">Cabeças</div><input type="number" class="vc" placeholder="0" min="0"></div><div style="flex:1"><div class="lbl">Lote</div><input type="text" class="vl" placeholder="P01"></div></div></div>
-      <button class="savb" style="width:100%;margin-top:3px" onclick="addVac()">＋ Adicionar</button>
-      <div class="fg" style="margin-top:10px;margin-bottom:0"><div class="lbl">Observação</div><input type="text" id="m-obs" placeholder="Opcional"></div>
+      <div class="fg"><div class="lbl">Nome do remédio / vacina</div>
+        <input type="text" id="m-nome" placeholder="Ex: Ivermectina, Vacina aftosa..."></div>
+      <div class="fg"><div class="lbl">Lote / Pasto</div>
+        <select id="m-lote"><option value="">Selecione o lote...</option></select></div>
+      <div class="fg"><div class="lbl">Nº de animais tratados</div>
+        <input type="number" id="m-nanim" placeholder="Auto (do lote)" min="0"></div>
+      <div class="fg"><div class="lbl">Dose por animal</div>
+        <div style="display:flex;gap:8px">
+          <input type="number" id="m-dose" placeholder="0" min="0" step="0.1" style="flex:1">
+          <select id="m-dose-unid" style="flex:1"><option>ml</option><option>mg</option><option>comp.</option><option>dose</option></select>
+        </div>
+      </div>
+      <div class="fg"><div class="lbl">Quem aplicou</div>
+        <input type="text" id="m-aplicou" placeholder="Nome do responsável"></div>
+      <div class="fg" style="margin-bottom:0"><div class="lbl">Observação</div>
+        <input type="text" id="m-obs" placeholder="Opcional"></div>
     </div>
-    <button class="sbtn" onclick="envM()">📤 Enviar</button>
-    <div class="ok" id="ok-m">✅ Medicamentos registrados!</div>
+    <button class="sbtn" onclick="envM()">📤 Registrar medicamento</button>
+    <div class="ok" id="ok-m">✅ Medicamento registrado!</div>
   </div>
+
+  <!-- ESCORE -->
 
   <!-- TRATO -->
   <div id="pg-trato" class="pg">
@@ -343,8 +367,8 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
         <div><div class="lbl">Consumo calculado</div><div id="t-cons-calc" style="padding:8px;background:#f5f5f5;border-radius:8px;font-size:13px;font-weight:700;color:#1B5E20;min-height:34px">—</div></div>
       </div>
       <div class="fg"><div class="lbl">Nº de animais no lote</div>
-      <div id="t-cab-info" style="padding:8px;background:#f5f5f5;border-radius:8px;font-size:13px;color:#555">Selecione o lote acima ↑</div>
-      <input type="hidden" id="t-cab" value="0">
+        <div id="t-cab-info" style="padding:8px;background:#f5f5f5;border-radius:8px;font-size:13px;color:#555">Selecione o lote acima ↑</div>
+        <input type="hidden" id="t-cab" value="0">
       </div>
       <div class="fg"><div class="lbl">Situação antes</div>
         <div class="b3">
@@ -358,6 +382,8 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
           <div class="bopt" onclick="sEsT(this,'1')">1 - Magro</div>
           <div class="bopt" onclick="sEsT(this,'2')">2 - Regular</div>
           <div class="bopt" onclick="sEsT(this,'3')">3 - Bom</div>
+        </div>
+        <div class="b3" style="margin-top:4px">
           <div class="bopt" onclick="sEsT(this,'4')">4 - Gordo</div>
         </div>
       </div>
@@ -367,56 +393,6 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     <div class="ok" id="ok-t">✅ Trato registrado!</div>
   </div>
 
-  <!-- INSUMO -->
-  <div id="pg-insumo" class="pg">
-    <div class="card">
-      <div class="stit">📦 Insumos do depósito</div>
-      <div class="fg"><div class="lbl">Fazenda</div><select id="i-faz" onchange="updInsProd()"></select></div>
-      <div class="fg"><div class="lbl">Data</div><input type="date" id="i-data"></div>
-      <div id="ins-l"><div class="ir"><div style="flex:2"><div class="lbl">Produto</div><select class="ip"></select></div><div style="flex:1"><div class="lbl">Qtd</div><input type="number" class="iq" placeholder="0" min="0" step="0.5"></div><div style="flex:1"><div class="lbl">Unid.</div><select class="iu"><option>saco</option><option>kg</option><option>litro</option><option>unid.</option></select></div></div></div>
-      <button class="savb" style="width:100%;margin-top:3px" onclick="addIns()">＋ Mais produto</button>
-      <div class="fg" style="margin-top:10px;margin-bottom:0"><div class="lbl">Destino</div><select id="i-dest"><option value="">Selecione...</option><option>Cocho do pasto</option><option>Casa de sal</option><option>Depósito</option><option>Curral</option><option>Outro</option></select></div>
-    </div>
-    <button class="sbtn" onclick="envI()">📤 Enviar lançamento</button>
-    <div class="ok" id="ok-i">✅ Insumos registrados!</div>
-  </div>
-
-  <!-- MEDICAMENTO -->
-  <div id="pg-med" class="pg">
-    <div class="card">
-      <div class="stit">💉 Medicamentos / Vacinas</div>
-      <div class="fg"><div class="lbl">Fazenda</div><select id="m-faz"></select></div>
-      <div class="fg"><div class="lbl">Data</div><input type="date" id="m-data"></div>
-      <div id="vac-l"><div class="ir"><div style="flex:2"><div class="lbl">Produto</div><select class="vp"><option value="">Selecione...</option><option>Vacina aftosa</option><option>Vacina brucelose</option><option>Carrapaticida</option><option>Vermífugo</option><option>Antibiótico</option><option>Outro</option></select></div><div style="flex:1"><div class="lbl">Cabeças</div><input type="number" class="vc" placeholder="0" min="0"></div><div style="flex:1"><div class="lbl">Lote</div><input type="text" class="vl" placeholder="P01"></div></div></div>
-      <button class="savb" style="width:100%;margin-top:3px" onclick="addVac()">＋ Adicionar</button>
-      <div class="fg" style="margin-top:10px;margin-bottom:0"><div class="lbl">Observação</div><input type="text" id="m-obs" placeholder="Opcional"></div>
-    </div>
-    <button class="sbtn" onclick="envM()">📤 Enviar</button>
-    <div class="ok" id="ok-m">✅ Medicamentos registrados!</div>
-  </div>
-
-  <!-- TRATO -->
-  <div id="pg-trato" class="pg">
-    <div class="card">
-      <div class="stit">🛠 Trato de cocho</div>
-      <div class="fg"><div class="lbl">Fazenda</div><select id="t-faz" onchange="updTrato()"></select></div>
-      <div class="fg"><div class="lbl">Data</div><input type="date" id="t-data"></div>
-      <div class="fg"><div class="lbl">Módulo / Cocho</div><select id="t-cocho"><option value="">Selecione...</option></select></div>
-      <div class="fg"><div class="lbl">Produto</div><select id="t-prod" onchange="calcSaldo()"><option value="">Selecione...</option></select></div>
-      <div class="brow" style="margin-bottom:11px">
-        <div><div class="lbl">Quantidade</div><input type="number" id="t-qtd" placeholder="0" min="0" step="0.5" oninput="calcSaldo()"></div>
-        <div style="display:none"><select id="t-unid"><option>kg</option></select></div>
-      </div>
-      <div class="fg"><div class="lbl">Cabeças no pasto</div><input type="number" id="t-cab" placeholder="Ex: 50" min="0"></div>
-      <div class="fg"><div class="lbl">Situação antes</div><div class="b3"><div class="bopt" onclick="sCo(this,'vazio')">Vazio</div><div class="bopt" onclick="sCo(this,'meio')">Meio</div><div class="bopt" onclick="sCo(this,'cheio')">Cheio</div></div></div>
-      <div class="fg" style="margin-bottom:0"><div class="lbl">Observação</div><input type="text" id="t-obs" placeholder="Opcional"></div>
-    </div>
-    <div class="card" id="sc" style="display:none"><div class="stit">ℹ️ Impacto no estoque</div><div id="si"></div></div>
-    <button class="sbtn" onclick="envT()">📤 Enviar trato</button>
-    <div class="ok" id="ok-t">✅ Trato registrado!</div>
-  </div>
-
-  <!-- ESCORE -->
   <div id="pg-escore" class="pg">
     <div style="background:#EAF3DE;border:1px solid #3B6D11;border-radius:10px;padding:11px;font-size:12px;color:#27500A;margin-bottom:12px;line-height:1.6">
       🔬 <strong>Guia de Escore de Fezes</strong><br>Toque no escore que melhor descreve o que você viu.
@@ -961,7 +937,9 @@ function doLogout() {
 // ═══════════════════════════════════════════
 function sp(id, back, prev) {
   document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
-  document.getElementById('pg-' + id).classList.add('on');
+  var pgEl = document.getElementById('pg-' + id);
+  if (!pgEl) { console.warn('Page not found: pg-'+id); return; }
+  pgEl.classList.add('on');
   var hbackEl = document.getElementById('hback'); if(hbackEl) hbackEl.style.display = back ? 'flex' : 'none';
   // Hide home button when already on home
   var hhomeEl = document.getElementById('hhome'); if(hhomeEl) hhomeEl.style.display = id==='home' ? 'none' : 'flex';
@@ -1190,11 +1168,36 @@ function envI() {
 }
 
 function envM() {
-  const v=[...document.querySelectorAll('#vac-l .ir')].map(r=>({p:r.querySelector('.vp').value,c:r.querySelector('.vc').value,l:r.querySelector('.vl').value})).filter(x=>x.p&&x.c);
-  if (!v.length) { alert('Adicione pelo menos um medicamento.'); return; }
-  const r={tipo:'medicamento',faz:document.getElementById('m-faz').value,n:CU.n,dt:document.getElementById('m-data').value,vacs:v,obs:document.getElementById('m-obs').value};
+  var nome = (document.getElementById('m-nome')||{}).value || '';
+  var lote = (document.getElementById('m-lote')||{}).value || '';
+  var nanim = parseInt((document.getElementById('m-nanim')||{}).value) || 0;
+  if (!nanim && lote) {
+    var lt = (S.LOTES||[]).find(function(l){ return l.nome===lote; });
+    if (lt) nanim = lt.qtd;
+  }
+  if (!nome) { alert('Informe o nome do remédio.'); return; }
+  var dose = (document.getElementById('m-dose')||{}).value || '';
+  var unid = (document.getElementById('m-dose-unid')||{}).value || '';
+  var aplicou = (document.getElementById('m-aplicou')||{}).value || CU.n;
+  var r = {
+    tipo:'medicamento',
+    faz: document.getElementById('m-faz').value,
+    n: CU.n,
+    dt: document.getElementById('m-data').value,
+    nome: nome,
+    lote: lote,
+    nanim: nanim,
+    dose: dose + ' ' + unid,
+    aplicou: aplicou,
+    obs: document.getElementById('m-obs').value
+  };
   S.rD.push(r); enviarDado(r); showOk('ok-m');
-  setTimeout(()=>{sp('home',false);rUlt();},1600);
+  document.getElementById('m-nome').value = '';
+  document.getElementById('m-nanim').value = '';
+  document.getElementById('m-dose').value = '';
+  document.getElementById('m-aplicou').value = '';
+  document.getElementById('m-obs').value = '';
+  setTimeout(function(){ sp('home',false); rUlt(); }, 1600);
 }
 
 function envT() {
@@ -1685,10 +1688,19 @@ function expCSV() {
 try { carregar(); } catch(e) { S = JSON.parse(JSON.stringify(DEFAULT)); }
 try { initLogin(); } catch(e) { console.error('initLogin error:', e); mostrarFazendas(); }
 
-document.getElementById('es-faz').addEventListener('change',updEsCo);
-document.getElementById('t-faz').addEventListener('change',updTrato);
-document.getElementById('i-faz').addEventListener('change',updInsProd);
-document.getElementById('ct-faz').addEventListener('change',updPrecosCt);
+// Safe event listeners
+['es-faz','t-faz','i-faz','ct-faz'].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (el) {
+    var fn = {
+      'es-faz': updEsCo,
+      't-faz': updTrato,
+      'i-faz': updInsProd,
+      'ct-faz': updPrecosCt
+    }[id];
+    if (fn) el.addEventListener('change', fn);
+  }
+});
 
 // ═══ SAFRA ═══
 function getSafra() {
@@ -2680,6 +2692,123 @@ function forcarSalvarNuvem() {
     }
   });
 }
+
+
+// ══ Fix salvarProduto to include % consumo ══
+var _salvarProdutoOrig = salvarProduto;
+salvarProduto = function() {
+  var faz  = (document.getElementById('i-cad-faz')||{}).value || '';
+  var nome = ((document.getElementById('i-cad-nome')||{}).value||'').trim();
+  var unid = (document.getElementById('i-cad-unid')||{}).value||'kg';
+  var estq = parseFloat((document.getElementById('i-cad-estq')||{}).value)||0;
+  var min  = parseFloat((document.getElementById('i-cad-min')||{}).value)||0;
+  var pct  = parseFloat((document.getElementById('i-cad-pct')||{}).value)||0;
+  if (!nome) { alert('Informe o nome do produto.'); return; }
+  if (!faz)  { alert('Selecione a fazenda.'); return; }
+  if (!S.FAZ[faz]) S.FAZ[faz] = {cochos:[],prods:[]};
+  if (!S.FAZ[faz].prods) S.FAZ[faz].prods = [];
+  if (S.FAZ[faz].prods.indexOf(nome) < 0) S.FAZ[faz].prods.push(nome);
+  if (!S.EST) S.EST = {};
+  S.EST[nome] = {q:estq, min:min, u:unid, pct:pct};
+  // Also save to LOTES insumos if % given
+  salvar();
+  updInsProd();
+  rListProdutos();
+  document.getElementById('i-cad-nome').value = '';
+  document.getElementById('i-cad-estq').value = '';
+  document.getElementById('i-cad-min').value  = '';
+  document.getElementById('i-cad-pct').value  = '';
+  showOk('ok-prod');
+};
+
+// ══ rListProdutos override to show % consumo ══
+rListProdutos = function() {
+  var el = document.getElementById('prod-lista');
+  if (!el) return;
+  var faz = (document.getElementById('i-cad-faz')||{}).value || getFL()[0] || '';
+  var prods = S.FAZ && S.FAZ[faz] ? (S.FAZ[faz].prods||[]) : [];
+  if (!prods.length) {
+    el.innerHTML = '<div style="font-size:12px;color:#aaa;padding:4px">Nenhum produto cadastrado.</div>';
+    return;
+  }
+  el.innerHTML = '<div style="font-size:11px;color:#666;margin-bottom:4px">Produtos cadastrados:</div>' +
+    prods.map(function(p) {
+      var est = S.EST&&S.EST[p] ? S.EST[p] : {};
+      var pctTxt = est.pct ? ' · ' + est.pct + '% PV' : '';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f5f5f5">' +
+        '<div><span style="font-size:13px;font-weight:600">' + p + '</span>' +
+        '<span style="font-size:11px;color:#888"> ' + (est.q||0) + ' ' + (est.u||'') + pctTxt + '</span></div>' +
+        '<button onclick="removerProduto(\'' + p.replace(/'/g,"&#39;") + '\',\'' + faz.replace(/'/g,"&#39;") + '\')" style="border:none;background:none;color:#C62828;font-size:14px;cursor:pointer">✕</button>' +
+      '</div>';
+    }).join('');
+};
+
+// ══ Medicamento: fill m-lote from LOTES ══
+function updMedLote() {
+  var faz = (document.getElementById('m-faz')||{}).value || '';
+  var sel = document.getElementById('m-lote');
+  if (!sel) return;
+  var lotes = (S.LOTES||[]).filter(function(l){ return !faz||l.faz===faz; });
+  sel.innerHTML = '<option value="">Selecione o lote...</option>' +
+    lotes.map(function(l){ return '<option>' + l.nome + ' (' + l.qtd + ' animais)</option>'; }).join('');
+}
+
+// ══ Patch popAll to fill m-lote ══
+var _popAllMed = popAll;
+popAll = function() {
+  _popAllMed();
+  updMedLote();
+};
+
+// m-faz onchange handled via popAll patch above
+
+// ══ FIX carregarNuvem: use jsonp-style URL workaround for CORS ══
+// Apps Script supports callback= for JSONP which avoids CORS issues
+carregarNuvem = function(callback) {
+  if (!S.cfgGS) { if(callback) callback(false); return; }
+  if (!navigator.onLine) { if(callback) callback(false); return; }
+  updCloudStatus('loading');
+  var url = S.cfgGS + '?acao=carregar';
+  fetch(url, {method:'GET'})
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(data) {
+      if (data.CONFIG && data.CONFIG.length > 0) {
+        var row = data.CONFIG[0];
+        if (row && row[1]) {
+          try {
+            var cfg = JSON.parse(row[1]);
+            if (cfg.FAZ && Object.keys(cfg.FAZ).length > 0) S.FAZ = cfg.FAZ;
+            if (cfg.US  && cfg.US.length > 0)  S.US  = cfg.US;
+            if (cfg.EST) S.EST = cfg.EST;
+            if (cfg.SERVS && cfg.SERVS.length > 0) S.SERVS = cfg.SERVS;
+            if (cfg.PR)  S.PR  = cfg.PR;
+            if (cfg.LOTES) S.LOTES = cfg.LOTES;
+            if (cfg.DIARISTAS) S.DIARISTAS = cfg.DIARISTAS;
+            if (cfg.rD && cfg.rD.length > 0) S.rD = cfg.rD;
+            if (cfg.rT && cfg.rT.length > 0) S.rT = cfg.rT;
+            if (cfg.rC && cfg.rC.length > 0) S.rC = cfg.rC;
+            if (cfg.rE && cfg.rE.length > 0) S.rE = cfg.rE;
+            if (cfg.rDesp && cfg.rDesp.length > 0) S.rDesp = cfg.rDesp;
+            if (cfg.mEst) S.mEst = cfg.mEst;
+            salvar();
+            updCloudStatus('ok');
+            if(callback) callback(true);
+          } catch(e) {
+            updCloudStatus('err');
+            if(callback) callback(false);
+          }
+        } else { updCloudStatus('ok'); if(callback) callback(false); }
+      } else { updCloudStatus('ok'); if(callback) callback(false); }
+    })
+    .catch(function(e) {
+      console.warn('carregarNuvem erro:', e);
+      updCloudStatus('err');
+      if(callback) callback(false);
+    });
+};
 
 </script>
 <div class="qr-modal" id="qr-modal" onclick="fecharQR(event)">
