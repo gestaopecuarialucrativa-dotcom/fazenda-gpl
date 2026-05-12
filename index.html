@@ -186,9 +186,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     </div>
     <!-- Passo 2: selecionar usuário da fazenda -->
     <div class="login-card" id="step-user" style="display:none">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;cursor:pointer" onclick="voltarFaz()">
-        <span style="font-size:18px;color:#888">←</span>
-        <div>
+      <div style="margin-bottom:14px"><div>
           <div class="login-title" id="step-user-title" style="text-align:left">Quem é você?</div>
           <div style="font-size:11px;color:#888" id="step-user-faz"></div>
         </div>
@@ -197,9 +195,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     </div>
     <!-- Passo 3: digitar PIN -->
     <div class="login-card" id="step-pin" style="display:none">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;cursor:pointer" onclick="voltarUsers()">
-        <span style="font-size:18px;color:#888">←</span>
-        <div>
+      <div style="margin-bottom:14px"><div>
           <div class="login-title" id="pin-nome" style="text-align:left">Digite seu PIN</div>
           <div style="font-size:11px;color:#888">4 dígitos</div>
         </div>
@@ -315,7 +311,22 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
       <div class="stit">📦 Lançar saída do depósito</div>
       <div class="fg"><div class="lbl">Fazenda</div><select id="i-faz" onchange="updInsProd()"></select></div>
       <div class="fg"><div class="lbl">Data</div><input type="date" id="i-data"></div>
-      <div id="ins-l"><div class="ir"><div style="flex:2"><div class="lbl">Produto</div><select class="ip"><option value="">Sel...</option></select></div><div style="flex:1"><div class="lbl">Qtd</div><input type="number" class="iq" placeholder="0" min="0" step="0.5"></div><div style="flex:1"><div class="lbl">Unid.</div><select class="iu"><option>saco</option><option>kg</option><option>litro</option><option>unid.</option></select></div></div></div>
+      <div id="ins-l">
+        <div class="ir">
+          <div style="flex:2">
+            <div class="lbl">Produto</div>
+            <select class="ip" onchange="updInsInfo(this)"><option value="">Selecione...</option></select>
+          </div>
+          <div style="flex:1">
+            <div class="lbl">Quantidade</div>
+            <input type="number" class="iq" placeholder="0" min="0" step="1">
+          </div>
+          <div style="flex:1">
+            <div class="lbl">Unidade</div>
+            <select class="iu"><option>saco</option><option>kg</option><option>litro</option><option>unid.</option></select>
+          </div>
+        </div>
+        <div class="ins-info" style="font-size:11px;color:#2E7D32;background:#E8F5E9;border-radius:6px;padding:5px 8px;margin-bottom:6px;display:none"></div></div>
       <button class="savb" style="width:100%;margin-top:3px" onclick="addIns()">＋ Mais produto</button>
       <div class="fg" style="margin-top:10px;margin-bottom:0"><div class="lbl">Destino</div><select id="i-dest"><option value="">Selecione...</option><option>Cocho do pasto</option><option>Casa de sal</option><option>Depósito</option><option>Curral</option><option>Outro</option></select></div>
     </div>
@@ -3106,6 +3117,38 @@ function gerarReciboPDF() {
   var w = window.open('','_blank');
   w.document.write(html);
   w.document.close();
+}
+
+
+// ══ Show product info when selected in insumo saida ══
+function updInsInfo(sel) {
+  var nome = sel.value;
+  var row = sel.closest ? sel.closest('.ir') : sel.parentElement.parentElement;
+  var infoEl = row ? row.nextElementSibling : null;
+  if (!infoEl || !infoEl.classList.contains('ins-info')) return;
+  if (!nome || !S.EST || !S.EST[nome]) {
+    infoEl.style.display = 'none';
+    return;
+  }
+  var est = S.EST[nome];
+  var txt = '📦 ' + nome;
+  if (est.peso_saco) txt += ' · Peso por saco: ' + est.peso_saco + ' kg';
+  txt += ' · Estoque: ' + est.q + ' ' + est.u;
+  if (est.pct) {
+    var consLote = 0;
+    if (S.LOTES && S.LOTES.length > 0) {
+      var faz = document.getElementById('i-faz') ? document.getElementById('i-faz').value : '';
+      var lote = S.LOTES.find(function(l){ return !faz || l.faz === faz; });
+      if (lote) consLote = (est.pct/100) * lote.peso * lote.qtd;
+    }
+    txt += ' · Consumo ' + est.pct + '% PV';
+    if (consLote > 0) txt += ' = ' + consLote.toFixed(1) + ' kg/dia no lote';
+  }
+  infoEl.textContent = txt;
+  infoEl.style.display = 'block';
+  // Auto-select unit from EST
+  var uSel = row.querySelector('.iu');
+  if (uSel && est.u) uSel.value = est.u;
 }
 
 </script>
