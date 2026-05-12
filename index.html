@@ -401,8 +401,8 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     <div class="fg"><div class="lbl">Lote</div><select id="es-cocho" onchange="updEsLote()"><option value="">Selecione o lote...</option></select></div>
     <div id="es-lote-info" style="display:none;background:#E8F5E9;border-radius:8px;padding:8px;font-size:12px;color:#1B5E20;margin-bottom:8px"></div>
     <div class="fg"><div class="lbl">Data</div><input type="date" id="es-data"></div>
-    <div class="fg"><div class="lbl">Nº de animais (do lote)</div>
-      <div id="es-nanim-info" style="padding:8px;background:#f5f5f5;border-radius:8px;font-size:13px;color:#555">Selecione o lote acima ↑</div>
+    <div class="fg"><div class="lbl">Nº de animais</div>
+      <div id="es-nanim-info" style="padding:8px;background:#E8F5E9;border-radius:8px;font-size:13px;color:#1B5E20;font-weight:600">Selecione o lote acima ↑</div>
       <input type="hidden" id="es-nanim" value="0">
     </div>
     <div class="ec" onclick="sEs(this,1)"><div class="enum e1c">1</div><div style="flex:1"><div class="etit">💩 Fezes firmes e secas</div><div class="edesc">Textura dura, compacta. Formato bem definido.</div><span class="etag tf">↑ Mais fibra</span></div></div>
@@ -631,7 +631,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 // ═══════════════════════════════════════════
 // ESTADO GLOBAL — tudo aqui, nada espalhado
 // ═══════════════════════════════════════════
-const STORAGE_KEY = 'gpl_v14_data';
+const STORAGE_KEY = 'gpl_v15_data';
 const TD = new Date().toISOString().split('T')[0];
 const EC = ['','#7B3F00','#A0522D','#2d7a1f','#CC8800','#CC2200'];
 const EI = [null,
@@ -703,6 +703,10 @@ function carregar() {
       if (!Array.isArray(S.rDesp)) S.rDesp = [];
       if (!Array.isArray(S.LOTES)) S.LOTES = [];
       if (!S.DIARISTAS) S.DIARISTAS = {};
+      // Clean duplicate FAZ keys (just in case)
+      var cleanFAZ = {};
+      Object.keys(S.FAZ).forEach(function(k){ cleanFAZ[k] = S.FAZ[k]; });
+      S.FAZ = cleanFAZ;
       if (!Array.isArray(S.SERVS)) S.SERVS = DEFAULT.SERVS;
       if (!S.PR) S.PR = DEFAULT.PR;
       if (!S.FAZ || Object.keys(S.FAZ).length === 0) S.FAZ = DEFAULT.FAZ;
@@ -1693,7 +1697,14 @@ function expCSV() {
 // INICIALIZAÇÃO
 // ═══════════════════════════════════════════
 try { carregar(); } catch(e) { S = JSON.parse(JSON.stringify(DEFAULT)); }
-try { initLogin(); } catch(e) { console.error('initLogin error:', e); mostrarFazendas(); }
+// On startup: if GAS URL is set and online, load from cloud before showing login
+if (S.cfgGS && navigator.onLine) {
+  carregarNuvem(function(loaded) {
+    try { initLogin(); } catch(e) { mostrarFazendas(); }
+  });
+} else {
+  try { initLogin(); } catch(e) { mostrarFazendas(); }
+}
 
 // Safe event listeners
 ['es-faz','t-faz','i-faz','ct-faz'].forEach(function(id) {
@@ -2240,17 +2251,28 @@ function updTratoLote() {
   }
   // Fill products from lote insumos + FAZ prods
   var opts = '<option value="">Selecione...</option>';
-  if (lote.insumos && lote.insumos.length) {
-    lote.insumos.forEach(function(ins){
-      var cons = (ins.pct/100) * lote.peso * lote.qtd;
-      opts += '<option value="' + ins.nome + '" data-cons="' + cons.toFixed(1) + '">' + ins.nome + ' (Recomendado: ' + cons.toFixed(1) + ' kg)</option>';
-    });
-  }
-  // Also add FAZ products
-  var fazProds = ((S.FAZ[faz]||{}).prods||[]);
+  var alreadyAdded = {};
+  // Add products based on % from S.EST
+  Object.keys(S.EST||{}).forEach(function(p){
+    var est = S.EST[p];
+    if (!est || !est.pct) return;
+    if (((S.FAZ[faz]||{}).prods||[]).indexOf(p) < 0 && Object.keys(S.FAZ).length > 0) return; // only show fazenda products
+    var cons = (est.pct/100) * (lote ? lote.peso : 0) * (lote ? lote.qtd : 0);
+    opts += '<option value="' + p + '" data-cons="' + cons.toFixed(1) + '">' + p + ' (Recomendado: ' + cons.toFixed(1) + ' kg)</option>';
+    alreadyAdded[p] = true;
+  });
+  // Add ALL products from S.EST for this fazenda
+  var fazProds = ((S.FAZ[faz]||{}).prods) || Object.keys(S.EST||{});
   fazProds.forEach(function(p){
-    if (!lote.insumos || !lote.insumos.find(function(i){ return i.nome===p; })) {
-      opts += '<option>' + p + '</option>';
+    if (!alreadyAdded[p]) {
+      var est = S.EST && S.EST[p];
+      var pct = est && est.pct ? est.pct : 0;
+      if (pct > 0 && lote && lote.peso && lote.qtd) {
+        var cons = (pct/100) * lote.peso * lote.qtd;
+        opts += '<option value="' + p + '" data-cons="' + cons.toFixed(1) + '">' + p + ' (Recomendado: ' + cons.toFixed(1) + ' kg)</option>';
+      } else {
+        opts += '<option>' + p + '</option>';
+      }
     }
   });
   if (prodSel) prodSel.innerHTML = opts;
@@ -2561,6 +2583,7 @@ function carregarNuvem(callback) {
   if (!navigator.onLine) { if(callback) callback(false); return; }
   CLOUD_LOADING = true;
   updCloudStatus('loading');
+  var cfgGS_backup = S.cfgGS; // keep URL even if we reset
   var url = S.cfgGS + '?acao=carregar';
   fetch(url, {method:'GET', mode:'cors'})
     .then(function(r) { return r.json(); })
@@ -2797,7 +2820,10 @@ carregarNuvem = function(callback) {
             if (cfg.rE && cfg.rE.length > 0) S.rE = cfg.rE;
             if (cfg.rDesp && cfg.rDesp.length > 0) S.rDesp = cfg.rDesp;
             if (cfg.mEst) S.mEst = cfg.mEst;
-            salvar();
+            // Clear old localStorage completely before saving cloud data
+            try { localStorage.removeItem('gpl_v14_data'); } catch(e){}
+            try { localStorage.removeItem('gpl_v15_data'); } catch(e){}
+            salvar(); // saves fresh cloud data with new key
             updCloudStatus('ok');
             if(callback) callback(true);
           } catch(e) {
@@ -2805,7 +2831,16 @@ carregarNuvem = function(callback) {
             if(callback) callback(false);
           }
         } else { updCloudStatus('ok'); if(callback) callback(false); }
-      } else { updCloudStatus('ok'); if(callback) callback(false); }
+      } else { 
+        // No CONFIG in cloud = planilha was cleared = reset everything
+        S = JSON.parse(JSON.stringify(DEFAULT));
+        S.cfgGS = cfgGS_backup; // keep the GAS URL
+        try { localStorage.removeItem('gpl_v14_data'); } catch(e){}
+        try { localStorage.removeItem('gpl_v15_data'); } catch(e){}
+        salvar();
+        updCloudStatus('ok'); 
+        if(callback) callback(true); // true = show login with fresh data
+      }
     })
     .catch(function(e) {
       console.warn('carregarNuvem erro:', e);
