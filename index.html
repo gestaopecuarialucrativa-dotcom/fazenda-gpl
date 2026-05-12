@@ -472,7 +472,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
   <!-- PAINEL -->
   <div id="pg-painel" class="pg">
-    <div class="fg"><div class="lbl">Fazenda</div><select id="pf" onchange="rPan()"><option value="">Todas</option></select></div>
+    <div class="fg"><div class="lbl">Fazenda</div><select id="pf" onchange="rPan()"><option value="">Todas as fazendas</option></select></div>
     <div class="psel"><div class="pbtn on" onclick="sPer(this,'dia')">Hoje</div><div class="pbtn" onclick="sPer(this,'semana')">Semana</div><div class="pbtn" onclick="sPer(this,'quinzena')">Quinzena</div><div class="pbtn" onclick="sPer(this,'mes')">Mês</div><div class="pbtn" onclick="sPer(this,'safra')">🌾 Safra</div></div>
     <div id="safra-info" style="display:none;font-size:11px;color:#2E7D32;background:#E8F5E9;border-radius:8px;padding:5px 10px;margin-bottom:6px;text-align:center"></div>
     <div class="sgrid">
@@ -1350,20 +1350,36 @@ function rPan() {
   document.getElementById('s-t').textContent=lt.length;
   if(le.length){const m=(le.reduce((a,r)=>a+r.es,0)/le.length).toFixed(1);document.getElementById('s-e').innerHTML=`<span style="color:${EC[Math.round(parseFloat(m))]}">${m}</span>`;document.getElementById('s-es').textContent=le.length+' aval.';}
   else{document.getElementById('s-e').textContent='—';document.getElementById('s-es').textContent='sem reg.';}
-  document.getElementById('l-d').innerHTML=lv.length?[...lv].reverse().map(function(r,idx){
+  var podeExcluir = CU && (CU.r==='Consultor' || CU.r==='Dono');
+  document.getElementById('l-d').innerHTML=lv.length?[...lv].reverse().map(function(r){
+    var globalIdx = S.rD.indexOf(r);
     var av=r.av==='otimo'?'<span class="bdg bg">Ótimo</span>':r.av==='bom'?'<span class="bdg ba">Bom</span>':'<span class="bdg br">Ruim</span>';
     var pagoBadge = r.pago ? ' <span style="font-size:10px;color:#2E7D32;font-weight:600">✅ Paga</span><div style="font-size:10px;color:#888">por '+r.pago_por+' em '+r.pago_dt+'</div>' : '';
-    var btnPagar = (!r.pago && r.v>0) ? '<button class="btn-pagar-diaria" data-idx="'+S.rD.indexOf(r)+'" style="margin-top:5px;padding:4px 12px;font-size:11px;font-weight:600;background:#2E7D32;color:#fff;border:none;border-radius:6px;cursor:pointer">✅ Marcar como paga</button>' : '';
+    var btnPagar = (!r.pago && r.v>0) ? '<button class="btn-pagar-diaria" data-idx="'+globalIdx+'" style="margin-top:5px;padding:4px 12px;font-size:11px;font-weight:600;background:#2E7D32;color:#fff;border:none;border-radius:6px;cursor:pointer">✅ Marcar como paga</button>' : '';
     var valStr = r.pago ? '<s style="color:#aaa">R$ '+r.v.toFixed(2).replace('.',',')+'</s>' : 'R$ '+r.v.toFixed(2).replace('.',',');
-    return '<div class="ri"><div class="rt"><span class="rn">'+r.n+av+'</span><span class="rv">'+valStr+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+' · '+r.srv+pagoBadge+'</div>'+btnPagar+'</div>';
+    var btnDel = podeExcluir ? '<button class="btn-del-reg" data-arr="rD" data-idx="'+globalIdx+'" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer;margin-left:8px">🗑️</button>' : '';
+    return '<div class="ri">'+btnDel+'<div class="rt"><span class="rn">'+r.n+av+'</span><span class="rv">'+valStr+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+' · '+r.srv+pagoBadge+'</div>'+btnPagar+'</div>';
   }).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
-  // Attach pay button events
   document.querySelectorAll('.btn-pagar-diaria').forEach(function(btn){
     btn.addEventListener('click', function(){ pagarDiaria(parseInt(this.getAttribute('data-idx'))); });
   });
+  document.querySelectorAll('.btn-del-reg').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var arr = this.getAttribute('data-arr');
+      var idx = parseInt(this.getAttribute('data-idx'));
+      excluirRegistro(arr, idx);
+    });
+  });
   document.getElementById('l-e').innerHTML=le.length?[...le].reverse().map(r=>`<div class="ri"><div class="rt"><span class="rn">${r.co||r.faz}</span><span style="font-size:14px;font-weight:700;color:${EC[r.es]}">${EI[r.es].em} E${r.es}</span></div><div class="rd">${r.dt.split('-').reverse().join('/')} · ${r.faz} · ${r.cab} animais${r.obs?' · '+r.obs:''}</div></div>`).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
   document.getElementById('l-t').innerHTML=lt.length?[...lt].reverse().map(r=>`<div class="ri"><div class="rt"><span class="rn">${r.co}</span><span class="rv">${r.q}${r.unid}</span></div><div class="rd">${r.dt.split('-').reverse().join('/')} · ${r.faz} · ${r.pr} · ${r.cab}cab</div></div>`).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
-  document.getElementById('l-ct').innerHTML=lc.length?[...lc].reverse().map(r=>`<div class="ri"><div class="rt"><span class="rn">${r.resp}</span><span class="rv">R$ ${r.total.toFixed(2).replace('.',',')}</span></div><div class="rd">${r.dt.split('-').reverse().join('/')} · ${r.faz} · ${r.det}</div></div>`).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
+  document.getElementById('l-ct').innerHTML=lc.length?[...lc].reverse().map(function(r){
+    var gi=S.rC.indexOf(r);
+    var del=podeExcluir?'<button class="btn-del-reg" data-arr="rC" data-idx="'+gi+'" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer">🗑️</button>':'';
+    return '<div class="ri">'+del+'<div class="rt"><span class="rn">'+r.resp+'</span><span class="rv">R$ '+r.total.toFixed(2).replace('.',',')+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+' · '+r.det+'</div></div>';
+  }).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
+  document.querySelectorAll('#l-ct .btn-del-reg').forEach(function(btn){
+    btn.addEventListener('click',function(){ excluirRegistro(this.getAttribute('data-arr'),parseInt(this.getAttribute('data-idx'))); });
+  });
 }
 
 function sPer(el,p) { document.querySelectorAll('.pbtn').forEach(b=>b.classList.remove('on')); el.classList.add('on'); perA=p; rPan(); }
@@ -3150,6 +3166,145 @@ function updInsInfo(sel) {
   var uSel = row.querySelector('.iu');
   if (uSel && est.u) uSel.value = est.u;
 }
+
+
+// ══════════════════════════════════════════
+// APAGAR LANÇAMENTO
+// ══════════════════════════════════════════
+function apagarLancamento(tipo, idx) {
+  var nomes = {diaria:'diária', trato:'trato de cocho', escore:'escore de fezes',
+               medicamento:'medicamento', cantina:'cantina', insumo:'insumo'};
+  if (!confirm('Apagar este ' + (nomes[tipo]||tipo) + '?\n\nEsta ação ficará registrada.')) return;
+  
+  var arr = tipo==='diaria' ? S.rD.filter(function(r){return r.tipo==='diaria';}) :
+            tipo==='trato'  ? S.rT :
+            tipo==='escore' ? S.rE :
+            tipo==='cantina'? S.rC : S.rD;
+
+  // Find the record in the original array
+  var orig = tipo==='trato' ? S.rT : tipo==='escore' ? S.rE : tipo==='cantina' ? S.rC : S.rD;
+  
+  // Mark as deleted (don't remove — keep audit trail)
+  if (orig[idx]) {
+    orig[idx]._apagado = true;
+    orig[idx]._apagado_por = CU ? CU.n : '?';
+    orig[idx]._apagado_em = new Date().toLocaleDateString('pt-BR');
+  }
+  salvar();
+  rPan();
+  rUlt();
+}
+
+// Override rPan diaria render to add delete button
+var _rPanDiariasOrig = null; // patched below after rPan loads
+
+// Patch rUlt to hide deleted records
+var _rUltOrig = rUlt;
+rUlt = function() {
+  // Temporarily filter deleted records from view arrays
+  var rdOrig = S.rD;
+  var rtOrig = S.rT;
+  var reOrig = S.rE;
+  S.rD = S.rD.filter(function(r){ return !r._apagado; });
+  S.rT = S.rT.filter(function(r){ return !r._apagado; });
+  S.rE = S.rE.filter(function(r){ return !r._apagado; });
+  _rUltOrig();
+  S.rD = rdOrig;
+  S.rT = rtOrig;
+  S.rE = reOrig;
+};
+
+// Patch rPan to filter deleted and add delete button on diarias
+var _rPanOrigDel = rPan;
+rPan = function() {
+  _rPanOrigDel();
+  // Re-render l-d with delete button
+  var per = typeof perA !== 'undefined' ? perA : 'mes';
+  var faz = document.getElementById('pf') ? document.getElementById('pf').value : '';
+  var lv = filtrar(S.rD.filter(function(r){ return r.tipo==='diaria' && !r._apagado; }), per);
+  var el = document.getElementById('l-d');
+  if (!el) return;
+
+  var isSupervisor = CU && (CU.r === 'Consultor' || CU.r === 'Dono');
+
+  el.innerHTML = lv.length ? [...lv].reverse().map(function(r) {
+    var realIdx = S.rD.indexOf(r);
+    var av = r.av==='otimo'?'<span class="bdg bg">Ótimo</span>':r.av==='bom'?'<span class="bdg ba">Bom</span>':'<span class="bdg br">Ruim</span>';
+    var pagoBadge = r.pago ? ' <span style="font-size:10px;color:#2E7D32;font-weight:600">✅ Paga</span><div style="font-size:10px;color:#888">por '+r.pago_por+' em '+r.pago_dt+'</div>' : '';
+    var btnPagar = (!r.pago && r.v>0) ? '<button class="btn-pagar-diaria" data-idx="'+S.rD.indexOf(r)+'" style="margin-top:5px;padding:4px 12px;font-size:11px;font-weight:600;background:#2E7D32;color:#fff;border:none;border-radius:6px;cursor:pointer">✅ Marcar como paga</button>' : '';
+    var btnApagar = isSupervisor ? '<button onclick="apagarLancamento(\'diaria\','+realIdx+')" style="margin-top:5px;margin-left:6px;padding:4px 10px;font-size:11px;background:#FFF0F0;color:#C62828;border:1px solid #FFCDD2;border-radius:6px;cursor:pointer">🗑️ Apagar</button>' : '';
+    var valStr = r.pago ? '<s style="color:#aaa">R$ '+r.v.toFixed(2).replace('.',',')+'</s>' : 'R$ '+r.v.toFixed(2).replace('.',',');
+    return '<div class="ri"><div class="rt"><span class="rn">'+r.n+av+'</span><span class="rv">'+valStr+'</span></div>' +
+           '<div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+' · '+r.srv+pagoBadge+'</div>' +
+           '<div>'+btnPagar+btnApagar+'</div></div>';
+  }).join('') : '<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
+
+  // Re-attach pay button events
+  el.querySelectorAll('.btn-pagar-diaria').forEach(function(btn){
+    btn.addEventListener('click', function(){ pagarDiaria(parseInt(this.getAttribute('data-idx'))); });
+  });
+
+  // Also re-render tratos with delete
+  var lt = filtrar(S.rT.filter(function(r){ return !r._apagado; }), per);
+  var elT = document.getElementById('l-t');
+  if (elT && isSupervisor) {
+    // Add delete buttons to existing trato rows
+    elT.querySelectorAll('.ri').forEach(function(row, i) {
+      if (!row.querySelector('[data-del]')) {
+        var btn = document.createElement('button');
+        btn.setAttribute('data-del','1');
+        btn.style.cssText = 'margin-top:4px;padding:3px 8px;font-size:10px;background:#FFF0F0;color:#C62828;border:1px solid #FFCDD2;border-radius:5px;cursor:pointer';
+        btn.textContent = '🗑️ Apagar';
+        var realIdx = S.rT.indexOf(lt[i]);
+        btn.onclick = function(){ apagarLancamento('trato', realIdx); };
+        row.appendChild(btn);
+      }
+    });
+  }
+};
+
+
+// ══ Excluir registro ══
+function excluirRegistro(arr, idx) {
+  if (!confirm('⚠️ Excluir este registro?\n\nEsta ação não pode ser desfeita.')) return;
+  if (!S[arr] || idx < 0 || idx >= S[arr].length) return;
+  var reg = S[arr][idx];
+  S[arr].splice(idx, 1);
+  // Also remove from queue if not yet synced
+  S.queue = S.queue.filter(function(q){
+    return JSON.stringify(q) !== JSON.stringify(reg);
+  });
+  salvar();
+  rPan();
+  rListDesp && rListDesp();
+}
+
+// ══ Rogério: filtro de fazenda no painel — ver todas ou escolher ══
+// The painel already has a fazenda selector (#pf) — 
+// for Consultor, populate with ALL fazendas including "Todas"
+var _popAllPainel = popAll;
+popAll = function() {
+  _popAllPainel();
+  var pf = document.getElementById('pf');
+  if (!pf) return;
+  var isConsultor = CU && CU.r === 'Consultor';
+  if (isConsultor) {
+    // Show all fazendas
+    var opts = '<option value="">Todas</option>';
+    Object.keys(S.FAZ).forEach(function(f){
+      opts += '<option value="'+f+'">'+f+'</option>';
+    });
+    pf.innerHTML = opts;
+    pf.disabled = false;
+    var fgPF = pf.closest ? pf.closest('.fg') : null;
+    if (fgPF) fgPF.style.display = '';
+  } else {
+    // Non-consultor: lock to their fazenda
+    var faz = CU && CU.fs && CU.fs.length > 0 ? CU.fs[0] : Object.keys(S.FAZ)[0];
+    pf.innerHTML = '<option value="'+faz+'">'+faz+'</option>';
+    pf.disabled = true;
+  }
+};
 
 </script>
 <div class="qr-modal" id="qr-modal" onclick="fecharQR(event)">
