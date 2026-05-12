@@ -531,31 +531,25 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
         <div style="flex:1"><div class="lbl">Nº de animais</div><input type="number" id="lt-qtd" placeholder="0" min="1" oninput="calcLote()"></div>
         <div style="flex:1"><div class="lbl">Peso médio (kg)</div><input type="number" id="lt-peso" placeholder="0" min="0" step="0.5" oninput="calcLote()"></div>
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:10px">
-        <div style="flex:1;background:#f0f9e8;border-radius:8px;padding:8px;text-align:center">
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <div style="flex:1;min-width:90px;background:#f0f9e8;border-radius:8px;padding:8px;text-align:center">
           <div style="font-size:10px;color:#666">Peso total (kg)</div>
           <div style="font-weight:700;color:#1B5E20" id="lt-peso-total">—</div>
         </div>
-        <div style="flex:1;background:#f0f9e8;border-radius:8px;padding:8px;text-align:center">
+        <div style="flex:1;min-width:90px;background:#f0f9e8;border-radius:8px;padding:8px;text-align:center">
           <div style="font-size:10px;color:#666">Total (@)</div>
           <div style="font-weight:700;color:#1B5E20" id="lt-arroba">—</div>
+        </div>
+        <div style="flex:1;min-width:90px;background:#E8F5E9;border-radius:8px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:#666">Média por animal</div>
+          <div style="font-weight:700;color:#2E7D32" id="lt-arroba-ind">—</div>
         </div>
       </div>
       <button class="sbtn" onclick="salvarLote()">💾 Salvar lote</button>
       <div class="ok" id="ok-lt">✅ Lote salvo!</div>
     </div>
 
-    <div class="card" style="margin-top:10px">
-      <div class="stit">📋 Insumos do lote</div>
-      <div class="info-box" style="font-size:11px">O consumo é calculado automaticamente: % × peso médio × nº de animais</div>
-      <div id="lt-ins-list"></div>
-      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-        <input type="text" id="lt-ins-nome" placeholder="Nome do produto" style="flex:2;min-width:120px;padding:7px;border:1.5px solid #ddd;border-radius:8px;font-size:13px">
-        <input type="number" id="lt-ins-pct" placeholder="% do peso" step="0.01" min="0" max="10" style="flex:1;min-width:70px;padding:7px;border:1.5px solid #ddd;border-radius:8px;font-size:13px">
-        <button class="savb" onclick="addInsLote()" style="background:#2E7D32;color:#fff;border-color:#2E7D32">＋</button>
-      </div>
-      <div style="font-size:11px;color:#888;margin-top:5px">Ex: Proteinado = 0,3%</div>
-    </div>
+
 
     <div class="card" style="margin-top:10px">
       <div class="stit">📋 Lotes cadastrados</div>
@@ -2114,12 +2108,15 @@ var ltInsumos = []; // insumos do lote sendo criado
 var esTSel = ''; // escore animal trato
 
 function calcLote() {
-  var qtd = parseFloat(document.getElementById('lt-qtd').value) || 0;
+  var qtd  = parseFloat(document.getElementById('lt-qtd').value)  || 0;
   var peso = parseFloat(document.getElementById('lt-peso').value) || 0;
-  var total = qtd * peso;
-  var arroba = total / 15;
+  var total   = qtd * peso;
+  var arroba  = total / 15;
+  var arrobaI = peso  / 15;
   document.getElementById('lt-peso-total').textContent = total > 0 ? total.toFixed(0) + ' kg' : '—';
-  document.getElementById('lt-arroba').textContent = arroba > 0 ? arroba.toFixed(1) + ' @' : '—';
+  document.getElementById('lt-arroba').textContent     = arroba > 0 ? arroba.toFixed(1) + ' @' : '—';
+  var elI = document.getElementById('lt-arroba-ind');
+  if (elI) elI.textContent = arrobaI > 0 ? arrobaI.toFixed(2) + ' @/animal' : '—';
 }
 
 function addInsLote() {
@@ -2184,18 +2181,15 @@ function rListLotes() {
   el.innerHTML = lista.map(function(l, i) {
     var total = l.qtd * l.peso;
     var arroba = (total/15).toFixed(1);
-    var insHtml = l.insumos.length ? l.insumos.map(function(ins){
-      var cons = (ins.pct/100) * l.peso * l.qtd;
-      return '<span style="font-size:11px;background:#E8F5E9;color:#1B5E20;border-radius:4px;padding:2px 6px;margin-right:4px">' +
-        ins.nome + ': ' + cons.toFixed(1) + ' kg/dia</span>';
-    }).join('') : '<span style="font-size:11px;color:#aaa">Sem insumos</span>';
+    var arrobaInd = l.peso > 0 ? (l.peso/15).toFixed(2) + ' @/animal' : '—';
+    var insHtml = '';  // insumos removed from lote
     return '<div style="background:#fff;border:1px solid #eee;border-radius:10px;padding:10px;margin-bottom:8px">' +
       '<div style="display:flex;justify-content:space-between;align-items:center">' +
         '<span style="font-weight:700;font-size:14px">🐄 ' + l.nome + '</span>' +
         '<button onclick="editLote(\'' + l.nome.replace(/'/g,"&#39;") + '\',\'' + (l.faz||'').replace(/'/g,"&#39;") + '\')" style="border:none;background:#f0f0f0;padding:3px 8px;border-radius:6px;font-size:11px;cursor:pointer">✏️ Editar</button>' +
       '</div>' +
       '<div style="font-size:12px;color:#555;margin-top:4px">' + l.qtd + ' animais · ' + l.peso + ' kg/cabeça · ' + arroba + ' @</div>' +
-      '<div style="margin-top:6px">' + insHtml + '</div>' +
+      '<div style="font-size:11px;color:#888;margin-top:3px">📐 ' + arrobaInd + '</div>' +
     '</div>';
   }).join('');
 }
