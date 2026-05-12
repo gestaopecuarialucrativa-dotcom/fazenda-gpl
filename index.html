@@ -1391,8 +1391,13 @@ function rUlt() {
     var dt = r.dt || r.data || '';
     if (fazAtual && r.faz && r.faz !== fazAtual) return false;
     if (dt < corteStr) return false;
-    // Vaqueiro só vê os próprios lançamentos
-    if (isVaqueiro && r.n && r.n !== CU.n) return false;
+    if (isVaqueiro) {
+      // Cantina: só vê se ele mesmo lançou
+      if (r.tipo === 'cantina' && r.resp && r.resp !== CU.n) return false;
+      // Diária: só vê as dele
+      if (r.tipo === 'diaria' && r.n && r.n !== CU.n) return false;
+      // Trato e escore: vê todos da fazenda (são registros de campo)
+    }
     return true;
   });
   todosArr.sort(function(a,b){ return (b.dt||'') > (a.dt||'') ? 1 : -1; });
