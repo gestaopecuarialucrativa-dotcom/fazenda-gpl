@@ -1386,10 +1386,14 @@ function rUlt() {
   var corte = new Date(); corte.setDate(corte.getDate() - diasAtras);
   var corteStr = corte.toISOString().split('T')[0];
   var fazAtual = CU && CU.fs && CU.fs.length===1 ? CU.fs[0] : '';
+  var isVaqueiro = CU && CU.r === 'Vaqueiro';
   var todosArr = [...S.rD,...S.rC,...S.rT,...S.rE].filter(function(r){
     var dt = r.dt || r.data || '';
     if (fazAtual && r.faz && r.faz !== fazAtual) return false;
-    return dt >= corteStr;
+    if (dt < corteStr) return false;
+    // Vaqueiro só vê os próprios lançamentos
+    if (isVaqueiro && r.n && r.n !== CU.n) return false;
+    return true;
   });
   todosArr.sort(function(a,b){ return (b.dt||'') > (a.dt||'') ? 1 : -1; });
   var todos = todosArr.slice(0, 20);
