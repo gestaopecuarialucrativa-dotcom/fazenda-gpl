@@ -3573,7 +3573,7 @@ function rConsResumo() {
   var html = '<div style="font-size:16px;font-weight:700;color:#1B5E20;margin-bottom:12px">🌿 Visão Geral — ' + fazendas.length + ' fazenda(s)</div>';
 
   fazendas.forEach(function(faz) {
-    var diarias   = (S.rD||[]).filter(function(r){ return r.faz===faz && r.tipo==='diaria'; });
+    var diarias   = (S.rD||[]).filter(function(r){ return r.faz===faz && r.tipo==='diaria' && !r._apagado; });
     var tratos    = (S.rT||[]).filter(function(r){ return r.faz===faz; });
     var escores   = (S.rE||[]).filter(function(r){ return r.faz===faz; });
     var despPagar = (S.rDesp||[]).filter(function(r){ return r.faz===faz && r.st==='pagar'; });
