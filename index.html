@@ -233,7 +233,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
       <div class="t3" id="h-s"></div>
     </div>
     <div id="cloud-status" style="font-size:10px;color:#aaa;margin-right:4px"></div><div class="sdot" id="sdot" title="Status"></div>
-    <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
+    <div class="upill" onclick="doLogout()" title="Sair">⏻ <span id="un"></span></div>
   </div>
   <div class="tabs" id="tabs" style="display:none"></div>
   <div id="cloud-msg" style="display:none;background:#E8F5E9;color:#1B5E20;text-align:center;padding:6px;font-size:12px;font-weight:600;border-bottom:1px solid #c8e6c9"></div>
@@ -982,10 +982,20 @@ function entrar(i) {
 
 function doLogout() {
   CU = null; loginFaz = null; loginUser = null; pinBuf = '';
+  // Reset all PIN dots
+  document.querySelectorAll('.pdot').forEach(function(d){ d.classList.remove('on'); });
+  // Hide app, show login
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-screen').style.display = 'block';
-  document.getElementById('tabs').style.display = 'none';
-  document.getElementById('hback').style.display = 'none';
+  var tabs = document.getElementById('tabs');
+  if (tabs) tabs.style.display = 'none';
+  var hback = document.getElementById('hback');
+  if (hback) hback.style.display = 'none';
+  // Reset all login steps
+  document.getElementById('step-faz').style.display = 'block';
+  document.getElementById('step-user').style.display = 'none';
+  document.getElementById('step-pin').style.display = 'none';
+  // Rebuild fazenda list fresh
   mostrarFazendas();
 }
 
