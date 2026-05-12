@@ -372,20 +372,21 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
       <div class="fg"><div class="lbl">Lote</div><select id="t-cocho" onchange="updTratoLote()"><option value="">Selecione o lote...</option></select></div>
       <div id="t-lote-info" style="display:none;background:#E8F5E9;border-radius:8px;padding:8px;font-size:12px;color:#1B5E20;margin-bottom:8px"></div>
       <div class="fg"><div class="lbl">Produto</div><select id="t-prod" onchange="calcSaldo()"><option value="">Selecione...</option></select></div>
-      <div class="brow" style="margin-bottom:11px">
-        <div>
-          <div class="lbl">Quantidade fornecida</div>
-          <div style="display:flex;gap:6px">
-            <input type="number" id="t-qtd" placeholder="0" min="0" step="0.5" oninput="calcSaldo()" style="flex:2">
-            <select id="t-unid-sel" style="flex:1;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:13px">
-              <option value="kg">kg</option>
-              <option value="saco">saco</option>
-              <option value="litro">litro</option>
-              <option value="unid.">unid.</option>
-            </select>
-          </div>
+      <div style="display:flex;gap:8px;margin-bottom:11px;flex-wrap:wrap">
+        <div style="flex:1;min-width:120px">
+          <div class="lbl">Quantidade (sacos) 📦</div>
+          <input type="number" id="t-qtd" placeholder="0" min="0" step="1" oninput="calcSaldo()" style="width:100%;padding:8px;border:1.5px solid #2E7D32;border-radius:8px;font-size:14px;font-weight:600">
+          <div style="font-size:10px;color:#888;margin-top:2px">Baixa do estoque</div>
         </div>
-        <div><div class="lbl">Consumo recomendado</div><div id="t-cons-calc" style="padding:8px;background:#f5f5f5;border-radius:8px;font-size:13px;font-weight:700;color:#1B5E20;min-height:34px">—</div></div>
+        <div style="flex:1;min-width:120px">
+          <div class="lbl">Quantidade (kg) 🌿</div>
+          <input type="number" id="t-qtd-kg" placeholder="Auto" min="0" step="0.5" style="width:100%;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:14px">
+          <div style="font-size:10px;color:#888;margin-top:2px">Apenas informativo</div>
+        </div>
+        <div style="flex:1;min-width:120px">
+          <div class="lbl">Consumo recomendado</div>
+          <div id="t-cons-calc" style="padding:8px;background:#f5f5f5;border-radius:8px;font-size:12px;font-weight:700;color:#1B5E20;min-height:34px">—</div>
+        </div>
       </div>
       <div class="fg"><div class="lbl">Nº de animais no lote</div>
         <div id="t-cab-info" style="padding:8px;background:#f5f5f5;border-radius:8px;font-size:13px;color:#555">Selecione o lote acima ↑</div>
@@ -591,6 +592,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
       <button class="sbtn" style="margin-top:10px" onclick="salvInteg()">🔌 Salvar integração</button>
       <button class="sbtn" style="margin-top:8px;background:#185FA5" onclick="forcarCarregarNuvem()">☁️ Carregar dados da nuvem agora</button>
       <button class="sbtn" style="margin-top:8px;background:#2E7D32" onclick="forcarSalvarNuvem()">💾 Salvar dados na nuvem agora</button>
+      <button class="sbtn" style="margin-top:8px;background:#C62828" onclick="limparTudoLocal()">🗑️ Limpar dados locais e recarregar da nuvem</button>
       <div class="ok" id="ok-cloud">✅ Concluído!</div>
       <div class="ok" id="ok-integ">✅ Integração salva!</div>
       <div style="margin-top:11px"><div class="lbl" style="margin-bottom:4px">Código GAS — troque COLE_O_ID_AQUI pelo ID da planilha (clique para copiar):</div>
@@ -1267,7 +1269,11 @@ function envT() {
   const faz=document.getElementById('t-faz').value;
   const cab=parseInt(document.getElementById('t-cab').value)||0;
   if (pr&&S.EST&&S.EST[pr]) baixar([{p:pr,q,u:'kg'}],dt,co);
-  var tUnid=(document.getElementById('t-unid-sel')||{}).value||'kg'; const r={tipo:'trato',faz,n:CU.n,dt,co,pr,q,unid:tUnid,cab,sit:coSel,escore:esTSel,obs:document.getElementById('t-obs').value};
+  var sacos = q; // q = sacos (baixa estoque)
+  var kgInput = document.getElementById('t-qtd-kg');
+  var pesoPorSaco = (S.EST && pr && S.EST[pr] && S.EST[pr].peso_saco) ? S.EST[pr].peso_saco : 30;
+  var kgFornecido = kgInput && kgInput.value ? parseFloat(kgInput.value) : sacos * pesoPorSaco;
+  const r={tipo:'trato',faz,n:CU.n,dt,co,pr,q:sacos,unid:'saco',kg_fornecido:kgFornecido,cab,sit:coSel,escore:esTSel,obs:document.getElementById('t-obs').value};
   S.rT.push(r); enviarDado(r); showOk('ok-t');
   document.getElementById('t-qtd').value=''; document.getElementById('t-cab').value=''; document.getElementById('t-obs').value='';
   document.querySelectorAll('#pg-trato .bopt').forEach(b=>b.classList.remove('sel')); coSel=''; esTSel='';
@@ -2369,18 +2375,30 @@ function updTratoLote() {
 
 function calcSaldo() {
   var prodSel = document.getElementById('t-prod');
-  var qtdEl = document.getElementById('t-qtd');
-  var consEl = document.getElementById('t-cons-calc');
+  var qtdSacoEl = document.getElementById('t-qtd');
+  var qtdKgEl   = document.getElementById('t-qtd-kg');
+  var consEl    = document.getElementById('t-cons-calc');
   if (!prodSel || !consEl) return;
+  var nomeProd = prodSel.value;
+  var est = (S.EST && nomeProd) ? S.EST[nomeProd] : null;
+  var pesoPorSaco = (est && est.peso_saco) ? est.peso_saco : 30;
+  var sacos = parseFloat((qtdSacoEl||{}).value) || 0;
+  // Auto-fill kg field from sacos × peso_saco
+  if (qtdKgEl && sacos > 0 && !qtdKgEl.value) {
+    qtdKgEl.placeholder = (sacos * pesoPorSaco).toFixed(0) + ' kg (auto)';
+  } else if (qtdKgEl && sacos > 0) {
+    qtdKgEl.placeholder = (sacos * pesoPorSaco).toFixed(0) + ' kg (auto)';
+  }
   var opt = prodSel.options[prodSel.selectedIndex];
   var cons = opt ? opt.getAttribute('data-cons') : null;
-  var qtd = parseFloat((qtdEl||{}).value) || 0;
+  var kgFornecido = qtdKgEl && qtdKgEl.value ? parseFloat(qtdKgEl.value) : sacos * pesoPorSaco;
   if (cons) {
-    var diff = qtd - parseFloat(cons);
-    consEl.textContent = 'Recomendado: ' + cons + ' kg' + (qtd > 0 ? ' | Você deu: ' + qtd.toFixed(1) + ' kg' : '');
-    consEl.style.color = Math.abs(diff) < 1 ? '#2E7D32' : (diff < 0 ? '#C62828' : '#FF8F00');
-  } else if (qtd > 0) {
-    consEl.textContent = qtd.toFixed(1) + ' kg';
+    var consNum = parseFloat(cons);
+    var diff = kgFornecido - consNum;
+    consEl.textContent = 'Recomendado: ' + cons + ' kg' + (kgFornecido > 0 ? ' | Fornecido: ' + kgFornecido.toFixed(1) + ' kg' : '');
+    consEl.style.color = Math.abs(diff) < 2 ? '#2E7D32' : (diff < 0 ? '#C62828' : '#FF8F00');
+  } else if (kgFornecido > 0) {
+    consEl.textContent = kgFornecido.toFixed(1) + ' kg fornecido (' + sacos + ' sacos × ' + pesoPorSaco + ' kg)';
     consEl.style.color = '#333';
   } else {
     consEl.textContent = '—';
@@ -3315,6 +3333,36 @@ popAll = function() {
     pf.disabled = true;
   }
 };
+
+
+// ══ Limpar localStorage completamente e recarregar da nuvem ══
+function limparTudoLocal() {
+  if (!confirm('⚠️ ATENÇÃO!\n\nIsso vai apagar TODOS os dados locais e recarregar da planilha.\n\nSó faça isso se a planilha estiver com os dados corretos.\n\nContinuar?')) return;
+  // Clear ALL gpl keys from localStorage
+  var keys = [];
+  for (var i = 0; i < localStorage.length; i++) {
+    var k = localStorage.key(i);
+    if (k && k.indexOf('gpl_') === 0) keys.push(k);
+  }
+  keys.forEach(function(k){ localStorage.removeItem(k); });
+  // Reset S to DEFAULT
+  S = JSON.parse(JSON.stringify(DEFAULT));
+  if (S.cfgGS) {
+    // Reload from cloud
+    carregarNuvem(function(ok) {
+      if (ok) {
+        alert('✅ Dados recarregados da planilha!');
+        location.reload();
+      } else {
+        alert('⚠️ Não foi possível carregar da planilha.\nVerifique a URL do Apps Script.\n\nO sistema foi resetado para o padrão.');
+        location.reload();
+      }
+    });
+  } else {
+    alert('✅ Dados locais limpos. Configure a URL do GAS para carregar da planilha.');
+    location.reload();
+  }
+}
 
 </script>
 <div class="qr-modal" id="qr-modal" onclick="fecharQR(event)">
