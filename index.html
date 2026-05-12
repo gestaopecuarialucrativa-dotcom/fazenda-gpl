@@ -584,6 +584,26 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     </div>
   </div>
 
+  <!-- CONSULTOR -->
+  <div id="pg-consultor" class="pg">
+
+    <!-- Resumo geral -->
+    <div id="cons-resumo"></div>
+
+    <!-- Alertas -->
+    <div id="cons-alertas" style="margin-top:10px"></div>
+
+    <!-- Anotações por fazenda -->
+    <div id="cons-notas" style="margin-top:10px"></div>
+
+    <!-- Botão relatório WhatsApp -->
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="sbtn" style="flex:1;background:#25D366" onclick="enviarRelatorioWpp()">📲 Enviar resumo no WhatsApp</button>
+      <button class="sbtn" style="flex:1;background:#C62828" onclick="gerarRelatorioPDF()">📄 Relatório PDF</button>
+    </div>
+
+  </div>
+
   <!-- CONFIG -->
   <div id="pg-config" class="pg">
     <!-- BANCO DE DADOS -->
@@ -620,10 +640,13 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     <!-- FAZENDAS -->
     <div class="card">
       <div class="stit">🏠 Fazendas</div>
+      <div class="info-box" style="font-size:11px">Cada fazenda tem sua própria planilha Google. Crie uma planilha em branco para cada fazenda, implante o Apps Script nela e cole a URL aqui.</div>
       <div id="faz-cfg"></div>
-      <div class="addr" style="margin-top:11px">
-        <input type="text" id="nf" placeholder="Nome da nova fazenda" style="flex:1">
-        <button class="savb" style="background:#2d7a1f;color:#fff;border-color:#2d7a1f;font-weight:700" onclick="addFaz()">＋ Adicionar</button>
+      <div style="margin-top:11px;padding:10px;background:#f9f9f9;border-radius:10px;border:1px solid #eee">
+        <div class="lbl" style="margin-bottom:6px">➕ Nova fazenda</div>
+        <input type="text" id="nf" placeholder="Nome da fazenda" style="width:100%;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:6px">
+        <input type="text" id="nf-gas" placeholder="URL do Apps Script desta fazenda" style="width:100%;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:6px">
+        <button class="sbtn" style="margin-top:0" onclick="addFaz()">＋ Adicionar fazenda</button>
       </div>
     </div>
 
@@ -659,7 +682,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 // ═══════════════════════════════════════════
 // ESTADO GLOBAL — tudo aqui, nada espalhado
 // ═══════════════════════════════════════════
-const STORAGE_KEY = 'gpl_v16_data';
+const STORAGE_KEY = 'gpl_v17_data';
 const TD = new Date().toISOString().split('T')[0];
 const EC = ['','#7B3F00','#A0522D','#2d7a1f','#CC8800','#CC2200'];
 const EI = [null,
@@ -671,6 +694,7 @@ const EI = [null,
 ];
 const PL = {diaria:'Diária',insumo:'Insumos',medicamento:'Medicamentos',trato:'Trato cocho',escore:'Escore fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Config.'};
 const TABS = [
+  {id:'consultor',l:'🌿 Visão Geral',p:'config'},
   {id:'cantina',l:'🏪 Cantina',p:'cantina'},
   {id:'estoque',l:'📦 Estoque',p:'estoque'},
   {id:'painel',l:'📊 Painel',p:'painel'},
@@ -690,11 +714,15 @@ const DEFAULT = {
   FAZ: {
     'Fazenda Estrela': {
       cochos: ['Pasto 01','Pasto 02','Pasto 03','Curral'],
-      prods:  ['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M']
+      prods:  ['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],
+      gasUrl: 'https://script.google.com/macros/s/AKfycbzVzVDp-MSNcpAgLsvKmG8UQJo52S4HAXlgl7ZF6tNaxjGefg96ia-vsVptg_o_I29Lmg/exec',
+      sheetId: '1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'
     },
     'Fazenda Santa Cruz': {
       cochos: ['Pasto 01','Pasto 02','Pasto 03','Curral'],
-      prods:  ['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M']
+      prods:  ['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],
+      gasUrl: '',
+      sheetId: ''
     }
   },
   US: [
@@ -719,9 +747,9 @@ const DEFAULT = {
   },
   SERVS: ['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],
   PR: {cafe:8, almoco:15, janta:12},
-  cfgGS: 'https://script.google.com/macros/s/AKfycbxg1g4ziLqwntXFiZprS4TILx/exec',
+  cfgGS: 'https://script.google.com/macros/s/AKfycbzVzVDp-MSNcpAgLsvKmG8UQJo52S4HAXlgl7ZF6tNaxjGefg96ia-vsVptg_o_I29Lmg/exec',
   cfgGHT: '',
-  rD:[], rT:[], rC:[], rE:[], mEst:[], queue:[], rDesp:[]
+  rD:[], rT:[], rC:[], rE:[], mEst:[], queue:[], rDesp:[], LOTES:[], DIARISTAS:{}, NOTAS:{}
 };
 
 // ═══════════════════════════════════════════
@@ -736,8 +764,8 @@ function carregar() {
       const saved = JSON.parse(raw);
       // Merge com defaults para não perder campos novos
       S = {...DEFAULT, ...saved};
-      // Always preserve DEFAULT cfgGS if saved doesn't have one
-      if (!S.cfgGS && DEFAULT.cfgGS) S.cfgGS = DEFAULT.cfgGS;
+      // ALWAYS use DEFAULT.cfgGS (embedded in file, always correct)
+      S.cfgGS = DEFAULT.cfgGS;
       // Always preserve DEFAULT users if saved has none
       if (!S.US || S.US.length === 0) S.US = DEFAULT.US;
       // Always preserve DEFAULT FAZ if saved has none
@@ -759,6 +787,11 @@ function carregar() {
       if (!Array.isArray(S.rDesp)) S.rDesp = [];
       if (!Array.isArray(S.LOTES)) S.LOTES = [];
       if (!S.DIARISTAS) S.DIARISTAS = {};
+      if (!S.NOTAS) S.NOTAS = {};
+      if (!Array.isArray(S.rDesp)) S.rDesp = [];
+      if (!Array.isArray(S.LOTES)) S.LOTES = [];
+      if (!S.DIARISTAS) S.DIARISTAS = {};
+      if (!S.NOTAS) S.NOTAS = {};
       // Clean duplicate FAZ keys (just in case)
       var cleanFAZ = {};
       Object.keys(S.FAZ).forEach(function(k){ cleanFAZ[k] = S.FAZ[k]; });
@@ -982,20 +1015,23 @@ function entrar(i) {
 
 function doLogout() {
   CU = null; loginFaz = null; loginUser = null; pinBuf = '';
-  // Reset all PIN dots
+  // Reset PIN dots
   document.querySelectorAll('.pdot').forEach(function(d){ d.classList.remove('on'); });
-  // Hide app, show login
+  // Hide app
   document.getElementById('app').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'block';
   var tabs = document.getElementById('tabs');
   if (tabs) tabs.style.display = 'none';
-  var hback = document.getElementById('hback');
-  if (hback) hback.style.display = 'none';
-  // Reset all login steps
+  // Show login screen
+  document.getElementById('login-screen').style.display = 'flex';
+  // Show ONLY step-faz, hide others
   document.getElementById('step-faz').style.display = 'block';
   document.getElementById('step-user').style.display = 'none';
   document.getElementById('step-pin').style.display = 'none';
-  // Rebuild fazenda list fresh
+  // Clear URL params so ?faz= doesn't redirect back
+  if (window.history && window.history.replaceState) {
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+  // Rebuild fazenda list
   mostrarFazendas();
 }
 
@@ -1011,7 +1047,7 @@ function sp(id, back, prev) {
   // Hide home button when already on home
   var hhomeEl = document.getElementById('hhome'); if(hhomeEl) hhomeEl.style.display = id==='home' ? 'none' : 'flex';
   prevPage = prev || null;
-  const TT = {home:'Início',diaria:'Lançar Diária',insumo:'Insumos',med:'Medicamentos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes'};
+  const TT = {home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',med:'Medicamentos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes'};
   document.getElementById('h-t').textContent = CU ? CU.n : 'GPL';
   document.getElementById('h-s').textContent = TT[id] || '';
   if (id === 'painel') rPan();
@@ -1479,7 +1515,7 @@ function addFaz() {
   if(S.FAZ[v]) { alert('Fazenda já existe!'); return; }
   S.FAZ[v]={cochos:[],prods:Object.keys(S.EST).slice(0,2)};
   salvar(); rFazCfg(); popAll(); rLinksUsuarios();
-  document.getElementById('nf').value='';
+  document.getElementById('nf').value=''; var nfGas=document.getElementById('nf-gas'); if(nfGas) nfGas.value='';
   alert('✅ Fazenda "'+v+'" adicionada!');
 }
 
@@ -1722,17 +1758,12 @@ function syncAgora() {
       return;
     }
     var params = new URLSearchParams({data: JSON.stringify(S.queue[i])});
-    fetch(S.cfgGS+'?'+params.toString(), {method:'GET', mode:'no-cors'})
-      .then(function() {
-        S.queue.splice(i, 1);
-        ok++;
-        enviarProximo(i-1);
-      })
-      .catch(function(e) {
-        console.warn('sync erro:', e);
-        errs++;
-        enviarProximo(i-1);
-      });
+    // Remove from queue BEFORE sending to prevent duplicates
+    var registro = S.queue.splice(i, 1)[0];
+    salvar(); // save immediately so even if fetch fails, record is gone from queue
+    fetch(getFazGasUrl((registro||{}).faz || '')+'?'+params.toString(), {method:'GET', mode:'no-cors'})
+      .then(function() { ok++; enviarProximo(i-1); })
+      .catch(function(e) { console.warn('sync erro:', e); enviarProximo(i-1); });
   }
   enviarProximo(S.queue.length - 1);
 }
@@ -2690,6 +2721,24 @@ function salvarNuvem(callback) {
     rDesp:     S.rDesp,
     mEst:      S.mEst,
   };
+  // Save to each fazenda's own sheet + global config
+  var fazendas = Object.keys(S.FAZ);
+  fazendas.forEach(function(faz) {
+    var fazGas = getFazGasUrl(faz);
+    if (fazGas) {
+      var fazCfg = {FAZ:{}, US:S.US, EST:S.EST, SERVS:S.SERVS, PR:S.PR, LOTES:[], DIARISTAS:{}, rDesp:[], mEst:[]};
+      fazCfg.FAZ[faz] = S.FAZ[faz];
+      fazCfg.LOTES = (S.LOTES||[]).filter(function(l){ return l.faz===faz; });
+      fazCfg.DIARISTAS[faz] = (S.DIARISTAS||{})[faz]||[];
+      fazCfg.rD = (S.rD||[]).filter(function(r){ return r.faz===faz; });
+      fazCfg.rT = (S.rT||[]).filter(function(r){ return r.faz===faz; });
+      fazCfg.rC = (S.rC||[]).filter(function(r){ return r.faz===faz; });
+      fazCfg.rE = (S.rE||[]).filter(function(r){ return r.faz===faz; });
+      fazCfg.rDesp = (S.rDesp||[]).filter(function(r){ return r.faz===faz; });
+      fetch(fazGas + '?acao=salvar_config&data=' + encodeURIComponent(JSON.stringify(fazCfg)), {method:'GET', mode:'no-cors'}).catch(function(){});
+    }
+  });
+  // Also save global config to main GAS
   var url = S.cfgGS + '?acao=salvar_config&data=' + encodeURIComponent(JSON.stringify(cfg));
   fetch(url, {method:'GET', mode:'no-cors'})
     .then(function() {
@@ -3387,6 +3436,265 @@ function limparTudoLocal() {
     location.reload();
   }
 }
+
+
+// ══ Get GAS URL for specific fazenda ══
+function getFazGasUrl(faz) {
+  // Priority: fazenda-specific URL → global URL
+  if (faz && S.FAZ[faz] && S.FAZ[faz].gasUrl) return S.FAZ[faz].gasUrl;
+  return S.cfgGS || '';
+}
+
+// ══ Update rFazCfg to show GAS URL field ══
+var _rFazCfgOrig = typeof rFazCfg === 'function' ? rFazCfg : function(){};
+rFazCfg = function() {
+  var c = document.getElementById('faz-cfg');
+  if (!c) return;
+  c.innerHTML = Object.entries(S.FAZ).map(function(entry){
+    var faz = entry[0]; var d = entry[1];
+    var k = faz.replace(/[\s']/g,'_');
+    var lotes = (S.LOTES||[]).filter(function(l){ return l.faz===faz; }).length;
+    return '<div class="fsec" style="background:#f9f9f9;border-radius:10px;padding:10px;margin-bottom:10px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
+        '<span style="font-weight:700;font-size:14px">🏠 '+faz+'</span>' +
+        '<div style="display:flex;gap:6px">' +
+          '<span onclick="editFaz(\''+faz+'\')" style="font-size:11px;background:#E6F1FB;color:#0C447C;padding:3px 8px;border-radius:6px;cursor:pointer">✏️ Editar</span>' +
+          '<span onclick="delFaz(\''+faz+'\')" style="font-size:11px;background:#FCEBEB;color:#CC2200;padding:3px 8px;border-radius:6px;cursor:pointer">🗑️ Excluir</span>' +
+        '</div>' +
+      '</div>' +
+      '<div style="font-size:11px;color:#666;margin-bottom:6px">'+lotes+' lote(s) cadastrado(s)</div>' +
+      '<div style="margin-bottom:6px"><div style="font-size:11px;color:#888;margin-bottom:3px">URL do Apps Script desta fazenda:</div>' +
+        '<div style="display:flex;gap:6px">' +
+          '<input id="gas-'+k+'" type="text" value="'+(d.gasUrl||'')+'" placeholder="https://script.google.com/..." style="flex:1;padding:6px 8px;border:1.5px solid #ddd;border-radius:7px;font-size:11px">' +
+          '<button onclick="salvarGasFaz(\''+faz+'\',\''+k+'\')" style="padding:6px 10px;background:#1B5E20;color:#fff;border:none;border-radius:7px;font-size:11px;cursor:pointer">💾</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+};
+
+function salvarGasFaz(faz, k) {
+  var url = (document.getElementById('gas-'+k)||{}).value || '';
+  if (S.FAZ[faz]) {
+    S.FAZ[faz].gasUrl = url.trim();
+    salvar();
+    alert('✅ URL salva para ' + faz + '!\n\nAgora clique em 💾 Salvar dados na nuvem.');
+  }
+}
+
+
+// ══════════════════════════════════════════════
+// TELA DO CONSULTOR
+// ══════════════════════════════════════════════
+
+function rConsultor() {
+  rConsResumo();
+  rConsAlertas();
+  rConsNotas();
+}
+
+function rConsResumo() {
+  var el = document.getElementById('cons-resumo');
+  if (!el) return;
+
+  var fazendas = Object.keys(S.FAZ);
+  var html = '<div style="font-size:16px;font-weight:700;color:#1B5E20;margin-bottom:12px">🌿 Visão Geral — ' + fazendas.length + ' fazenda(s)</div>';
+
+  fazendas.forEach(function(faz) {
+    var diarias   = (S.rD||[]).filter(function(r){ return r.faz===faz && r.tipo==='diaria'; });
+    var tratos    = (S.rT||[]).filter(function(r){ return r.faz===faz; });
+    var escores   = (S.rE||[]).filter(function(r){ return r.faz===faz; });
+    var despPagar = (S.rDesp||[]).filter(function(r){ return r.faz===faz && r.st==='pagar'; });
+    var lotes     = (S.LOTES||[]).filter(function(l){ return l.faz===faz; });
+
+    var totalDiarias = diarias.reduce(function(a,r){ return a+r.v; }, 0);
+    var totalPagar   = despPagar.reduce(function(a,r){ return a+r.val; }, 0);
+    var escMed = escores.length ? (escores.reduce(function(a,r){ return a+r.es; },0)/escores.length).toFixed(1) : '—';
+    var totalAnimais = lotes.reduce(function(a,l){ return a+l.qtd; }, 0);
+
+    // Status color
+    var statusCor = '#2E7D32';
+    var statusTxt = '✅ Normal';
+    if (totalPagar > 0) { statusCor = '#E65100'; statusTxt = '⚠️ Pendências'; }
+    if (escores.length && parseFloat(escMed) >= 4) { statusCor = '#C62828'; statusTxt = '🚨 Atenção'; }
+
+    html += '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:14px;margin-bottom:10px;border-left:4px solid '+statusCor+'">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
+        '<span style="font-weight:700;font-size:15px">🏠 '+faz+'</span>' +
+        '<span style="font-size:11px;font-weight:600;color:'+statusCor+'">'+statusTxt+'</span>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">' +
+        '<div style="background:#E8F5E9;border-radius:8px;padding:8px;text-align:center">' +
+          '<div style="font-size:10px;color:#555">💰 Diárias</div>' +
+          '<div style="font-weight:700;color:#1B5E20;font-size:14px">R$ '+Math.round(totalDiarias)+'</div>' +
+          '<div style="font-size:10px;color:#888">'+diarias.length+' reg.</div>' +
+        '</div>' +
+        '<div style="background:'+(totalPagar>0?'#FFEBEE':'#E8F5E9')+';border-radius:8px;padding:8px;text-align:center">' +
+          '<div style="font-size:10px;color:#555">⏳ A pagar</div>' +
+          '<div style="font-weight:700;color:'+(totalPagar>0?'#C62828':'#2E7D32')+';font-size:14px">R$ '+Math.round(totalPagar)+'</div>' +
+          '<div style="font-size:10px;color:#888">'+despPagar.length+' lançadas</div>' +
+        '</div>' +
+        '<div style="background:#E8F5E9;border-radius:8px;padding:8px;text-align:center">' +
+          '<div style="font-size:10px;color:#555">🐄 Animais</div>' +
+          '<div style="font-weight:700;color:#1B5E20;font-size:14px">'+totalAnimais+'</div>' +
+          '<div style="font-size:10px;color:#888">'+lotes.length+' lote(s)</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:11px;color:#666">' +
+        '<span>🔬 Escore médio: <b>'+escMed+'</b></span>' +
+        '<span>🛠 Tratos: <b>'+tratos.length+'</b></span>' +
+      '</div>' +
+      '<button onclick="sp(\'painel\',true,\'consultor\')" style="margin-top:8px;width:100%;padding:7px;background:#f0f0f0;border:none;border-radius:8px;font-size:12px;cursor:pointer;color:#333">Ver painel detalhado →</button>' +
+    '</div>';
+  });
+
+  el.innerHTML = html;
+}
+
+function rConsAlertas() {
+  var el = document.getElementById('cons-alertas');
+  if (!el) return;
+
+  var alertas = [];
+
+  // Estoque baixo
+  Object.keys(S.EST||{}).forEach(function(prod){
+    var e = S.EST[prod];
+    if (e.q <= e.min) {
+      alertas.push({tipo:'danger', msg:'📦 Estoque baixo: <b>'+prod+'</b> ('+e.q+' '+e.u+' — mín '+e.min+')'});
+    }
+  });
+
+  // Escores ruins (4 ou 5)
+  var escoresRecentes = (S.rE||[]).filter(function(r){
+    var d = new Date(r.dt+'T00:00:00');
+    var corte = new Date(); corte.setDate(corte.getDate()-7);
+    return d >= corte;
+  });
+  escoresRecentes.forEach(function(r){
+    if (r.es >= 4) {
+      alertas.push({tipo:'danger', msg:'🚨 Escore '+r.es+' em <b>'+(r.co||r.faz)+'</b> ('+r.dt.split('-').reverse().join('/')+')'});
+    }
+  });
+
+  // Despesas vencidas
+  var hoje = new Date().toISOString().split('T')[0];
+  (S.rDesp||[]).filter(function(r){ return r.st==='pagar' && r.venc < hoje; }).forEach(function(r){
+    alertas.push({tipo:'warning', msg:'⏰ Despesa vencida: <b>'+r.desc+'</b> — R$ '+r.val.toFixed(2)+' ('+r.faz+')'});
+  });
+
+  if (!alertas.length) {
+    el.innerHTML = '<div style="background:#E8F5E9;border-radius:10px;padding:12px;font-size:13px;color:#2E7D32;font-weight:600">✅ Nenhum alerta no momento</div>';
+    return;
+  }
+
+  var html = '<div style="font-size:13px;font-weight:700;color:#C62828;margin-bottom:8px">🚨 Alertas ('+alertas.length+')</div>';
+  alertas.forEach(function(a){
+    var bg = a.tipo==='danger' ? '#FFEBEE' : '#FFF8E1';
+    var border = a.tipo==='danger' ? '#C62828' : '#FF8F00';
+    html += '<div style="background:'+bg+';border-left:3px solid '+border+';border-radius:8px;padding:10px;margin-bottom:6px;font-size:12px">'+a.msg+'</div>';
+  });
+  el.innerHTML = html;
+}
+
+function rConsNotas() {
+  var el = document.getElementById('cons-notas');
+  if (!el) return;
+  if (!S.NOTAS) S.NOTAS = {};
+
+  var html = '<div style="font-size:13px;font-weight:700;color:#1B5E20;margin-bottom:8px">📝 Decisões e anotações</div>';
+
+  Object.keys(S.FAZ).forEach(function(faz){
+    var nota = S.NOTAS[faz] || '';
+    var k = faz.replace(/[\s']/g,'_');
+    html += '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:12px;margin-bottom:8px">' +
+      '<div style="font-weight:600;font-size:13px;margin-bottom:6px">🏠 '+faz+'</div>' +
+      '<textarea id="nota-'+k+'" rows="3" placeholder="Decisões, recomendações, observações para o proprietário..." style="width:100%;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;resize:vertical;font-family:inherit">'+nota+'</textarea>' +
+      '<div style="display:flex;gap:6px;margin-top:6px">' +
+        '<button onclick="salvarNota(\''+faz+'\',\''+k+'\')" style="flex:1;padding:7px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer">💾 Salvar</button>' +
+        '<button onclick="compartilharNota(\''+faz+'\',\''+k+'\')" style="flex:1;padding:7px;background:#25D366;color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer">📲 WhatsApp</button>' +
+      '</div>' +
+    '</div>';
+  });
+
+  el.innerHTML = html;
+}
+
+function salvarNota(faz, k) {
+  if (!S.NOTAS) S.NOTAS = {};
+  var ta = document.getElementById('nota-'+k);
+  if (ta) { S.NOTAS[faz] = ta.value; salvar(); }
+  // Flash saved
+  if (ta) { ta.style.borderColor='#2E7D32'; setTimeout(function(){ ta.style.borderColor='#ddd'; },1000); }
+}
+
+function compartilharNota(faz, k) {
+  salvarNota(faz, k);
+  var nota = S.NOTAS[faz] || '';
+  var dono = (S.US.find(function(u){ return u.r==='Dono' && u.fs.indexOf(faz)>=0; })||{}).n || faz;
+
+  // Build summary
+  var diarias   = (S.rD||[]).filter(function(r){ return r.faz===faz && r.tipo==='diaria'; });
+  var despPagar = (S.rDesp||[]).filter(function(r){ return r.faz===faz && r.st==='pagar'; });
+  var totalD    = diarias.reduce(function(a,r){ return a+r.v; },0);
+  var totalP    = despPagar.reduce(function(a,r){ return a+r.val; },0);
+
+  var msg = '🌿 *Gestão Pecuária Lucrativa*\n';
+  msg += '*Rogério Avelino — Consultor*\n\n';
+  msg += '🏠 *'+faz+'*\n';
+  msg += '📅 '+new Date().toLocaleDateString('pt-BR')+'\n\n';
+  msg += '📊 *Resumo:*\n';
+  msg += '• Diárias: R$ '+totalD.toFixed(2).replace('.',',')+' ('+diarias.length+' reg.)\n';
+  if (totalP > 0) msg += '• A pagar: R$ '+totalP.toFixed(2).replace('.',',')+'\n';
+  if (nota) { msg += '\n📝 *Observações:*\n'+nota; }
+
+  window.open('https://wa.me/?text='+encodeURIComponent(msg), '_blank');
+}
+
+function enviarRelatorioWpp() {
+  var fazendas = Object.keys(S.FAZ);
+  var msg = '🌿 *Gestão Pecuária Lucrativa — Rogério Avelino*\n';
+  msg += '📅 '+new Date().toLocaleDateString('pt-BR')+'\n\n';
+  msg += '*RESUMO GERAL*\n\n';
+
+  fazendas.forEach(function(faz){
+    var diarias = (S.rD||[]).filter(function(r){ return r.faz===faz && r.tipo==='diaria'; });
+    var desp    = (S.rDesp||[]).filter(function(r){ return r.faz===faz && r.st==='pagar'; });
+    var lotes   = (S.LOTES||[]).filter(function(l){ return l.faz===faz; });
+    var totalD  = diarias.reduce(function(a,r){ return a+r.v; },0);
+    var totalP  = desp.reduce(function(a,r){ return a+r.val; },0);
+    var animais = lotes.reduce(function(a,l){ return a+l.qtd; },0);
+
+    msg += '🏠 *'+faz+'*\n';
+    msg += '• '+animais+' animais · '+diarias.length+' diárias · R$ '+totalD.toFixed(2).replace('.',',')+'\n';
+    if (totalP > 0) msg += '• ⚠️ A pagar: R$ '+totalP.toFixed(2).replace('.',',')+'\n';
+    var nota = S.NOTAS && S.NOTAS[faz];
+    if (nota) msg += '• 📝 '+nota+'\n';
+    msg += '\n';
+  });
+
+  window.open('https://wa.me/?text='+encodeURIComponent(msg), '_blank');
+}
+
+// Patch sp() to call rConsultor when navigating to it
+var _spOrigConsultor = sp;
+sp = function(id, back, prev) {
+  _spOrigConsultor(id, back, prev);
+  if (id === 'consultor') setTimeout(rConsultor, 50);
+};
+
+// Show consultor tab only for Consultor role
+var _buildTabsOrig = buildTabs;
+buildTabs = function() {
+  _buildTabsOrig();
+  // Hide consultor tab for non-consultores
+  var isConsultor = CU && CU.r === 'Consultor';
+  document.querySelectorAll('.tab').forEach(function(tab){
+    if (tab.getAttribute('data-id') === 'consultor') {
+      tab.style.display = isConsultor ? '' : 'none';
+    }
+  });
+};
 
 </script>
 <div class="qr-modal" id="qr-modal" onclick="fecharQR(event)">
