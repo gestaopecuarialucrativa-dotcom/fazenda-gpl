@@ -631,7 +631,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 // ═══════════════════════════════════════════
 // ESTADO GLOBAL — tudo aqui, nada espalhado
 // ═══════════════════════════════════════════
-const STORAGE_KEY = 'gpl_v15_data';
+const STORAGE_KEY = 'gpl_v16_data';
 const TD = new Date().toISOString().split('T')[0];
 const EC = ['','#7B3F00','#A0522D','#2d7a1f','#CC8800','#CC2200'];
 const EI = [null,
@@ -660,22 +660,40 @@ const ACTS = [
 // Dados padrão
 const DEFAULT = {
   FAZ: {
-    'Fazenda Santa Cruz':{cochos:['Módulo 01','Módulo 02','Módulo 03','Pasto 01'],prods:['Proteinado','Sal mineral','Adubo mineral']},
-    'Fazenda Boa Vista':{cochos:['Módulo A','Módulo B','Pasto 06'],prods:['Proteinado','Ração','Sal mineral']}
+    'Fazenda Estrela': {
+      cochos: ['Pasto 01','Pasto 02','Pasto 03','Curral'],
+      prods:  ['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M']
+    },
+    'Fazenda Santa Cruz': {
+      cochos: ['Pasto 01','Pasto 02','Pasto 03','Curral'],
+      prods:  ['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M']
+    }
   },
   US: [
-    {n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,config:1}},
-    {n:'José (Dono)',i:'JD',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Santa Cruz'],p:{diaria:0,insumo:0,medicamento:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,config:0}},
-    {n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Santa Cruz'],p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,config:0}},
-    {n:'Elisângela',i:'EL',c:'av-p',r:'Cantina',pin:'2222',fs:['Fazenda Boa Vista'],p:{diaria:0,insumo:0,medicamento:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,config:0}},
-    {n:'Carlos',i:'CA',c:'av-t',r:'Vaqueiro',pin:'3333',fs:['Fazenda Boa Vista'],p:{diaria:1,insumo:1,medicamento:0,trato:1,escore:1,cantina:0,estoque:0,painel:0,config:0}}
+    {n:'Rogério Avelino', i:'RA', c:'av-g', r:'Consultor', pin:'1234', fs:[],
+     p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,config:1}},
+    {n:'Rafael (proprietário)', i:'RA', c:'av-b', r:'Dono', pin:'5678', fs:['Fazenda Estrela'],
+     p:{diaria:0,insumo:0,medicamento:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,config:0}},
+    {n:'Fábio', i:'FA', c:'av-a', r:'Vaqueiro', pin:'1111', fs:['Fazenda Estrela'],
+     p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,config:0}}
   ],
-  EST: {'Proteinado':{q:20,min:5,u:'saco'},'Sal mineral':{q:8,min:3,u:'saco'},'Adubo mineral':{q:15,min:4,u:'saco'},'Ração':{q:6,min:5,u:'saco'}},
-  SERVS: ['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Outro'],
-  PR: {cafe:8,almoco:15,janta:12},
-  cfgGS: 'https://script.google.com/macros/s/AKfycbzmD2hxxiV150x9y79UkOKWB5-yv74NyxHz18YYKSyydvI8ZpkXQd1Y_anlg5TStfzFxg/exec',
+  EST: {
+    'TECNOCORTE ENERGY HD':   {q:100, min:10, u:'saco', pct:0.3,  peso_saco:30},
+    'TECNOCORTE ECOBOV NA+':  {q:100, min:10, u:'saco', pct:0.05, peso_saco:30},
+    'TECNOCORTE PROTEICO 30M':{q:100, min:10, u:'saco', pct:0.1,  peso_saco:30}
+  },
+  LOTES: [
+    {faz:'Fazenda Estrela', nome:'Lote 01', qtd:28, peso:406, insumos:[]}
+  ],
+  DIARISTAS: {
+    'Fazenda Estrela': ['Fábio'],
+    'Fazenda Santa Cruz': []
+  },
+  SERVS: ['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],
+  PR: {cafe:8, almoco:15, janta:12},
+  cfgGS: 'https://script.google.com/macros/s/AKfycbxg1g4ziLqwntXFiZprS4TILx/exec',
   cfgGHT: '',
-  rD:[], rT:[], rC:[], rE:[], mEst:[], queue:[], rDesp:[], LOTES:[], DIARISTAS:{}
+  rD:[], rT:[], rC:[], rE:[], mEst:[], queue:[], rDesp:[]
 };
 
 // ═══════════════════════════════════════════
@@ -690,6 +708,16 @@ function carregar() {
       const saved = JSON.parse(raw);
       // Merge com defaults para não perder campos novos
       S = {...DEFAULT, ...saved};
+      // Always preserve DEFAULT cfgGS if saved doesn't have one
+      if (!S.cfgGS && DEFAULT.cfgGS) S.cfgGS = DEFAULT.cfgGS;
+      // Always preserve DEFAULT users if saved has none
+      if (!S.US || S.US.length === 0) S.US = DEFAULT.US;
+      // Always preserve DEFAULT FAZ if saved has none
+      if (!S.FAZ || Object.keys(S.FAZ).length === 0) S.FAZ = DEFAULT.FAZ;
+      // Always preserve DEFAULT EST if saved has none
+      if (!S.EST || Object.keys(S.EST).length === 0) S.EST = DEFAULT.EST;
+      // Always preserve LOTES if empty
+      if (!S.LOTES || S.LOTES.length === 0) S.LOTES = DEFAULT.LOTES;
       // Preservar FAZ e US do salvo (não sobrescrever com DEFAULT)
       if (saved.FAZ && Object.keys(saved.FAZ).length > 0) S.FAZ = saved.FAZ;
       if (saved.US && saved.US.length > 0) S.US = saved.US;
