@@ -2,9 +2,14 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#1a5c10">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GPL Fazenda">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1B5E20">
+<meta name="description" content="Gestão Pecuária Lucrativa — Rogério Avelino">
+<link rel="manifest" href="manifest.json">
 <title>GPL — Gestão Pecuária Lucrativa</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -235,9 +240,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
   <!-- HOME VAQUEIRO -->
   <div id="pg-home" class="pg">
-    <div id="offline-badge" style="display:none;background:#FFF3E0;border:1px solid #FFB300;border-radius:8px;padding:8px 12px;font-size:12px;color:#7D5200;margin-bottom:12px">
-      📵 Offline — <span id="pend-cnt" style="background:#FFB300;color:#fff;border-radius:10px;padding:2px 7px;font-size:11px;font-weight:700">0</span> registros aguardando
-    </div>
+    <div id="offline-badge" style="display:none;background:#FFF3E0;border:1px solid #FFB300;border-radius:8px;padding:8px 12px;font-size:12px;color:#7D5200;margin-bottom:8px">⚡ Modo offline — dados salvos localmente e enviados quando conectar</div>
     <div style="margin-bottom:14px">
       <div style="font-size:18px;font-weight:700" id="h-nome">Olá!</div>
       <div style="font-size:12px;color:#888;margin-top:2px" id="h-data"></div>
@@ -485,7 +488,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <!-- PAINEL -->
   <div id="pg-painel" class="pg">
     <div class="fg"><div class="lbl">Fazenda</div><select id="pf" onchange="rPan()"><option value="">Todas as fazendas</option></select></div>
-    <div class="psel"><div class="pbtn on" onclick="sPer(this,'dia')">Hoje</div><div class="pbtn" onclick="sPer(this,'semana')">Semana</div><div class="pbtn" onclick="sPer(this,'quinzena')">Quinzena</div><div class="pbtn" onclick="sPer(this,'mes')">Mês</div><div class="pbtn" onclick="sPer(this,'safra')">🌾 Safra</div></div>
+    <div class="psel"><div class="pbtn on" onclick="sPer(this,'quinzena')">15 dias</div><div class="pbtn" onclick="sPer(this,'semana')">Semana</div><div class="pbtn" onclick="sPer(this,'quinzena')">Quinzena</div><div class="pbtn" onclick="sPer(this,'mes')">Mês</div><div class="pbtn" onclick="sPer(this,'safra')">🌾 Safra</div></div>
     <div id="safra-info" style="display:none;font-size:11px;color:#2E7D32;background:#E8F5E9;border-radius:8px;padding:5px 10px;margin-bottom:6px;text-align:center"></div>
     <div class="sgrid">
       <div class="sc"><div class="sl">Total diárias</div><div class="sv" id="s-d">R$ 0</div><div class="ss" id="s-ds">0 reg.</div></div>
@@ -1333,12 +1336,23 @@ function rEst() {
 }
 
 function rUlt() {
-  const todos=[...S.rD,...S.rT,...S.rE].slice(-8).reverse();
+  var diasAtras = 15; // últimos 15 dias
+  var corte = new Date(); corte.setDate(corte.getDate() - diasAtras);
+  var corteStr = corte.toISOString().split('T')[0];
+  var fazAtual = CU && CU.fs && CU.fs.length===1 ? CU.fs[0] : '';
+  var todosArr = [...S.rD,...S.rC,...S.rT,...S.rE].filter(function(r){
+    var dt = r.dt || r.data || '';
+    if (fazAtual && r.faz && r.faz !== fazAtual) return false;
+    return dt >= corteStr;
+  });
+  todosArr.sort(function(a,b){ return (b.dt||'') > (a.dt||'') ? 1 : -1; });
+  var todos = todosArr.slice(0, 20);
   const c=document.getElementById('vult'); if (!c) return;
   c.innerHTML=todos.length?todos.map(r=>{
     if(r.tipo==='escore') return `<div class="ri"><div class="rt"><span class="rn">Escore <span style="background:${EC[r.es]};color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:3px;font-weight:700">E${r.es}</span></span></div><div class="rd">${r.dt.split('-').reverse().join('/')} · ${r.co||r.faz}${r.obs?' · '+r.obs:''}</div></div>`;
     if(r.tipo==='trato') return `<div class="ri"><div class="rt"><span class="rn">Trato <span class="bdg bt">${r.co}</span></span></div><div class="rd">${r.dt.split('-').reverse().join('/')} · ${r.pr} ${r.q}${r.unid}</div></div>`;
-    if(r.tipo==='insumo') return `<div class="ri"><div class="rn">Insumos <span class="bdg bp">Depósito</span></div><div class="rd">${r.dt.split('-').reverse().join('/')} · ${r.ins.map(x=>x.q+' '+x.u+' '+x.p).join(', ')}</div></div>`;
+    if(r.tipo==='insumo') return '<div class="ri"><div class="rn">Insumos <span class="bdg bp">Depósito</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+(r.ins?r.ins.map(function(x){return x.q+' '+x.u+' '+x.p;}).join(', '):'')+'</div></div>';
+    if(r.tipo==='cantina') { var ct=r; return '<div class="ri"><div class="rt"><span class="rn">Cantina</span><span class="rv">R$ '+ct.total.toFixed(2).replace('.',',')+'</span></div><div class="rd">'+ct.dt.split('-').reverse().join('/')+' · '+ct.faz+' · '+ct.resp+'</div></div>'; }
     if(r.tipo==='medicamento') return `<div class="ri"><div class="rn">Medicamentos <span class="bdg ba">Vacinas</span></div><div class="rd">${r.dt.split('-').reverse().join('/')} · ${r.vacs.map(v=>v.p).join(', ')}</div></div>`;
     const av=r.av==='otimo'?'<span class="bdg bg">Ótimo</span>':r.av==='bom'?'<span class="bdg ba">Bom</span>':'<span class="bdg br">Ruim</span>';
     return `<div class="ri"><div class="rt"><span class="rn">${r.srv}${av}</span><span class="rv">R$ ${r.v.toFixed(2).replace('.',',')}</span></div><div class="rd">${r.dt.split('-').reverse().join('/')} · ${r.faz}</div></div>`;
@@ -1357,7 +1371,7 @@ function filtrar(lista,per) {
   });
 }
 
-let perA='dia';
+let perA='quinzena';
 function rPan() {
   const lv=filtrar(S.rD.filter(r=>r.tipo==='diaria'),perA);
   const lc=filtrar(S.rC,perA); const lt=filtrar(S.rT,perA); const le=filtrar(S.rE,perA);
