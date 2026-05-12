@@ -1410,14 +1410,12 @@ function rUlt() {
   var isVaqueiro = CU && CU.r === 'Vaqueiro';
   var todosArr = [...S.rD,...S.rC,...S.rT,...S.rE].filter(function(r){
     var dt = r.dt || r.data || '';
+    if (r._apagado) return false;
     if (fazAtual && r.faz && r.faz !== fazAtual) return false;
     if (dt < corteStr) return false;
     if (isVaqueiro) {
-      // Cantina: só vê se ele mesmo lançou
       if (r.tipo === 'cantina' && r.resp && r.resp !== CU.n) return false;
-      // Diária: só vê as dele
       if (r.tipo === 'diaria' && r.n && r.n !== CU.n) return false;
-      // Trato e escore: vê todos da fazenda (são registros de campo)
     }
     return true;
   });
@@ -1449,7 +1447,7 @@ function filtrar(lista,per) {
 
 let perA='quinzena';
 function rPan() {
-  const lv=filtrar(S.rD.filter(r=>r.tipo==='diaria'),perA);
+  const lv=filtrar(S.rD.filter(r=>r.tipo==='diaria' && !r._apagado),perA);
   const lc=filtrar(S.rC,perA); const lt=filtrar(S.rT,perA); const le=filtrar(S.rE,perA);
   const td=lv.reduce((a,r)=>a+r.v,0); const tc=lc.reduce((a,r)=>a+r.total,0);
   document.getElementById('s-d').textContent='R$ '+Math.round(td); document.getElementById('s-ds').textContent=lv.length+' reg.';
