@@ -373,8 +373,19 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
       <div id="t-lote-info" style="display:none;background:#E8F5E9;border-radius:8px;padding:8px;font-size:12px;color:#1B5E20;margin-bottom:8px"></div>
       <div class="fg"><div class="lbl">Produto</div><select id="t-prod" onchange="calcSaldo()"><option value="">Selecione...</option></select></div>
       <div class="brow" style="margin-bottom:11px">
-        <div><div class="lbl">Quantidade (kg)</div><input type="number" id="t-qtd" placeholder="0" min="0" step="0.5" oninput="calcSaldo()"></div>
-        <div><div class="lbl">Consumo calculado</div><div id="t-cons-calc" style="padding:8px;background:#f5f5f5;border-radius:8px;font-size:13px;font-weight:700;color:#1B5E20;min-height:34px">—</div></div>
+        <div>
+          <div class="lbl">Quantidade fornecida</div>
+          <div style="display:flex;gap:6px">
+            <input type="number" id="t-qtd" placeholder="0" min="0" step="0.5" oninput="calcSaldo()" style="flex:2">
+            <select id="t-unid-sel" style="flex:1;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:13px">
+              <option value="kg">kg</option>
+              <option value="saco">saco</option>
+              <option value="litro">litro</option>
+              <option value="unid.">unid.</option>
+            </select>
+          </div>
+        </div>
+        <div><div class="lbl">Consumo recomendado</div><div id="t-cons-calc" style="padding:8px;background:#f5f5f5;border-radius:8px;font-size:13px;font-weight:700;color:#1B5E20;min-height:34px">—</div></div>
       </div>
       <div class="fg"><div class="lbl">Nº de animais no lote</div>
         <div id="t-cab-info" style="padding:8px;background:#f5f5f5;border-radius:8px;font-size:13px;color:#555">Selecione o lote acima ↑</div>
@@ -1256,7 +1267,7 @@ function envT() {
   const faz=document.getElementById('t-faz').value;
   const cab=parseInt(document.getElementById('t-cab').value)||0;
   if (pr&&S.EST&&S.EST[pr]) baixar([{p:pr,q,u:'kg'}],dt,co);
-  const r={tipo:'trato',faz,n:CU.n,dt,co,pr,q,unid:'kg',cab,sit:coSel,escore:esTSel,obs:document.getElementById('t-obs').value};
+  var tUnid=(document.getElementById('t-unid-sel')||{}).value||'kg'; const r={tipo:'trato',faz,n:CU.n,dt,co,pr,q,unid:tUnid,cab,sit:coSel,escore:esTSel,obs:document.getElementById('t-obs').value};
   S.rT.push(r); enviarDado(r); showOk('ok-t');
   document.getElementById('t-qtd').value=''; document.getElementById('t-cab').value=''; document.getElementById('t-obs').value='';
   document.querySelectorAll('#pg-trato .bopt').forEach(b=>b.classList.remove('sel')); coSel=''; esTSel='';
@@ -1370,8 +1381,22 @@ function rPan() {
       excluirRegistro(arr, idx);
     });
   });
-  document.getElementById('l-e').innerHTML=le.length?[...le].reverse().map(r=>`<div class="ri"><div class="rt"><span class="rn">${r.co||r.faz}</span><span style="font-size:14px;font-weight:700;color:${EC[r.es]}">${EI[r.es].em} E${r.es}</span></div><div class="rd">${r.dt.split('-').reverse().join('/')} · ${r.faz} · ${r.cab} animais${r.obs?' · '+r.obs:''}</div></div>`).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
-  document.getElementById('l-t').innerHTML=lt.length?[...lt].reverse().map(r=>`<div class="ri"><div class="rt"><span class="rn">${r.co}</span><span class="rv">${r.q}${r.unid}</span></div><div class="rd">${r.dt.split('-').reverse().join('/')} · ${r.faz} · ${r.pr} · ${r.cab}cab</div></div>`).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
+  document.getElementById('l-e').innerHTML=le.length?[...le].reverse().map(function(r){
+    var gi=S.rE.indexOf(r);
+    var del=podeExcluir?'<button class="btn-del-reg" data-arr="rE" data-idx="'+gi+'" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer">🗑️</button>':'';
+    return '<div class="ri">'+del+'<div class="rt"><span class="rn">'+(r.co||r.lote||r.faz)+'</span><span style="font-size:14px;font-weight:700;color:'+EC[r.es]+'">'+EI[r.es].em+' E'+r.es+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+' · '+(r.cab||0)+' animais'+(r.obs?' · '+r.obs:'')+'</div></div>';
+  }).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
+  document.querySelectorAll('#l-e .btn-del-reg').forEach(function(b){
+    b.addEventListener('click',function(){ excluirRegistro(this.getAttribute('data-arr'),parseInt(this.getAttribute('data-idx'))); });
+  });
+  document.getElementById('l-t').innerHTML=lt.length?[...lt].reverse().map(function(r){
+    var gi=S.rT.indexOf(r);
+    var del=podeExcluir?'<button class="btn-del-reg" data-arr="rT" data-idx="'+gi+'" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer">🗑️</button>':'';
+    return '<div class="ri">'+del+'<div class="rt"><span class="rn">'+(r.co||'—')+'</span><span class="rv">'+r.q+' '+(r.unid||'kg')+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+' · '+r.pr+' · '+(r.cab||0)+' cab</div></div>';
+  }).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
+  document.querySelectorAll('#l-t .btn-del-reg').forEach(function(b){
+    b.addEventListener('click',function(){ excluirRegistro(this.getAttribute('data-arr'),parseInt(this.getAttribute('data-idx'))); });
+  });
   document.getElementById('l-ct').innerHTML=lc.length?[...lc].reverse().map(function(r){
     var gi=S.rC.indexOf(r);
     var del=podeExcluir?'<button class="btn-del-reg" data-arr="rC" data-idx="'+gi+'" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer">🗑️</button>':'';
@@ -3246,21 +3271,6 @@ rPan = function() {
 
   // Also re-render tratos with delete
   var lt = filtrar(S.rT.filter(function(r){ return !r._apagado; }), per);
-  var elT = document.getElementById('l-t');
-  if (elT && isSupervisor) {
-    // Add delete buttons to existing trato rows
-    elT.querySelectorAll('.ri').forEach(function(row, i) {
-      if (!row.querySelector('[data-del]')) {
-        var btn = document.createElement('button');
-        btn.setAttribute('data-del','1');
-        btn.style.cssText = 'margin-top:4px;padding:3px 8px;font-size:10px;background:#FFF0F0;color:#C62828;border:1px solid #FFCDD2;border-radius:5px;cursor:pointer';
-        btn.textContent = '🗑️ Apagar';
-        var realIdx = S.rT.indexOf(lt[i]);
-        btn.onclick = function(){ apagarLancamento('trato', realIdx); };
-        row.appendChild(btn);
-      }
-    });
-  }
 };
 
 
