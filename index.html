@@ -492,7 +492,8 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
     <!-- DESPESAS -->
     <div class="card" style="margin-top:10px">
-      <div class="stit">💸 Lançar despesa</div>
+      <div class="stit">💸 Despesa avulsa</div>
+      <div style="font-size:11px;color:#888;margin-bottom:8px">Para despesas além das diárias (ração, vet, insumos...)</div>
       <div class="fg"><div class="lbl">Fazenda</div><select id="desp-faz"></select></div>
       <div class="fg"><div class="lbl">Descrição</div><input type="text" id="desp-desc" placeholder="Ex: Ração, Medicamento..."></div>
       <div class="fg"><div class="lbl">Valor (R$)</div><input type="number" id="desp-val" placeholder="0,00" step="0.01" min="0"></div>
@@ -1301,7 +1302,17 @@ function rPan() {
   document.getElementById('s-t').textContent=lt.length;
   if(le.length){const m=(le.reduce((a,r)=>a+r.es,0)/le.length).toFixed(1);document.getElementById('s-e').innerHTML=`<span style="color:${EC[Math.round(parseFloat(m))]}">${m}</span>`;document.getElementById('s-es').textContent=le.length+' aval.';}
   else{document.getElementById('s-e').textContent='—';document.getElementById('s-es').textContent='sem reg.';}
-  document.getElementById('l-d').innerHTML=lv.length?[...lv].reverse().map(r=>{const av=r.av==='otimo'?'<span class="bdg bg">Ótimo</span>':r.av==='bom'?'<span class="bdg ba">Bom</span>':'<span class="bdg br">Ruim</span>';return `<div class="ri"><div class="rt"><span class="rn">${r.n}${av}</span><span class="rv">R$ ${r.v.toFixed(2).replace('.',',')}</span></div><div class="rd">${r.dt.split('-').reverse().join('/')} · ${r.faz} · ${r.srv}</div></div>`}).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
+  document.getElementById('l-d').innerHTML=lv.length?[...lv].reverse().map(function(r,idx){
+    var av=r.av==='otimo'?'<span class="bdg bg">Ótimo</span>':r.av==='bom'?'<span class="bdg ba">Bom</span>':'<span class="bdg br">Ruim</span>';
+    var pagoBadge = r.pago ? ' <span style="font-size:10px;color:#2E7D32;font-weight:600">✅ Paga</span><div style="font-size:10px;color:#888">por '+r.pago_por+' em '+r.pago_dt+'</div>' : '';
+    var btnPagar = (!r.pago && r.v>0) ? '<button class="btn-pagar-diaria" data-idx="'+S.rD.indexOf(r)+'" style="margin-top:5px;padding:4px 12px;font-size:11px;font-weight:600;background:#2E7D32;color:#fff;border:none;border-radius:6px;cursor:pointer">✅ Marcar como paga</button>' : '';
+    var valStr = r.pago ? '<s style="color:#aaa">R$ '+r.v.toFixed(2).replace('.',',')+'</s>' : 'R$ '+r.v.toFixed(2).replace('.',',');
+    return '<div class="ri"><div class="rt"><span class="rn">'+r.n+av+'</span><span class="rv">'+valStr+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+' · '+r.srv+pagoBadge+'</div>'+btnPagar+'</div>';
+  }).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
+  // Attach pay button events
+  document.querySelectorAll('.btn-pagar-diaria').forEach(function(btn){
+    btn.addEventListener('click', function(){ pagarDiaria(parseInt(this.getAttribute('data-idx'))); });
+  });
   document.getElementById('l-e').innerHTML=le.length?[...le].reverse().map(r=>`<div class="ri"><div class="rt"><span class="rn">${r.co||r.faz}</span><span style="font-size:14px;font-weight:700;color:${EC[r.es]}">${EI[r.es].em} E${r.es}</span></div><div class="rd">${r.dt.split('-').reverse().join('/')} · ${r.faz} · ${r.cab} animais${r.obs?' · '+r.obs:''}</div></div>`).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
   document.getElementById('l-t').innerHTML=lt.length?[...lt].reverse().map(r=>`<div class="ri"><div class="rt"><span class="rn">${r.co}</span><span class="rv">${r.q}${r.unid}</span></div><div class="rd">${r.dt.split('-').reverse().join('/')} · ${r.faz} · ${r.pr} · ${r.cab}cab</div></div>`).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
   document.getElementById('l-ct').innerHTML=lc.length?[...lc].reverse().map(r=>`<div class="ri"><div class="rt"><span class="rn">${r.resp}</span><span class="rv">R$ ${r.total.toFixed(2).replace('.',',')}</span></div><div class="rd">${r.dt.split('-').reverse().join('/')} · ${r.faz} · ${r.det}</div></div>`).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
@@ -2803,6 +2814,65 @@ carregarNuvem = function(callback) {
       updCloudStatus('err');
       if(callback) callback(false);
     });
+};
+
+
+// ══ Pagar diária ══
+function pagarDiaria(idx) {
+  var allD = S.rD.filter(function(r){ return r.tipo==='diaria'; });
+  var r = S.rD[idx];
+  if (!r) return;
+  r.pago = true;
+  r.pago_por = CU ? CU.n.split(' ')[0] : 'Sistema';
+  r.pago_dt = new Date().toLocaleDateString('pt-BR');
+  // Also mark corresponding despesa as paid
+  if (S.rDesp) {
+    var desc = 'Diária: ' + r.n;
+    var desp = S.rDesp.find(function(d){ return d.desc===desc && d.venc===r.dt && d.faz===r.faz && d.st==='pagar'; });
+    if (desp) desp.st = 'pago';
+  }
+  salvar();
+  rPan();
+}
+
+
+// ══ Auto-fazenda: se usuário tem só 1 fazenda, preenche e esconde o campo ══
+function autoFazenda() {
+  if (!CU) return;
+  var isConsultor = CU.r === 'Consultor' || (CU.p && CU.p.config);
+  var fazendas = CU.fs && CU.fs.length > 0 ? CU.fs : Object.keys(S.FAZ);
+  var umaFaz = fazendas.length === 1 ? fazendas[0] : null;
+
+  // All fazenda selects
+  var selIds = ['d-faz','i-faz','m-faz','t-faz','es-faz','lt-faz','desp-faz','i-cad-faz'];
+  selIds.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    // If single fazenda user: set value and hide the field wrapper
+    if (umaFaz && !isConsultor) {
+      el.value = umaFaz;
+      // Hide the parent fg div
+      var fg = el.closest ? el.closest('.fg') : null;
+      if (fg) fg.style.display = 'none';
+    } else {
+      var fg = el.closest ? el.closest('.fg') : null;
+      if (fg) fg.style.display = '';
+    }
+  });
+
+  // Also trigger updates that depend on fazenda
+  if (umaFaz && !isConsultor) {
+    updDiariaNome && updDiariaNome();
+    updTrato && updTrato();
+    updEsCo && updEsCo();
+  }
+}
+
+// Patch popAll to call autoFazenda
+var _popAllAutoFaz = popAll;
+popAll = function() {
+  _popAllAutoFaz();
+  autoFazenda();
 };
 
 </script>
