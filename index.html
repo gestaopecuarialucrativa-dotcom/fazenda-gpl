@@ -2106,7 +2106,7 @@ function rChart() {
     var key = d.toISOString().split('T')[0];
     labels.push(d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}));
 
-    var tD = (S.rD||[]).filter(function(r){ return r.tipo==='diaria'&&r.dt===key&&(!faz||r.faz===faz); })
+    var tD = (S.rD||[]).filter(function(r){ return !r._apagado && r.tipo==='diaria'&&r.dt===key&&(!faz||r.faz===faz); })
                .reduce(function(a,r){ return a+r.v; },0);
     var tC = (S.rC||[]).filter(function(r){ var dt=(r.dt||r.data||'').split('T')[0]; return dt===key&&(!faz||r.faz===faz); })
                .reduce(function(a,r){ return a+r.total; },0);
@@ -2802,10 +2802,10 @@ function salvarNuvem(callback) {
       fazCfg.FAZ[faz] = S.FAZ[faz];
       fazCfg.LOTES = (S.LOTES||[]).filter(function(l){ return l.faz===faz; });
       fazCfg.DIARISTAS[faz] = (S.DIARISTAS||{})[faz]||[];
-      fazCfg.rD = (S.rD||[]).filter(function(r){ return r.faz===faz; });
-      fazCfg.rT = (S.rT||[]).filter(function(r){ return r.faz===faz; });
+      fazCfg.rD = (S.rD||[]).filter(function(r){ return !r._apagado && r.faz===faz; });
+      fazCfg.rT = (S.rT||[]).filter(function(r){ return !r._apagado && r.faz===faz; });
       fazCfg.rC = (S.rC||[]).filter(function(r){ return r.faz===faz; });
-      fazCfg.rE = (S.rE||[]).filter(function(r){ return r.faz===faz; });
+      fazCfg.rE = (S.rE||[]).filter(function(r){ return !r._apagado && r.faz===faz; });
       fazCfg.rDesp = (S.rDesp||[]).filter(function(r){ return r.faz===faz; });
       fetch(fazGas + '?acao=salvar_config&data=' + encodeURIComponent(JSON.stringify(fazCfg)), {method:'GET', mode:'no-cors'}).catch(function(){});
     }
@@ -3574,8 +3574,8 @@ function rConsResumo() {
 
   fazendas.forEach(function(faz) {
     var diarias   = (S.rD||[]).filter(function(r){ return r.faz===faz && r.tipo==='diaria' && !r._apagado; });
-    var tratos    = (S.rT||[]).filter(function(r){ return r.faz===faz; });
-    var escores   = (S.rE||[]).filter(function(r){ return r.faz===faz; });
+    var tratos    = (S.rT||[]).filter(function(r){ return !r._apagado && r.faz===faz; });
+    var escores   = (S.rE||[]).filter(function(r){ return !r._apagado && r.faz===faz; });
     var despPagar = (S.rDesp||[]).filter(function(r){ return r.faz===faz && r.st==='pagar'; });
     var lotes     = (S.LOTES||[]).filter(function(l){ return l.faz===faz; });
 
@@ -3639,6 +3639,7 @@ function rConsAlertas() {
 
   // Escores ruins (4 ou 5)
   var escoresRecentes = (S.rE||[]).filter(function(r){
+    if (r._apagado) return false;
     var d = new Date(r.dt+'T00:00:00');
     var corte = new Date(); corte.setDate(corte.getDate()-7);
     return d >= corte;
@@ -3730,7 +3731,7 @@ function enviarRelatorioWpp() {
   msg += '*RESUMO GERAL*\n\n';
 
   fazendas.forEach(function(faz){
-    var diarias = (S.rD||[]).filter(function(r){ return r.faz===faz && r.tipo==='diaria'; });
+    var diarias = (S.rD||[]).filter(function(r){ return !r._apagado && r.faz===faz && r.tipo==='diaria'; });
     var desp    = (S.rDesp||[]).filter(function(r){ return r.faz===faz && r.st==='pagar'; });
     var lotes   = (S.LOTES||[]).filter(function(l){ return l.faz===faz; });
     var totalD  = diarias.reduce(function(a,r){ return a+r.v; },0);
