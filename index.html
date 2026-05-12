@@ -779,7 +779,9 @@ function mostrarFazendas() {
   var lista = document.getElementById('faz-list');
   if (!lista) return;
   var html = '';
-  Object.keys(S.FAZ).forEach(function(faz) {
+  // Deduplicate fazendas
+  var fazKeys = Object.keys(S.FAZ).filter(function(v,i,a){ return a.indexOf(v)===i; });
+  fazKeys.forEach(function(faz) {
     html += '<div class="ucard" onclick="selecionarFaz(\'' + faz + '\')" style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #e8e8e8;border-radius:12px;background:#fff;cursor:pointer;margin-bottom:8px">' +
       '<span style="font-size:24px">🏠</span>' +
       '<div style="flex:1;font-size:14px;font-weight:700">' + faz + '</div>' +
@@ -1143,7 +1145,7 @@ function enviarDado(dados) {
 function envD() {
   const n=document.getElementById('d-nome').value; const v=parseFloat(document.getElementById('d-val').value)||0;
   if (!n||!srvSel||!avSel) { alert('Preencha nome, serviço e avaliação.'); return; }
-  const r={tipo:'diaria',faz:document.getElementById('d-faz').value,n,dt:document.getElementById('d-data').value,srv:srvSel==='Outro'?document.getElementById('d-out').value:srvSel,v,av:avSel,obs:document.getElementById('d-obs').value};
+  const r={tipo:'diaria',faz:(document.getElementById('d-faz').value || (CU&&CU.fs&&CU.fs.length===1?CU.fs[0]:(getFL()[0]||''))),n,dt:document.getElementById('d-data').value,srv:srvSel==='Outro'?document.getElementById('d-out').value:srvSel,v,av:avSel,obs:document.getElementById('d-obs').value};
   S.rD.push(r); enviarDado(r); showOk('ok-d');
   document.getElementById('d-nome').value=''; document.getElementById('d-val').value=''; document.getElementById('d-obs').value='';
   document.querySelectorAll('#d-servs .bopt,.avbtn').forEach(b=>b.classList.remove('sel')); srvSel=''; avSel='';
@@ -1176,7 +1178,7 @@ function envM() {
   var aplicou = (document.getElementById('m-aplicou')||{}).value || CU.n;
   var r = {
     tipo:'medicamento',
-    faz: document.getElementById('m-faz').value,
+    faz: (document.getElementById('m-faz').value || (CU&&CU.fs&&CU.fs.length===1?CU.fs[0]:(getFL()[0]||''))),
     n: CU.n,
     dt: document.getElementById('m-data').value,
     nome: nome,
@@ -1255,7 +1257,7 @@ function rEst() {
     const pc=Math.min(100,Math.round(d.q/Math.max(d.q,d.min*3)*100));
     const cl=d.q<=d.min?'l':d.q<=d.min*2?'m':'';
     const badge=d.q<=d.min?`<span class="lb">⚠️ Baixo!</span>`:d.q<=d.min*2?`<span class="wb">Atenção</span>`:'';
-    return `<div class="er"><div style="flex:1"><div style="font-size:13px;font-weight:700">${nome} ${badge}</div><div style="font-size:11px;color:#888;margin-top:2px">${d.q} ${d.u} · mín ${d.min}<div class="ebw"><div class="ebar ${cl}" style="width:${pc}%;height:100%"></div></div></div></div><div style="font-size:18px;font-weight:700;padding-left:10px;color:${d.q<=d.min?'#CC2200':'#2d7a1f'};text-align:right">${d.q}<div style="font-size:10px;font-weight:400;color:#888">${d.u}</div></div></div>`;
+    return `<div class="er"><div style="flex:1"><div style="font-size:13px;font-weight:700">${nome} ${badge}</div><div style="font-size:11px;color:#888;margin-top:2px">${d.q} ${d.u} · mín ${d.min}<div class="ebw"><div class="ebar ${cl}" style="width:${pc}%;height:100%"></div></div></div></div><div style="text-align:right;padding-left:10px"><div style="font-size:18px;font-weight:700;color:${d.q<=d.min?'#CC2200':'#2d7a1f'}">${d.q}<div style="font-size:10px;font-weight:400;color:#888">${d.u}</div></div><button onclick="editarProdutoEst('${nome}')" style="margin-top:4px;padding:2px 8px;font-size:10px;background:#f0f0f0;border:none;border-radius:5px;cursor:pointer">✏️</button></div></div>`;
   }).join('');
   const ml=document.getElementById('mov-l'); if (!ml) return;
   ml.innerHTML=S.mEst.length?[...S.mEst].reverse().slice(0,20).map(m=>`<div class="ri"><div class="rt"><span class="rn">${m.p}</span><span style="font-size:13px;font-weight:700;color:${m.t==='entrada'?'#2d7a1f':'#CC2200'}">${m.t==='entrada'?'+':'-'}${m.q} ${m.u}</span></div><div class="rd">${m.dt.split('-').reverse().join('/')} · ${m.t==='entrada'?'Entrada':'Saída → '+m.loc}</div></div>`).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:12px">Nenhuma.</div>';
@@ -2111,8 +2113,8 @@ function calcLote() {
   var qtd  = parseFloat(document.getElementById('lt-qtd').value)  || 0;
   var peso = parseFloat(document.getElementById('lt-peso').value) || 0;
   var total   = qtd * peso;
-  var arroba  = total / 15;
-  var arrobaI = peso  / 15;
+  var arroba  = total / 30;
+  var arrobaI = peso  / 30;
   document.getElementById('lt-peso-total').textContent = total > 0 ? total.toFixed(0) + ' kg' : '—';
   document.getElementById('lt-arroba').textContent     = arroba > 0 ? arroba.toFixed(1) + ' @' : '—';
   var elI = document.getElementById('lt-arroba-ind');
@@ -2180,7 +2182,7 @@ function rListLotes() {
   }
   el.innerHTML = lista.map(function(l, i) {
     var total = l.qtd * l.peso;
-    var arroba = (total/15).toFixed(1);
+    var arroba = (total/30).toFixed(1);
     var arrobaInd = l.peso > 0 ? (l.peso/15).toFixed(2) + ' @/animal' : '—';
     var insHtml = '';  // insumos removed from lote
     return '<div style="background:#fff;border:1px solid #eee;border-radius:10px;padding:10px;margin-bottom:8px">' +
@@ -2572,19 +2574,21 @@ function carregarNuvem(callback) {
           try {
             var cfg = JSON.parse(row[1]);
             // Merge cloud config into S (cloud wins)
-            if (cfg.FAZ && Object.keys(cfg.FAZ).length > 0) S.FAZ = cfg.FAZ;
-            if (cfg.US  && cfg.US.length > 0)  S.US  = cfg.US;
-            if (cfg.EST) S.EST = cfg.EST;
-            if (cfg.SERVS && cfg.SERVS.length > 0) S.SERVS = cfg.SERVS;
-            if (cfg.PR)  S.PR  = cfg.PR;
-            if (cfg.LOTES) S.LOTES = cfg.LOTES;
-            if (cfg.DIARISTAS) S.DIARISTAS = cfg.DIARISTAS;
-            if (cfg.rD && cfg.rD.length > 0) S.rD = cfg.rD;
-            if (cfg.rT && cfg.rT.length > 0) S.rT = cfg.rT;
-            if (cfg.rC && cfg.rC.length > 0) S.rC = cfg.rC;
-            if (cfg.rE && cfg.rE.length > 0) S.rE = cfg.rE;
-            if (cfg.rDesp && cfg.rDesp.length > 0) S.rDesp = cfg.rDesp;
-            if (cfg.mEst) S.mEst = cfg.mEst;
+            // FULL REPLACE: cloud is the source of truth
+            S.FAZ       = cfg.FAZ       || S.FAZ;
+            S.US        = cfg.US        || S.US;
+            S.EST       = cfg.EST       || S.EST;
+            S.SERVS     = cfg.SERVS     || S.SERVS;
+            S.PR        = cfg.PR        || S.PR;
+            S.LOTES     = cfg.LOTES     || [];
+            S.DIARISTAS = cfg.DIARISTAS || {};
+            S.rD        = cfg.rD        || [];
+            S.rT        = cfg.rT        || [];
+            S.rC        = cfg.rC        || [];
+            S.rE        = cfg.rE        || [];
+            S.rDesp     = cfg.rDesp     || [];
+            S.mEst      = cfg.mEst      || [];
+            if (cfg.cfgGS) S.cfgGS = cfg.cfgGS;
             salvar(); // update localStorage with cloud data
             updCloudStatus('ok');
             if(callback) callback(true);
@@ -2867,6 +2871,70 @@ var _popAllAutoFaz = popAll;
 popAll = function() {
   _popAllAutoFaz();
   autoFazenda();
+};
+
+
+// ══ Editar produto no estoque ══
+function editarProdutoEst(nome) {
+  var d = S.EST[nome] || {};
+  var novoNome = prompt('Nome do produto:', nome);
+  if (!novoNome) return;
+  var qtd  = parseFloat(prompt('Estoque atual (' + (d.u||'unid') + '):', d.q||0));
+  var min  = parseFloat(prompt('Estoque mínimo:', d.min||0));
+  var unid = prompt('Unidade (kg, saco, litro, unid.):', d.u||'kg');
+  var pct  = parseFloat(prompt('% consumo por PV (0 se não aplicar):', d.pct||0));
+
+  if (novoNome !== nome) {
+    // Rename: copy to new key, delete old
+    S.EST[novoNome] = S.EST[nome];
+    delete S.EST[nome];
+    // Update FAZ prods
+    Object.keys(S.FAZ).forEach(function(faz) {
+      if (S.FAZ[faz].prods) {
+        var idx = S.FAZ[faz].prods.indexOf(nome);
+        if (idx >= 0) S.FAZ[faz].prods[idx] = novoNome;
+      }
+    });
+    nome = novoNome;
+  }
+  if (!isNaN(qtd))  S.EST[nome].q   = qtd;
+  if (!isNaN(min))  S.EST[nome].min  = min;
+  if (unid)         S.EST[nome].u    = unid;
+  if (!isNaN(pct))  S.EST[nome].pct  = pct;
+  salvar();
+  rEst();
+  updInsProd();
+  alert('✅ Produto atualizado!');
+}
+
+// ══ Diarista: nome fica salvo e aparece na diária ══
+// Override envD to ensure nome do diarista is saved to DIARISTAS list
+var _envD_diarista = envD;
+envD = function() {
+  var nomeEl = document.getElementById('d-nome');
+  var fazEl  = document.getElementById('d-faz');
+  var nome = nomeEl ? nomeEl.value : '';
+  var faz  = (fazEl ? fazEl.value : '') || (CU&&CU.fs&&CU.fs.length===1?CU.fs[0]:'');
+  // Save diarista name if not already saved
+  if (nome && faz) {
+    if (!S.DIARISTAS) S.DIARISTAS = {};
+    if (!S.DIARISTAS[faz]) S.DIARISTAS[faz] = [];
+    if (S.DIARISTAS[faz].indexOf(nome) < 0) {
+      S.DIARISTAS[faz].push(nome);
+    }
+  }
+  _envD_diarista();
+};
+
+// ══ Estoque entrada page: populate ep select from ALL products ══
+var _rEstOrig = rEst;
+rEst = function() {
+  _rEstOrig();
+  var ep = document.getElementById('ep');
+  if (ep) {
+    ep.innerHTML = '<option value="">Selecione...</option>' +
+      Object.keys(S.EST).map(function(p){ return '<option>'+p+'</option>'; }).join('');
+  }
 };
 
 </script>
