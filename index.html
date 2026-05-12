@@ -1242,18 +1242,33 @@ function baixar(lista, dt, loc) {
 }
 
 function enviarDado(dados) {
-  // Prevent duplicate: check if identical record already in queue
   var sig = JSON.stringify(dados);
   var alreadyQueued = S.queue.some(function(q){
-    var qSig = JSON.stringify(q);
-    // Compare without timestamp
-    return qSig.replace(/"timestamp":"[^"]*"/,'') === sig.replace(/"timestamp":"[^"]*"/,'');
+    return JSON.stringify(q).replace(/"timestamp":"[^"]*"/,'') === sig.replace(/"timestamp":"[^"]*"/,'');
   });
   if (alreadyQueued) { salvar(); return; }
-  S.queue.push({...dados, timestamp:new Date().toISOString()});
-  salvar();
-  atualizarSync();
-  if (navigator.onLine && S.cfgGS) { try { syncAgora(); } catch(e) {} }
+  
+  var reg = Object.assign({}, dados, {timestamp: new Date().toISOString()});
+  
+  // Try to send directly NOW if online
+  if (navigator.onLine && S.cfgGS) {
+    var gasUrl = getFazGasUrl(dados.faz || '');
+    var params = new URLSearchParams({data: JSON.stringify(reg)});
+    // Send via GET (compatible with old GAS code)
+    fetch(gasUrl + '?' + params.toString(), {method:'GET', mode:'no-cors'})
+      .then(function(){ atualizarSync(); })
+      .catch(function(){
+        // If failed, add to queue for retry
+        S.queue.push(reg);
+        salvar();
+        atualizarSync();
+      });
+  } else {
+    // Offline: add to queue
+    S.queue.push(reg);
+    salvar();
+    atualizarSync();
+  }
 }
 
 function envD() {
@@ -1769,10 +1784,22 @@ function syncAgora() {
     var params = new URLSearchParams({data: JSON.stringify(S.queue[i])});
     // Remove from queue BEFORE sending to prevent duplicates
     var registro = S.queue.splice(i, 1)[0];
-    salvar(); // save immediately so even if fetch fails, record is gone from queue
-    fetch(getFazGasUrl((registro||{}).faz || '')+'?'+params.toString(), {method:'GET', mode:'no-cors'})
+    salvar();
+    var gasUrl = getFazGasUrl((registro||{}).faz || '');
+    // Try POST first, fallback to GET
+    fetch(gasUrl, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: params.toString()
+    })
       .then(function() { ok++; enviarProximo(i-1); })
-      .catch(function(e) { console.warn('sync erro:', e); enviarProximo(i-1); });
+      .catch(function() {
+        // Fallback: GET request (works with old GAS code)
+        fetch(gasUrl + '?' + params.toString(), {method:'GET', mode:'no-cors'})
+          .then(function() { ok++; enviarProximo(i-1); })
+          .catch(function(e) { console.warn('sync erro:', e); enviarProximo(i-1); });
+      });
   }
   enviarProximo(S.queue.length - 1);
 }
