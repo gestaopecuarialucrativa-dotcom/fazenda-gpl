@@ -454,9 +454,28 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
       <div class="stit">🧾 Cobrança</div>
       <div class="tgbar"><div class="tgo on" id="tgr" onclick="sCob('ref')">Por refeição</div><div class="tgo" id="tgd" onclick="sCob('dia')">Por diária</div></div>
       <div id="br">
-        <div class="rrow"><div><div style="font-size:13px;font-weight:600">☕ Café</div><div style="font-size:11px;color:#888" id="lbl-cafe">R$ 8,00/p</div></div><div class="qctrl"><div class="qbtn" onclick="addQ('cafe',-1)">−</div><div class="qnum" id="qc">0</div><div class="qbtn" onclick="addQ('cafe',1)">+</div></div></div>
-        <div class="rrow"><div><div style="font-size:13px;font-weight:600">🍽 Almoço</div><div style="font-size:11px;color:#888" id="lbl-almoco">R$ 15,00/p</div></div><div class="qctrl"><div class="qbtn" onclick="addQ('almoco',-1)">−</div><div class="qnum" id="qa">0</div><div class="qbtn" onclick="addQ('almoco',1)">+</div></div></div>
-        <div class="rrow"><div><div style="font-size:13px;font-weight:600">🌙 Janta</div><div style="font-size:11px;color:#888" id="lbl-janta">R$ 12,00/p</div></div><div class="qctrl"><div class="qbtn" onclick="addQ('janta',-1)">−</div><div class="qnum" id="qj">0</div><div class="qbtn" onclick="addQ('janta',1)">+</div></div></div>
+        <div class="rrow">
+          <div style="flex:1"><div style="font-size:13px;font-weight:600">☕ Café</div></div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div style="font-size:11px;color:#888">R$</div>
+            <input type="number" id="val-cafe" step="0.5" min="0" style="width:60px;padding:4px;border:1.5px solid #ddd;border-radius:6px;font-size:13px;text-align:center" onchange="updTotal()">
+            <div class="qctrl"><div class="qbtn" onclick="addQ('cafe',-1)">−</div><div class="qnum" id="qc">0</div><div class="qbtn" onclick="addQ('cafe',1)">+</div></div>
+          </div>
+        </div>
+        <div class="rrow">
+          <div style="flex:1"><div style="font-size:13px;font-weight:600">🍽 Almoço</div></div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div style="font-size:11px;color:#888">R$</div>
+            <input type="number" id="val-almoco" step="0.5" min="0" style="width:60px;padding:4px;border:1.5px solid #ddd;border-radius:6px;font-size:13px;text-align:center" onchange="updTotal()">
+            <div class="qctrl"><div class="qbtn" onclick="addQ('almoco',-1)">−</div><div class="qnum" id="qa">0</div><div class="qbtn" onclick="addQ('almoco',1)">+</div></div>
+          </div>
+        </div>
+        <div class="rrow">
+          <div style="flex:1"><div style="font-size:13px;font-weight:600">🌙 Janta</div></div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div style="font-size:11px;color:#888">R$</div>
+            <input type="number" id="val-janta" step="0.5" min="0" style="width:60px;padding:4px;border:1.5px solid #ddd;border-radius:6px;font-size:13px;text-align:center" onchange="updTotal()">
+            <div class="qctrl"><div class="qbtn" onclick="addQ('janta',-1)">−</div><div class="qnum" id="qj">0</div><div class="qbtn" onclick="addQ('janta',1)">+</div></div></div>
       </div>
       <div id="bd" style="display:none">
         <div class="fg"><div class="lbl">Nº de pessoas</div><input type="number" id="ct-np" placeholder="5" min="0" oninput="calcCt()"></div>
@@ -3769,6 +3788,8 @@ buildTabs = function() {
   });
 };
 
+
+function updTotal(){ if(typeof rCob==='function') rCob(); }
 </script>
 <div class="qr-modal" id="qr-modal" onclick="fecharQR(event)">
   <div class="qr-box" onclick="event.stopPropagation()">
