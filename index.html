@@ -1078,15 +1078,19 @@ function sp(id, back, prev) {
   if (id === 'painel') { setTimeout(function(){ popAll(); rPan(); }, 50); }
   if (id === 'insumo') { setTimeout(function(){ rListProdutos(); updInsCadFaz(); }, 50); }
   if (id === 'lote') { setTimeout(function(){ rListLotes(); }, 50); }
-  if (id === 'estoque') { setTimeout(function(){ rEst(); }, 50); }
-  if (id === 'config') setTimeout(() => {
+
+  if (id === 'config') setTimeout(function(){
+    popAll();
     rFazCfg(); rUcfg(); rServL(); rLinksUsuarios();
-    const gs = document.getElementById('cfg-gs'); if (gs) gs.value = S.cfgGS || '';
-    const ght = document.getElementById('cfg-ght'); if (ght) ght.value = S.cfgGHT || '';
-    const pc = document.getElementById('p-c'); if (pc) pc.value = S.PR.cafe;
-    const pa = document.getElementById('p-a'); if (pa) pa.value = S.PR.almoco;
-    const pj = document.getElementById('p-j'); if (pj) pj.value = S.PR.janta;
+    var gs = document.getElementById('cfg-gs'); if (gs) gs.value = S.cfgGS || '';
+    var ght = document.getElementById('cfg-ght'); if (ght) ght.value = S.cfgGHT || '';
+    var pc = document.getElementById('p-c'); if (pc) pc.value = S.PR.cafe;
+    var pa = document.getElementById('p-a'); if (pa) pa.value = S.PR.almoco;
+    var pj = document.getElementById('p-j'); if (pj) pj.value = S.PR.janta;
   }, 50);
+  if (id === 'estoque') { setTimeout(function(){ popAll(); rEst(); }, 50); }
+  if (id === 'consultor') { setTimeout(function(){ popAll(); rConsultor(); }, 50); }
+  if (id === 'cantina') { setTimeout(function(){ popAll(); updPrecosCt(); }, 50); }
   window.scrollTo(0, 0);
 }
 
