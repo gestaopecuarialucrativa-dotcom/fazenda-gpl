@@ -740,7 +740,7 @@ const DEFAULT = {
     'Fazenda Estrela': {
       cochos: ['Pasto 01','Pasto 02','Pasto 03','Curral'],
       prods:  ['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],
-      gasUrl: 'https://script.google.com/macros/s/AKfycbzVzVDp-MSNcpAgLsvKmG8UQJo52S4HAXlgl7ZF6tNaxjGefg96ia-vsVptg_o_I29Lmg/exec',
+      gasUrl: 'https://script.google.com/macros/s/AKfycbxaVjBYJ5_B9PaVDOjFN_ZZvuXBO0ksC_TB_QEP7NwgtYL4CVd04yEIjcv3OeK7lxe3YA/exec',
       sheetId: '1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'
     },
     'Fazenda Santa Cruz': {
@@ -772,7 +772,7 @@ const DEFAULT = {
   },
   SERVS: ['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],
   PR: {cafe:8, almoco:15, janta:12},
-  cfgGS: 'https://script.google.com/macros/s/AKfycbzVzVDp-MSNcpAgLsvKmG8UQJo52S4HAXlgl7ZF6tNaxjGefg96ia-vsVptg_o_I29Lmg/exec',
+  cfgGS: 'https://script.google.com/macros/s/AKfycbxaVjBYJ5_B9PaVDOjFN_ZZvuXBO0ksC_TB_QEP7NwgtYL4CVd04yEIjcv3OeK7lxe3YA/exec',
   cfgGHT: '',
   rD:[], rT:[], rC:[], rE:[], mEst:[], queue:[], rDesp:[], LOTES:[], DIARISTAS:{}, NOTAS:{}
 };
@@ -3422,38 +3422,7 @@ rUlt = function() {
 };
 
 // Patch rPan to filter deleted and add delete button on diarias
-var _rPanOrigDel = rPan;
-rPan = function() {
-  _rPanOrigDel();
-  // Re-render l-d with delete button
-  var per = typeof perA !== 'undefined' ? perA : 'mes';
-  var faz = document.getElementById('pf') ? document.getElementById('pf').value : '';
-  var lv = filtrar(S.rD.filter(function(r){ return r.tipo==='diaria' && !r._apagado; }), per);
-  var el = document.getElementById('l-d');
-  if (!el) return;
-
-  var isSupervisor = CU && (CU.r === 'Consultor' || CU.r === 'Dono');
-
-  el.innerHTML = lv.length ? [...lv].reverse().map(function(r) {
-    var realIdx = S.rD.indexOf(r);
-    var av = r.av==='otimo'?'<span class="bdg bg">Ótimo</span>':r.av==='bom'?'<span class="bdg ba">Bom</span>':'<span class="bdg br">Ruim</span>';
-    var pagoBadge = r.pago ? ' <span style="font-size:10px;color:#2E7D32;font-weight:600">✅ Paga</span><div style="font-size:10px;color:#888">por '+r.pago_por+' em '+r.pago_dt+'</div>' : '';
-    var btnPagar = (!r.pago && r.v>0) ? '<button class="btn-pagar-diaria" data-idx="'+S.rD.indexOf(r)+'" style="margin-top:5px;padding:4px 12px;font-size:11px;font-weight:600;background:#2E7D32;color:#fff;border:none;border-radius:6px;cursor:pointer">✅ Marcar como paga</button>' : '';
-    var btnApagar = isSupervisor ? '<button onclick="apagarLancamento(\'diaria\','+realIdx+')" style="margin-top:5px;margin-left:6px;padding:4px 10px;font-size:11px;background:#FFF0F0;color:#C62828;border:1px solid #FFCDD2;border-radius:6px;cursor:pointer">🗑️ Apagar</button>' : '';
-    var valStr = r.pago ? '<s style="color:#aaa">R$ '+r.v.toFixed(2).replace('.',',')+'</s>' : 'R$ '+r.v.toFixed(2).replace('.',',');
-    return '<div class="ri"><div class="rt"><span class="rn">'+r.n+av+'</span><span class="rv">'+valStr+'</span></div>' +
-           '<div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+' · '+r.srv+pagoBadge+'</div>' +
-           '<div>'+btnPagar+btnApagar+'</div></div>';
-  }).join('') : '<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
-
-  // Re-attach pay button events
-  el.querySelectorAll('.btn-pagar-diaria').forEach(function(btn){
-    btn.addEventListener('click', function(){ pagarDiaria(parseInt(this.getAttribute('data-idx'))); });
-  });
-
-  // Also re-render tratos with delete
-  var lt = filtrar(S.rT.filter(function(r){ return !r._apagado; }), per);
-};
+var // rPan delete buttons handled in main rPan
 
 
 // ══ Excluir registro ══
