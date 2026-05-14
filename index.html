@@ -2979,14 +2979,22 @@ entrar = function(i) {
     setTimeout(function() {
       carregarNuvem(function(loaded) {
         if (loaded) {
-          // Refresh UI with cloud data
           popAll();
           rUlt();
+          // Re-render current active page
+          var activePg = document.querySelector('.pg.on');
+          if (activePg) {
+            var pgId = activePg.id.replace('pg-','');
+            if (pgId === 'painel') rPan();
+            else if (pgId === 'consultor') rConsultor && rConsultor();
+            else if (pgId === 'estoque') rEst && rEst();
+            else if (pgId === 'config') { rFazCfg && rFazCfg(); rUcfg && rUcfg(); }
+          }
           var cloudMsg = document.getElementById('cloud-msg');
           if (cloudMsg) {
-            cloudMsg.textContent = '☁️ Dados atualizados da nuvem!';
+            cloudMsg.textContent = '☁️ Dados atualizados!';
             cloudMsg.style.display = 'block';
-            setTimeout(function(){ cloudMsg.style.display = 'none'; }, 3000);
+            setTimeout(function(){ cloudMsg.style.display = 'none'; }, 2000);
           }
         }
       });
