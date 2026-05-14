@@ -1022,20 +1022,37 @@ function entrar(i) {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   document.getElementById('un').textContent = CU.n.split(' ')[0];
-  popAll();
-  const v = isV(CU), a = isA(CU);
-  const tb = document.getElementById('tabs');
-  if (a) { tb.style.display = 'flex'; buildTabs(); } else tb.style.display = 'none';
+  
+  var v = isV(CU), a = isA(CU);
+  var tb = document.getElementById('tabs');
+  
+  if (a) {
+    tb.style.display = 'flex';
+    buildTabs();
+  } else {
+    tb.style.display = 'none';
+  }
+  
   if (v) {
+    // Vaqueiro: mostra home
     document.getElementById('h-nome').textContent = 'Olá, ' + CU.n.split(' ')[0] + '! 👋';
     document.getElementById('h-data').textContent = new Date().toLocaleDateString('pt-BR', {weekday:'long',day:'numeric',month:'long'});
+    popAll();
     buildActs();
     sp('home', false);
+    rUlt();
   } else {
-    const first = TABS.find(t => CU.p[t.p]);
+    // Consultor/Dono/Cantina: mostra primeira aba
+    popAll();
+    var first = TABS.find(function(t){ return CU.p[t.p]; });
     if (first) goTab(first.id);
   }
+  
   initSync();
+  
+  // Show/hide produto cadastro card based on permission
+  var cadCard = document.getElementById('ins-cad-card');
+  if (cadCard) cadCard.style.display = (CU.p && CU.p.config) ? 'block' : 'none';
 }
 
 function doLogout() {
@@ -1114,8 +1131,9 @@ function buildTabs() {
 }
 
 function goTab(id) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
-  const tb = document.getElementById('tab-' + id); if (tb) tb.classList.add('on');
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); });
+  var tb = document.getElementById('tab-' + id);
+  if (tb) tb.classList.add('on');
   sp(id, false);
 }
 
@@ -2812,15 +2830,7 @@ updEsLote = function() {
 };
 
 // ══ Show/hide insumo cad card based on permission ══
-var _entrarOrig2 = entrar;
-entrar = function(i) {
-  _entrarOrig2(i);
-  // Show cadastro card only for Consultor/Dono/config permission
-  var cadCard = document.getElementById('ins-cad-card');
-  if (cadCard) {
-    cadCard.style.display = (CU && CU.p && CU.p.config) ? 'block' : 'none';
-  }
-};
+// entrar patch removed
 
 // ══ Also call updInsCadFaz in popAll patch ══
 
@@ -2973,36 +2983,7 @@ salvar = function() {
 salvar._timer = null;
 
 // ── Override entrar() to load from cloud first ──
-var _entrarOrigCloud = entrar;
-entrar = function(i) {
-  _entrarOrigCloud(i);
-  // After login, silently refresh from cloud
-  if (S.cfgGS && navigator.onLine) {
-    setTimeout(function() {
-      carregarNuvem(function(loaded) {
-        if (loaded) {
-          popAll();
-          rUlt();
-          // Re-render current active page
-          var activePg = document.querySelector('.pg.on');
-          if (activePg) {
-            var pgId = activePg.id.replace('pg-','');
-            if (pgId === 'painel') rPan();
-            else if (pgId === 'consultor') rConsultor && rConsultor();
-            else if (pgId === 'estoque') rEst && rEst();
-            else if (pgId === 'config') { rFazCfg && rFazCfg(); rUcfg && rUcfg(); }
-          }
-          var cloudMsg = document.getElementById('cloud-msg');
-          if (cloudMsg) {
-            cloudMsg.textContent = '☁️ Dados atualizados!';
-            cloudMsg.style.display = 'block';
-            setTimeout(function(){ cloudMsg.style.display = 'none'; }, 2000);
-          }
-        }
-      });
-    }, 500);
-  }
-};
+// entrar patch removed
 
 // ── Override salvInteg() to load cloud right after saving URL ──
 var _salvIntegOrig = typeof salvInteg === 'function' ? salvInteg : function(){};
