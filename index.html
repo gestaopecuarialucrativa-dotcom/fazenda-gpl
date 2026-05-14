@@ -719,11 +719,11 @@ const EI = [null,
 ];
 const PL = {diaria:'Diária',insumo:'Insumos',medicamento:'Medicamentos',trato:'Trato cocho',escore:'Escore fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Config.'};
 const TABS = [
-  {id:'consultor',l:'🌿 Visão Geral',p:'config'},
+  {id:'painel',l:'📊 Painel',p:'painel'},
   {id:'cantina',l:'🏪 Cantina',p:'cantina'},
   {id:'estoque',l:'📦 Estoque',p:'estoque'},
-  {id:'painel',l:'📊 Painel',p:'painel'},
-  {id:'config',l:'⚙️ Config.',p:'config'}
+  {id:'config',l:'⚙️ Config.',p:'config'},
+  {id:'consultor',l:'🌿 Visão Geral',p:'config'}
 ];
 const ACTS = [
   {id:'diaria',l:'Lançar diária',s:'Serviço do dia',ic:'👤',c:'gr',p:'diaria'},
@@ -1531,6 +1531,7 @@ function filtrar(lista,per) {
 
 let perA='quinzena';
 function rPan() {
+  try {
   const lv=filtrar(S.rD.filter(r=>r.tipo==='diaria' && !r._apagado),perA);
   const lc=filtrar(S.rC,perA); const lt=filtrar(S.rT,perA); const le=filtrar(S.rE,perA);
   const td=lv.reduce((a,r)=>a+r.v,0); const tc=lc.reduce((a,r)=>a+r.total,0);
@@ -1583,6 +1584,7 @@ function rPan() {
   document.querySelectorAll('#l-ct .btn-del-reg').forEach(function(btn){
     btn.addEventListener('click',function(){ excluirRegistro(this.getAttribute('data-arr'),parseInt(this.getAttribute('data-idx'))); });
   });
+  } catch(e) { console.error('rPan error:', e); }
 }
 
 function sPer(el,p) { document.querySelectorAll('.pbtn').forEach(b=>b.classList.remove('on')); el.classList.add('on'); perA=p; rPan(); }
@@ -3564,9 +3566,9 @@ function salvarGasFaz(faz, k) {
 // ══════════════════════════════════════════════
 
 function rConsultor() {
-  rConsResumo();
-  rConsAlertas();
-  rConsNotas();
+  try { rConsResumo(); } catch(e) { console.error('rConsResumo error:', e); }
+  try { rConsAlertas(); } catch(e) { console.error('rConsAlertas error:', e); }
+  try { rConsNotas(); } catch(e) { console.error('rConsNotas error:', e); }
 }
 
 function rConsResumo() {
