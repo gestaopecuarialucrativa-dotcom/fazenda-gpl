@@ -1128,35 +1128,95 @@ function getPF(f) { return S.FAZ[f] ? S.FAZ[f].prods : Object.keys(S.EST); }
 function getCF(f) { return S.FAZ[f] ? S.FAZ[f].cochos : []; }
 
 function popAll() {
-  ['d-faz','i-faz','m-faz','t-faz','es-faz','ct-faz','pf'].forEach(id => {
-    const s = document.getElementById(id); if (!s) return;
-    const ia = id === 'pf';
-    s.innerHTML = (ia ? '<option value="">Todas</option>' : '') + getFL().map(f => `<option>${f}</option>`).join('');
-    // Auto-selecionar se só tem uma fazenda
-    if (!ia && CU && CU.fs.length === 1) s.value = CU.fs[0];
-  });
-  // d-nome: só diaristas (vaqueiros) da fazenda selecionada
-  const dNomeEl = document.getElementById('d-nome');
-  if (dNomeEl) {
-    const fazAtual = document.getElementById('d-faz') ? document.getElementById('d-faz').value : '';
-    const diaristas = getDiaristas(fazAtual);
-    dNomeEl.innerHTML = '<option value="">Selecione...</option>' + diaristas.map(n => `<option>${n}</option>`).join('');
-    if (CU && CU.r === 'Vaqueiro') dNomeEl.value = CU.n;
-  }
-  // ct-resp: todos os usuários
-  const ctRespEl = document.getElementById('ct-resp');
-  if (ctRespEl) {
-    ctRespEl.innerHTML = '<option value="">Selecione...</option>' + S.US.map(u => `<option>${u.n}</option>`).join('');
-    if (CU) ctRespEl.value = CU.n;
-  }
-  popServs(); updTrato(); updEsCo(); updInsProd();
-  const ep = document.getElementById('ep');
-  if (ep) ep.innerHTML = '<option value="">Selecione...</option>' + Object.keys(S.EST).map(p => `<option>${p}</option>`).join('');
-  ['d-data','i-data','m-data','t-data','es-data','ct-data','ed'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.value = TD;
-  });
-}
+  // ── Fill all fazenda selects ──
+  var fazList = getFL();
+  var isConsultor = CU && CU.r === 'Consultor';
+  var umaFaz = (!isConsultor && CU && CU.fs && CU.fs.length === 1) ? CU.fs[0] : null;
 
+  ['d-faz','i-faz','m-faz','t-faz','es-faz','ct-faz','lt-faz','i-cad-faz'].forEach(function(id) {
+    var s = document.getElementById(id);
+    if (!s) return;
+    s.innerHTML = fazList.map(function(f){ return '<option>'+f+'</option>'; }).join('');
+    if (umaFaz) {
+      s.value = umaFaz;
+      var fg = s.closest ? s.closest('.fg') : null;
+      if (fg) fg.style.display = 'none';
+    } else {
+      var fg = s.closest ? s.closest('.fg') : null;
+      if (fg) fg.style.display = '';
+    }
+  });
+
+  // Painel fazenda selector
+  var pf = document.getElementById('pf');
+  if (pf) {
+    if (isConsultor) {
+      pf.innerHTML = '<option value="">Todas</option>' + fazList.map(function(f){ return '<option value="'+f+'">'+f+'</option>'; }).join('');
+      pf.disabled = false;
+    } else {
+      var faz = umaFaz || fazList[0] || '';
+      pf.innerHTML = '<option value="'+faz+'">'+faz+'</option>';
+      pf.disabled = true;
+    }
+  }
+
+  // ── Nome do vaqueiro (d-nome) ──
+  var dNome = document.getElementById('d-nome');
+  if (dNome) {
+    var fazD = document.getElementById('d-faz');
+    var fazAtual = (fazD ? fazD.value : '') || umaFaz || '';
+    var diaristas = getDiaristas(fazAtual);
+    dNome.innerHTML = '<option value="">Selecione...</option>' + diaristas.map(function(n){ return '<option>'+n+'</option>'; }).join('');
+    if (CU && CU.r === 'Vaqueiro') {
+      if (!diaristas.length || diaristas.indexOf(CU.n) < 0) {
+        var opt = document.createElement('option');
+        opt.value = CU.n; opt.textContent = CU.n;
+        dNome.appendChild(opt);
+      }
+      dNome.value = CU.n;
+    }
+  }
+
+  // ── Cantina resp ──
+  var ctResp = document.getElementById('ct-resp');
+  if (ctResp) {
+    ctResp.innerHTML = '<option value="">Selecione...</option>' + S.US.map(function(u){ return '<option>'+u.n+'</option>'; }).join('');
+    if (CU) ctResp.value = CU.n;
+  }
+
+  // ── Lotes nos selects de trato e escore ──
+  updTrato();
+  updEsCo();
+  updMedLote();
+
+  // ── Produtos insumos ──
+  updInsProd();
+  updInsCadFaz();
+
+  // ── Estoque entrada ──
+  var ep = document.getElementById('ep');
+  if (ep) ep.innerHTML = '<option value="">Selecione...</option>' + Object.keys(S.EST).map(function(p){ return '<option>'+p+'</option>'; }).join('');
+
+  // ── Datas ──
+  ['d-data','i-data','m-data','t-data','es-data','ct-data','ed'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = TD;
+  });
+
+  // ── Cantina preços ──
+  var vc = document.getElementById('val-cafe');
+  var va = document.getElementById('val-almoco');
+  var vj = document.getElementById('val-janta');
+  if (vc && !vc.value) vc.value = S.PR.cafe;
+  if (va && !va.value) va.value = S.PR.almoco;
+  if (vj && !vj.value) vj.value = S.PR.janta;
+
+  // ── Lotes list ──
+  var ltFaz = document.getElementById('lt-faz');
+  if (ltFaz) rListLotes && rListLotes();
+
+  popServs();
+}
 function popServs() {
   const so = document.getElementById('d-servs'); if (!so) return;
   so.innerHTML = S.SERVS.map(s => `<div class="bopt" onclick="sSrv(this,'${s}')">${s}</div>`).join('');
@@ -2595,19 +2655,6 @@ updEsCo = function() {
 };
 
 // ══ Patch popAll to add lt-faz and call updDiariaNome ══
-var _popAllOrig2 = popAll;
-popAll = function() {
-  _popAllOrig2();
-  // fill lt-faz
-  var ltFaz = document.getElementById('lt-faz');
-  if (ltFaz) {
-    ltFaz.innerHTML = getFL().map(function(f){ return '<option>' + f + '</option>'; }).join('');
-  }
-  rListLotes();
-  rListInsLote();
-  updDiariaNome();
-  updTrato();
-};
 
 // ══ DIARISTAS: add/manage per fazenda ══
 function addDiarista() {
@@ -2773,17 +2820,6 @@ entrar = function(i) {
 };
 
 // ══ Also call updInsCadFaz in popAll patch ══
-var _popAllOrig3 = popAll;
-popAll = function() {
-  _popAllOrig3();
-  updInsCadFaz();
-  // fill i-cad-faz  
-  var icadFaz = document.getElementById('i-cad-faz');
-  if (icadFaz) {
-    icadFaz.innerHTML = getFL().map(function(f){ return '<option>' + f + '</option>'; }).join('');
-    if (CU && CU.fs.length === 1) icadFaz.value = CU.fs[0];
-  }
-};
 
 
 // ══════════════════════════════════════════════
@@ -3053,11 +3089,6 @@ function updMedLote() {
 }
 
 // ══ Patch popAll to fill m-lote ══
-var _popAllMed = popAll;
-popAll = function() {
-  _popAllMed();
-  updMedLote();
-};
 
 // m-faz onchange handled via popAll patch above
 
@@ -3185,11 +3216,6 @@ function autoFazenda() {
 }
 
 // Patch popAll to call autoFazenda
-var _popAllAutoFaz = popAll;
-popAll = function() {
-  _popAllAutoFaz();
-  autoFazenda();
-};
 
 
 // ══ Editar produto no estoque ══
@@ -3447,29 +3473,6 @@ function excluirRegistro(arr, idx) {
 // ══ Rogério: filtro de fazenda no painel — ver todas ou escolher ══
 // The painel already has a fazenda selector (#pf) — 
 // for Consultor, populate with ALL fazendas including "Todas"
-var _popAllPainel = popAll;
-popAll = function() {
-  _popAllPainel();
-  var pf = document.getElementById('pf');
-  if (!pf) return;
-  var isConsultor = CU && CU.r === 'Consultor';
-  if (isConsultor) {
-    // Show all fazendas
-    var opts = '<option value="">Todas</option>';
-    Object.keys(S.FAZ).forEach(function(f){
-      opts += '<option value="'+f+'">'+f+'</option>';
-    });
-    pf.innerHTML = opts;
-    pf.disabled = false;
-    var fgPF = pf.closest ? pf.closest('.fg') : null;
-    if (fgPF) fgPF.style.display = '';
-  } else {
-    // Non-consultor: lock to their fazenda
-    var faz = CU && CU.fs && CU.fs.length > 0 ? CU.fs[0] : Object.keys(S.FAZ)[0];
-    pf.innerHTML = '<option value="'+faz+'">'+faz+'</option>';
-    pf.disabled = true;
-  }
-};
 
 
 // ══ Limpar localStorage completamente e recarregar da nuvem ══
