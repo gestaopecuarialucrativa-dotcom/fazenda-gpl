@@ -3,47 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GPL — Gestão Pecuária</title>
+    <title>GPL — Gestão Pecuária Lucrativa</title>
     <style>
         :root { --primary: #1B5E20; --bg: #f0f2f5; --white: #ffffff; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
         body { background: var(--bg); color: #333; min-height: 100vh; padding-bottom: 50px; }
         
-        /* Cabeçalho */
-        .header { background: var(--primary); color: white; padding: 18px; text-align: center; font-weight: bold; font-size: 1.1rem; position: sticky; top: 0; z-index: 100; shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .header { background: linear-gradient(135deg,#1a5c10,#2d7a1f); color: white; padding: 18px; text-align: center; font-weight: bold; font-size: 1.1rem; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         
-        /* Menu de Navegação */
         .nav { display: flex; background: white; border-bottom: 1px solid #ddd; overflow-x: auto; position: sticky; top: 55px; z-index: 99; }
-        .nav-item { flex: 1; padding: 15px 5px; text-align: center; font-size: 0.85rem; font-weight: 600; color: #666; cursor: pointer; border-bottom: 3px solid transparent; min-width: 80px; transition: 0.3s; }
+        .nav-item { flex: 1; padding: 15px 5px; text-align: center; font-size: 0.85rem; font-weight: 600; color: #666; cursor: pointer; border-bottom: 3px solid transparent; min-width: 80px; }
         .nav-item.active { color: var(--primary); border-bottom-color: var(--primary); background: #f9f9f9; }
         
-        /* Container Principal */
-        .container { padding: 15px; max-width: 600px; margin: 0 auto; }
-        .page { display: none; animation: fadeIn 0.3s ease; }
+        .container { padding: 10px; max-width: 600px; margin: 0 auto; }
+        .page { display: none; }
         .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
-        /* Cartões e Estilos */
-        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eee; }
-        .card-title { color: var(--primary); font-size: 1.1rem; margin-bottom: 15px; font-weight: bold; border-left: 5px solid var(--primary); padding-left: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        .card-title { color: var(--primary); font-size: 1rem; margin-bottom: 12px; font-weight: 800; border-bottom: 2px solid #E8F5E9; padding-bottom: 6px; }
+
+        /* Estilos do Painel (KPIs) conforme seu painel.html */
+        .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .kpi { background: white; border-radius: 10px; padding: 12px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .kpi-val { font-size: 20px; font-weight: 900; color: #1B5E20; }
+        .kpi-lbl { font-size: 10px; color: #888; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
         
-        .grid-fin { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .stat-box { padding: 15px; border-radius: 10px; text-align: center; font-weight: bold; }
-        .green { background: #E8F5E9; color: #2E7D32; }
-        .red { background: #FFEBEE; color: #C62828; }
-        
-        .stock-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; align-items: center; }
-        .stock-row:last-child { border-bottom: none; }
-        
-        /* Botões e Inputs */
-        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; outline: none; }
-        input:focus { border-color: var(--primary); }
-        .btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.2s; }
-        .btn:active { transform: scale(0.98); opacity: 0.9; }
-        .btn-outline { background: white; color: var(--primary); border: 2px solid var(--primary); margin-top: 10px; }
-        
-        .loading { text-align: center; color: #888; padding: 30px; font-style: italic; }
-        .refresh-tag { font-size: 0.7rem; color: #999; text-align: center; margin-top: 10px; }
+        .pills { display: flex; gap: 5px; margin-bottom: 15px; justify-content: center; }
+        .pill { padding: 6px 15px; border: 1.5px solid #ddd; border-radius: 20px; background: white; color: #888; font-size: 11px; font-weight: 700; cursor: pointer; }
+        .pill.on { background: #1B5E20; color: white; border-color: #1B5E20; }
+
+        .stock-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+        .btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -61,31 +52,44 @@
     <div class="container">
         <section id="inicio" class="page active">
             <div class="card">
-                <div class="card-title">Resumo</div>
-                <p>Bem-vindo, <b>Rogério Avelino</b>.</p>
-                <p style="margin-top:10px; color: #666; font-size: 0.9rem;">O sistema está sincronizado com a sua planilha oficial.</p>
+                <div class="card-title">Resumo Geral</div>
+                <p>Bem-vindo, <b>Rogério Avelino</b>. Sistema pronto.</p>
             </div>
         </section>
 
         <section id="painel" class="page">
+            <div class="pills">
+                <button class="pill on" onclick="setPer(this, 7)">7 dias</button>
+                <button class="pill" onclick="setPer(this, 15)">15 dias</button>
+                <button class="pill" onclick="setPer(this, 30)">Mês</button>
+            </div>
+
+            <div class="kpis">
+                <div class="kpi"><div class="kpi-lbl">💰 Receitas</div><div class="kpi-val" id="kp-rec">R$ 0</div></div>
+                <div class="kpi"><div class="kpi-lbl">💸 Despesas</div><div class="kpi-val" style="color:#C62828" id="kp-desp">R$ 0</div></div>
+                <div class="kpi" style="grid-column: span 2; background: #E8F5E9;">
+                    <div class="kpi-lbl">✅ Saldo Geral</div>
+                    <div class="kpi-val" id="kp-saldo">R$ 0</div>
+                </div>
+            </div>
+
             <div class="card">
-                <div class="card-title">Financeiro</div>
-                <div id="dados-painel"><div class="loading">Buscando dados...</div></div>
+                <div class="card-title">Detalhamento</div>
+                <div id="lista-painel"><div style="text-align:center; color:#999; font-size:12px;">Carregando...</div></div>
             </div>
         </section>
 
         <section id="estoque" class="page">
             <div class="card">
-                <div class="card-title">Estoque</div>
-                <div id="lista-estoque"><div class="loading">Buscando estoque...</div></div>
+                <div class="card-title">Itens em Estoque</div>
+                <div id="lista-estoque"></div>
             </div>
         </section>
 
         <section id="cantina" class="page">
             <div class="card">
                 <div class="card-title">Lançar Cantina</div>
-                <label style="font-size: 0.8rem; font-weight: bold; color: #666;">QUANTIDADE / VALOR</label>
-                <input type="number" id="qtd" placeholder="0.00" inputmode="decimal">
+                <input type="number" id="qtd" placeholder="Valor ou Quantidade" inputmode="decimal">
                 <button class="btn" onclick="salvar()">Salvar Registro</button>
             </div>
         </section>
@@ -93,98 +97,58 @@
         <section id="config" class="page">
             <div class="card">
                 <div class="card-title">Configurações</div>
-                <p style="font-size: 0.9rem; margin-bottom: 20px; color: #444;">Use as opções abaixo para manter o aplicativo atualizado com a planilha.</p>
-                
-                <button class="btn" onclick="puxarDados()">🔄 Atualizar Dados Agora</button>
-                <button class="btn btn-outline" onclick="location.reload()">🧹 Limpar Cache e Reiniciar</button>
-                
-                <div class="refresh-tag" id="last-update">Última sincronização: --:--</div>
-            </div>
-            
-            <div class="card">
-                <div class="card-title">Suporte</div>
-                <p style="font-size: 0.8rem; color: #888;">ID Planilha: 1KE-B91...uIO</p>
+                <button class="btn" style="margin-bottom:10px" onclick="puxarDados()">🔄 Sincronizar Agora</button>
+                <button class="btn" style="background:#666" onclick="location.reload()">🧹 Reiniciar App</button>
             </div>
         </section>
     </div>
 
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxaVjBYJ5_B9PaVDOjFN_ZZvuXBO0ksC_TB_QEP7NwgtYL4CVd04yEIjcv3OeK7lxe3YA/exec";
+        let dadosGlobais = null;
 
         function openPage(evt, pageId) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(pageId).classList.add('active');
             evt.currentTarget.classList.add('active');
-            if(pageId === 'estoque' || pageId === 'painel') puxarDados();
+            if(pageId === 'painel' || pageId === 'estoque') puxarDados();
+        }
+
+        function setPer(btn, dias) {
+            document.querySelectorAll('.pill').forEach(b => b.classList.remove('on'));
+            btn.classList.add('on');
+            renderPainel();
         }
 
         async function puxarDados() {
-            const painelDiv = document.getElementById('dados-painel');
-            const estoqueDiv = document.getElementById('lista-estoque');
-            
             try {
                 const resp = await fetch(SCRIPT_URL + "?acao=carregar");
-                const r = await resp.json();
-                
-                // Atualiza Painel
-                if(r.Painel && r.Painel[1]) {
-                    painelDiv.innerHTML = `
-                        <div class="grid-fin">
-                            <div class="stat-box green"><small>Receitas</small><br>R$ ${r.Painel[1][0]}</div>
-                            <div class="stat-box red"><small>Despesas</small><br>R$ ${r.Painel[1][1]}</div>
-                        </div>
-                        <div style="text-align:center; margin-top:15px; font-weight:bold; padding:12px; background:#f0f0f0; border-radius:8px; border: 1px dashed #ccc;">
-                            Saldo: R$ ${r.Painel[1][2]}
-                        </div>`;
-                }
+                dadosGlobais = await resp.json();
+                renderPainel();
+                renderEstoque();
+            } catch (e) { console.error("Erro ao carregar", e); }
+        }
 
-                // Atualiza Estoque
-                if(r.Estoque) {
-                    let h = '';
-                    for(let i = 1; i < r.Estoque.length; i++) {
-                        if(r.Estoque[i][0]) {
-                            h += `<div class="stock-row"><span>${r.Estoque[i][0]}</span><strong>${r.Estoque[i][1]}</strong></div>`;
-                        }
-                    }
-                    estoqueDiv.innerHTML = h || "Nenhum item encontrado.";
-                }
-                
-                document.getElementById('last-update').innerText = "Última sincronização: " + new Date().toLocaleTimeString();
+        function renderPainel() {
+            if(!dadosGlobais || !dadosGlobais.Painel) return;
+            const p = dadosGlobais.Painel[1]; // Linha 2 da aba Painel
+            document.getElementById('kp-rec').innerText = "R$ " + (p[0] || 0);
+            document.getElementById('kp-desp').innerText = "R$ " + (p[1] || 0);
+            document.getElementById('kp-saldo').innerText = "R$ " + (p[2] || 0);
+            document.getElementById('lista-painel').innerHTML = "<div style='font-size:12px; color:#666; text-align:center'>Dados atualizados via Planilha.</div>";
+        }
 
-            } catch (e) {
-                console.error(e);
-                if(painelDiv) painelDiv.innerHTML = "Erro ao conectar.";
+        function renderEstoque() {
+            if(!dadosGlobais || !dadosGlobais.Estoque) return;
+            let h = '';
+            for(let i = 1; i < dadosGlobais.Estoque.length; i++) {
+                if(dadosGlobais.Estoque[i][0]) {
+                    h += `<div class="stock-row"><span>${dadosGlobais.Estoque[i][0]}</span><strong>${dadosGlobais.Estoque[i][1]}</strong></div>`;
+                }
             }
+            document.getElementById('lista-estoque').innerHTML = h || "Vazio";
         }
 
         async function salvar() {
             const val = document.getElementById('qtd').value;
-            if(!val) return alert("Por favor, digite um valor.");
-            
-            const btn = event.target;
-            const originalText = btn.innerText;
-            btn.innerText = "Enviando...";
-            btn.disabled = true;
-
-            try {
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify({tipo: 'Cantina', valor: val})
-                });
-                alert("Lançamento realizado com sucesso!");
-                document.getElementById('qtd').value = '';
-            } catch (e) {
-                alert("Erro ao salvar.");
-            } finally {
-                btn.innerText = originalText;
-                btn.disabled = false;
-            }
-        }
-
-        // Inicia carregando os dados
-        puxarDados();
-    </script>
-</body>
-</html>
