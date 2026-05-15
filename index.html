@@ -2,216 +2,122 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="GPL Fazenda">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#1B5E20">
-    <meta name="description" content="Gestão Pecuária Lucrativa — Rogério Avelino">
-    <link rel="manifest" href="manifest.json">
-    <title>GPL — Gestão Pecuária Lucrativa</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GPL — Gestão Pecuária</title>
     <style>
-        /* Estilos Base */
-        *{box-sizing:border-box;margin:0;padding:0}
-        body{font-family:system-ui,sans-serif;font-size:14px;background:#f0f0f0;color:#1a1a1a;max-width:480px;margin:0 auto;min-height:100vh}
+        :root { --primary: #1B5E20; --secondary: #2D7A1F; --bg: #f0f2f5; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
         
+        body { background: var(--bg); color: #333; line-height: 1.6; }
+
         /* HEADER */
-        .hdr{background:linear-gradient(135deg,#1a5c10,#2d7a1f);padding:0 12px;height:52px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-        .htxt{color:#fff;flex:1;min-width:0}
-        .htxt .t2{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-        
-        /* TABS NAVEGAÇÃO */
-        .tabs{display:flex;border-bottom:2px solid #e0e0e0;background:#fff;overflow-x:auto;position:sticky;top:52px;z-index:90}
-        .tab{flex:1;padding:12px 5px;text-align:center;font-size:11px;cursor:pointer;border-bottom:3px solid transparent;color:#888;white-space:nowrap;transition: 0.2s}
-        .tab.on{color:#2d7a1f;border-bottom-color:#2d7a1f;font-weight:700}
+        .header { background: var(--primary); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .header h1 { font-size: 1.2rem; }
 
-        /* PAGINAS */
-        .pg{padding:15px; display:none}
-        .pg.on{display:block}
-        
-        /* CARDS E UI */
-        .card{background:#fff;border-radius:12px;padding:15px;margin-bottom:12px;box-shadow:0 2px 5px rgba(0,0,0,0.05);border:1px solid #eee}
-        .stit{font-size:14px;font-weight:700;margin-bottom:10px;color:#1B5E20;display:flex;align-items:center;gap:8px}
-        
-        /* ESTOQUE BARS */
-        .er{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f0f0f0}
-        .ebw{width:80px;height:8px;background:#eee;border-radius:4px;overflow:hidden}
-        .ebar{height:100%;background:#2d7a1f;transition:width 0.5s}
-        .ebar.l{background:#CC2200} /* Baixo estoque */
+        /* NAVEGAÇÃO */
+        .nav { display: flex; background: white; overflow-x: auto; position: sticky; top: 51px; z-index: 999; border-bottom: 1px solid #ddd; }
+        .nav-item { flex: 1; padding: 12px 5px; text-align: center; font-size: 0.8rem; font-weight: bold; color: #666; cursor: pointer; white-space: nowrap; border-bottom: 3px solid transparent; }
+        .nav-item.active { color: var(--primary); border-bottom-color: var(--primary); background: #f9f9f9; }
 
-        /* LOGIN */
-        #login-screen{position:fixed;inset:0;background:#fff;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
-        .login-card{background:#fff;padding:25px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,0.1);width:100%;max-width:320px;text-align:center}
-        .pin-dots{display:flex;gap:10px;justify-content:center;margin:20px 0}
-        .pin-dot{width:15px;height:15px;border-radius:50%;border:2px solid #ddd}
-        .pin-dot.f{background:#2d7a1f;border-color:#2d7a1f}
-        
+        /* CONTEÚDO */
+        .container { padding: 15px; max-width: 500px; margin: 0 auto; }
+        .page { display: none; animation: fadeIn 0.3s; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* CARDS */
+        .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card-title { color: var(--primary); font-size: 1rem; margin-bottom: 15px; font-weight: bold; display: flex; align-items: center; gap: 8px; border-left: 4px solid var(--primary); padding-left: 10px; }
+
+        /* GRID FINANCEIRO */
+        .grid-fin { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stat-box { padding: 12px; border-radius: 8px; text-align: center; }
+        .stat-box.green { background: #e8f5e9; color: #2e7d32; }
+        .stat-box.red { background: #ffebee; color: #c62828; }
+        .stat-val { display: block; font-size: 1.1rem; font-weight: bold; }
+
+        /* ESTOQUE */
+        .stock-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .progress-bg { width: 80px; height: 8px; background: #eee; border-radius: 4px; overflow: hidden; }
+        .progress-bar { height: 100%; background: var(--secondary); }
+
         /* BOTÕES */
-        .sbtn{width:100%;padding:14px;border-radius:10px;background:#2d7a1f;border:none;color:#fff;font-weight:700;cursor:pointer}
-        .loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,0.8);display:none;align-items:center;justify-content:center;z-index:150}
+        .btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; }
+
     </style>
 </head>
 <body>
 
-    <!-- Header Fixo -->
-    <header class="hdr">
-        <div class="htxt">
-            <div class="t2">GPL — Fazenda Lucrativa</div>
-        </div>
-        <div id="status-dot" class="sdot on"></div>
+    <header class="header">
+        <h1>GPL — FAZENDA LUCRAVIVA</h1>
     </header>
 
-    <!-- Menu de Abas -->
-    <nav class="tabs" id="main-nav" style="display:none">
-        <div class="tab on" onclick="openTab('inicio')">Início</div>
-        <div class="tab" onclick="openTab('painel')">Painel</div>
-        <div class="tab" onclick="openTab('estoque')">Estoque</div>
-        <div class="tab" onclick="openTab('cantina')">Cantina</div>
-        <div class="tab" onclick="openTab('config')">Config</div>
+    <nav class="nav">
+        <div class="nav-item active" onclick="openPage(event, 'inicio')">Início</div>
+        <div class="nav-item" onclick="openPage(event, 'painel')">Painel</div>
+        <div class="nav-item" onclick="openPage(event, 'estoque')">Estoque</div>
+        <div class="nav-item" onclick="openPage(event, 'cantina')">Cantina</div>
+        <div class="nav-item" onclick="openPage(event, 'config')">Config</div>
     </nav>
 
-    <!-- Conteúdo das Páginas -->
-    <main id="app-pages" style="display:none">
-        
-        <!-- INÍCIO -->
-        <section id="inicio" class="pg on">
+    <div class="container">
+        <section id="inicio" class="page active">
             <div class="card">
-                <h3 class="stit">Bem-vindo, Rogério</h3>
-                <p>Selecione uma aba acima para gerenciar os dados da fazenda em tempo real.</p>
+                <div class="card-title">Resumo Geral</div>
+                <p>Bem-vindo, Rogério. O sistema está pronto para uso.</p>
             </div>
         </section>
 
-        <!-- PAINEL / VISÃO GERAL -->
-        <section id="painel" class="pg">
+        <section id="painel" class="page">
             <div class="card">
-                <h3 class="stit">Visão Geral (Financeiro)</h3>
-                <div id="painel-content">Carregando indicadores...</div>
-            </div>
-        </section>
-
-        <!-- ESTOQUE -->
-        <section id="estoque" class="pg">
-            <div class="card">
-                <h3 class="stit">Estoque de Insumos</h3>
-                <div id="estoque-list">Carregando estoque...</div>
-            </div>
-        </section>
-
-        <!-- CANTINA -->
-        <section id="cantina" class="pg">
-            <div class="card">
-                <h3 class="stit">Registro da Cantina</h3>
-                <p>Formulário de refeições...</p>
-                <button class="sbtn" onclick="alert('Funcionalidade em desenvolvimento')">Lançar Refeição</button>
-            </div>
-        </section>
-
-        <!-- CONFIGURAÇÕES -->
-        <section id="config" class="pg">
-            <div class="card">
-                <h3 class="stit">Configurações</h3>
-                <p>Versão do App: 2.0.1</p>
-                <button class="sbtn" style="background:#888; margin-top:10px" onclick="location.reload()">Sincronizar Dados</button>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Tela de Login (PIN) -->
-    <div id="login-screen">
-        <div class="login-card">
-            <h2 style="color:#1B5E20">Acesso GPL</h2>
-            <p style="font-size:12px; color:#666">Digite seu PIN para acessar</p>
-            <div class="pin-dots">
-                <div class="pin-dot"></div>
-                <div class="pin-dot"></div>
-                <div class="pin-dot"></div>
-                <div class="pin-dot"></div>
-            </div>
-            <button class="sbtn" onclick="mockLogin()">Entrar</button>
-        </div>
-    </div>
-
-    <div id="loading" class="loading-overlay">Processando...</div>
-
-    <script>
-        // --- CONFIGURAÇÃO ---
-        const SCRIPT_URL = "COLE_AQUI_SUA_URL_DO_GOOGLE_APPS_SCRIPT";
-
-        // --- NAVEGAÇÃO ---
-        function openTab(tabId) {
-            // Remove 'on' de todas as abas e páginas
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
-            document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
-            
-            // Ativa a aba clicada
-            event.currentTarget.classList.add('on');
-            const page = document.getElementById(tabId);
-            if(page) {
-                page.classList.add('on');
-                if(tabId === 'estoque') loadEstoqueData();
-                if(tabId === 'painel') loadPainelData();
-            }
-        }
-
-        // --- LÓGICA DE LOGIN (SIMULADA) ---
-        function mockLogin() {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('main-nav').style.display = 'flex';
-            document.getElementById('app-pages').style.display = 'block';
-        }
-
-        // --- RENDERIZAÇÃO DO ESTOQUE (CORRIGIDA) ---
-        async function loadEstoqueData() {
-            const container = document.getElementById('estoque-list');
-            container.innerHTML = "Atualizando dados...";
-
-            try {
-                // Simulação de chamada para a planilha (substitua por fetch(SCRIPT_URL))
-                const mockDados = [
-                    {nome: "Sal Mineral", atual: 45, max: 100, un: "sac"},
-                    {nome: "Ração Bezerro", atual: 12, max: 80, un: "sac"},
-                    {nome: "Vacina Febre A.", atual: 500, max: 500, un: "dos"}
-                ];
-
-                let html = '';
-                mockDados.forEach(item => {
-                    const perc = Math.min((item.atual / item.max) * 100, 100);
-                    const isLow = perc < 20 ? 'l' : '';
-                    
-                    html += `
-                        <div class="er">
-                            <div>
-                                <strong>${item.nome}</strong><br>
-                                <small>${item.atual} / ${item.max} ${item.un}</small>
-                            </div>
-                            <div class="ebw">
-                                <div class="ebar ${isLow}" style="width: ${perc}%"></div>
-                            </div>
-                        </div>`;
-                });
-                container.innerHTML = html;
-            } catch (e) {
-                container.innerHTML = "Erro ao carger estoque. Verifique a conexão.";
-            }
-        }
-
-        // --- RENDERIZAÇÃO DO PAINEL ---
-        function loadPainelData() {
-            const container = document.getElementById('painel-content');
-            container.innerHTML = `
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
-                    <div style="background:#f9f9f9; padding:10px; border-radius:8px">
-                        <small>Receita Mês</small><br>
-                        <strong style="color:green">R$ 45.200</strong>
+                <div class="card-title">Visão Financeira</div>
+                <div class="grid-fin">
+                    <div class="stat-box green">
+                        <small>Receitas</small>
+                        <span class="stat-val">R$ 0,00</span>
                     </div>
-                    <div style="background:#f9f9f9; padding:10px; border-radius:8px">
-                        <small>Despesas</small><br>
-                        <strong style="color:red">R$ 12.850</strong>
+                    <div class="stat-box red">
+                        <small>Despesas</small>
+                        <span class="stat-val">R$ 0,00</span>
                     </div>
                 </div>
-            `;
+            </div>
+        </section>
+
+        <section id="estoque" class="page">
+            <div class="card">
+                <div class="card-title">Itens em Estoque</div>
+                <div id="lista-estoque">Carregando dados da planilha...</div>
+            </div>
+        </section>
+
+        <section id="cantina" class="page">
+            <div class="card">
+                <div class="card-title">Registro de Refeição</div>
+                <input type="number" id="qtd_refeicao" placeholder="Qtd de pessoas">
+                <button class="btn" onclick="alert('Enviando para planilha...')">Lançar Agora</button>
+            </div>
+        </section>
+
+        <section id="config" class="page">
+            <div class="card">
+                <div class="card-title">Sincronização</div>
+                <button class="btn" onclick="location.reload()">Atualizar App</button>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        function openPage(evt, pageId) {
+            const pages = document.getElementsByClassName("page");
+            for (let i = 0; i < pages.length; i++) { pages[i].classList.remove("active"); }
+            
+            const navItems = document.getElementsByClassName("nav-item");
+            for (let i = 0; i < navItems.length; i++) { navItems[i].classList.remove("active"); }
+            
+            document.getElementById(pageId).classList.add("active");
+            evt.currentTarget.classList.add("active");
         }
     </script>
 </body>
