@@ -3,167 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GPL — Gestão Pecuária</title>
+    <title>GPL — Fazenda Lucraviva</title>
     <style>
         :root { --primary: #1B5E20; --bg: #f0f2f5; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        body { background: var(--bg); color: #333; overflow-x: hidden; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+        body { background: var(--bg); color: #333; }
+        .header { background: linear-gradient(135deg,#1a5c10,#2d7a1f); color: white; padding: 15px; text-align: center; font-weight: 800; font-size: 18px; position: sticky; top: 0; z-index: 100; }
         
-        /* TELA DE LOGIN (PIN) */
-        #login-screen { position: fixed; inset: 0; background: var(--primary); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; color: white; }
-        .pin-box { background: white; padding: 30px; border-radius: 15px; display: flex; flex-direction: column; gap: 15px; width: 80%; max-width: 300px; }
-        .pin-box input { padding: 15px; text-align: center; font-size: 24px; border: 2px solid #ddd; border-radius: 10px; color: #333; }
-        .btn-login { background: #2d7a1f; color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-
-        /* ESTRUTURA DO APP */
-        .header { background: linear-gradient(135deg,#1a5c10,#2d7a1f); color: white; padding: 15px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 100; }
-        .nav { display: flex; background: white; border-bottom: 1px solid #ddd; overflow-x: auto; position: sticky; top: 50px; z-index: 99; }
-        .nav-item { flex: 1; padding: 15px 5px; text-align: center; font-size: 11px; font-weight: bold; color: #666; cursor: pointer; border-bottom: 3px solid transparent; min-width: 70px; }
+        /* Menu Superior */
+        .nav { display: flex; background: white; border-bottom: 1px solid #ddd; overflow-x: auto; position: sticky; top: 52px; z-index: 99; }
+        .nav-item { flex: 1; padding: 15px 5px; text-align: center; font-size: 11px; font-weight: bold; color: #666; cursor: pointer; border-bottom: 3px solid transparent; min-width: 80px; }
         .nav-item.active { color: var(--primary); border-bottom-color: var(--primary); }
+
         .container { padding: 10px; display: none; }
         .container.active { display: block; }
 
-        /* CARDS DO PAINEL (Conforme suas fotos) */
-        .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-        .kpi { background: white; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .kpi-lbl { font-size: 10px; color: #888; font-weight: bold; text-transform: uppercase; }
-        .kpi-val { font-size: 18px; font-weight: 900; color: var(--primary); }
-        
-        .section-title { font-size: 12px; font-weight: 800; color: #555; margin: 15px 0 8px 5px; text-transform: uppercase; display: flex; justify-content: space-between; }
-        .row-item { background: white; padding: 12px; border-radius: 10px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .row-info { display: flex; flex-direction: column; }
-        .row-main { font-size: 13px; font-weight: bold; color: #333; }
-        .row-sub { font-size: 11px; color: #888; }
-        .row-val { font-size: 14px; font-weight: 800; color: var(--primary); }
+        /* KPIs Estilo Segundo Print */
+        .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+        .kpi { background: white; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        .kpi-val { font-size: 22px; font-weight: 900; color: #1B5E20; }
+        .kpi-lbl { font-size: 11px; color: #888; text-transform: uppercase; font-weight: 700; }
 
-        input[type="number"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; }
-        .btn-save { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; }
+        /* Seções do Painel */
+        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        .card-title { font-size: 13px; font-weight: 800; color: #1B5E20; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; text-transform: uppercase; }
+        
+        .row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f9f9f9; }
+        .row-name { font-size: 13px; font-weight: 700; color: #333; }
+        .row-sub { font-size: 11px; color: #999; }
+        .row-val { font-size: 14px; font-weight: 800; color: #1B5E20; }
+
+        /* Estilo PIN */
+        #login { position: fixed; inset: 0; background: var(--primary); z-index: 1000; display: flex; align-items: center; justify-content: center; flex-direction: column; color: white; }
+        .pin-box { background: white; padding: 25px; border-radius: 15px; width: 85%; max-width: 320px; text-align: center; }
+        .pin-box input { width: 100%; padding: 15px; font-size: 20px; text-align: center; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
-    <div id="login-screen">
-        <h2 style="margin-bottom: 20px;">GPL - ACESSO</h2>
-        <div class="pin-box">
-            <input type="password" id="pin-input" placeholder="DIGITE SEU PIN" inputmode="numeric">
-            <button class="btn-login" onclick="checkPin()">ENTRAR NO SISTEMA</button>
+<div id="login">
+    <h2 style="margin-bottom:20px">GPL — ACESSO</h2>
+    <div class="pin-box">
+        <input type="password" id="pin" placeholder="PIN DE ACESSO" inputmode="numeric">
+        <button onclick="logar()" style="width:100%; padding:15px; background:#2d7a1f; color:white; border:none; border-radius:10px; font-weight:bold">ENTRAR</button>
+    </div>
+</div>
+
+<div id="app" style="display:none">
+    <header class="header">GPL — FAZENDA LUCRAVIVA</header>
+    <nav class="nav">
+        <div class="nav-item active" onclick="guia(this, 'painel')">PAINEL</div>
+        <div class="nav-item" onclick="guia(this, 'estoque')">ESTOQUE</div>
+        <div class="nav-item" onclick="guia(this, 'lancamento')">LANÇAR</div>
+        <div class="nav-item" onclick="guia(this, 'config')">CONFIG</div>
+    </nav>
+
+    <div id="painel" class="container active">
+        <div class="kpis">
+            <div class="kpi"><div class="kpi-lbl">Produção</div><div class="kpi-val" id="k-prod">0</div></div>
+            <div class="kpi"><div class="kpi-lbl">Saldo Cantina</div><div class="kpi-val" id="k-cant">R$ 0</div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">🐄 Produção Recente</div>
+            <div id="l-prod"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">🍴 Cantina (Últimos)</div>
+            <div id="l-cant"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">📊 Escore Corporal</div>
+            <div id="l-esc"></div>
         </div>
     </div>
 
-    <div id="app-content" style="display:none;">
-        <header class="header">GPL — FAZENDA LUCRAVIVA</header>
-        <nav class="nav">
-            <div class="nav-item active" onclick="tab(this, 'painel')">PAINEL</div>
-            <div class="nav-item" onclick="tab(this, 'estoque')">ESTOQUE</div>
-            <div class="nav-item" onclick="tab(this, 'lancamento')">LANÇAR</div>
-            <div class="nav-item" onclick="tab(this, 'config')">CONFIG</div>
-        </nav>
+    <div id="estoque" class="container">
+        <div class="card"><div class="card-title">Itens em Estoque</div><div id="l-est"></div></div>
+    </div>
 
-        <div id="painel" class="container active">
-            <div class="kpis">
-                <div class="kpi"><div class="kpi-lbl">Produção</div><div class="kpi-val" id="res-prod">0</div></div>
-                <div class="kpi"><div class="kpi-lbl">Saldo Cantina</div><div class="kpi-val" id="res-cant">R$ 0</div></div>
-            </div>
-
-            <div class="section-title">Produção Recente</div>
-            <div id="lista-prod"></div>
-
-            <div class="section-title">Lançamentos Cantina</div>
-            <div id="lista-cant"></div>
-        </div>
-
-        <div id="estoque" class="container">
-            <div class="section-title">Itens Disponíveis</div>
-            <div id="lista-est"></div>
-        </div>
-
-        <div id="lancamento" class="container">
-            <div class="card" style="background:white; padding:15px; border-radius:10px;">
-                <div class="section-title">Novo Registro</div>
-                <select id="tipo-lanc" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px;">
-                    <option value="Cantina">Cantina (Almoço/Gasto)</option>
-                    <option value="Produção">Produção (Leite/Gado)</option>
-                </select>
-                <input type="number" id="valor-lanc" placeholder="Valor ou Quantidade">
-                <button class="btn-save" onclick="salvarDados()">SALVAR NA PLANILHA</button>
-            </div>
-        </div>
-
-        <div id="config" class="container">
-            <button class="btn-save" style="background:#666" onclick="location.reload()">SAIR / RECARREGAR</button>
+    <div id="lancamento" class="container">
+        <div class="card">
+            <div class="card-title">Novo Registro</div>
+            <select id="tipo" style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px">
+                <option value="Produção">Produção</option>
+                <option value="Cantina">Cantina</option>
+                <option value="Escore">Escore</option>
+            </select>
+            <input type="number" id="valor" placeholder="Valor / Qtd" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd">
+            <button onclick="salvar()" style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:bold">SALVAR</button>
         </div>
     </div>
 
-    <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxaVjBYJ5_B9PaVDOjFN_ZZvuXBO0ksC_TB_QEP7NwgtYL4CVd04yEIjcv3OeK7lxe3YA/exec";
-        
-        // FUNÇÃO DE PIN
-        function checkPin() {
-            const pin = document.getElementById('pin-input').value;
-            if(pin === "1234" || pin === "2024") { // Coloque seus PINs aqui
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('app-content').style.display = 'block';
-                carregar();
-            } else {
-                alert("PIN INCORRETO!");
-            }
-        }
+    <div id="config" class="container">
+        <button onclick="location.reload()" style="width:100%; padding:15px; background:#666; color:white; border:none; border-radius:8px; font-weight:bold">RECARREGAR / SAIR</button>
+    </div>
+</div>
 
-        function tab(el, id) {
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
-            el.classList.add('active');
-            document.getElementById(id).classList.add('active');
-            if(id !== 'lancamento') carregar();
-        }
+<script>
+    const URL = "https://script.google.com/macros/s/AKfycbxaVjBYJ5_B9PaVDOjFN_ZZvuXBO0ksC_TB_QEP7NwgtYL4CVd04yEIjcv3OeK7lxe3YA/exec";
 
-        async function carregar() {
-            try {
-                const r = await fetch(SCRIPT_URL + "?acao=carregar").then(res => res.json());
-                
-                // Renderiza Produção
-                let hProd = "";
-                if(r.Produção) {
-                    r.Produção.slice(1, 6).forEach(row => {
-                        hProd += `<div class="row-item"><div class="row-info"><span class="row-main">Produção</span><span class="row-sub">${row[0]}</span></div><div class="row-val">${row[1]}</div></div>`;
-                    });
-                    document.getElementById('lista-prod').innerHTML = hProd;
-                }
-
-                // Renderiza Cantina
-                let hCant = "";
-                if(r.Cantina) {
-                    let total = 0;
-                    r.Cantina.slice(1).forEach(row => {
-                        total += parseFloat(row[1] || 0);
-                        hCant += `<div class="row-item"><div class="row-info"><span class="row-main">Lançamento</span><span class="row-sub">${row[0]}</span></div><div class="row-val">R$ ${row[1]}</div></div>`;
-                    });
-                    document.getElementById('lista-cant').innerHTML = hCant;
-                    document.getElementById('res-cant').innerText = "R$ " + total.toFixed(2);
-                }
-
-                // Renderiza Estoque
-                let hEst = "";
-                if(r.Estoque) {
-                    r.Estoque.slice(1).forEach(row => {
-                        hEst += `<div class="row-item"><div class="row-info"><span class="row-main">${row[0]}</span></div><div class="row-val">${row[1]}</div></div>`;
-                    });
-                    document.getElementById('lista-est').innerHTML = hEst;
-                }
-
-            } catch (e) { console.log(e); }
-        }
-
-        async function salvarDados() {
-            const t = document.getElementById('tipo-lanc').value;
-            const v = document.getElementById('valor-lanc').value;
-            if(!v) return alert("Preencha o valor");
-            
-            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({tipo: t, valor: v}) });
-            alert("Sucesso!");
-            document.getElementById('valor-lanc').value = "";
+    function logar() {
+        if(document.getElementById('pin').value === "2024") {
+            document.getElementById('login').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
             carregar();
-        }
-    </script>
+        } else { alert("PIN Inválido!"); }
+    }
+
+    function guia(el, id) {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById(id).classList.add('active');
+        if(id !== 'lancamento') carregar();
+    }
+
+    async function carregar() {
+        try {
+            const res = await fetch(URL + "?acao=carregar").then(r => r.json());
+            
+            // Produção
+            let hP = "";
+            if(res.Produção) {
+                res.Produção.slice(1, 6).reverse().forEach(r => {
+                    hP += `<div class="row"><div><div class="row-name">Leite</div><div class="row-sub">${r[0]}</div></div><div class="row-val">${r[1]}L</div></div>`;
+                });
+                document.getElementById('l-prod').innerHTML = hP;
+                document.getElementById('k-prod').innerText = res.Produção[res.Produção.length-1][1] || 0;
+            }
+
+            // Cantina
+            let hC = ""; let sC = 0;
+            if(res.Cantina) {
+                res.Cantina.slice(1).forEach(r => {
+                    sC += parseFloat(r[1] || 0);
+                    hC += `<div class="row"><div><div class="row-name">Gasto</div><div class="row-sub">${r[0]}</div></div><div class="row-val">R$ ${r[1]}</div></div>`;
+                });
+                document.getElementById('l-cant').innerHTML = hC;
+                document.getElementById('k-cant').innerText = "R$ " + sC.toFixed(2);
+            }
+
+            // Estoque
+            let hE = "";
+            if(res.Estoque) {
+                res.Estoque.slice(1).forEach(r => {
+                    hE += `<div class="row"><div><div class="row-name">${r[0]}</div></div><div class="row-val">${r[1]}</div></div>`;
+                });
+                document.getElementById('l-est').innerHTML = hE;
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    async function salvar() {
+        const t = document.getElementById('tipo').value;
+        const v = document.getElementById('valor').value;
+        if(!v) return alert("Digite o valor!");
+        await fetch(URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({tipo: t, valor: v}) });
+        alert("Salvo!"); document.getElementById('valor').value = ""; carregar();
+    }
+</script>
 </body>
 </html>
