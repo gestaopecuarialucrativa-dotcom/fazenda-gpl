@@ -32,7 +32,7 @@ body{font-family:system-ui,sans-serif;font-size:14px;background:#f0f0f0;color:#1
 .tab{flex:1;padding:8px 2px;text-align:center;font-size:11px;cursor:pointer;border-bottom:3px solid transparent;color:#888;white-space:nowrap;min-width:50px;margin-bottom:-2px}
 .tab.on{color:#2d7a1f;border-bottom-color:#2d7a1f;font-weight:700}
 /* PAGES */
-.pg{display:none;padding:13px}.pg.on{display:block}
+.pg{padding:13px}
 /* CARDS */
 .card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:13px;margin-bottom:11px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
 .lbl{font-size:12px;color:#666;margin-bottom:4px}
@@ -239,7 +239,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <div id="cloud-msg" style="display:none;background:#E8F5E9;color:#1B5E20;text-align:center;padding:6px;font-size:12px;font-weight:600;border-bottom:1px solid #c8e6c9"></div>
 
   <!-- HOME VAQUEIRO -->
-  <div id="pg-home" class="pg">
+  <div id="pg-home" class="pg" style="display:none">
     <div id="offline-badge" style="display:none;background:#FFF3E0;border:1px solid #FFB300;border-radius:8px;padding:8px 12px;font-size:12px;color:#7D5200;margin-bottom:8px">⚡ Modo offline — dados salvos localmente e enviados quando conectar</div>
     <div style="margin-bottom:14px">
       <div style="font-size:18px;font-weight:700" id="h-nome">Olá!</div>
@@ -253,7 +253,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   </div>
 
   <!-- DIÁRIA -->
-  <div id="pg-diaria" class="pg">
+  <div id="pg-diaria" class="pg" style="display:none">
     <div class="card">
       <div class="stit">👤 Diária do vaqueiro</div>
       <div class="fg"><div class="lbl">Fazenda</div><select id="d-faz" onchange="updDiariaNome()"></select></div>
@@ -281,7 +281,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   </div>
 
   <!-- INSUMO -->
-  <div id="pg-insumo" class="pg">
+  <div id="pg-insumo" class="pg" style="display:none">
     <!-- Cadastrar produto -->
     <div class="card" id="ins-cad-card">
       <div class="stit">📋 Cadastrar produto</div>
@@ -338,7 +338,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   </div>
 
   <!-- MEDICAMENTO -->
-  <div id="pg-med" class="pg">
+  <div id="pg-med" class="pg" style="display:none">
     <div class="card">
       <div class="stit">💉 Medicamentos / Vacinas</div>
       <div class="fg"><div class="lbl">Fazenda</div><select id="m-faz" onchange="updMedLote()"></select></div>
@@ -367,7 +367,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <!-- ESCORE -->
 
   <!-- TRATO -->
-  <div id="pg-trato" class="pg">
+  <div id="pg-trato" class="pg" style="display:none">
     <div class="card">
       <div class="stit">🛠 Trato de cocho</div>
       <div class="fg"><div class="lbl">Fazenda</div><select id="t-faz" onchange="updTrato()"></select></div>
@@ -418,7 +418,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     <div class="ok" id="ok-t">✅ Trato registrado!</div>
   </div>
 
-  <div id="pg-escore" class="pg">
+  <div id="pg-escore" class="pg" style="display:none">
     <div style="background:#EAF3DE;border:1px solid #3B6D11;border-radius:10px;padding:11px;font-size:12px;color:#27500A;margin-bottom:12px;line-height:1.6">
       🔬 <strong>Guia de Escore de Fezes</strong><br>Toque no escore que melhor descreve o que você viu.
     </div>
@@ -443,7 +443,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   </div>
 
   <!-- CANTINA -->
-  <div id="pg-cantina" class="pg">
+  <div id="pg-cantina" class="pg" style="display:none">
     <div class="card">
       <div class="stit">🏪 Cantina</div>
       <div class="fg"><div class="lbl">Fazenda</div><select id="ct-faz" onchange="updPrecosCt()"></select></div>
@@ -491,7 +491,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   </div>
 
   <!-- ESTOQUE -->
-  <div id="pg-estoque" class="pg">
+  <div id="pg-estoque" class="pg" style="display:none">
     <div class="card"><div class="stit">📦 Estoque atual</div><div id="est-l"></div></div>
     <div class="card">
       <div class="stit">⬇️ Entrada de produto</div>
@@ -505,7 +505,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   </div>
 
   <!-- PAINEL -->
-  <div id="pg-painel" class="pg"><div style="background:#1B5E20;color:white;padding:20px;font-size:20px;font-weight:bold;margin-bottom:10px">✅ PAINEL VISÍVEL</div>
+  <div id="pg-painel" class="pg" style="display:none">
     <div class="fg"><div class="lbl">Fazenda</div><select id="pf" onchange="rPan()"><option value="">Todas as fazendas</option></select></div>
     <div class="psel"><div class="pbtn on" onclick="sPer(this,'quinzena')">15 dias</div><div class="pbtn" onclick="sPer(this,'semana')">Semana</div><div class="pbtn" onclick="sPer(this,'quinzena')">Quinzena</div><div class="pbtn" onclick="sPer(this,'mes')">Mês</div><div class="pbtn" onclick="sPer(this,'safra')">🌾 Safra</div></div>
     <div id="safra-info" style="display:none;font-size:11px;color:#2E7D32;background:#E8F5E9;border-radius:8px;padding:5px 10px;margin-bottom:6px;text-align:center"></div>
@@ -572,7 +572,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   </div>
 
   <!-- LOTES -->
-  <div id="pg-lote" class="pg">
+  <div id="pg-lote" class="pg" style="display:none">
     <div class="card">
       <div class="stit">🐄 Cadastro de Lotes</div>
       <div class="fg"><div class="lbl">Fazenda</div><select id="lt-faz" onchange="rListLotes()"></select></div>
@@ -610,7 +610,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   </div>
 
   <!-- CONSULTOR -->
-  <div id="pg-consultor" class="pg">
+  <div id="pg-consultor" class="pg" style="display:none">
 
     <!-- Resumo geral -->
     <div id="cons-resumo"></div>
@@ -630,7 +630,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   </div>
 
   <!-- CONFIG -->
-  <div id="pg-config" class="pg">
+  <div id="pg-config" class="pg" style="display:none">
     <!-- BANCO DE DADOS -->
     <div class="card">
       <div class="stit">🗄️ Banco de dados</div>
@@ -1081,10 +1081,10 @@ function doLogout() {
 // NAVEGAÇÃO
 // ═══════════════════════════════════════════
 function sp(id, back, prev) {
-  document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.pg').forEach(function(p){ p.style.display='none'; });
   var pgEl = document.getElementById('pg-' + id);
   if (!pgEl) { console.warn('Page not found: pg-'+id); return; }
-  pgEl.classList.add('on');
+  pgEl.style.display = 'block';
   var hbackEl = document.getElementById('hback'); if(hbackEl) hbackEl.style.display = back ? 'flex' : 'none';
   // Hide home button when already on home
   var hhomeEl = document.getElementById('hhome'); if(hhomeEl) hhomeEl.style.display = id==='home' ? 'none' : 'flex';
@@ -1092,7 +1092,7 @@ function sp(id, back, prev) {
   const TT = {home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',med:'Medicamentos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes'};
   document.getElementById('h-t').textContent = CU ? CU.n : 'GPL';
   document.getElementById('h-s').textContent = TT[id] || '';
-  if (id === 'painel') { try{rPan();}catch(e){console.error('rPan ERRO:',e);} }
+  if (id === 'painel') { setTimeout(function(){ popAll(); rPan(); }, 50); }
   if (id === 'insumo') { setTimeout(function(){ rListProdutos(); updInsCadFaz(); }, 50); }
   if (id === 'lote') { setTimeout(function(){ rListLotes(); }, 50); }
 
