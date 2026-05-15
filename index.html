@@ -5,47 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GPL — Fazenda Lucraviva</title>
     <style>
-        :root { --primary: #1B5E20; --bg: #f0f2f5; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+        :root { --primary: #1B5E20; --bg: #f4f7f6; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
         body { background: var(--bg); color: #333; }
-        .header { background: linear-gradient(135deg,#1a5c10,#2d7a1f); color: white; padding: 15px; text-align: center; font-weight: 800; font-size: 18px; position: sticky; top: 0; z-index: 100; }
         
-        /* Menu Superior */
-        .nav { display: flex; background: white; border-bottom: 1px solid #ddd; overflow-x: auto; position: sticky; top: 52px; z-index: 99; }
-        .nav-item { flex: 1; padding: 15px 5px; text-align: center; font-size: 11px; font-weight: bold; color: #666; cursor: pointer; border-bottom: 3px solid transparent; min-width: 80px; }
-        .nav-item.active { color: var(--primary); border-bottom-color: var(--primary); }
-
-        .container { padding: 10px; display: none; }
-        .container.active { display: block; }
-
-        /* KPIs Estilo Segundo Print */
-        .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
-        .kpi { background: white; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
-        .kpi-val { font-size: 22px; font-weight: 900; color: #1B5E20; }
-        .kpi-lbl { font-size: 11px; color: #888; text-transform: uppercase; font-weight: 700; }
-
-        /* Seções do Painel */
-        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
-        .card-title { font-size: 13px; font-weight: 800; color: #1B5E20; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; text-transform: uppercase; }
+        /* LOGIN */
+        #login { position: fixed; inset: 0; background: var(--primary); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        .pin-box { background: white; padding: 30px; border-radius: 20px; width: 85%; max-width: 320px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        .pin-box input { width: 100%; padding: 15px; font-size: 24px; text-align: center; border: 2px solid #ddd; border-radius: 12px; margin-bottom: 20px; color: #333; outline: none; }
         
-        .row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f9f9f9; }
-        .row-name { font-size: 13px; font-weight: 700; color: #333; }
-        .row-sub { font-size: 11px; color: #999; }
-        .row-val { font-size: 14px; font-weight: 800; color: #1B5E20; }
+        /* HEADER & NAV */
+        .header { background: linear-gradient(135deg,#1a5c10,#2d7a1f); color: white; padding: 18px; text-align: center; font-weight: 800; font-size: 19px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .nav { display: flex; background: white; border-bottom: 1px solid #ddd; position: sticky; top: 55px; z-index: 99; }
+        .nav-item { flex: 1; padding: 15px 5px; text-align: center; font-size: 11px; font-weight: bold; color: #888; cursor: pointer; border-bottom: 3px solid transparent; text-transform: uppercase; }
+        .nav-item.active { color: var(--primary); border-bottom-color: var(--primary); background: #f9f9f9; }
 
-        /* Estilo PIN */
-        #login { position: fixed; inset: 0; background: var(--primary); z-index: 1000; display: flex; align-items: center; justify-content: center; flex-direction: column; color: white; }
-        .pin-box { background: white; padding: 25px; border-radius: 15px; width: 85%; max-width: 320px; text-align: center; }
-        .pin-box input { width: 100%; padding: 15px; font-size: 20px; text-align: center; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px; }
+        .container { padding: 12px; display: none; max-width: 600px; margin: 0 auto; }
+        .container.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* KPIS COLORIDOS */
+        .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .kpi { background: white; border-radius: 15px; padding: 18px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #eee; }
+        .kpi-lbl { font-size: 10px; color: #999; text-transform: uppercase; font-weight: 800; margin-bottom: 5px; }
+        .kpi-val { font-size: 22px; font-weight: 900; color: var(--primary); }
+
+        /* LISTAS */
+        .card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .card-title { font-size: 13px; font-weight: 800; color: var(--primary); margin-bottom: 12px; border-bottom: 2px solid #f0f0f0; padding-bottom: 6px; display: flex; justify-content: space-between; }
+        .row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f8f8f8; }
+        .row:last-child { border-bottom: none; }
+        .row-info { display: flex; flex-direction: column; }
+        .row-name { font-size: 13px; font-weight: 700; color: #444; }
+        .row-sub { font-size: 11px; color: #aaa; }
+        .row-val { font-size: 14px; font-weight: 800; color: var(--primary); }
+
+        /* FORMULÁRIO */
+        select, input[type="number"] { width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #ddd; font-size: 16px; outline: none; }
+        .btn-salvar { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; }
+        .btn-salvar:active { transform: scale(0.98); background: #144517; }
     </style>
 </head>
 <body>
 
 <div id="login">
-    <h2 style="margin-bottom:20px">GPL — ACESSO</h2>
+    <h2 style="margin-bottom:25px; letter-spacing: 2px;">GPL — ACESSO</h2>
     <div class="pin-box">
-        <input type="password" id="pin" placeholder="PIN DE ACESSO" inputmode="numeric">
-        <button onclick="logar()" style="width:100%; padding:15px; background:#2d7a1f; color:white; border:none; border-radius:10px; font-weight:bold">ENTRAR</button>
+        <input type="password" id="pin" placeholder="PIN" inputmode="numeric">
+        <button onclick="logar()" style="width:100%; padding:16px; background:var(--primary); color:white; border:none; border-radius:10px; font-weight:bold; font-size: 16px;">ENTRAR NO SISTEMA</button>
     </div>
 </div>
 
@@ -60,8 +67,8 @@
 
     <div id="painel" class="container active">
         <div class="kpis">
-            <div class="kpi"><div class="kpi-lbl">Produção</div><div class="kpi-val" id="k-prod">0</div></div>
-            <div class="kpi"><div class="kpi-lbl">Saldo Cantina</div><div class="kpi-val" id="k-cant">R$ 0</div></div>
+            <div class="kpi"><div class="kpi-lbl">Leite (Hoje)</div><div class="kpi-val" id="k-prod">0L</div></div>
+            <div class="kpi"><div class="kpi-lbl">Cantina</div><div class="kpi-val" id="k-cant" style="color:#C62828">R$ 0</div></div>
         </div>
 
         <div class="card">
@@ -70,47 +77,43 @@
         </div>
 
         <div class="card">
-            <div class="card-title">🍴 Cantina (Últimos)</div>
+            <div class="card-title">🍽️ Cantina</div>
             <div id="l-cant"></div>
-        </div>
-
-        <div class="card">
-            <div class="card-title">📊 Escore Corporal</div>
-            <div id="l-esc"></div>
         </div>
     </div>
 
     <div id="estoque" class="container">
-        <div class="card"><div class="card-title">Itens em Estoque</div><div id="l-est"></div></div>
+        <div class="card"><div class="card-title">Itens Disponíveis</div><div id="l-est"></div></div>
     </div>
 
     <div id="lancamento" class="container">
         <div class="card">
-            <div class="card-title">Novo Registro</div>
-            <select id="tipo" style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px">
-                <option value="Produção">Produção</option>
-                <option value="Cantina">Cantina</option>
-                <option value="Escore">Escore</option>
+            <div class="card-title">Novo Lançamento</div>
+            <select id="tipo">
+                <option value="Produção">Produção (Leite)</option>
+                <option value="Cantina">Cantina (Despesa)</option>
+                <option value="Escore">Escore Corporal</option>
             </select>
-            <input type="number" id="valor" placeholder="Valor / Qtd" style="width:100%; padding:12px; margin-bottom:15px; border-radius:8px; border:1px solid #ddd">
-            <button onclick="salvar()" style="width:100%; padding:15px; background:var(--primary); color:white; border:none; border-radius:8px; font-weight:bold">SALVAR</button>
+            <input type="number" id="valor" placeholder="Quantidade ou Valor" inputmode="decimal">
+            <button class="btn-salvar" onclick="salvar()">SALVAR NA PLANILHA</button>
         </div>
     </div>
 
     <div id="config" class="container">
-        <button onclick="location.reload()" style="width:100%; padding:15px; background:#666; color:white; border:none; border-radius:8px; font-weight:bold">RECARREGAR / SAIR</button>
+        <button class="btn-salvar" style="background:#666" onclick="location.reload()">SAIR / RECARREGAR</button>
+        <p style="text-align:center; margin-top:20px; font-size:10px; color:#999;">Versão 1.0.4 - Sincronizado</p>
     </div>
 </div>
 
 <script>
-    const URL = "https://script.google.com/macros/s/AKfycbxaVjBYJ5_B9PaVDOjFN_ZZvuXBO0ksC_TB_QEP7NwgtYL4CVd04yEIjcv3OeK7lxe3YA/exec";
+    const URL_SCRIPT = "https://script.google.com/macros/s/AKfycbxaVjBYJ5_B9PaVDOjFN_ZZvuXBO0ksC_TB_QEP7NwgtYL4CVd04yEIjcv3OeK7lxe3YA/exec";
 
     function logar() {
         if(document.getElementById('pin').value === "2024") {
             document.getElementById('login').style.display = 'none';
             document.getElementById('app').style.display = 'block';
             carregar();
-        } else { alert("PIN Inválido!"); }
+        } else { alert("PIN INCORRETO!"); }
     }
 
     function guia(el, id) {
@@ -123,46 +126,59 @@
 
     async function carregar() {
         try {
-            const res = await fetch(URL + "?acao=carregar").then(r => r.json());
+            const resp = await fetch(URL_SCRIPT + "?acao=carregar");
+            const dados = await resp.json();
             
-            // Produção
+            // Renderizar Produção
             let hP = "";
-            if(res.Produção) {
-                res.Produção.slice(1, 6).reverse().forEach(r => {
-                    hP += `<div class="row"><div><div class="row-name">Leite</div><div class="row-sub">${r[0]}</div></div><div class="row-val">${r[1]}L</div></div>`;
+            if(dados.Produção) {
+                const ultimos = dados.Produção.slice(1).reverse().slice(0,5);
+                ultimos.forEach(r => {
+                    hP += `<div class="row"><div class="row-info"><span class="row-name">Leite</span><span class="row-sub">${r[0]}</span></div><div class="row-val">${r[1]}L</div></div>`;
                 });
-                document.getElementById('l-prod').innerHTML = hP;
-                document.getElementById('k-prod').innerText = res.Produção[res.Produção.length-1][1] || 0;
+                document.getElementById('l-prod').innerHTML = hP || "Nenhum dado.";
+                document.getElementById('k-prod').innerText = (ultimos[0] ? ultimos[0][1] : 0) + "L";
             }
 
-            // Cantina
-            let hC = ""; let sC = 0;
-            if(res.Cantina) {
-                res.Cantina.slice(1).forEach(r => {
-                    sC += parseFloat(r[1] || 0);
-                    hC += `<div class="row"><div><div class="row-name">Gasto</div><div class="row-sub">${r[0]}</div></div><div class="row-val">R$ ${r[1]}</div></div>`;
+            // Renderizar Cantina
+            let hC = ""; let totalC = 0;
+            if(dados.Cantina) {
+                dados.Cantina.slice(1).forEach(r => {
+                    totalC += parseFloat(r[1] || 0);
+                    hC += `<div class="row"><div class="row-info"><span class="row-name">Gasto</span><span class="row-sub">${r[0]}</span></div><div class="row-val">R$ ${r[1]}</div></div>`;
                 });
-                document.getElementById('l-cant').innerHTML = hC;
-                document.getElementById('k-cant').innerText = "R$ " + sC.toFixed(2);
+                document.getElementById('l-cant').innerHTML = hC || "Sem lançamentos.";
+                document.getElementById('k-cant').innerText = "R$ " + totalC.toFixed(2);
             }
 
-            // Estoque
+            // Renderizar Estoque
             let hE = "";
-            if(res.Estoque) {
-                res.Estoque.slice(1).forEach(r => {
-                    hE += `<div class="row"><div><div class="row-name">${r[0]}</div></div><div class="row-val">${r[1]}</div></div>`;
+            if(dados.Estoque) {
+                dados.Estoque.slice(1).forEach(r => {
+                    hE += `<div class="row"><div class="row-name">${r[0]}</div><div class="row-val">${r[1]}</div></div>`;
                 });
-                document.getElementById('l-est').innerHTML = hE;
+                document.getElementById('l-est').innerHTML = hE || "Vazio.";
             }
-        } catch(e) { console.error(e); }
+
+        } catch (e) { console.error("Erro ao carregar:", e); }
     }
 
     async function salvar() {
         const t = document.getElementById('tipo').value;
         const v = document.getElementById('valor').value;
-        if(!v) return alert("Digite o valor!");
-        await fetch(URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({tipo: t, valor: v}) });
-        alert("Salvo!"); document.getElementById('valor').value = ""; carregar();
+        if(!v) return alert("Por favor, digite um valor!");
+
+        const btn = event.target;
+        btn.innerText = "ENVIANDO...";
+        btn.disabled = true;
+
+        try {
+            await fetch(URL_SCRIPT, { method: 'POST', mode: 'no-cors', body: JSON.stringify({tipo: t, valor: v}) });
+            alert("LANÇADO COM SUCESSO!");
+            document.getElementById('valor').value = "";
+            carregar();
+        } catch(e) { alert("Erro ao salvar!"); }
+        finally { btn.innerText = "SALVAR NA PLANILHA"; btn.disabled = false; }
     }
 </script>
 </body>
