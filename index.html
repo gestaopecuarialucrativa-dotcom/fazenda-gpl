@@ -603,30 +603,6 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
   <!-- ESTOQUE -->
   <div id="pg-estoque" class="pg">
-
-  <div class="gpl-section">
-    <div class="gpl-section-title">📦 Estoque atual</div>
-    <div id="est-l"><div class="gpl-empty">Carregando...</div></div>
-  </div>
-
-  <div class="gpl-section">
-    <div class="gpl-section-title">⬇️ Registrar entrada</div>
-    <div class="gpl-field"><label>Produto</label><select id="ep" class="gpl-inp"><option value="">Selecione...</option></select></div>
-    <div style="display:flex;gap:8px">
-      <div class="gpl-field" style="flex:1"><label>Quantidade</label><input type="number" id="eq" class="gpl-inp" placeholder="0" min="0" step="0.5"></div>
-      <div class="gpl-field" style="flex:1"><label>Data</label><input type="date" id="ed" class="gpl-inp"></div>
-    </div>
-    <div class="gpl-field"><label>NF / Fornecedor</label><input type="text" id="eo" class="gpl-inp" placeholder="Ex: NF 1234 — Agropecuária X"></div>
-    <button class="gpl-btn-green" onclick="entEst()" style="width:100%;margin-top:4px">⬇️ Registrar entrada</button>
-    <div class="gpl-ok" id="ok-e">✅ Entrada registrada!</div>
-  </div>
-
-  <div class="gpl-section">
-    <div class="gpl-section-title">🕐 Últimas movimentações</div>
-    <div id="mov-l"><div class="gpl-empty">Nenhuma movimentação.</div></div>
-  </div>
-
-</div><div id="pg-estoque" class="pg">
     <div class="card"><div class="stit">📦 Estoque atual</div><div id="est-l"></div></div>
     <div class="card">
       <div class="stit">⬇️ Entrada de produto</div>
@@ -641,128 +617,6 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
   <!-- PAINEL -->
   <div id="pg-painel" class="pg">
-
-  <!-- Filtros -->
-  <div class="gpl-bar">
-    <select id="pf" onchange="rPan()" class="gpl-sel">
-      <option value="">🏠 Todas as fazendas</option>
-    </select>
-    <div class="gpl-pills" id="per-pills">
-      <button class="gpill on" onclick="sPer(this,'semana')">7d</button>
-      <button class="gpill" onclick="sPer(this,'quinzena')">15d</button>
-      <button class="gpill" onclick="sPer(this,'mes')">Mês</button>
-      <button class="gpill" onclick="sPer(this,'safra')">🌾 Safra</button>
-    </div>
-  </div>
-  <div id="safra-info" class="gpl-safra-info" style="display:none"></div>
-
-  <!-- KPIs -->
-  <div class="gpl-kpis">
-    <div class="gpl-kpi gpl-kpi-green">
-      <div class="gpl-kpi-label">👤 Diárias pagas</div>
-      <div class="gpl-kpi-val" id="s-d">R$ 0</div>
-      <div class="gpl-kpi-sub" id="s-ds">0 registros</div>
-    </div>
-    <div class="gpl-kpi gpl-kpi-green">
-      <div class="gpl-kpi-label">🏪 Cantina</div>
-      <div class="gpl-kpi-val" id="s-c">R$ 0</div>
-      <div class="gpl-kpi-sub" id="s-cs">0 registros</div>
-    </div>
-    <div class="gpl-kpi gpl-kpi-neutral">
-      <div class="gpl-kpi-label">🛠 Tratos</div>
-      <div class="gpl-kpi-val" id="s-t">0</div>
-      <div class="gpl-kpi-sub">registros</div>
-    </div>
-    <div class="gpl-kpi gpl-kpi-neutral">
-      <div class="gpl-kpi-label">🔬 Escore fezes</div>
-      <div class="gpl-kpi-val" id="s-e">—</div>
-      <div class="gpl-kpi-sub" id="s-es">sem registros</div>
-    </div>
-    <div class="gpl-kpi gpl-kpi-red">
-      <div class="gpl-kpi-label">💸 A pagar</div>
-      <div class="gpl-kpi-val" id="s-dp">R$ 0</div>
-      <div class="gpl-kpi-sub" id="s-dps">0 pendentes</div>
-    </div>
-    <div class="gpl-kpi gpl-kpi-green">
-      <div class="gpl-kpi-label">✅ Pagas</div>
-      <div class="gpl-kpi-val" id="s-dpg">R$ 0</div>
-      <div class="gpl-kpi-sub" id="s-dpgs">0 liquidadas</div>
-    </div>
-  </div>
-
-  <!-- Gráfico -->
-  <div class="gpl-section">
-    <div class="gpl-section-title">📊 Desembolso — últimos 7 dias</div>
-    <canvas id="chart-desembolso" height="160" style="width:100%;display:block"></canvas>
-    <div style="display:flex;gap:14px;margin-top:8px;font-size:10px;justify-content:center;color:#666">
-      <span><span style="display:inline-block;width:9px;height:9px;background:#4CAF50;border-radius:2px;margin-right:3px"></span>Diárias</span>
-      <span><span style="display:inline-block;width:9px;height:9px;background:#FF9800;border-radius:2px;margin-right:3px"></span>Cantina</span>
-      <span><span style="display:inline-block;width:9px;height:9px;background:#E53935;border-radius:2px;margin-right:3px"></span>Despesas</span>
-    </div>
-  </div>
-
-  <!-- Listas -->
-  <div class="gpl-section">
-    <div class="gpl-section-title">👤 Diárias</div>
-    <div id="l-d"><div class="gpl-empty">Nenhum registro no período.</div></div>
-  </div>
-  <div class="gpl-section">
-    <div class="gpl-section-title">🔬 Escore de fezes</div>
-    <div id="l-e"><div class="gpl-empty">Nenhum registro no período.</div></div>
-  </div>
-  <div class="gpl-section">
-    <div class="gpl-section-title">🛠 Tratos de cocho</div>
-    <div id="l-t"><div class="gpl-empty">Nenhum registro no período.</div></div>
-  </div>
-  <div class="gpl-section">
-    <div class="gpl-section-title">🏪 Cantina</div>
-    <div id="l-ct"><div class="gpl-empty">Nenhum registro no período.</div></div>
-  </div>
-
-  <!-- Exportar -->
-  <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-    <button class="gpl-btn-outline" onclick="expCSV()" style="flex:1">⬇️ Exportar CSV</button>
-    <button class="gpl-btn-red" onclick="gerarRelatorioPDF()" style="flex:1">📄 PDF</button>
-    <button class="gpl-btn-dark" onclick="gerarReciboPDF()" style="flex:1">🧾 Recibo</button>
-  </div>
-
-  <!-- Lançar despesa -->
-  <div class="gpl-section">
-    <div class="gpl-section-title">💸 Lançar despesa avulsa</div>
-    <div class="gpl-field"><label>Fazenda</label><select id="desp-faz" class="gpl-inp"></select></div>
-    <div class="gpl-field"><label>Descrição</label><input type="text" id="desp-desc" class="gpl-inp" placeholder="Ex: Ração, Medicamento, Veterinário..."></div>
-    <div style="display:flex;gap:8px">
-      <div class="gpl-field" style="flex:1"><label>Valor (R$)</label><input type="number" id="desp-val" class="gpl-inp" placeholder="0,00" step="0.01" min="0"></div>
-      <div class="gpl-field" style="flex:1"><label>Vencimento</label><input type="date" id="desp-venc" class="gpl-inp"></div>
-    </div>
-    <div class="gpl-field"><label>Status</label>
-      <div style="display:flex;gap:6px">
-        <button class="gpill on" id="db-pagar" onclick="sDespSt(this,'pagar')" style="flex:1;padding:9px">⏳ A pagar</button>
-        <button class="gpill" id="db-pago" onclick="sDespSt(this,'pago')" style="flex:1;padding:9px">✅ Pago</button>
-      </div>
-    </div>
-    <button class="gpl-btn-green" onclick="envDesp()" style="width:100%;margin-top:4px">💾 Lançar despesa</button>
-    <div class="gpl-ok" id="ok-desp">✅ Despesa lançada!</div>
-  </div>
-
-  <!-- Lista despesas -->
-  <div class="gpl-section">
-    <div class="gpl-section-title">📋 Despesas lançadas</div>
-    <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
-      <button class="gpill on" id="df-todas" onclick="filtDesp(this,'todas')" style="flex:1">Todas</button>
-      <button class="gpill" id="df-pagar" onclick="filtDesp(this,'pagar')" style="flex:1">A pagar</button>
-      <button class="gpill" id="df-pago" onclick="filtDesp(this,'pago')" style="flex:1">Pagas</button>
-    </div>
-    <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
-      <span style="font-size:11px;color:#888">Mês:</span>
-      <select id="df-mes" onchange="rListDesp()" class="gpl-inp" style="flex:1;padding:5px">
-        <option value="">Todos os meses</option>
-      </select>
-    </div>
-    <div id="l-desp"><div class="gpl-empty">Nenhuma despesa lançada.</div></div>
-  </div>
-
-</div><div id="pg-painel" class="pg">
     <div class="fg"><div class="lbl">Fazenda</div><select id="pf" onchange="rPan()"><option value="">Todas as fazendas</option></select></div>
     <div class="psel"><div class="pbtn on" onclick="sPer(this,'quinzena')">15 dias</div><div class="pbtn" onclick="sPer(this,'semana')">Semana</div><div class="pbtn" onclick="sPer(this,'quinzena')">Quinzena</div><div class="pbtn" onclick="sPer(this,'mes')">Mês</div><div class="pbtn" onclick="sPer(this,'safra')">🌾 Safra</div></div>
     <div id="safra-info" style="display:none;font-size:11px;color:#2E7D32;background:#E8F5E9;border-radius:8px;padding:5px 10px;margin-bottom:6px;text-align:center"></div>
@@ -869,29 +723,6 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <!-- CONSULTOR -->
   <div id="pg-consultor" class="pg">
 
-  <!-- Cabeçalho identidade -->
-  <div class="gpl-cons-header">
-    <div class="gpl-cons-brand">🌿 Gestão Pecuária Lucrativa</div>
-    <div class="gpl-cons-sub">Rogério Avelino · Visão Geral</div>
-  </div>
-
-  <!-- Resumo por fazenda -->
-  <div id="cons-resumo"></div>
-
-  <!-- Alertas -->
-  <div id="cons-alertas" style="margin-top:10px"></div>
-
-  <!-- Anotações -->
-  <div id="cons-notas" style="margin-top:10px"></div>
-
-  <!-- Ações -->
-  <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
-    <button class="gpl-btn-wpp" onclick="enviarRelatorioWpp()" style="flex:1">📲 WhatsApp</button>
-    <button class="gpl-btn-red" onclick="gerarRelatorioPDF()" style="flex:1">📄 Relatório PDF</button>
-  </div>
-
-</div><div id="pg-consultor" class="pg">
-
     <!-- Resumo geral -->
     <div id="cons-resumo"></div>
 
@@ -911,111 +742,6 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
   <!-- CONFIG -->
   <div id="pg-config" class="pg">
-
-  <!-- BANCO DE DADOS -->
-  <div class="gpl-section">
-    <div class="gpl-section-title">🗄️ Banco de dados</div>
-    <div class="gpl-info">Google Planilhas — dados salvos na nuvem em tempo real.</div>
-    <div class="gpl-field"><label>URL do Google Apps Script</label>
-      <input type="text" id="cfg-gs" class="gpl-inp" placeholder="https://script.google.com/macros/s/...">
-    </div>
-    <div class="gpl-field"><label>GitHub Token (backup)</label>
-      <input type="text" id="cfg-ght" class="gpl-inp" placeholder="ghp_...">
-    </div>
-    <button class="gpl-btn-green" onclick="salvInteg()" style="width:100%;margin-top:4px">🔌 Salvar integração</button>
-    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-      <button class="gpl-btn-blue" onclick="forcarCarregarNuvem()" style="flex:1">☁️ Carregar da nuvem</button>
-      <button class="gpl-btn-dark" onclick="forcarSalvarNuvem()" style="flex:1">💾 Salvar na nuvem</button>
-    </div>
-    <button class="gpl-btn-red" onclick="limparTudoLocal()" style="width:100%;margin-top:8px">🗑️ Limpar local e recarregar nuvem</button>
-    <div class="gpl-ok" id="ok-cloud">✅ Concluído!</div>
-    <div class="gpl-ok" id="ok-integ">✅ Integração salva!</div>
-
-    <div style="margin-top:14px">
-      <div style="font-size:11px;color:#666;margin-bottom:5px;font-weight:600">Código Google Apps Script (clique para copiar):</div>
-      <div class="gpl-code" onclick="copiarGAS()">var SHEET_ID='COLE_O_ID_AQUI'; function doGet(e){return processar(e);} function doPost(e){return processar(e);} function processar(e){...}</div>
-      <div style="font-size:10px;color:#aaa;margin-top:3px">📋 Clique para copiar o código completo</div>
-    </div>
-  </div>
-
-  <!-- LINKS POR FAZENDA -->
-  <div class="gpl-section">
-    <div class="gpl-section-title">🔗 Links por Fazenda</div>
-    <div class="gpl-info">Cada fazenda tem seu próprio link de acesso privado.</div>
-    <div id="links-fazendas"></div>
-  </div>
-
-  <!-- LINKS POR USUÁRIO -->
-  <div class="gpl-section">
-    <div class="gpl-section-title">👤 Links por Funcionário</div>
-    <div class="gpl-info">Link direto — abre já no PIN da pessoa.</div>
-    <div id="links-usuarios"></div>
-  </div>
-
-  <!-- FAZENDAS -->
-  <div class="gpl-section">
-    <div class="gpl-section-title">🏠 Fazendas</div>
-    <div class="gpl-info">Cada fazenda pode ter sua própria planilha Google.</div>
-    <div id="faz-cfg"></div>
-    <div style="margin-top:12px;padding:12px;background:#f5f9f5;border-radius:10px;border:1px solid #d4e9d4">
-      <div style="font-size:12px;font-weight:700;color:#1B5E20;margin-bottom:8px">➕ Nova fazenda</div>
-      <input type="text" id="nf" class="gpl-inp" placeholder="Nome da fazenda" style="margin-bottom:6px">
-      <input type="text" id="nf-gas" class="gpl-inp" placeholder="URL do Apps Script desta fazenda (opcional)" style="margin-bottom:6px">
-      <button class="gpl-btn-green" onclick="addFaz()" style="width:100%">＋ Adicionar fazenda</button>
-    </div>
-  </div>
-
-  <!-- USUÁRIOS -->
-  <div class="gpl-section">
-    <div class="gpl-section-title">👥 Usuários e PIN</div>
-    <div id="ucfg-l"></div>
-    <button class="gpl-btn-green" onclick="addUser()" style="width:100%;margin-top:10px">＋ Novo usuário</button>
-  </div>
-
-  <!-- SERVIÇOS -->
-  <div class="gpl-section">
-    <div class="gpl-section-title">📋 Tipos de serviço</div>
-    <div id="serv-l" style="margin-bottom:8px"></div>
-    <div style="display:flex;gap:6px">
-      <input type="text" id="ns" class="gpl-inp" placeholder="Nome do serviço" style="flex:1">
-      <button class="gpl-btn-green" onclick="addServ()" style="padding:9px 14px">＋</button>
-    </div>
-  </div>
-
-  <!-- PREÇOS CANTINA -->
-  <div class="gpl-section">
-    <div class="gpl-section-title">🧾 Preços da Cantina (R$)</div>
-    <div class="gpl-field" style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eee;padding:8px 0">
-      <span>☕ Café da manhã</span>
-      <div style="display:flex;gap:6px;align-items:center">
-        <input type="number" id="p-c" class="gpl-inp" style="width:80px;text-align:right" step="0.01">
-        <button class="gpl-btn-sm" onclick="sPreco('cafe','p-c')">Salvar</button>
-      </div>
-    </div>
-    <div class="gpl-field" style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eee;padding:8px 0">
-      <span>🍽 Almoço</span>
-      <div style="display:flex;gap:6px;align-items:center">
-        <input type="number" id="p-a" class="gpl-inp" style="width:80px;text-align:right" step="0.01">
-        <button class="gpl-btn-sm" onclick="sPreco('almoco','p-a')">Salvar</button>
-      </div>
-    </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0">
-      <span>🌙 Janta</span>
-      <div style="display:flex;gap:6px;align-items:center">
-        <input type="number" id="p-j" class="gpl-inp" style="width:80px;text-align:right" step="0.01">
-        <button class="gpl-btn-sm" onclick="sPreco('janta','p-j')">Salvar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- SYNC OFFLINE -->
-  <div class="gpl-section">
-    <div class="gpl-section-title">📡 Dados pendentes (offline)</div>
-    <div id="pend-list"><div class="gpl-empty">Nenhum dado pendente. ✅</div></div>
-    <button class="gpl-btn-blue" onclick="syncAgora()" style="width:100%;margin-top:8px">🔄 Sincronizar agora</button>
-  </div>
-
-</div><div id="pg-config" class="pg">
     <!-- BANCO DE DADOS -->
     <div class="card">
       <div class="stit">🗄️ Banco de dados</div>
@@ -1104,11 +830,7 @@ const EI = [null,
 ];
 const PL = {diaria:'Diária',insumo:'Insumos',medicamento:'Medicamentos',trato:'Trato cocho',escore:'Escore fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Config.'};
 const TABS = [
-  {id:'painel',l:'📊 Painel',p:'painel'},
-  {id:'cantina',l:'🏪 Cantina',p:'cantina'},
-  {id:'estoque',l:'📦 Estoque',p:'estoque'},
-  {id:'config',l:'⚙️ Config.',p:'config'},
-  {id:'consultor',l:'🌿 Visão Geral',p:'config'}
+  {id:'cantina',l:'🏪 Cantina',p:'cantina'}
 ];
 const ACTS = [
   {id:'diaria',l:'Lançar diária',s:'Serviço do dia',ic:'👤',c:'gr',p:'diaria'},
