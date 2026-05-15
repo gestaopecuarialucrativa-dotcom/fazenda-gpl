@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#1B5E20">
 <meta name="description" content="Gestão Pecuária Lucrativa — Rogério Avelino">
 <link rel="manifest" href="manifest.json">
-<title>GPL — Gestão Pecuária Lucrativa</title>
+<title>GPL v17 — Gestão Pecuária Lucrativa</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;font-size:14px;background:#f0f0f0;color:#1a1a1a;max-width:480px;margin:0 auto;min-height:100vh}
@@ -170,6 +170,8 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 .qr-box h3{margin:0 0 12px;font-size:15px;color:#1B5E20}
 .qr-box canvas{border-radius:8px}
 .qr-close{margin-top:14px;padding:8px 24px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.av-g{background:#2E7D32}.av-b{background:#1565C0}.av-a{background:#E65100}.av-p{background:#6A1B9A}.av-t{background:#00695C}
 </style>
 </head>
 <body>
@@ -728,7 +730,7 @@ const TABS = [
 const ACTS = [
   {id:'diaria',l:'Lançar diária',s:'Serviço do dia',ic:'👤',c:'gr',p:'diaria'},
   {id:'insumo',l:'Insumos',s:'Depósito → campo',ic:'📦',c:'bl',p:'insumo'},
-  {id:'medicamento',l:'Medicamentos',s:'Vacinas e remédios',ic:'💉',c:'am',p:'medicamento'},
+  {id:'med',l:'Medicamentos',s:'Vacinas e remédios',ic:'💉',c:'am',p:'medicamento'},
   {id:'trato',l:'Trato de cocho',s:'Proteinado, sal...',ic:'🛠',c:'tl',p:'trato'},
   {id:'lote',l:'Lotes',s:'Cadastro de lotes',ic:'🐄',c:'gr',p:'config'},
   {id:'escore',l:'Escore de fezes',s:'Avaliação do gado',ic:'🔬',c:'pu',p:'escore'}
@@ -2692,7 +2694,7 @@ function addDiarista() {
   }
 }
 
-// ══ Diária lançada → vai para despesas a pagar ══
+// ══ Diária: salva diarista + lança despesa a pagar ══
 var _envD_orig = envD;
 envD = function() {
   // Capture values BEFORE calling original (which resets form)
@@ -2700,17 +2702,22 @@ envD = function() {
   var vEl = document.getElementById('d-val');
   var dEl = document.getElementById('d-data');
   var fEl = document.getElementById('d-faz');
-  var n = nEl ? nEl.value : '';
-  var v = parseFloat(vEl ? vEl.value : 0) || 0;
-  var dt = dEl ? dEl.value : '';
-  var faz = fEl ? fEl.value : '';
-  // Call original first
+  var n   = nEl ? nEl.value : '';
+  var v   = parseFloat(vEl ? vEl.value : 0) || 0;
+  var dt  = dEl ? dEl.value : '';
+  var faz = (fEl ? fEl.value : '') || (CU&&CU.fs&&CU.fs.length===1?CU.fs[0]:'');
+  // 1. Salvar diarista na lista da fazenda
+  if (n && faz) {
+    if (!S.DIARISTAS) S.DIARISTAS = {};
+    if (!S.DIARISTAS[faz]) S.DIARISTAS[faz] = [];
+    if (S.DIARISTAS[faz].indexOf(n) < 0) S.DIARISTAS[faz].push(n);
+  }
+  // 2. Call original envD
   _envD_orig();
-  // After envD, add to despesas a pagar if valor > 0
+  // 3. Lançar despesa a pagar automaticamente
   if (v > 0 && n) {
     if (!S.rDesp) S.rDesp = [];
     var desc = 'Diária: ' + n;
-    // Avoid duplicates on same day
     var exists = S.rDesp.find(function(r){ return r.desc===desc && r.venc===dt && r.faz===faz && r.st==='pagar'; });
     if (!exists) {
       S.rDesp.push({ tipo:'despesa', faz:faz, desc:desc, val:v, venc:dt, st:'pagar', dt:dt, id:Date.now(), auto:true });
@@ -2898,66 +2905,7 @@ function salvarNuvem(callback) {
     });
 }
 
-// Carrega configurações da planilha ao abrir o sistema
-function carregarNuvem(callback) {
-  if (!S.cfgGS) { if(callback) callback(false); return; }
-  if (!navigator.onLine) { if(callback) callback(false); return; }
-  CLOUD_LOADING = true;
-  updCloudStatus('loading');
-  var cfgGS_backup = S.cfgGS; // keep URL even if we reset
-  var url = S.cfgGS + '?acao=carregar';
-  fetch(url, {method:'GET', mode:'cors'})
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      CLOUD_LOADING = false;
-      // data is { CONFIG: [[...]], diaria: [[...]], ... }
-      if (data.CONFIG && data.CONFIG.length > 0) {
-        // CONFIG row: [campo, valor_json]
-        var row = data.CONFIG[0];
-        if (row && row[1]) {
-          try {
-            var cfg = JSON.parse(row[1]);
-            // Merge cloud config into S (cloud wins)
-            // FULL REPLACE: cloud is the source of truth
-            S.FAZ       = cfg.FAZ       || S.FAZ;
-            S.US        = cfg.US        || S.US;
-            S.EST       = cfg.EST       || S.EST;
-            S.SERVS     = cfg.SERVS     || S.SERVS;
-            S.PR        = cfg.PR        || S.PR;
-            S.LOTES     = cfg.LOTES     || [];
-            S.DIARISTAS = cfg.DIARISTAS || {};
-            S.rD        = cfg.rD        || [];
-            S.rT        = cfg.rT        || [];
-            S.rC        = cfg.rC        || [];
-            S.rE        = cfg.rE        || [];
-            S.rDesp     = cfg.rDesp     || [];
-            S.mEst      = cfg.mEst      || [];
-            if (cfg.cfgGS) S.cfgGS = cfg.cfgGS;
-            salvar(); // update localStorage with cloud data
-            updCloudStatus('ok');
-            if(callback) callback(true);
-          } catch(e) {
-            console.warn('carregarNuvem parse erro:', e);
-            updCloudStatus('err');
-            if(callback) callback(false);
-          }
-        } else {
-          updCloudStatus('ok');
-          if(callback) callback(false);
-        }
-      } else {
-        updCloudStatus('ok');
-        if(callback) callback(false);
-      }
-    })
-    .catch(function(e) {
-      CLOUD_LOADING = false;
-      console.warn('carregarNuvem fetch erro:', e);
-      updCloudStatus('err');
-      // silently fail - use localStorage
-      if(callback) callback(false);
-    });
-}
+// carregarNuvem defined below (single implementation)
 
 function updCloudStatus(st) {
   var el = document.getElementById('cloud-status');
@@ -3090,6 +3038,7 @@ carregarNuvem = function(callback) {
   if (!S.cfgGS) { if(callback) callback(false); return; }
   if (!navigator.onLine) { if(callback) callback(false); return; }
   updCloudStatus('loading');
+  var cfgGS_backup = S.cfgGS;
   var url = S.cfgGS + '?acao=carregar';
   fetch(url, {method:'GET'})
     .then(function(r) {
@@ -3130,8 +3079,7 @@ carregarNuvem = function(callback) {
         // No CONFIG in cloud = planilha was cleared = reset everything
         S = JSON.parse(JSON.stringify(DEFAULT));
         S.cfgGS = cfgGS_backup; // keep the GAS URL
-        try { localStorage.removeItem('gpl_v14_data'); } catch(e){}
-        try { localStorage.removeItem('gpl_v15_data'); } catch(e){}
+        // Cleanup old keys handled by limparTudoLocal
         salvar();
         updCloudStatus('ok'); 
         if(callback) callback(true); // true = show login with fresh data
@@ -3243,24 +3191,7 @@ function editarProdutoEst(nome) {
   alert('✅ Produto atualizado!');
 }
 
-// ══ Diarista: nome fica salvo e aparece na diária ══
-// Override envD to ensure nome do diarista is saved to DIARISTAS list
-var _envD_diarista = envD;
-envD = function() {
-  var nomeEl = document.getElementById('d-nome');
-  var fazEl  = document.getElementById('d-faz');
-  var nome = nomeEl ? nomeEl.value : '';
-  var faz  = (fazEl ? fazEl.value : '') || (CU&&CU.fs&&CU.fs.length===1?CU.fs[0]:'');
-  // Save diarista name if not already saved
-  if (nome && faz) {
-    if (!S.DIARISTAS) S.DIARISTAS = {};
-    if (!S.DIARISTAS[faz]) S.DIARISTAS[faz] = [];
-    if (S.DIARISTAS[faz].indexOf(nome) < 0) {
-      S.DIARISTAS[faz].push(nome);
-    }
-  }
-  _envD_diarista();
-};
+// ══ envD diarista logic merged above ══
 
 // ══ Estoque entrada page: populate ep select from ALL products ══
 var _rEstOrig = rEst;
@@ -3736,25 +3667,12 @@ function enviarRelatorioWpp() {
   window.open('https://wa.me/?text='+encodeURIComponent(msg), '_blank');
 }
 
-// Patch sp() to call rConsultor when navigating to it
-var _spOrigConsultor = sp;
-sp = function(id, back, prev) {
-  _spOrigConsultor(id, back, prev);
-  if (id === 'consultor') setTimeout(rConsultor, 50);
-};
+// sp() already calls rConsultor via the 'if (id === 'consultor')' block in the main function
+// No additional patch needed
 
-// Show consultor tab only for Consultor role
-var _buildTabsOrig = buildTabs;
-buildTabs = function() {
-  _buildTabsOrig();
-  // Hide consultor tab for non-consultores
-  var isConsultor = CU && CU.r === 'Consultor';
-  document.querySelectorAll('.tab').forEach(function(tab){
-    if (tab.getAttribute('data-id') === 'consultor') {
-      tab.style.display = isConsultor ? '' : 'none';
-    }
-  });
-};
+// Consultor tab visibility is handled by buildTabs via CU.p[t.p] filter
+// No patch needed - the TABS array uses 'config' permission for consultor tab
+// which Consultor role has, and Dono/Vaqueiro do not
 
 
 function updTotal(){ if(typeof rCob==='function') rCob(); }
