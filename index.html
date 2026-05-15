@@ -10,16 +10,24 @@
         body { background: var(--bg); color: #333; }
         .header { background: var(--primary); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 1000; }
         .nav { display: flex; background: white; position: sticky; top: 51px; z-index: 999; border-bottom: 1px solid #ddd; overflow-x: auto; }
-        .nav-item { flex: 1; padding: 15px 5px; text-align: center; font-size: 0.8rem; font-weight: bold; color: #666; cursor: pointer; border-bottom: 3px solid transparent; }
+        .nav-item { flex: 1; padding: 15px 5px; text-align: center; font-size: 0.8rem; font-weight: bold; color: #666; cursor: pointer; border-bottom: 3px solid transparent; min-width: 80px; }
         .nav-item.active { color: var(--primary); border-bottom-color: var(--primary); }
         .container { padding: 15px; max-width: 500px; margin: 0 auto; }
         .page { display: none; }
         .page.active { display: block; }
         .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .card-title { color: var(--primary); font-size: 1rem; margin-bottom: 15px; font-weight: bold; border-left: 4px solid var(--primary); padding-left: 10px; }
-        .loading { text-align: center; color: #666; padding: 20px; }
-        /* Estilo da Lista de Estoque */
-        .stock-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        
+        /* Layout Financeiro */
+        .grid-fin { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .stat-box { padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; }
+        .green { background: #e8f5e9; color: #2e7d32; }
+        .red { background: #ffebee; color: #c62828; }
+        
+        /* Lista de Estoque */
+        .stock-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        .loading { text-align: center; color: #888; padding: 20px; }
+        .btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -36,32 +44,37 @@
 
     <div class="container">
         <section id="inicio" class="page active">
-            <div class="card"><div class="card-title">Resumo Geral</div><p>Sincronizado com a planilha de Rogério Avelino.</p></div>
+            <div class="card"><div class="card-title">Resumo</div><p>Sincronizado com Rogério Avelino.</p></div>
         </section>
 
         <section id="painel" class="page">
-            <div class="card"><div class="card-title">Financeiro</div><div id="dados-painel">Carregando...</div></div>
+            <div class="card">
+                <div class="card-title">Financeiro</div>
+                <div id="dados-painel"><div class="loading">Carregando...</div></div>
+            </div>
         </section>
 
         <section id="estoque" class="page">
-            <div class="card"><div class="card-title">Itens em Estoque</div><div id="lista-estoque">Aguardando dados...</div></div>
+            <div class="card">
+                <div class="card-title">Itens em Estoque</div>
+                <div id="lista-estoque"><div class="loading">Carregando...</div></div>
+            </div>
         </section>
 
         <section id="cantina" class="page">
             <div class="card">
                 <div class="card-title">Lançar Refeição</div>
-                <input type="number" id="qtd" placeholder="Quantidade" style="width:100%; padding:10px; margin-bottom:10px;">
-                <button onclick="salvarRefeicao()" style="width:100%; padding:10px; background:var(--primary); color:white; border:none; border-radius:5px;">Salvar</button>
+                <input type="number" id="qtd" placeholder="Quantidade" style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #ddd; border-radius:6px;">
+                <button class="btn" onclick="salvar('Cantina')">Salvar Almoço</button>
             </div>
         </section>
 
         <section id="config" class="page">
-            <div class="card"><button onclick="location.reload()" style="width:100%; padding:10px;">Recarregar App</button></div>
+            <div class="card"><button class="btn" style="background:#666" onclick="location.reload()">Atualizar Dados</button></div>
         </section>
     </div>
 
     <script>
-        // SEU LINK DO GOOGLE
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxaVjBYJ5_B9PaVDOjFN_ZZvuXBO0ksC_TB_QEP7NwgtYL4CVd04yEIjcv3OeK7lxe3YA/exec";
 
         function openPage(evt, pageId) {
@@ -69,51 +82,67 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(pageId).classList.add('active');
             evt.currentTarget.classList.add('active');
-
-            if(pageId === 'estoque') carregarDados('estoque');
-            if(pageId === 'painel') carregarDados('painel');
+            if(pageId === 'estoque' || pageId === 'painel') puxarDados();
         }
 
-        async function carregarDados(tipo) {
-            const container = tipo === 'estoque' ? document.getElementById('lista-estoque') : document.getElementById('dados-painel');
-            container.innerHTML = '<div class="loading">Buscando na planilha...</div>';
-
+        async function puxarDados() {
             try {
-                // Aqui ele chama o seu link passando o comando "carregar" que está no seu Script do Google
-                const resp = await fetch(SCRIPT_URL + "?acao=carregar");
-                const dados = await resp.json();
+                const response = await fetch(SCRIPT_URL + "?acao=carregar");
+                const r = await response.json(); // Aqui 'r' contém todas as abas
                 
-                if(tipo === 'estoque') {
-                    renderEstoque(dados.Estoque); // "Estoque" deve ser o nome da aba na planilha
+                // 1. PROCESSAR ESTOQUE (Aba "Estoque")
+                const dadosEstoque = r["Estoque"];
+                if(dadosEstoque) {
+                    let html = '';
+                    for(let i = 1; i < dadosEstoque.length; i++) {
+                        html += `<div class="stock-row"><span>${dadosEstoque[i][0]}</span> <strong>${dadosEstoque[i][1]}</strong></div>`;
+                    }
+                    document.getElementById('lista-estoque').innerHTML = html;
+                }
+
+                // 2. PROCESSAR PAINEL (Aba "Painel")
+                const dadosPainel = r["Painel"];
+                if(dadosPainel && dadosPainel[1]) {
+                    document.getElementById('dados-painel').innerHTML = `
+                        <div class="grid-fin">
+                            <div class="stat-box green"><small>Receita</small><br>R$ ${dadosPainel[1][0]}</div>
+                            <div class="stat-box red"><small>Despesa</small><br>R$ ${dadosPainel[1][1]}</div>
+                        </div>
+                        <div style="text-align:center; font-weight:bold; padding:10px; background:#f0f0f0; border-radius:6px">Saldo: R$ ${dadosPainel[1][2]}</div>
+                    `;
                 }
             } catch (e) {
-                container.innerHTML = "Erro ao conectar com a planilha. Verifique se a aba 'Estoque' existe.";
+                console.error("Erro ao carregar:", e);
             }
         }
 
-        function renderEstoque(rows) {
-            if(!rows) return;
-            let html = '';
-            // Pula a primeira linha (cabeçalho) e monta a lista
-            for(let i = 1; i < rows.length; i++) {
-                html += `<div class="stock-row"><span>${rows[i][0]}</span> <strong>${rows[i][1]}</strong></div>`;
-            }
-            document.getElementById('lista-estoque').innerHTML = html;
-        }
-
-        async function salvarRefeicao() {
-            const valor = document.getElementById('qtd').value;
-            if(!valor) return alert("Digite um valor");
+        async function salvar(tipo) {
+            const val = document.getElementById('qtd').value;
+            if(!val) return alert("Digite a quantidade");
             
-            // Envia para a planilha
-            await fetch(SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({tipo: 'Cantina', dados: {quantidade: valor, data: new Date()}})
-            });
-            alert("Enviado!");
-            document.getElementById('qtd').value = '';
+            const btn = event.target;
+            btn.innerText = "Enviando...";
+            btn.disabled = true;
+
+            const payload = { tipo: tipo, data: new Date().toLocaleString(), valor: val };
+            
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                alert("Salvo com sucesso!");
+                document.getElementById('qtd').value = '';
+            } catch (e) {
+                alert("Erro ao salvar.");
+            } finally {
+                btn.innerText = "Salvar Almoço";
+                btn.disabled = false;
+            }
         }
+
+        // Carrega dados ao abrir
+        puxarDados();
     </script>
 </body>
 </html>
