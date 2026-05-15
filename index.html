@@ -5,47 +5,109 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>GPL — Gestão Pecuária</title>
     <style>
-        :root { --primary: #1B5E20; --bg: #f0f2f5; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        body { background: var(--bg); color: #333; min-height: 100vh; }
-        .header { background: var(--primary); color: white; padding: 15px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 10; }
-        .nav { display: flex; background: white; border-bottom: 1px solid #ddd; overflow-x: auto; position: sticky; top: 48px; z-index: 9; }
-        .nav-item { flex: 1; padding: 15px 5px; text-align: center; font-size: 0.8rem; font-weight: bold; color: #666; cursor: pointer; border-bottom: 3px solid transparent; min-width: 80px; }
-        .nav-item.active { color: var(--primary); border-bottom-color: var(--primary); }
-        .container { padding: 15px; max-width: 500px; margin: 0 auto; }
-        .page { display: none; }
+        :root { --primary: #1B5E20; --bg: #f0f2f5; --white: #ffffff; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: var(--bg); color: #333; min-height: 100vh; padding-bottom: 50px; }
+        
+        /* Cabeçalho */
+        .header { background: var(--primary); color: white; padding: 18px; text-align: center; font-weight: bold; font-size: 1.1rem; position: sticky; top: 0; z-index: 100; shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        
+        /* Menu de Navegação */
+        .nav { display: flex; background: white; border-bottom: 1px solid #ddd; overflow-x: auto; position: sticky; top: 55px; z-index: 99; }
+        .nav-item { flex: 1; padding: 15px 5px; text-align: center; font-size: 0.85rem; font-weight: 600; color: #666; cursor: pointer; border-bottom: 3px solid transparent; min-width: 80px; transition: 0.3s; }
+        .nav-item.active { color: var(--primary); border-bottom-color: var(--primary); background: #f9f9f9; }
+        
+        /* Container Principal */
+        .container { padding: 15px; max-width: 600px; margin: 0 auto; }
+        .page { display: none; animation: fadeIn 0.3s ease; }
         .page.active { display: block; }
-        .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .card-title { color: var(--primary); font-size: 1rem; margin-bottom: 15px; font-weight: bold; border-left: 4px solid var(--primary); padding-left: 10px; }
-        .grid-fin { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .stat-box { padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; }
-        .green { background: #e8f5e9; color: #2e7d32; }
-        .red { background: #ffebee; color: #c62828; }
-        .stock-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; }
-        .loading { text-align: center; color: #888; padding: 20px; font-style: italic; }
-        .btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        /* Cartões e Estilos */
+        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eee; }
+        .card-title { color: var(--primary); font-size: 1.1rem; margin-bottom: 15px; font-weight: bold; border-left: 5px solid var(--primary); padding-left: 12px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .grid-fin { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .stat-box { padding: 15px; border-radius: 10px; text-align: center; font-weight: bold; }
+        .green { background: #E8F5E9; color: #2E7D32; }
+        .red { background: #FFEBEE; color: #C62828; }
+        
+        .stock-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; align-items: center; }
+        .stock-row:last-child { border-bottom: none; }
+        
+        /* Botões e Inputs */
+        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; outline: none; }
+        input:focus { border-color: var(--primary); }
+        .btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; transition: 0.2s; }
+        .btn:active { transform: scale(0.98); opacity: 0.9; }
+        .btn-outline { background: white; color: var(--primary); border: 2px solid var(--primary); margin-top: 10px; }
+        
+        .loading { text-align: center; color: #888; padding: 30px; font-style: italic; }
+        .refresh-tag { font-size: 0.7rem; color: #999; text-align: center; margin-top: 10px; }
     </style>
 </head>
 <body>
+
     <header class="header">GPL — FAZENDA LUCRAVIVA</header>
+
     <nav class="nav">
         <div class="nav-item active" onclick="openPage(event, 'inicio')">Início</div>
         <div class="nav-item" onclick="openPage(event, 'painel')">Painel</div>
         <div class="nav-item" onclick="openPage(event, 'estoque')">Estoque</div>
         <div class="nav-item" onclick="openPage(event, 'cantina')">Cantina</div>
+        <div class="nav-item" onclick="openPage(event, 'config')">Config</div>
     </nav>
+
     <div class="container">
-        <section id="inicio" class="page active"><div class="card"><div class="card-title">Resumo</div><p>Sincronizado com Rogério Avelino.</p></div></section>
-        <section id="painel" class="page"><div class="card"><div class="card-title">Financeiro</div><div id="dados-painel"><div class="loading">Buscando dados...</div></div></div></section>
-        <section id="estoque" class="page"><div class="card"><div class="card-title">Estoque</div><div id="lista-estoque"><div class="loading">Buscando dados...</div></div></div></section>
+        <section id="inicio" class="page active">
+            <div class="card">
+                <div class="card-title">Resumo</div>
+                <p>Bem-vindo, <b>Rogério Avelino</b>.</p>
+                <p style="margin-top:10px; color: #666; font-size: 0.9rem;">O sistema está sincronizado com a sua planilha oficial.</p>
+            </div>
+        </section>
+
+        <section id="painel" class="page">
+            <div class="card">
+                <div class="card-title">Financeiro</div>
+                <div id="dados-painel"><div class="loading">Buscando dados...</div></div>
+            </div>
+        </section>
+
+        <section id="estoque" class="page">
+            <div class="card">
+                <div class="card-title">Estoque</div>
+                <div id="lista-estoque"><div class="loading">Buscando estoque...</div></div>
+            </div>
+        </section>
+
         <section id="cantina" class="page">
             <div class="card">
                 <div class="card-title">Lançar Cantina</div>
-                <input type="number" id="qtd" placeholder="Quantidade" style="width:100%; padding:12px; margin-bottom:10px; border:1px solid #ccc; border-radius:6px;">
+                <label style="font-size: 0.8rem; font-weight: bold; color: #666;">QUANTIDADE / VALOR</label>
+                <input type="number" id="qtd" placeholder="0.00" inputmode="decimal">
                 <button class="btn" onclick="salvar()">Salvar Registro</button>
             </div>
         </section>
+
+        <section id="config" class="page">
+            <div class="card">
+                <div class="card-title">Configurações</div>
+                <p style="font-size: 0.9rem; margin-bottom: 20px; color: #444;">Use as opções abaixo para manter o aplicativo atualizado com a planilha.</p>
+                
+                <button class="btn" onclick="puxarDados()">🔄 Atualizar Dados Agora</button>
+                <button class="btn btn-outline" onclick="location.reload()">🧹 Limpar Cache e Reiniciar</button>
+                
+                <div class="refresh-tag" id="last-update">Última sincronização: --:--</div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Suporte</div>
+                <p style="font-size: 0.8rem; color: #888;">ID Planilha: 1KE-B91...uIO</p>
+            </div>
+        </section>
     </div>
+
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxaVjBYJ5_B9PaVDOjFN_ZZvuXBO0ksC_TB_QEP7NwgtYL4CVd04yEIjcv3OeK7lxe3YA/exec";
 
@@ -58,29 +120,70 @@
         }
 
         async function puxarDados() {
+            const painelDiv = document.getElementById('dados-painel');
+            const estoqueDiv = document.getElementById('lista-estoque');
+            
             try {
                 const resp = await fetch(SCRIPT_URL + "?acao=carregar");
                 const r = await resp.json();
+                
+                // Atualiza Painel
                 if(r.Painel && r.Painel[1]) {
-                    document.getElementById('dados-painel').innerHTML = `
-                        <div class="grid-fin"><div class="stat-box green">Receita<br>R$ ${r.Painel[1][0]}</div><div class="stat-box red">Despesa<br>R$ ${r.Painel[1][1]}</div></div>
-                        <div style="text-align:center; margin-top:10px; font-weight:bold; padding:10px; background:#eee; border-radius:6px;">Saldo: R$ ${r.Painel[1][2]}</div>`;
+                    painelDiv.innerHTML = `
+                        <div class="grid-fin">
+                            <div class="stat-box green"><small>Receitas</small><br>R$ ${r.Painel[1][0]}</div>
+                            <div class="stat-box red"><small>Despesas</small><br>R$ ${r.Painel[1][1]}</div>
+                        </div>
+                        <div style="text-align:center; margin-top:15px; font-weight:bold; padding:12px; background:#f0f0f0; border-radius:8px; border: 1px dashed #ccc;">
+                            Saldo: R$ ${r.Painel[1][2]}
+                        </div>`;
                 }
+
+                // Atualiza Estoque
                 if(r.Estoque) {
                     let h = '';
                     for(let i = 1; i < r.Estoque.length; i++) {
-                        h += `<div class="stock-row"><span>${r.Estoque[i][0]}</span><strong>${r.Estoque[i][1]}</strong></div>`;
+                        if(r.Estoque[i][0]) {
+                            h += `<div class="stock-row"><span>${r.Estoque[i][0]}</span><strong>${r.Estoque[i][1]}</strong></div>`;
+                        }
                     }
-                    document.getElementById('lista-estoque').innerHTML = h || "Vazio.";
+                    estoqueDiv.innerHTML = h || "Nenhum item encontrado.";
                 }
-            } catch (e) { console.log(e); }
+                
+                document.getElementById('last-update').innerText = "Última sincronização: " + new Date().toLocaleTimeString();
+
+            } catch (e) {
+                console.error(e);
+                if(painelDiv) painelDiv.innerHTML = "Erro ao conectar.";
+            }
         }
+
         async function salvar() {
             const val = document.getElementById('qtd').value;
-            if(!val) return alert("Digite um valor");
-            await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({tipo: 'Cantina', valor: val}) });
-            alert("Salvo!"); document.getElementById('qtd').value = '';
+            if(!val) return alert("Por favor, digite um valor.");
+            
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "Enviando...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify({tipo: 'Cantina', valor: val})
+                });
+                alert("Lançamento realizado com sucesso!");
+                document.getElementById('qtd').value = '';
+            } catch (e) {
+                alert("Erro ao salvar.");
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
         }
+
+        // Inicia carregando os dados
         puxarDados();
     </script>
 </body>
