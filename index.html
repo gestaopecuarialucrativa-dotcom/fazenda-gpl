@@ -858,15 +858,15 @@ let prevPage = null;
 
 function initLogin() {
   // Verificar link ?user=xxx ou ?faz=xxx
-  const params = new URLSearchParams(window.location.search);
-  const userParam = params.get('user');
-  const fazParam = params.get('faz');
+  var params = new URLSearchParams(window.location.search);
+  var userParam = params.get('user');
+  var fazParam = params.get('faz');
 
   if (userParam) {
-    // Link direto por usuário — ir direto pro PIN
-    const slug = userParam.toLowerCase();
-    const u = S.US.find(u => {
-      const ns = u.n.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+    var slug = userParam.toLowerCase();
+    // Try to find user by slug (accent-insensitive)
+    var u = S.US.find(function(u) {
+      var ns = u.n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
       return ns === slug;
     });
     if (u) {
@@ -874,20 +874,46 @@ function initLogin() {
       mostrarPin(u);
       return;
     }
+    // User not found in S.US — try partial name match as fallback
+    var u2 = S.US.find(function(u) {
+      var first = u.n.split(' ')[0].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-');
+      return slug.indexOf(first) === 0;
+    });
+    if (u2) {
+      loginUser = S.US.indexOf(u2);
+      mostrarPin(u2);
+      return;
+    }
+    // Still not found: show all users (consultor fallback)
+    mostrarUsersLista(S.US);
+    document.getElementById('step-faz').style.display = 'none';
+    document.getElementById('step-user').style.display = 'block';
+    document.getElementById('step-user-title').textContent = 'Quem é você?';
+    document.getElementById('step-user-faz').textContent = 'Selecione seu perfil';
+    return;
   }
 
   if (fazParam) {
     // Link por fazenda — mostrar usuários dessa fazenda
-    const fn = fazParam.toLowerCase().replace(/-/g,' ');
-    const faz = Object.keys(S.FAZ).find(f => f.toLowerCase().includes(fn));
+    var fn = fazParam.toLowerCase().replace(/-/g,' ');
+    var faz = Object.keys(S.FAZ).find(function(f){ return f.toLowerCase().includes(fn); });
     if (faz) {
       loginFaz = faz;
       mostrarUsers(faz);
       return;
     }
+    // Fazenda não encontrada — tenta match parcial
+    var faz2 = Object.keys(S.FAZ).find(function(f){
+      return f.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').includes(fazParam.toLowerCase());
+    });
+    if (faz2) {
+      loginFaz = faz2;
+      mostrarUsers(faz2);
+      return;
+    }
   }
 
-  // Sem parâmetro — mostrar fazendas
+  // Sem parâmetro ou não encontrado — mostrar fazendas
   mostrarFazendas();
 }
 
@@ -1826,7 +1852,7 @@ const BASE_URL = 'https://gestaopecuarialucrativa-dotcom.github.io/fazenda-gpl/'
 function rLinksUsuarios() {
   const c=document.getElementById('links-usuarios'); if(!c) return;
   c.innerHTML=S.US.map(u=>{
-    const slug=u.n.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+    const slug=u.n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
     const link=BASE_URL+'?user='+slug;
     return `<div class="lnk-card">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
@@ -1993,13 +2019,23 @@ function expCSV() {
 // INICIALIZAÇÃO
 // ═══════════════════════════════════════════
 try { carregar(); } catch(e) { S = JSON.parse(JSON.stringify(DEFAULT)); }
-// On startup: if GAS URL is set and online, load from cloud before showing login
+
+// Startup: show login immediately from localStorage, then sync cloud in background
+try { initLogin(); } catch(e) { mostrarFazendas(); }
+
+// After login screen is shown, sync cloud data silently
 if (S.cfgGS && navigator.onLine) {
-  carregarNuvem(function(loaded) {
-    try { initLogin(); } catch(e) { mostrarFazendas(); }
-  });
-} else {
-  try { initLogin(); } catch(e) { mostrarFazendas(); }
+  setTimeout(function() {
+    carregarNuvem(function(loaded) {
+      // If user is already on PIN screen or app, don't disrupt
+      var appVisible = document.getElementById('app').style.display !== 'none';
+      var pinVisible = document.getElementById('step-pin').style.display !== 'none';
+      if (!appVisible && !pinVisible) {
+        // Still on fazenda/user selection - re-run initLogin with fresh data
+        try { initLogin(); } catch(e) {}
+      }
+    });
+  }, 100);
 }
 
 // Safe event listeners
@@ -2271,14 +2307,17 @@ carregar = function() {
 // LINKS POR FAZENDA + QR CODE
 // ══════════════════════════════════════════════
 
+// Reliable slugify using unicode escape (avoids literal char encoding issues)
 function slugify(txt) {
   return txt.toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/[àáâãäå]/g,'a').replace(/[èéêë]/g,'e')
     .replace(/[ìíîï]/g,'i').replace(/[òóôõö]/g,'o')
     .replace(/[ùúûü]/g,'u').replace(/[ç]/g,'c')
-    .replace(/[ñ]/g,'n').replace(/[^a-z0-9]+/g,'-')
-    .replace(/^-|-$/g,'');
+    .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 }
+
 
 function getLinkBase() {
   // When opened from file:// use GitHub Pages URL
@@ -3040,7 +3079,10 @@ carregarNuvem = function(callback) {
   updCloudStatus('loading');
   var cfgGS_backup = S.cfgGS;
   var url = S.cfgGS + '?acao=carregar';
-  fetch(url, {method:'GET'})
+  // Timeout de 5s para não travar o login
+  var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  var timeoutId = controller ? setTimeout(function(){ controller.abort(); }, 5000) : null;
+  fetch(url, {method:'GET', signal: controller ? controller.signal : undefined})
     .then(function(r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.json();
