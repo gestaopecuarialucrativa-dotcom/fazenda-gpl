@@ -3,152 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GPL — Gestão Pecuária Lucrativa</title>
+    <title>GPL — Gestão Pecuária</title>
     <style>
-        :root { --primary: #1B5E20; --bg: #f0f2f5; --white: #ffffff; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-        body { background: var(--bg); color: #333; min-height: 100vh; padding-bottom: 50px; }
+        :root { --primary: #1B5E20; --bg: #f0f2f5; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background: var(--bg); color: #333; overflow-x: hidden; }
         
-        .header { background: linear-gradient(135deg,#1a5c10,#2d7a1f); color: white; padding: 18px; text-align: center; font-weight: bold; font-size: 1.1rem; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        
-        .nav { display: flex; background: white; border-bottom: 1px solid #ddd; overflow-x: auto; position: sticky; top: 55px; z-index: 99; }
-        .nav-item { flex: 1; padding: 15px 5px; text-align: center; font-size: 0.85rem; font-weight: 600; color: #666; cursor: pointer; border-bottom: 3px solid transparent; min-width: 80px; }
-        .nav-item.active { color: var(--primary); border-bottom-color: var(--primary); background: #f9f9f9; }
-        
-        .container { padding: 10px; max-width: 600px; margin: 0 auto; }
-        .page { display: none; }
-        .page.active { display: block; }
-        
-        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
-        .card-title { color: var(--primary); font-size: 1rem; margin-bottom: 12px; font-weight: 800; border-bottom: 2px solid #E8F5E9; padding-bottom: 6px; }
+        /* TELA DE LOGIN (PIN) */
+        #login-screen { position: fixed; inset: 0; background: var(--primary); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000; color: white; }
+        .pin-box { background: white; padding: 30px; border-radius: 15px; display: flex; flex-direction: column; gap: 15px; width: 80%; max-width: 300px; }
+        .pin-box input { padding: 15px; text-align: center; font-size: 24px; border: 2px solid #ddd; border-radius: 10px; color: #333; }
+        .btn-login { background: #2d7a1f; color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
 
-        /* Estilos do Painel (KPIs) conforme seu painel.html */
-        .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .kpi { background: white; border-radius: 10px; padding: 12px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .kpi-val { font-size: 20px; font-weight: 900; color: #1B5E20; }
-        .kpi-lbl { font-size: 10px; color: #888; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
-        
-        .pills { display: flex; gap: 5px; margin-bottom: 15px; justify-content: center; }
-        .pill { padding: 6px 15px; border: 1.5px solid #ddd; border-radius: 20px; background: white; color: #888; font-size: 11px; font-weight: 700; cursor: pointer; }
-        .pill.on { background: #1B5E20; color: white; border-color: #1B5E20; }
+        /* ESTRUTURA DO APP */
+        .header { background: linear-gradient(135deg,#1a5c10,#2d7a1f); color: white; padding: 15px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 100; }
+        .nav { display: flex; background: white; border-bottom: 1px solid #ddd; overflow-x: auto; position: sticky; top: 50px; z-index: 99; }
+        .nav-item { flex: 1; padding: 15px 5px; text-align: center; font-size: 11px; font-weight: bold; color: #666; cursor: pointer; border-bottom: 3px solid transparent; min-width: 70px; }
+        .nav-item.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .container { padding: 10px; display: none; }
+        .container.active { display: block; }
 
-        .stock-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
-        .btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; }
-        input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 8px; }
+        /* CARDS DO PAINEL (Conforme suas fotos) */
+        .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+        .kpi { background: white; padding: 12px; border-radius: 10px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .kpi-lbl { font-size: 10px; color: #888; font-weight: bold; text-transform: uppercase; }
+        .kpi-val { font-size: 18px; font-weight: 900; color: var(--primary); }
+        
+        .section-title { font-size: 12px; font-weight: 800; color: #555; margin: 15px 0 8px 5px; text-transform: uppercase; display: flex; justify-content: space-between; }
+        .row-item { background: white; padding: 12px; border-radius: 10px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .row-info { display: flex; flex-direction: column; }
+        .row-main { font-size: 13px; font-weight: bold; color: #333; }
+        .row-sub { font-size: 11px; color: #888; }
+        .row-val { font-size: 14px; font-weight: 800; color: var(--primary); }
+
+        input[type="number"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 10px; }
+        .btn-save { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <header class="header">GPL — FAZENDA LUCRAVIVA</header>
+    <div id="login-screen">
+        <h2 style="margin-bottom: 20px;">GPL - ACESSO</h2>
+        <div class="pin-box">
+            <input type="password" id="pin-input" placeholder="DIGITE SEU PIN" inputmode="numeric">
+            <button class="btn-login" onclick="checkPin()">ENTRAR NO SISTEMA</button>
+        </div>
+    </div>
 
-    <nav class="nav">
-        <div class="nav-item active" onclick="openPage(event, 'inicio')">Início</div>
-        <div class="nav-item" onclick="openPage(event, 'painel')">Painel</div>
-        <div class="nav-item" onclick="openPage(event, 'estoque')">Estoque</div>
-        <div class="nav-item" onclick="openPage(event, 'cantina')">Cantina</div>
-        <div class="nav-item" onclick="openPage(event, 'config')">Config</div>
-    </nav>
+    <div id="app-content" style="display:none;">
+        <header class="header">GPL — FAZENDA LUCRAVIVA</header>
+        <nav class="nav">
+            <div class="nav-item active" onclick="tab(this, 'painel')">PAINEL</div>
+            <div class="nav-item" onclick="tab(this, 'estoque')">ESTOQUE</div>
+            <div class="nav-item" onclick="tab(this, 'lancamento')">LANÇAR</div>
+            <div class="nav-item" onclick="tab(this, 'config')">CONFIG</div>
+        </nav>
 
-    <div class="container">
-        <section id="inicio" class="page active">
-            <div class="card">
-                <div class="card-title">Resumo Geral</div>
-                <p>Bem-vindo, <b>Rogério Avelino</b>. Sistema pronto.</p>
-            </div>
-        </section>
-
-        <section id="painel" class="page">
-            <div class="pills">
-                <button class="pill on" onclick="setPer(this, 7)">7 dias</button>
-                <button class="pill" onclick="setPer(this, 15)">15 dias</button>
-                <button class="pill" onclick="setPer(this, 30)">Mês</button>
-            </div>
-
+        <div id="painel" class="container active">
             <div class="kpis">
-                <div class="kpi"><div class="kpi-lbl">💰 Receitas</div><div class="kpi-val" id="kp-rec">R$ 0</div></div>
-                <div class="kpi"><div class="kpi-lbl">💸 Despesas</div><div class="kpi-val" style="color:#C62828" id="kp-desp">R$ 0</div></div>
-                <div class="kpi" style="grid-column: span 2; background: #E8F5E9;">
-                    <div class="kpi-lbl">✅ Saldo Geral</div>
-                    <div class="kpi-val" id="kp-saldo">R$ 0</div>
-                </div>
+                <div class="kpi"><div class="kpi-lbl">Produção</div><div class="kpi-val" id="res-prod">0</div></div>
+                <div class="kpi"><div class="kpi-lbl">Saldo Cantina</div><div class="kpi-val" id="res-cant">R$ 0</div></div>
             </div>
 
-            <div class="card">
-                <div class="card-title">Detalhamento</div>
-                <div id="lista-painel"><div style="text-align:center; color:#999; font-size:12px;">Carregando...</div></div>
-            </div>
-        </section>
+            <div class="section-title">Produção Recente</div>
+            <div id="lista-prod"></div>
 
-        <section id="estoque" class="page">
-            <div class="card">
-                <div class="card-title">Itens em Estoque</div>
-                <div id="lista-estoque"></div>
-            </div>
-        </section>
+            <div class="section-title">Lançamentos Cantina</div>
+            <div id="lista-cant"></div>
+        </div>
 
-        <section id="cantina" class="page">
-            <div class="card">
-                <div class="card-title">Lançar Cantina</div>
-                <input type="number" id="qtd" placeholder="Valor ou Quantidade" inputmode="decimal">
-                <button class="btn" onclick="salvar()">Salvar Registro</button>
-            </div>
-        </section>
+        <div id="estoque" class="container">
+            <div class="section-title">Itens Disponíveis</div>
+            <div id="lista-est"></div>
+        </div>
 
-        <section id="config" class="page">
-            <div class="card">
-                <div class="card-title">Configurações</div>
-                <button class="btn" style="margin-bottom:10px" onclick="puxarDados()">🔄 Sincronizar Agora</button>
-                <button class="btn" style="background:#666" onclick="location.reload()">🧹 Reiniciar App</button>
+        <div id="lancamento" class="container">
+            <div class="card" style="background:white; padding:15px; border-radius:10px;">
+                <div class="section-title">Novo Registro</div>
+                <select id="tipo-lanc" style="width:100%; padding:10px; margin-bottom:10px; border-radius:8px;">
+                    <option value="Cantina">Cantina (Almoço/Gasto)</option>
+                    <option value="Produção">Produção (Leite/Gado)</option>
+                </select>
+                <input type="number" id="valor-lanc" placeholder="Valor ou Quantidade">
+                <button class="btn-save" onclick="salvarDados()">SALVAR NA PLANILHA</button>
             </div>
-        </section>
+        </div>
+
+        <div id="config" class="container">
+            <button class="btn-save" style="background:#666" onclick="location.reload()">SAIR / RECARREGAR</button>
+        </div>
     </div>
 
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxaVjBYJ5_B9PaVDOjFN_ZZvuXBO0ksC_TB_QEP7NwgtYL4CVd04yEIjcv3OeK7lxe3YA/exec";
-        let dadosGlobais = null;
-
-        function openPage(evt, pageId) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            evt.currentTarget.classList.add('active');
-            if(pageId === 'painel' || pageId === 'estoque') puxarDados();
-        }
-
-        function setPer(btn, dias) {
-            document.querySelectorAll('.pill').forEach(b => b.classList.remove('on'));
-            btn.classList.add('on');
-            renderPainel();
-        }
-
-        async function puxarDados() {
-            try {
-                const resp = await fetch(SCRIPT_URL + "?acao=carregar");
-                dadosGlobais = await resp.json();
-                renderPainel();
-                renderEstoque();
-            } catch (e) { console.error("Erro ao carregar", e); }
-        }
-
-        function renderPainel() {
-            if(!dadosGlobais || !dadosGlobais.Painel) return;
-            const p = dadosGlobais.Painel[1]; // Linha 2 da aba Painel
-            document.getElementById('kp-rec').innerText = "R$ " + (p[0] || 0);
-            document.getElementById('kp-desp').innerText = "R$ " + (p[1] || 0);
-            document.getElementById('kp-saldo').innerText = "R$ " + (p[2] || 0);
-            document.getElementById('lista-painel').innerHTML = "<div style='font-size:12px; color:#666; text-align:center'>Dados atualizados via Planilha.</div>";
-        }
-
-        function renderEstoque() {
-            if(!dadosGlobais || !dadosGlobais.Estoque) return;
-            let h = '';
-            for(let i = 1; i < dadosGlobais.Estoque.length; i++) {
-                if(dadosGlobais.Estoque[i][0]) {
-                    h += `<div class="stock-row"><span>${dadosGlobais.Estoque[i][0]}</span><strong>${dadosGlobais.Estoque[i][1]}</strong></div>`;
-                }
+        
+        // FUNÇÃO DE PIN
+        function checkPin() {
+            const pin = document.getElementById('pin-input').value;
+            if(pin === "1234" || pin === "2024") { // Coloque seus PINs aqui
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-content').style.display = 'block';
+                carregar();
+            } else {
+                alert("PIN INCORRETO!");
             }
-            document.getElementById('lista-estoque').innerHTML = h || "Vazio";
         }
 
-        async function salvar() {
-            const val = document.getElementById('qtd').value;
+        function tab(el, id) {
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById(id).classList.add('active');
+            if(id !== 'lancamento') carregar();
+        }
+
+        async function carregar() {
+            try {
+                const r = await fetch(SCRIPT_URL + "?acao=carregar").then(res => res.json());
+                
+                // Renderiza Produção
+                let hProd = "";
+                if(r.Produção) {
+                    r.Produção.slice(1, 6).forEach(row => {
+                        hProd += `<div class="row-item"><div class="row-info"><span class="row-main">Produção</span><span class="row-sub">${row[0]}</span></div><div class="row-val">${row[1]}</div></div>`;
+                    });
+                    document.getElementById('lista-prod').innerHTML = hProd;
+                }
+
+                // Renderiza Cantina
+                let hCant = "";
+                if(r.Cantina) {
+                    let total = 0;
+                    r.Cantina.slice(1).forEach(row => {
+                        total += parseFloat(row[1] || 0);
+                        hCant += `<div class="row-item"><div class="row-info"><span class="row-main">Lançamento</span><span class="row-sub">${row[0]}</span></div><div class="row-val">R$ ${row[1]}</div></div>`;
+                    });
+                    document.getElementById('lista-cant').innerHTML = hCant;
+                    document.getElementById('res-cant').innerText = "R$ " + total.toFixed(2);
+                }
+
+                // Renderiza Estoque
+                let hEst = "";
+                if(r.Estoque) {
+                    r.Estoque.slice(1).forEach(row => {
+                        hEst += `<div class="row-item"><div class="row-info"><span class="row-main">${row[0]}</span></div><div class="row-val">${row[1]}</div></div>`;
+                    });
+                    document.getElementById('lista-est').innerHTML = hEst;
+                }
+
+            } catch (e) { console.log(e); }
+        }
+
+        async function salvarDados() {
+            const t = document.getElementById('tipo-lanc').value;
+            const v = document.getElementById('valor-lanc').value;
+            if(!v) return alert("Preencha o valor");
+            
+            await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({tipo: t, valor: v}) });
+            alert("Sucesso!");
+            document.getElementById('valor-lanc').value = "";
+            carregar();
+        }
+    </script>
+</body>
+</html>
