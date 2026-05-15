@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GPL Painel TEST v99</title>
+<style>
+body{font-family:system-ui,sans-serif;background:#f0f0f0;margin:0;padding:0}
+.header{background:linear-gradient(135deg,#1a5c10,#2d7a1f);padding:14px;color:#fff;font-size:18px;font-weight:800}
+.card{background:#fff;border-radius:12px;padding:14px;margin:10px;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px}
+.kpi{background:#fff;border-radius:10px;padding:12px;text-align:center}
+.kpi-val{font-size:24px;font-weight:900;color:#1B5E20}
+.kpi-lbl{font-size:11px;color:#888;text-transform:uppercase;font-weight:700}
+.badge-g{background:#E8F5E9;color:#1B5E20;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;display:inline-block}
+.badge-r{background:#FFEBEE;color:#C62828;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;display:inline-block}
+.badge-a{background:#FFF8E1;color:#E65100;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;display:inline-block}
+.row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid #f5f5f5}
+.row:last-child{border-bottom:none}
+.row-name{font-size:13px;font-weight:700}
+.row-val{font-size:13px;font-weight:700;color:#1B5E20;white-space:nowrap;margin-left:8px}
+.row-sub{font-size:11px;color:#888;margin-top:2px}
+.version{background:#1B5E20;color:#fff;text-align:center;padding:6px;font-size:12px;font-weight:700}
+.sel{width:100%;padding:8px;border:1.5px solid #ddd;border-radius:9px;font-size:13px;background:#fff;margin-bottom:10px}
+.pills{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+.pill{padding:5px 12px;border:1.5px solid #ddd;border-radius:16px;background:#fff;color:#888;font-size:11px;font-weight:700;cursor:pointer}
+.pill.on{background:#1B5E20;color:#fff;border-color:#1B5E20}
+.empty{color:#aaa;text-align:center;padding:16px;font-size:12px}
+.ok-bar{background:#E8F5E9;border-left:4px solid #4CAF50;padding:10px;font-size:12px;color:#1B5E20;margin-bottom:8px;border-radius:0 8px 8px 0}
+</style>
+</head>
+<body>
+
+<div class="version">GPL Painel · VERSÃO DE TESTE · 15/05/2026</div>
+
+<div class="header">📊 Gestão Pecuária Lucrativa · Rogério Avelino</div>
+
+<div style="padding:10px">
+  <select class="sel" id="sel-faz" onchange="renderPainel()">
+    <option value="">Todas as fazendas</option>
+  </select>
+  <div class="pills">
+    <button class="pill on" onclick="setPer(this,'semana')">7 dias</button>
+    <button class="pill" onclick="setPer(this,'quinzena')">15 dias</button>
+    <button class="pill" onclick="setPer(this,'mes')">Mês</button>
+  </div>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="kpi-lbl">💰 Diárias</div><div class="kpi-val" id="kp-d">R$ 0</div><div style="font-size:10px;color:#888" id="kp-ds">0 reg.</div></div>
+  <div class="kpi"><div class="kpi-lbl">🏪 Cantina</div><div class="kpi-val" id="kp-c">R$ 0</div><div style="font-size:10px;color:#888" id="kp-cs">0 reg.</div></div>
+  <div class="kpi" style="background:#FFEBEE"><div class="kpi-lbl">💸 A pagar</div><div class="kpi-val" style="color:#C62828" id="kp-dp">R$ 0</div><div style="font-size:10px;color:#888" id="kp-dps">0</div></div>
+  <div class="kpi" style="background:#E8F5E9"><div class="kpi-lbl">✅ Pagas</div><div class="kpi-val" id="kp-pg">R$ 0</div><div style="font-size:10px;color:#888" id="kp-pgs">0</div></div>
+  <div class="kpi"><div class="kpi-lbl">🛠 Tratos</div><div class="kpi-val" id="kp-t">0</div></div>
+  <div class="kpi"><div class="kpi-lbl">🔬 Escore</div><div class="kpi-val" id="kp-e">—</div><div style="font-size:10px;color:#888" id="kp-es"></div></div>
+</div>
+
+<div class="card">
+  <div style="font-size:13px;font-weight:800;color:#1B5E20;margin-bottom:10px;border-bottom:2px solid #E8F5E9;padding-bottom:6px">👤 Diárias</div>
+  <div id="lista-d"><div class="empty">Nenhum registro.</div></div>
+</div>
+
+<div class="card">
+  <div style="font-size:13px;font-weight:800;color:#1B5E20;margin-bottom:10px;border-bottom:2px solid #E8F5E9;padding-bottom:6px">🛠 Tratos</div>
+  <div id="lista-t"><div class="empty">Nenhum registro.</div></div>
+</div>
+
+<div class="card">
+  <div style="font-size:13px;font-weight:800;color:#1B5E20;margin-bottom:10px;border-bottom:2px solid #E8F5E9;padding-bottom:6px">🔬 Escore de fezes</div>
+  <div id="lista-e"><div class="empty">Nenhum registro.</div></div>
+</div>
+
+<div class="card">
+  <div style="font-size:13px;font-weight:800;color:#1B5E20;margin-bottom:10px;border-bottom:2px solid #E8F5E9;padding-bottom:6px">🏪 Cantina</div>
+  <div id="lista-c"><div class="empty">Nenhum registro.</div></div>
+</div>
+
+<div style="height:40px"></div>
+
+<script>
+// Chave do localStorage — mesma do sistema GPL
+var STORAGE_KEY = 'gpl_v17_data';
+var perAtual = 'semana';
+var S = null;
+
+function carregar() {
+  try {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) S = JSON.parse(raw);
+  } catch(e) {}
+  if (!S) S = {rD:[],rT:[],rC:[],rE:[],rDesp:[],FAZ:{},US:[]};
+  if (!S.rD) S.rD = [];
+  if (!S.rT) S.rT = [];
+  if (!S.rC) S.rC = [];
+  if (!S.rE) S.rE = [];
+  if (!S.rDesp) S.rDesp = [];
+  if (!S.FAZ) S.FAZ = {};
+}
+
+function setPer(btn, per) {
+  document.querySelectorAll('.pill').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');
+  perAtual = per;
+  renderPainel();
+}
+
+function filtrar(lista) {
+  var faz = document.getElementById('sel-faz').value;
+  var now = new Date();
+  var dias = perAtual === 'semana' ? 7 : perAtual === 'quinzena' ? 15 : 30;
+  var corte = new Date(now); corte.setDate(now.getDate() - dias);
+  return lista.filter(function(r) {
+    var dt = r.dt || r.data || '';
+    var d = new Date(dt + 'T00:00:00');
+    if (faz && r.faz !== faz) return false;
+    return d >= corte;
+  });
+}
+
+function fmt(v) { return 'R$ ' + (Math.round(v)||0).toLocaleString('pt-BR'); }
+
+var EC = ['','#7B3F00','#A0522D','#2d7a1f','#CC8800','#CC2200'];
+
+function renderPainel() {
+  var lv = filtrar(S.rD.filter(function(r){return r.tipo==='diaria'&&!r._apagado;}));
+  var lc = filtrar(S.rC);
+  var lt = filtrar(S.rT);
+  var le = filtrar(S.rE);
+  var ld = filtrar(S.rDesp||[]);
+
+  var td = lv.reduce(function(a,r){return a+r.v;},0);
+  var tc = lc.reduce(function(a,r){return a+r.total;},0);
+  var pagar = ld.filter(function(r){return r.st==='pagar';});
+  var pago  = ld.filter(function(r){return r.st==='pago';});
+
+  document.getElementById('kp-d').textContent  = fmt(td);
+  document.getElementById('kp-ds').textContent = lv.length + ' registros';
+  document.getElementById('kp-c').textContent  = fmt(tc);
+  document.getElementById('kp-cs').textContent = lc.length + ' registros';
+  document.getElementById('kp-dp').textContent = fmt(pagar.reduce(function(a,r){return a+r.val;},0));
+  document.getElementById('kp-dps').textContent= pagar.length + ' pendentes';
+  document.getElementById('kp-pg').textContent = fmt(pago.reduce(function(a,r){return a+r.val;},0));
+  document.getElementById('kp-pgs').textContent= pago.length + ' pagas';
+  document.getElementById('kp-t').textContent  = lt.length;
+
+  if (le.length) {
+    var m = (le.reduce(function(a,r){return a+r.es;},0)/le.length).toFixed(1);
+    document.getElementById('kp-e').innerHTML  = '<span style="color:'+EC[Math.round(parseFloat(m))]+'">'+m+'</span>';
+    document.getElementById('kp-es').textContent = le.length + ' aval.';
+  } else {
+    document.getElementById('kp-e').textContent = '—';
+    document.getElementById('kp-es').textContent = '';
+  }
+
+  // Diárias
+  var ld_el = document.getElementById('lista-d');
+  ld_el.innerHTML = lv.length ? lv.slice().reverse().map(function(r){
+    var av = r.av==='otimo'?'<span class="badge-g">Ótimo</span>':r.av==='bom'?'<span class="badge-a">Bom</span>':'<span class="badge-r">Ruim</span>';
+    return '<div class="row"><div><div class="row-name">'+r.n+' '+av+'</div><div class="row-sub">'+r.dt.split('-').reverse().join('/')+ ' · '+r.faz+' · '+r.srv+'</div></div><div class="row-val">R$ '+r.v.toFixed(2).replace('.',',')+'</div></div>';
+  }).join('') : '<div class="empty">Nenhum registro no período.</div>';
+
+  // Tratos
+  var lt_el = document.getElementById('lista-t');
+  lt_el.innerHTML = lt.length ? lt.slice().reverse().map(function(r){
+    return '<div class="row"><div><div class="row-name">'+(r.co||'—')+' · '+r.pr+'</div><div class="row-sub">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+'</div></div><div class="row-val">'+r.q+' '+(r.unid||'kg')+'</div></div>';
+  }).join('') : '<div class="empty">Nenhum.</div>';
+
+  // Escore
+  var le_el = document.getElementById('lista-e');
+  le_el.innerHTML = le.length ? le.slice().reverse().map(function(r){
+    return '<div class="row"><div><div class="row-name">'+(r.co||r.faz)+'</div><div class="row-sub">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+'</div></div><div class="row-val" style="color:'+EC[r.es]+'">E'+r.es+'</div></div>';
+  }).join('') : '<div class="empty">Nenhum.</div>';
+
+  // Cantina
+  var lc_el = document.getElementById('lista-c');
+  lc_el.innerHTML = lc.length ? lc.slice().reverse().map(function(r){
+    return '<div class="row"><div><div class="row-name">'+r.resp+'</div><div class="row-sub">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+'</div></div><div class="row-val">R$ '+r.total.toFixed(2).replace('.',',')+'</div></div>';
+  }).join('') : '<div class="empty">Nenhum.</div>';
+
+  // Fazendas no select
+  var sel = document.getElementById('sel-faz');
+  if (sel.options.length <= 1) {
+    Object.keys(S.FAZ).forEach(function(f){
+      var o = document.createElement('option'); o.value = f; o.textContent = f;
+      sel.appendChild(o);
+    });
+  }
+}
+
+// Inicializar
+carregar();
+renderPainel();
+</script>
+</body>
+</html>
