@@ -1109,7 +1109,12 @@ function sp(id, back, prev) {
   const TT = {home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',med:'Medicamentos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes'};
   document.getElementById('h-t').textContent = CU ? CU.n : 'GPL';
   document.getElementById('h-s').textContent = TT[id] || '';
-  if (id === 'painel') { setTimeout(function(){ popAll(); rPan(); }, 50); }
+  if (id === 'painel') { setTimeout(function(){
+    console.log('PAINEL: iniciando render, CU=', CU ? CU.n : 'NULL');
+    try { popAll(); } catch(e){ console.error('popAll erro:', e); }
+    try { rPan(); } catch(e){ console.error('rPan erro:', e); }
+    console.log('PAINEL: render concluído');
+  }, 50); }
   if (id === 'insumo') { setTimeout(function(){ rListProdutos(); updInsCadFaz(); }, 50); }
   if (id === 'lote') { setTimeout(function(){ rListLotes(); }, 50); }
 
@@ -1121,7 +1126,12 @@ function sp(id, back, prev) {
     var pa = document.getElementById('p-a'); if (pa) pa.value = S.PR.almoco;
     var pj = document.getElementById('p-j'); if (pj) pj.value = S.PR.janta;
   } catch(e){ console.error('config error:',e); } }, 50);
-  if (id === 'estoque') { setTimeout(function(){ popAll(); rEst(); }, 50); }
+  if (id === 'estoque') { setTimeout(function(){
+    console.log('ESTOQUE: iniciando render');
+    try { popAll(); } catch(e){ console.error('popAll erro:', e); }
+    try { rEst(); } catch(e){ console.error('rEst erro:', e); }
+    console.log('ESTOQUE: render concluído');
+  }, 50); }
   if (id === 'consultor') { setTimeout(function(){ popAll(); rConsultor(); }, 50); }
   if (id === 'cantina') { setTimeout(function(){ popAll(); updPrecosCt(); }, 50); }
   window.scrollTo(0, 0);
@@ -1148,6 +1158,7 @@ function buildTabs() {
 }
 
 function goTab(id) {
+  console.log('goTab chamado:', id);
   document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); });
   var tb = document.getElementById('tab-' + id);
   if (tb) tb.classList.add('on');
