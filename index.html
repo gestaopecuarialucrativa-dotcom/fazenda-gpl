@@ -491,7 +491,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   </div>
 
   <!-- ESTOQUE -->
-  <div id="pg-estoque" class="pg">
+  <div id="pg-estoque" class="pg"><p style="color:red;font-weight:bold;font-size:16px;padding:10px">🔴 pg-estoque está visível</p>
 
   <div class="card"><div class="stit">📦 Estoque atual</div><div id="est-l"></div></div>
 
@@ -512,7 +512,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 </div>
 
   <!-- PAINEL -->
-  <div id="pg-painel" class="pg">
+  <div id="pg-painel" class="pg"><p style="color:red;font-weight:bold;font-size:16px;padding:10px">🔴 pg-painel está visível</p>
 
   <!-- Fazenda + Período -->
   <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
@@ -637,7 +637,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   </div>
 
   <!-- CONSULTOR -->
-  <div id="pg-consultor" class="pg">
+  <div id="pg-consultor" class="pg"><p style="color:red;font-weight:bold;font-size:16px;padding:10px">🔴 pg-consultor está visível</p>
 
   <div style="background:linear-gradient(135deg,#1B5E20,#2E7D32);border-radius:14px;padding:18px;margin-bottom:12px;color:#fff">
     <div style="font-size:17px;font-weight:800">🌿 Gestão Pecuária Lucrativa</div>
@@ -656,7 +656,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 </div>
 
   <!-- CONFIG -->
-  <div id="pg-config" class="pg">
+  <div id="pg-config" class="pg"><p style="color:red;font-weight:bold;font-size:16px;padding:10px">🔴 pg-config está visível</p>
 
   <div class="card">
     <div class="stit">🗄️ Banco de dados</div>
@@ -1137,20 +1137,20 @@ function sp(id, back, prev) {
   const TT = {home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',med:'Medicamentos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes'};
   document.getElementById('h-t').textContent = CU ? CU.n : 'GPL';
   document.getElementById('h-s').textContent = TT[id] || '';
-  if (id === 'painel') { setTimeout(function(){ popAll(); rPan(); }, 50); }
+  if (id === 'painel') { try{rPan();}catch(e){console.error('rPan:',e);} }
   if (id === 'insumo') { setTimeout(function(){ rListProdutos(); updInsCadFaz(); }, 50); }
   if (id === 'lote') { setTimeout(function(){ rListLotes(); }, 50); }
 
-  if (id === 'config') setTimeout(function(){ try {
+  if (id === 'config') { try {
     rFazCfg(); rUcfg(); rServL(); rLinksUsuarios();
     var gs = document.getElementById('cfg-gs'); if (gs) gs.value = S.cfgGS || '';
     var ght = document.getElementById('cfg-ght'); if (ght) ght.value = S.cfgGHT || '';
     var pc = document.getElementById('p-c'); if (pc) pc.value = S.PR.cafe;
     var pa = document.getElementById('p-a'); if (pa) pa.value = S.PR.almoco;
     var pj = document.getElementById('p-j'); if (pj) pj.value = S.PR.janta;
-  } catch(e){ console.error('config error:',e); } }, 50);
-  if (id === 'estoque') { setTimeout(function(){ popAll(); rEst(); }, 50); }
-  if (id === 'consultor') { setTimeout(function(){ popAll(); rConsultor(); }, 50); }
+  } catch(e){ console.error('config error:',e); } }
+  if (id === 'estoque') { try{rEst();}catch(e){console.error('rEst:',e);} }
+  if (id === 'consultor') { try{rConsultor();}catch(e){console.error('rCons:',e);} }
   if (id === 'cantina') { setTimeout(function(){ popAll(); updPrecosCt(); }, 50); }
   window.scrollTo(0, 0);
 }
