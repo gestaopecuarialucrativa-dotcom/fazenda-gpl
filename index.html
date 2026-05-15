@@ -505,7 +505,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   </div>
 
   <!-- PAINEL -->
-  <div id="pg-painel" class="pg">
+  <div id="pg-painel" class="pg"><div style="background:#1B5E20;color:white;padding:20px;font-size:20px;font-weight:bold;margin-bottom:10px">✅ PAINEL VISÍVEL</div>
     <div class="fg"><div class="lbl">Fazenda</div><select id="pf" onchange="rPan()"><option value="">Todas as fazendas</option></select></div>
     <div class="psel"><div class="pbtn on" onclick="sPer(this,'quinzena')">15 dias</div><div class="pbtn" onclick="sPer(this,'semana')">Semana</div><div class="pbtn" onclick="sPer(this,'quinzena')">Quinzena</div><div class="pbtn" onclick="sPer(this,'mes')">Mês</div><div class="pbtn" onclick="sPer(this,'safra')">🌾 Safra</div></div>
     <div id="safra-info" style="display:none;font-size:11px;color:#2E7D32;background:#E8F5E9;border-radius:8px;padding:5px 10px;margin-bottom:6px;text-align:center"></div>
@@ -1092,7 +1092,7 @@ function sp(id, back, prev) {
   const TT = {home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',med:'Medicamentos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes'};
   document.getElementById('h-t').textContent = CU ? CU.n : 'GPL';
   document.getElementById('h-s').textContent = TT[id] || '';
-  if (id === 'painel') { try{rPan();}catch(e){console.error('rPan:',e);} }
+  if (id === 'painel') { try{rPan();}catch(e){console.error('rPan ERRO:',e);} }
   if (id === 'insumo') { setTimeout(function(){ rListProdutos(); updInsCadFaz(); }, 50); }
   if (id === 'lote') { setTimeout(function(){ rListLotes(); }, 50); }
 
@@ -1104,8 +1104,8 @@ function sp(id, back, prev) {
     var pa = document.getElementById('p-a'); if (pa) pa.value = S.PR.almoco;
     var pj = document.getElementById('p-j'); if (pj) pj.value = S.PR.janta;
   } catch(e){ console.error('config error:',e); } }, 50);
-  if (id === 'estoque') { try{rEst();}catch(e){console.error('rEst:',e);} }
-  if (id === 'consultor') { try{rConsultor();}catch(e){console.error('rCons:',e);} }
+  if (id === 'estoque') { setTimeout(function(){ popAll(); rEst(); }, 50); }
+  if (id === 'consultor') { setTimeout(function(){ popAll(); rConsultor(); }, 50); }
   if (id === 'cantina') { setTimeout(function(){ popAll(); updPrecosCt(); }, 50); }
   window.scrollTo(0, 0);
 }
@@ -1549,7 +1549,6 @@ function filtrar(lista,per) {
 
 let perA='quinzena';
 function rPan() {
-  var podeExcluir = !!(CU && (CU.r==='Consultor' || CU.r==='Dono'));
   try {
   const lv=filtrar(S.rD.filter(r=>r.tipo==='diaria' && !r._apagado),perA);
   const lc=filtrar(S.rC,perA); const lt=filtrar(S.rT,perA); const le=filtrar(S.rE,perA);
@@ -1559,6 +1558,7 @@ function rPan() {
   document.getElementById('s-t').textContent=lt.length;
   if(le.length){const m=(le.reduce((a,r)=>a+r.es,0)/le.length).toFixed(1);document.getElementById('s-e').innerHTML=`<span style="color:${EC[Math.round(parseFloat(m))]}">${m}</span>`;document.getElementById('s-es').textContent=le.length+' aval.';}
   else{document.getElementById('s-e').textContent='—';document.getElementById('s-es').textContent='sem reg.';}
+  var podeExcluir = CU && (CU.r==='Consultor' || CU.r==='Dono');
   document.getElementById('l-d').innerHTML=lv.length?[...lv].reverse().map(function(r){
     var globalIdx = S.rD.indexOf(r);
     var av=r.av==='otimo'?'<span class="bdg bg">Ótimo</span>':r.av==='bom'?'<span class="bdg ba">Bom</span>':'<span class="bdg br">Ruim</span>';
