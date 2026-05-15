@@ -491,112 +491,85 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   </div>
 
   <!-- ESTOQUE -->
-  <div id="pg-estoque" class="pg"><p style="color:red;font-weight:bold;font-size:16px;padding:10px">🔴 pg-estoque está visível</p>
-
-  <div class="card"><div class="stit">📦 Estoque atual</div><div id="est-l"></div></div>
-
-  <div class="card">
-    <div class="stit">⬇️ Registrar entrada</div>
-    <div class="fg"><div class="lbl">Produto</div><select id="ep" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px"><option value="">Selecione...</option></select></div>
-    <div style="display:flex;gap:8px">
-      <div class="fg" style="flex:1"><div class="lbl">Quantidade</div><input type="number" id="eq" placeholder="0" min="0" step="0.5" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box"></div>
-      <div class="fg" style="flex:1"><div class="lbl">Data</div><input type="date" id="ed" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box"></div>
+  <div id="pg-estoque" class="pg">
+    <div class="card"><div class="stit">📦 Estoque atual</div><div id="est-l"></div></div>
+    <div class="card">
+      <div class="stit">⬇️ Entrada de produto</div>
+      <div class="fg"><div class="lbl">Produto</div><select id="ep"></select></div>
+      <div class="brow" style="margin-bottom:11px"><div><div class="lbl">Quantidade</div><input type="number" id="eq" placeholder="0" min="0" step="0.5"></div><div><div class="lbl">Data</div><input type="date" id="ed"></div></div>
+      <div class="fg" style="margin-bottom:0"><div class="lbl">NF / Fornecedor</div><input type="text" id="eo" placeholder="Ex: NF 1234"></div>
+      <button class="sbtn" style="margin-top:10px" onclick="entEst()">⬇️ Registrar entrada</button>
+      <div class="ok" id="ok-e">✅ Entrada registrada!</div>
     </div>
-    <div class="fg" style="margin-bottom:0"><div class="lbl">NF / Fornecedor</div><input type="text" id="eo" placeholder="Ex: NF 1234" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box"></div>
-    <button class="sbtn" style="margin-top:10px" onclick="entEst()">⬇️ Registrar entrada</button>
-    <div class="ok" id="ok-e">✅ Entrada registrada!</div>
+    <div class="card"><div class="stit">🕐 Movimentações</div><div id="mov-l"><div style="font-size:12px;color:#888;text-align:center;padding:12px">Nenhuma.</div></div></div>
   </div>
-
-  <div class="card"><div class="stit">🕐 Movimentações recentes</div><div id="mov-l"><div style="font-size:12px;color:#888;text-align:center;padding:12px">Nenhuma.</div></div></div>
-
-</div>
 
   <!-- PAINEL -->
-  <div id="pg-painel" class="pg"><p style="color:red;font-weight:bold;font-size:16px;padding:10px">🔴 pg-painel está visível</p>
-
-  <!-- Fazenda + Período -->
-  <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-    <select id="pf" onchange="rPan()" style="flex:1;padding:8px;border:1.5px solid #ddd;border-radius:9px;font-size:13px;background:#fff">
-      <option value="">Todas as fazendas</option>
-    </select>
-  </div>
-  <div style="display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap">
-    <button class="pbtn on" onclick="sPer(this,'semana')">7 dias</button>
-    <button class="pbtn" onclick="sPer(this,'quinzena')">15 dias</button>
-    <button class="pbtn" onclick="sPer(this,'mes')">Mês</button>
-    <button class="pbtn" onclick="sPer(this,'safra')">🌾 Safra</button>
-  </div>
-  <div id="safra-info" style="display:none;background:#E8F5E9;border-radius:8px;padding:5px 10px;font-size:11px;color:#1B5E20;font-weight:700;margin-bottom:8px;text-align:center"></div>
-
-  <!-- KPIs -->
-  <div class="sgrid">
-    <div class="sc"><div class="sl">💰 Diárias</div><div class="sv" id="s-d">R$ 0</div><div class="ss" id="s-ds">0 reg.</div></div>
-    <div class="sc"><div class="sl">🏪 Cantina</div><div class="sv" id="s-c">R$ 0</div><div class="ss" id="s-cs">0 reg.</div></div>
-    <div class="sc"><div class="sl">🛠 Tratos</div><div class="sv" id="s-t">0</div><div class="ss">registros</div></div>
-    <div class="sc"><div class="sl">🔬 Escore fezes</div><div class="sv" id="s-e">—</div><div class="ss" id="s-es">sem reg.</div></div>
-    <div class="sc sc-red"><div class="sl">💸 A pagar</div><div class="sv" id="s-dp">R$ 0</div><div class="ss" id="s-dps">0 pendentes</div></div>
-    <div class="sc sc-grn"><div class="sl">✅ Pagas</div><div class="sv" id="s-dpg">R$ 0</div><div class="ss" id="s-dpgs">0 pagas</div></div>
-  </div>
-
-  <!-- Gráfico -->
-  <div class="card">
-    <div class="stit">📊 Desembolso — últimos 7 dias</div>
-    <canvas id="chart-desembolso" height="180" style="width:100%;display:block"></canvas>
-    <div style="display:flex;gap:12px;margin-top:6px;font-size:10px;justify-content:center;color:#888">
-      <span><span style="display:inline-block;width:8px;height:8px;background:#4CAF50;border-radius:2px;margin-right:3px"></span>Diárias</span>
-      <span><span style="display:inline-block;width:8px;height:8px;background:#FF9800;border-radius:2px;margin-right:3px"></span>Cantina</span>
-      <span><span style="display:inline-block;width:8px;height:8px;background:#F44336;border-radius:2px;margin-right:3px"></span>Despesas</span>
+  <div id="pg-painel" class="pg">
+    <div class="fg"><div class="lbl">Fazenda</div><select id="pf" onchange="rPan()"><option value="">Todas as fazendas</option></select></div>
+    <div class="psel"><div class="pbtn on" onclick="sPer(this,'quinzena')">15 dias</div><div class="pbtn" onclick="sPer(this,'semana')">Semana</div><div class="pbtn" onclick="sPer(this,'quinzena')">Quinzena</div><div class="pbtn" onclick="sPer(this,'mes')">Mês</div><div class="pbtn" onclick="sPer(this,'safra')">🌾 Safra</div></div>
+    <div id="safra-info" style="display:none;font-size:11px;color:#2E7D32;background:#E8F5E9;border-radius:8px;padding:5px 10px;margin-bottom:6px;text-align:center"></div>
+    <div class="sgrid">
+      <div class="sc"><div class="sl">Total diárias</div><div class="sv" id="s-d">R$ 0</div><div class="ss" id="s-ds">0 reg.</div></div>
+      <div class="sc"><div class="sl">Total cantina</div><div class="sv" id="s-c">R$ 0</div><div class="ss" id="s-cs">0 reg.</div></div>
+      <div class="sc"><div class="sl">Tratos de cocho</div><div class="sv" id="s-t">0</div><div class="ss">registros</div></div>
+      <div class="sc"><div class="sl">Escore médio fezes</div><div class="sv" id="s-e">—</div><div class="ss" id="s-es">sem reg.</div></div>
+      <div class="sc sc-red"><div class="sl">💸 A pagar</div><div class="sv" id="s-dp">R$ 0</div><div class="ss" id="s-dps">0 lançadas</div></div>
+      <div class="sc sc-grn"><div class="sl">✅ Pagas</div><div class="sv" id="s-dpg">R$ 0</div><div class="ss" id="s-dpgs">0 pagas</div></div>
     </div>
-  </div>
+    <div class="card"><div class="stit">👤 Diárias</div><div id="l-d"><div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div></div></div>
+    <div class="card"><div class="stit">🔬 Escore de fezes</div><div id="l-e"><div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div></div></div>
+    <div class="card"><div class="stit">🛠 Tratos de cocho</div><div id="l-t"><div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div></div></div>
+    <div class="card"><div class="stit">🏪 Cantina</div><div id="l-ct"><div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div></div></div>
+    <button class="xbtn" onclick="expCSV()">⬇️ Exportar CSV</button>
+    <button class="xbtn" style="background:#C62828;color:#fff;border-color:#C62828" onclick="gerarRelatorioPDF()">📄 Relatório PDF</button>
+    <button class="xbtn" style="background:#1B5E20;color:#fff;border-color:#1B5E20" onclick="gerarReciboPDF()">🧾 Gerar recibo</button>
 
-  <!-- Listas -->
-  <div class="card"><div class="stit">👤 Diárias</div><div id="l-d"><div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div></div></div>
-  <div class="card"><div class="stit">🔬 Escore de fezes</div><div id="l-e"><div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div></div></div>
-  <div class="card"><div class="stit">🛠 Tratos de cocho</div><div id="l-t"><div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div></div></div>
-  <div class="card"><div class="stit">🏪 Cantina</div><div id="l-ct"><div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div></div></div>
-
-  <!-- Exportar -->
-  <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-    <button class="xbtn" onclick="expCSV()" style="flex:1">⬇️ CSV</button>
-    <button class="xbtn" onclick="gerarRelatorioPDF()" style="flex:1;background:#C62828;color:#fff;border-color:#C62828">📄 PDF</button>
-    <button class="xbtn" onclick="gerarReciboPDF()" style="flex:1;background:#1B5E20;color:#fff;border-color:#1B5E20">🧾 Recibo</button>
-  </div>
-
-  <!-- Lançar despesa -->
-  <div class="card">
-    <div class="stit">💸 Lançar despesa avulsa</div>
-    <div class="fg"><div class="lbl">Fazenda</div><select id="desp-faz" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px"></select></div>
-    <div class="fg"><div class="lbl">Descrição</div><input type="text" id="desp-desc" placeholder="Ex: Ração, Medicamento..." style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box"></div>
-    <div style="display:flex;gap:8px">
-      <div class="fg" style="flex:1"><div class="lbl">Valor (R$)</div><input type="number" id="desp-val" placeholder="0,00" step="0.01" min="0" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box"></div>
-      <div class="fg" style="flex:1"><div class="lbl">Vencimento</div><input type="date" id="desp-venc" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box"></div>
-    </div>
-    <div class="fg"><div class="lbl">Status</div>
-      <div style="display:flex;gap:6px">
-        <button class="pbtn on" id="db-pagar" onclick="sDespSt(this,'pagar')" style="flex:1;padding:9px">⏳ A pagar</button>
-        <button class="pbtn" id="db-pago" onclick="sDespSt(this,'pago')" style="flex:1;padding:9px">✅ Pago</button>
+    <!-- GRÁFICO -->
+    <div class="card" style="margin-top:10px">
+      <div class="stit">📊 Desembolso (últimos 7 dias)</div>
+      <canvas id="chart-desembolso" height="200" style="width:100%;display:block"></canvas>
+      <div style="display:flex;gap:12px;margin-top:6px;font-size:10px;justify-content:center">
+        <span style="display:flex;align-items:center;gap:3px"><span style="width:10px;height:10px;background:#4CAF50;display:inline-block;border-radius:2px"></span>Diárias</span>
+        <span style="display:flex;align-items:center;gap:3px"><span style="width:10px;height:10px;background:#FF9800;display:inline-block;border-radius:2px"></span>Cantina</span>
+        <span style="display:flex;align-items:center;gap:3px"><span style="width:10px;height:10px;background:#F44336;display:inline-block;border-radius:2px"></span>Despesas</span>
       </div>
     </div>
-    <button class="sbtn" onclick="envDesp()">💾 Lançar despesa</button>
-    <div class="ok" id="ok-desp">✅ Despesa lançada!</div>
-  </div>
 
-  <!-- Lista despesas -->
-  <div class="card">
-    <div class="stit">📋 Despesas</div>
-    <div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap">
-      <button class="pbtn on" id="df-todas" onclick="filtDesp(this,'todas')" style="flex:1">Todas</button>
-      <button class="pbtn" id="df-pagar" onclick="filtDesp(this,'pagar')" style="flex:1">A pagar</button>
-      <button class="pbtn" id="df-pago" onclick="filtDesp(this,'pago')" style="flex:1">Pagas</button>
+    <!-- DESPESAS -->
+    <div class="card" style="margin-top:10px">
+      <div class="stit">💸 Despesa avulsa</div>
+      <div style="font-size:11px;color:#888;margin-bottom:8px">Para despesas além das diárias (ração, vet, insumos...)</div>
+      <div class="fg"><div class="lbl">Fazenda</div><select id="desp-faz"></select></div>
+      <div class="fg"><div class="lbl">Descrição</div><input type="text" id="desp-desc" placeholder="Ex: Ração, Medicamento..."></div>
+      <div class="fg"><div class="lbl">Valor (R$)</div><input type="number" id="desp-val" placeholder="0,00" step="0.01" min="0"></div>
+      <div class="fg"><div class="lbl">Vencimento</div><input type="date" id="desp-venc"></div>
+      <div class="fg"><div class="lbl">Status</div>
+        <div style="display:flex;gap:6px">
+          <div class="pbtn on" id="db-pagar" onclick="sDespSt(this,'pagar')" style="flex:1;padding:8px;font-size:12px">⏳ A pagar</div>
+          <div class="pbtn" id="db-pago" onclick="sDespSt(this,'pago')" style="flex:1;padding:8px;font-size:12px">✅ Pago</div>
+        </div>
+      </div>
+      <button class="sbtn" onclick="envDesp()">💾 Lançar despesa</button>
+      <div class="ok" id="ok-desp">✅ Despesa lançada!</div>
     </div>
-    <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
-      <span style="font-size:11px;color:#888">Mês:</span>
-      <select id="df-mes" onchange="rListDesp()" style="flex:1;padding:5px;border:1.5px solid #ddd;border-radius:8px;font-size:12px"></select>
-    </div>
-    <div id="l-desp"><div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhuma despesa.</div></div>
-  </div>
 
-</div>
+    <div class="card" style="margin-top:10px">
+      <div class="stit">📋 Despesas</div>
+      <div style="display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap">
+        <div class="pbtn on" id="df-todas" onclick="filtDesp(this,'todas')" style="flex:1;padding:6px;font-size:11px">Todas</div>
+        <div class="pbtn" id="df-pagar" onclick="filtDesp(this,'pagar')" style="flex:1;padding:6px;font-size:11px">A pagar</div>
+        <div class="pbtn" id="df-pago" onclick="filtDesp(this,'pago')" style="flex:1;padding:6px;font-size:11px">Pagas</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
+        <div style="font-size:11px;color:#888">Mês:</div>
+        <select id="df-mes" onchange="rListDesp()" style="flex:1;padding:5px;border:1.5px solid #ddd;border-radius:8px;font-size:12px">
+          <option value="">Todos</option>
+        </select>
+      </div>
+      <div id="l-desp"><div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhuma despesa lançada.</div></div>
+    </div>
+  </div>
 
   <!-- LOTES -->
   <div id="pg-lote" class="pg">
@@ -637,115 +610,97 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   </div>
 
   <!-- CONSULTOR -->
-  <div id="pg-consultor" class="pg"><p style="color:red;font-weight:bold;font-size:16px;padding:10px">🔴 pg-consultor está visível</p>
+  <div id="pg-consultor" class="pg">
 
-  <div style="background:linear-gradient(135deg,#1B5E20,#2E7D32);border-radius:14px;padding:18px;margin-bottom:12px;color:#fff">
-    <div style="font-size:17px;font-weight:800">🌿 Gestão Pecuária Lucrativa</div>
-    <div style="font-size:12px;opacity:.8;margin-top:2px">Rogério Avelino · Visão Geral</div>
+    <!-- Resumo geral -->
+    <div id="cons-resumo"></div>
+
+    <!-- Alertas -->
+    <div id="cons-alertas" style="margin-top:10px"></div>
+
+    <!-- Anotações por fazenda -->
+    <div id="cons-notas" style="margin-top:10px"></div>
+
+    <!-- Botão relatório WhatsApp -->
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="sbtn" style="flex:1;background:#25D366" onclick="enviarRelatorioWpp()">📲 Enviar resumo no WhatsApp</button>
+      <button class="sbtn" style="flex:1;background:#C62828" onclick="gerarRelatorioPDF()">📄 Relatório PDF</button>
+    </div>
+
   </div>
-
-  <div id="cons-resumo"></div>
-  <div id="cons-alertas" style="margin-top:8px"></div>
-  <div id="cons-notas" style="margin-top:8px"></div>
-
-  <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-    <button class="sbtn" style="flex:1;background:#25D366" onclick="enviarRelatorioWpp()">📲 WhatsApp</button>
-    <button class="sbtn" style="flex:1;background:#C62828" onclick="gerarRelatorioPDF()">📄 PDF</button>
-  </div>
-
-</div>
 
   <!-- CONFIG -->
-  <div id="pg-config" class="pg"><p style="color:red;font-weight:bold;font-size:16px;padding:10px">🔴 pg-config está visível</p>
-
-  <div class="card">
-    <div class="stit">🗄️ Banco de dados</div>
-    <div style="background:#f0f7e8;border:1px solid #b8dca0;border-radius:9px;padding:10px;font-size:12px;color:#27500A;margin-bottom:10px">Google Planilhas — dados salvos na nuvem em tempo real.</div>
-    <div class="fg"><div class="lbl">URL do Google Apps Script</div><input type="text" id="cfg-gs" placeholder="https://script.google.com/macros/s/..." style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box"></div>
-    <div class="fg" style="margin-bottom:0"><div class="lbl">GitHub Token (backup)</div><input type="text" id="cfg-ght" placeholder="ghp_..." style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box"></div>
-    <button class="sbtn" style="margin-top:10px" onclick="salvInteg()">🔌 Salvar integração</button>
-    <button class="sbtn" style="margin-top:8px;background:#185FA5" onclick="forcarCarregarNuvem()">☁️ Carregar dados da nuvem</button>
-    <button class="sbtn" style="margin-top:8px;background:#2E7D32" onclick="forcarSalvarNuvem()">💾 Salvar dados na nuvem</button>
-    <button class="sbtn" style="margin-top:8px;background:#C62828" onclick="limparTudoLocal()">🗑️ Limpar local e recarregar</button>
-    <div class="ok" id="ok-cloud">✅ Concluído!</div>
-    <div class="ok" id="ok-integ">✅ Integração salva!</div>
-    <div style="margin-top:12px">
-      <div class="lbl" style="margin-bottom:4px">Código Apps Script (clique para copiar):</div>
-      <div style="background:#f0f0f0;border-radius:8px;padding:10px;font-size:10px;font-family:monospace;color:#555;word-break:break-all;cursor:pointer;border:1px solid #ddd" onclick="copiarGAS()">var SHEET_ID='COLE_O_ID_AQUI'; function doGet(e){return processar(e);} function doPost(e){return processar(e);}...</div>
-      <div style="font-size:10px;color:#aaa;margin-top:2px">📋 Clique para copiar</div>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="stit">🔗 Links por Fazenda</div>
-    <div style="background:#f0f7e8;border:1px solid #b8dca0;border-radius:9px;padding:10px;font-size:12px;color:#27500A;margin-bottom:10px">Cada fazenda tem link privado de acesso.</div>
-    <div id="links-fazendas"></div>
-  </div>
-
-  <div class="card">
-    <div class="stit">👤 Links por Funcionário</div>
-    <div style="background:#f0f7e8;border:1px solid #b8dca0;border-radius:9px;padding:10px;font-size:12px;color:#27500A;margin-bottom:10px">Link direto — abre no PIN da pessoa.</div>
-    <div id="links-usuarios"></div>
-  </div>
-
-  <div class="card">
-    <div class="stit">🏠 Fazendas</div>
-    <div id="faz-cfg"></div>
-    <div style="margin-top:10px;padding:10px;background:#f5f9f5;border-radius:10px;border:1px solid #c8e6c9">
-      <div class="lbl" style="margin-bottom:6px">➕ Nova fazenda</div>
-      <input type="text" id="nf" placeholder="Nome da fazenda" style="width:100%;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:6px;box-sizing:border-box">
-      <input type="text" id="nf-gas" placeholder="URL Apps Script (opcional)" style="width:100%;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:6px;box-sizing:border-box">
-      <button class="sbtn" style="margin-top:0" onclick="addFaz()">＋ Adicionar fazenda</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="stit">👥 Usuários e PIN</div>
-    <div id="ucfg-l"></div>
-    <button class="savb" style="width:100%;margin-top:9px;background:#2d7a1f;color:#fff;border-color:#2d7a1f;font-weight:700" onclick="addUser()">＋ Novo usuário</button>
-  </div>
-
-  <div class="card">
-    <div class="stit">📋 Tipos de serviço</div>
-    <div id="serv-l"></div>
-    <div style="display:flex;gap:6px;margin-top:6px">
-      <input type="text" id="ns" placeholder="Nome do serviço" style="flex:1;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:13px">
-      <button class="savb" onclick="addServ()">Add</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="stit">🧾 Preços cantina (R$)</div>
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0">
-      <span>☕ Café</span>
-      <div style="display:flex;gap:6px;align-items:center">
-        <input type="number" style="width:75px;padding:6px;border:1px solid #ddd;border-radius:8px;font-size:13px" id="p-c" step="0.01">
-        <button class="savb" onclick="sPreco('cafe','p-c')">Salvar</button>
+  <div id="pg-config" class="pg">
+    <!-- BANCO DE DADOS -->
+    <div class="card">
+      <div class="stit">🗄️ Banco de dados</div>
+      <div class="info-box">Google Planilhas — dados salvos na nuvem em tempo real.</div>
+      <div class="fg"><div class="lbl">URL do Google Apps Script</div><input type="text" id="cfg-gs" placeholder="https://script.google.com/macros/s/..."></div>
+      <div class="fg" style="margin-bottom:0"><div class="lbl">GitHub Token (backup)</div><input type="text" id="cfg-ght" placeholder="ghp_..."></div>
+      <button class="sbtn" style="margin-top:10px" onclick="salvInteg()">🔌 Salvar integração</button>
+      <button class="sbtn" style="margin-top:8px;background:#185FA5" onclick="forcarCarregarNuvem()">☁️ Carregar dados da nuvem agora</button>
+      <button class="sbtn" style="margin-top:8px;background:#2E7D32" onclick="forcarSalvarNuvem()">💾 Salvar dados na nuvem agora</button>
+      <button class="sbtn" style="margin-top:8px;background:#C62828" onclick="limparTudoLocal()">🗑️ Limpar dados locais e recarregar da nuvem</button>
+      <div class="ok" id="ok-cloud">✅ Concluído!</div>
+      <div class="ok" id="ok-integ">✅ Integração salva!</div>
+      <div style="margin-top:11px"><div class="lbl" style="margin-bottom:4px">Código GAS — troque COLE_O_ID_AQUI pelo ID da planilha (clique para copiar):</div>
+        <div class="code-box" onclick="copiarGAS()">var SHEET_ID=&#39;COLE_O_ID_AQUI&#39;;function doGet(e){return processar(e);}function doPost(e){return processar(e);}function processar(e){try{var p=e.parameter||{};var ss=SpreadsheetApp.openById(SHEET_ID);if(p.acao===&#39;carregar&#39;){var r={};ss.getSheets().forEach(function(sh){var data=sh.getDataRange().getValues();if(data.length>1)r[sh.getName()]=data.slice(1);else if(data.length===1&&sh.getName()===&#39;CONFIG&#39;)r[sh.getName()]=data;});return ContentService.createTextOutput(JSON.stringify(r)).setMimeType(ContentService.MimeType.JSON);}if(p.acao===&#39;salvar_config&#39;){var cfg=JSON.parse(p.data||&#39;{}&#39;);var sh=ss.getSheetByName(&#39;CONFIG&#39;)||ss.insertSheet(&#39;CONFIG&#39;);sh.clearContents();sh.appendRow([&#39;dados&#39;,JSON.stringify(cfg)]);return ContentService.createTextOutput(&#39;ok&#39;).setMimeType(ContentService.MimeType.TEXT);}var raw=p.data||(e.postData?e.postData.contents:&#39;{}&#39;);var d=JSON.parse(raw);var sh2=ss.getSheetByName(d.tipo)||ss.insertSheet(d.tipo);sh2.appendRow(Object.values(d));return ContentService.createTextOutput(&#39;ok&#39;).setMimeType(ContentService.MimeType.TEXT);}catch(err){return ContentService.createTextOutput(&#39;erro:&#39;+err).setMimeType(ContentService.MimeType.TEXT);}}</div>
+        <div style="font-size:11px;color:#888">📋 Clique para copiar</div>
       </div>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0">
-      <span>🍽 Almoço</span>
-      <div style="display:flex;gap:6px;align-items:center">
-        <input type="number" style="width:75px;padding:6px;border:1px solid #ddd;border-radius:8px;font-size:13px" id="p-a" step="0.01">
-        <button class="savb" onclick="sPreco('almoco','p-a')">Salvar</button>
+
+    <!-- LINKS POR USUÁRIO -->
+    <div class="card">
+      <div class="stit">🔗 Links por Fazenda</div>
+      <div class="info-box">📌 Cada fazenda recebe um link próprio. Quem abrir o link da Fazenda X só vê os funcionários da Fazenda X — sem ver as outras.</div>
+      <div id="links-fazendas"></div>
+    </div>
+
+    <div class="card">
+      <div class="stit">👤 Links por Funcionário</div>
+      <div class="info-box">Link individual: abre direto no PIN da pessoa.</div>
+      <div id="links-usuarios"></div>
+    </div>
+
+    <!-- FAZENDAS -->
+    <div class="card">
+      <div class="stit">🏠 Fazendas</div>
+      <div class="info-box" style="font-size:11px">Cada fazenda tem sua própria planilha Google. Crie uma planilha em branco para cada fazenda, implante o Apps Script nela e cole a URL aqui.</div>
+      <div id="faz-cfg"></div>
+      <div style="margin-top:11px;padding:10px;background:#f9f9f9;border-radius:10px;border:1px solid #eee">
+        <div class="lbl" style="margin-bottom:6px">➕ Nova fazenda</div>
+        <input type="text" id="nf" placeholder="Nome da fazenda" style="width:100%;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:6px">
+        <input type="text" id="nf-gas" placeholder="URL do Apps Script desta fazenda" style="width:100%;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:6px">
+        <button class="sbtn" style="margin-top:0" onclick="addFaz()">＋ Adicionar fazenda</button>
       </div>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0">
-      <span>🌙 Janta</span>
-      <div style="display:flex;gap:6px;align-items:center">
-        <input type="number" style="width:75px;padding:6px;border:1px solid #ddd;border-radius:8px;font-size:13px" id="p-j" step="0.01">
-        <button class="savb" onclick="sPreco('janta','p-j')">Salvar</button>
-      </div>
+
+    <!-- USUÁRIOS -->
+    <div class="card">
+      <div class="stit">👥 Usuários e PIN</div>
+      <div id="ucfg-l"></div>
+      <button class="savb" style="width:100%;margin-top:9px;background:#2d7a1f;color:#fff;border-color:#2d7a1f;font-weight:700" onclick="addUser()">＋ Novo usuário</button>
+    </div>
+
+    <!-- SERVIÇOS -->
+    <div class="card"><div class="stit">📋 Tipos de serviço</div><div id="serv-l"></div><div class="addr"><input type="text" id="ns" placeholder="Nome do serviço" style="flex:1"><button class="savb" onclick="addServ()">Add</button></div></div>
+
+    <!-- PREÇOS -->
+    <div class="card">
+      <div class="stit">🧾 Preços cantina (R$)</div>
+      <div style="font-size:11px;color:#888;margin-bottom:10px">Os preços são salvos globalmente. Após salvar, feche e reabra o sistema para confirmar.</div>
+      <div class="er"><span>☕ Café da manhã</span><div style="display:flex;gap:7px;align-items:center"><input type="number" style="width:75px" id="p-c" step="0.01"><button class="savb" onclick="sPreco('cafe','p-c')">Salvar</button></div></div>
+      <div class="er"><span>🍽 Almoço</span><div style="display:flex;gap:7px;align-items:center"><input type="number" style="width:75px" id="p-a" step="0.01"><button class="savb" onclick="sPreco('almoco','p-a')">Salvar</button></div></div>
+      <div class="er" style="border:none"><span>🌙 Janta</span><div style="display:flex;gap:7px;align-items:center"><input type="number" style="width:75px" id="p-j" step="0.01"><button class="savb" onclick="sPreco('janta','p-j')">Salvar</button></div></div>
+    </div>
+
+    <!-- DADOS PENDENTES -->
+    <div class="card">
+      <div class="stit">📡 Dados pendentes (offline)</div>
+      <div id="pend-list"><div style="font-size:12px;color:#888;text-align:center;padding:12px">Nenhum dado pendente.</div></div>
+      <button class="sbtn" style="background:#185FA5;margin-top:8px" onclick="syncAgora()">🔄 Sincronizar agora</button>
     </div>
   </div>
-
-  <div class="card">
-    <div class="stit">📡 Dados pendentes (offline)</div>
-    <div id="pend-list"><div style="font-size:12px;color:#888;text-align:center;padding:12px">Nenhum. ✅</div></div>
-    <button class="sbtn" style="background:#185FA5;margin-top:8px" onclick="syncAgora()">🔄 Sincronizar agora</button>
-  </div>
-
-</div>
 </div>
 
 <script>
@@ -1137,20 +1092,20 @@ function sp(id, back, prev) {
   const TT = {home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',med:'Medicamentos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes'};
   document.getElementById('h-t').textContent = CU ? CU.n : 'GPL';
   document.getElementById('h-s').textContent = TT[id] || '';
-  if (id === 'painel') { try{rPan();}catch(e){console.error('rPan:',e);} }
+  if (id === 'painel') { setTimeout(function(){ popAll(); rPan(); }, 50); }
   if (id === 'insumo') { setTimeout(function(){ rListProdutos(); updInsCadFaz(); }, 50); }
   if (id === 'lote') { setTimeout(function(){ rListLotes(); }, 50); }
 
-  if (id === 'config') { try {
+  if (id === 'config') setTimeout(function(){ try {
     rFazCfg(); rUcfg(); rServL(); rLinksUsuarios();
     var gs = document.getElementById('cfg-gs'); if (gs) gs.value = S.cfgGS || '';
     var ght = document.getElementById('cfg-ght'); if (ght) ght.value = S.cfgGHT || '';
     var pc = document.getElementById('p-c'); if (pc) pc.value = S.PR.cafe;
     var pa = document.getElementById('p-a'); if (pa) pa.value = S.PR.almoco;
     var pj = document.getElementById('p-j'); if (pj) pj.value = S.PR.janta;
-  } catch(e){ console.error('config error:',e); } }
-  if (id === 'estoque') { try{rEst();}catch(e){console.error('rEst:',e);} }
-  if (id === 'consultor') { try{rConsultor();}catch(e){console.error('rCons:',e);} }
+  } catch(e){ console.error('config error:',e); } }, 50);
+  if (id === 'estoque') { setTimeout(function(){ popAll(); rEst(); }, 50); }
+  if (id === 'consultor') { setTimeout(function(){ popAll(); rConsultor(); }, 50); }
   if (id === 'cantina') { setTimeout(function(){ popAll(); updPrecosCt(); }, 50); }
   window.scrollTo(0, 0);
 }
@@ -1594,14 +1549,10 @@ function filtrar(lista,per) {
 
 let perA='quinzena';
 function rPan() {
-  var podeExcluir = !!(CU && (CU.r==='Consultor' || CU.r==='Dono'));
-  var lv=[],lc=[],lt=[],le=[];
-  try{
-    lv=filtrar(S.rD.filter(function(r){return r.tipo==='diaria'&&!r._apagado;}),perA);
-    lc=filtrar(S.rC,perA); lt=filtrar(S.rT,perA); le=filtrar(S.rE,perA);
-  }catch(e){console.error('filtrar:',e);}
-  var td=lv.reduce(function(a,r){return a+r.v;},0);
-  var tc=lc.reduce(function(a,r){return a+r.total;},0);
+  try {
+  const lv=filtrar(S.rD.filter(r=>r.tipo==='diaria' && !r._apagado),perA);
+  const lc=filtrar(S.rC,perA); const lt=filtrar(S.rT,perA); const le=filtrar(S.rE,perA);
+  const td=lv.reduce((a,r)=>a+r.v,0); const tc=lc.reduce((a,r)=>a+r.total,0);
   var el;
   el=document.getElementById('s-d');  if(el)el.textContent='R$ '+Math.round(td);
   el=document.getElementById('s-ds'); if(el)el.textContent=lv.length+' reg.';
@@ -1609,70 +1560,66 @@ function rPan() {
   el=document.getElementById('s-cs'); if(el)el.textContent=lc.length+' reg.';
   el=document.getElementById('s-t');  if(el)el.textContent=lt.length;
   if(le.length){
-    var m=(le.reduce(function(a,r){return a+r.es;},0)/le.length).toFixed(1);
-    el=document.getElementById('s-e'); if(el)el.innerHTML='<span style="color:'+EC[Math.round(parseFloat(m))]+'">'+m+'</span>';
-    el=document.getElementById('s-es');if(el)el.textContent=le.length+' aval.';
-  }else{
-    el=document.getElementById('s-e'); if(el)el.textContent='—';
-    el=document.getElementById('s-es');if(el)el.textContent='sem reg.';
+    const m=(le.reduce((a,r)=>a+r.es,0)/le.length).toFixed(1);
+    el=document.getElementById('s-e');  if(el)el.innerHTML='<span style="color:'+EC[Math.round(parseFloat(m))]+'">'+m+'</span>';
+    el=document.getElementById('s-es'); if(el)el.textContent=le.length+' aval.';
+  } else {
+    el=document.getElementById('s-e');  if(el)el.textContent='—';
+    el=document.getElementById('s-es'); if(el)el.textContent='sem reg.';
   }
+  var podeExcluir = !!(CU && (CU.r==='Consultor' || CU.r==='Dono'));
+
+  el=document.getElementById('l-d');
+  if(el) el.innerHTML=lv.length?[...lv].reverse().map(function(r){
+    var gi=S.rD.indexOf(r);
+    var av=r.av==='otimo'?'<span class="bdg bg">Ótimo</span>':r.av==='bom'?'<span class="bdg ba">Bom</span>':'<span class="bdg br">Ruim</span>';
+    var valStr=r.pago?'<s style="color:#aaa">R$ '+r.v.toFixed(2).replace('.',',')+'</s>':'R$ '+r.v.toFixed(2).replace('.',',');
+    var btnPag=(!r.pago&&r.v>0)?'<button class="btn-pd" data-i="'+gi+'" style="margin-top:4px;padding:3px 10px;font-size:11px;background:#1B5E20;color:#fff;border:none;border-radius:6px;cursor:pointer">✅ Pagar</button>':'';
+    var btnDel=podeExcluir?'<button class="btn-dl" data-a="rD" data-i="'+gi+'" style="float:right;border:none;background:none;color:#C62828;font-size:13px;cursor:pointer">🗑️</button>':'';
+    return '<div class="ri">'+btnDel+'<div class="rt"><span class="rn">'+r.n+' '+av+'</span><span class="rv">'+valStr+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+' · '+r.srv+(r.pago?' ✅':'')+'</div>'+btnPag+'</div>';
+  }).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
+  if(el){el.querySelectorAll('.btn-pd').forEach(b=>{b.onclick=()=>pagarDiaria(parseInt(b.dataset.i));});el.querySelectorAll('.btn-dl').forEach(b=>{b.onclick=()=>excluirRegistro(b.dataset.a,parseInt(b.dataset.i));});}
+
+  el=document.getElementById('l-e');
+  if(el) el.innerHTML=le.length?[...le].reverse().map(function(r){
+    var gi=S.rE.indexOf(r);
+    var del=podeExcluir?'<button class="btn-dl" data-a="rE" data-i="'+gi+'" style="float:right;border:none;background:none;color:#C62828;font-size:13px;cursor:pointer">🗑️</button>':'';
+    return '<div class="ri">'+del+'<div class="rt"><span class="rn">'+(r.co||r.faz)+'</span><span style="color:'+EC[r.es]+';font-weight:800">'+EI[r.es].em+' E'+r.es+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+'</div></div>';
+  }).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
+  if(el)el.querySelectorAll('.btn-dl').forEach(b=>{b.onclick=()=>excluirRegistro(b.dataset.a,parseInt(b.dataset.i));});
+
+  el=document.getElementById('l-t');
+  if(el) el.innerHTML=lt.length?[...lt].reverse().map(function(r){
+    var gi=S.rT.indexOf(r);
+    var del=podeExcluir?'<button class="btn-dl" data-a="rT" data-i="'+gi+'" style="float:right;border:none;background:none;color:#C62828;font-size:13px;cursor:pointer">🗑️</button>':'';
+    return '<div class="ri">'+del+'<div class="rt"><span class="rn">'+(r.co||'—')+'</span><span class="rv">'+r.q+' '+(r.unid||'kg')+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+' · '+r.pr+'</div></div>';
+  }).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
+  if(el)el.querySelectorAll('.btn-dl').forEach(b=>{b.onclick=()=>excluirRegistro(b.dataset.a,parseInt(b.dataset.i));});
+
+  el=document.getElementById('l-ct');
+  if(el) el.innerHTML=lc.length?[...lc].reverse().map(function(r){
+    var gi=S.rC.indexOf(r);
+    var del=podeExcluir?'<button class="btn-dl" data-a="rC" data-i="'+gi+'" style="float:right;border:none;background:none;color:#C62828;font-size:13px;cursor:pointer">🗑️</button>':'';
+    return '<div class="ri">'+del+'<div class="rt"><span class="rn">'+r.resp+'</span><span class="rv">R$ '+r.total.toFixed(2).replace('.',',')+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+'</div></div>';
+  }).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
+  if(el)el.querySelectorAll('.btn-dl').forEach(b=>{b.onclick=()=>excluirRegistro(b.dataset.a,parseInt(b.dataset.i));});
+
+  // Despesas
   if(!S.rDesp)S.rDesp=[];
-  var df=document.getElementById('desp-faz');
-  if(df&&df.options.length<=1)df.innerHTML='<option value="">Todas</option>'+Object.keys(S.FAZ).map(function(f){return'<option>'+f+'</option>';}).join('');
+  el=document.getElementById('desp-faz');
+  if(el&&el.options.length<=1)el.innerHTML='<option value="">Todas</option>'+Object.keys(S.FAZ).map(f=>'<option>'+f+'</option>').join('');
   var despFil=filtrar(S.rDesp,perA);
-  var pagar=despFil.filter(function(r){return r.st==='pagar';});
-  var pago=despFil.filter(function(r){return r.st==='pago';});
-  var totP=pagar.reduce(function(a,r){return a+r.val;},0);
-  var totPg=pago.reduce(function(a,r){return a+r.val;},0);
+  var pagar=despFil.filter(r=>r.st==='pagar');
+  var pago=despFil.filter(r=>r.st==='pago');
+  var totP=pagar.reduce((a,r)=>a+r.val,0);
+  var totPg=pago.reduce((a,r)=>a+r.val,0);
   el=document.getElementById('s-dp');   if(el)el.textContent='R$ '+Math.round(totP);
   el=document.getElementById('s-dpg');  if(el)el.textContent='R$ '+Math.round(totPg);
-  el=document.getElementById('s-dps');  if(el)el.textContent=pagar.length+' pendentes';
+  el=document.getElementById('s-dps');  if(el)el.textContent=pagar.length+' lançadas';
   el=document.getElementById('s-dpgs'); if(el)el.textContent=pago.length+' pagas';
-  var ldEl=document.getElementById('l-d');
-  if(ldEl){
-    if(!lv.length){ldEl.innerHTML='<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';}
-    else{
-      ldEl.innerHTML=lv.slice().reverse().map(function(r){
-        var gi=S.rD.indexOf(r);
-        var av=r.av==='otimo'?'<span class="bdg bg">Ótimo</span>':r.av==='bom'?'<span class="bdg ba">Bom</span>':'<span class="bdg br">Ruim</span>';
-        var valStr=r.pago?'<s style="color:#aaa">R$ '+r.v.toFixed(2).replace('.',',')+'</s>':'R$ '+r.v.toFixed(2).replace('.',',');
-        var btnPag=(!r.pago&&r.v>0)?'<button style="margin-top:4px;padding:3px 10px;font-size:11px;background:#1B5E20;color:#fff;border:none;border-radius:6px;cursor:pointer" class="btn-pd" data-i="'+gi+'">✅ Pagar</button>':'';
-        var btnDel=podeExcluir?'<button style="float:right;border:none;background:none;color:#C62828;font-size:13px;cursor:pointer" class="btn-dl" data-a="rD" data-i="'+gi+'">🗑️</button>':'';
-        return '<div class="ri">'+btnDel+'<div class="rt"><span class="rn">'+r.n+' '+av+'</span><span class="rv">'+valStr+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+' · '+r.srv+(r.pago?' ✅':'')+'</div>'+btnPag+'</div>';
-      }).join('');
-      ldEl.querySelectorAll('.btn-pd').forEach(function(b){b.onclick=function(){pagarDiaria(parseInt(this.dataset.i));};});
-      ldEl.querySelectorAll('.btn-dl').forEach(function(b){b.onclick=function(){excluirRegistro(this.dataset.a,parseInt(this.dataset.i));};});
-    }
-  }
-  var leEl=document.getElementById('l-e');
-  if(leEl){
-    leEl.innerHTML=le.length?le.slice().reverse().map(function(r){
-      var gi=S.rE.indexOf(r);
-      var del=podeExcluir?'<button style="float:right;border:none;background:none;color:#C62828;font-size:13px;cursor:pointer" class="btn-dl" data-a="rE" data-i="'+gi+'">🗑️</button>':'';
-      return '<div class="ri">'+del+'<div class="rt"><span class="rn">'+(r.co||r.faz)+'</span><span style="color:'+EC[r.es]+';font-weight:800">'+EI[r.es].em+' E'+r.es+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+'</div></div>';
-    }).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
-    leEl.querySelectorAll('.btn-dl').forEach(function(b){b.onclick=function(){excluirRegistro(this.dataset.a,parseInt(this.dataset.i));};});
-  }
-  var ltEl=document.getElementById('l-t');
-  if(ltEl){
-    ltEl.innerHTML=lt.length?lt.slice().reverse().map(function(r){
-      var gi=S.rT.indexOf(r);
-      var del=podeExcluir?'<button style="float:right;border:none;background:none;color:#C62828;font-size:13px;cursor:pointer" class="btn-dl" data-a="rT" data-i="'+gi+'">🗑️</button>':'';
-      return '<div class="ri">'+del+'<div class="rt"><span class="rn">'+(r.co||'—')+'</span><span class="rv">'+r.q+' '+(r.unid||'kg')+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+' · '+r.pr+'</div></div>';
-    }).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
-    ltEl.querySelectorAll('.btn-dl').forEach(function(b){b.onclick=function(){excluirRegistro(this.dataset.a,parseInt(this.dataset.i));};});
-  }
-  var lcEl=document.getElementById('l-ct');
-  if(lcEl){
-    lcEl.innerHTML=lc.length?lc.slice().reverse().map(function(r){
-      var gi=S.rC.indexOf(r);
-      var del=podeExcluir?'<button style="float:right;border:none;background:none;color:#C62828;font-size:13px;cursor:pointer" class="btn-dl" data-a="rC" data-i="'+gi+'">🗑️</button>':'';
-      return '<div class="ri">'+del+'<div class="rt"><span class="rn">'+r.resp+'</span><span class="rv">R$ '+r.total.toFixed(2).replace('.',',')+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+'</div></div>';
-    }).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
-    lcEl.querySelectorAll('.btn-dl').forEach(function(b){b.onclick=function(){excluirRegistro(this.dataset.a,parseInt(this.dataset.i));};});
-  }
   try{rListDesp();}catch(e){}
   try{rChart();}catch(e){}
+  } catch(e) { console.error('rPan error:', e); }
 }
 
 function sPer(el,p) { document.querySelectorAll('.pbtn').forEach(b=>b.classList.remove('on')); el.classList.add('on'); perA=p; rPan(); }
@@ -2125,7 +2072,7 @@ sPer = function(el, v) {
 };
 
 // ═══ Patch rPan to add despesas + chart ═══
-;
+// rPan patch removido - integrado na função principal;
 
 // ═══ DESPESAS ═══
 var despStSel = 'pagar';
