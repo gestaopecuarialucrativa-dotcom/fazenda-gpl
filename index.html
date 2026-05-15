@@ -1120,7 +1120,7 @@ function sp(id, back, prev) {
   const TT = {home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',med:'Medicamentos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes'};
   document.getElementById('h-t').textContent = CU ? CU.n : 'GPL';
   document.getElementById('h-s').textContent = TT[id] || '';
-  if (id === 'painel') { setTimeout(function(){ popAll(); rPan(); }, 50); }
+  if (id === 'painel') { try { rPan(); } catch(e){ console.error('rPan:',e); } }
   if (id === 'insumo') { setTimeout(function(){ rListProdutos(); updInsCadFaz(); }, 50); }
   if (id === 'lote') { setTimeout(function(){ rListLotes(); }, 50); }
 
@@ -1132,7 +1132,7 @@ function sp(id, back, prev) {
     var pa = document.getElementById('p-a'); if (pa) pa.value = S.PR.almoco;
     var pj = document.getElementById('p-j'); if (pj) pj.value = S.PR.janta;
   } catch(e){ console.error('config error:',e); } }, 50);
-  if (id === 'estoque') { setTimeout(function(){ popAll(); rEst(); }, 50); }
+  if (id === 'estoque') { try { rEst(); } catch(e){ console.error('rEst:',e); } }
   if (id === 'consultor') { setTimeout(function(){ popAll(); rConsultor(); }, 50); }
   if (id === 'cantina') { setTimeout(function(){ popAll(); updPrecosCt(); }, 50); }
   window.scrollTo(0, 0);
@@ -1577,60 +1577,130 @@ function filtrar(lista,per) {
 
 let perA='quinzena';
 function rPan() {
-  try {
-  const lv=filtrar(S.rD.filter(r=>r.tipo==='diaria' && !r._apagado),perA);
-  const lc=filtrar(S.rC,perA); const lt=filtrar(S.rT,perA); const le=filtrar(S.rE,perA);
-  const td=lv.reduce((a,r)=>a+r.v,0); const tc=lc.reduce((a,r)=>a+r.total,0);
-  document.getElementById('s-d').textContent='R$ '+Math.round(td); document.getElementById('s-ds').textContent=lv.length+' reg.';
-  document.getElementById('s-c').textContent='R$ '+Math.round(tc); document.getElementById('s-cs').textContent=lc.length+' reg.';
-  document.getElementById('s-t').textContent=lt.length;
-  if(le.length){const m=(le.reduce((a,r)=>a+r.es,0)/le.length).toFixed(1);document.getElementById('s-e').innerHTML=`<span style="color:${EC[Math.round(parseFloat(m))]}">${m}</span>`;document.getElementById('s-es').textContent=le.length+' aval.';}
-  else{document.getElementById('s-e').textContent='—';document.getElementById('s-es').textContent='sem reg.';}
+  // Declarar variáveis de escopo global da função
   var podeExcluir = CU && (CU.r==='Consultor' || CU.r==='Dono');
-  document.getElementById('l-d').innerHTML=lv.length?[...lv].reverse().map(function(r){
-    var globalIdx = S.rD.indexOf(r);
-    var av=r.av==='otimo'?'<span class="bdg bg">Ótimo</span>':r.av==='bom'?'<span class="bdg ba">Bom</span>':'<span class="bdg br">Ruim</span>';
-    var pagoBadge = r.pago ? ' <span style="font-size:10px;color:#2E7D32;font-weight:600">✅ Paga</span><div style="font-size:10px;color:#888">por '+r.pago_por+' em '+r.pago_dt+'</div>' : '';
-    var btnPagar = (!r.pago && r.v>0) ? '<button class="btn-pagar-diaria" data-idx="'+globalIdx+'" style="margin-top:5px;padding:4px 12px;font-size:11px;font-weight:600;background:#2E7D32;color:#fff;border:none;border-radius:6px;cursor:pointer">✅ Marcar como paga</button>' : '';
-    var valStr = r.pago ? '<s style="color:#aaa">R$ '+r.v.toFixed(2).replace('.',',')+'</s>' : 'R$ '+r.v.toFixed(2).replace('.',',');
-    var btnDel = podeExcluir ? '<button class="btn-del-reg" data-arr="rD" data-idx="'+globalIdx+'" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer;margin-left:8px">🗑️</button>' : '';
-    return '<div class="ri">'+btnDel+'<div class="rt"><span class="rn">'+r.n+av+'</span><span class="rv">'+valStr+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+' · '+r.srv+pagoBadge+'</div>'+btnPagar+'</div>';
-  }).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
-  document.querySelectorAll('.btn-pagar-diaria').forEach(function(btn){
-    btn.addEventListener('click', function(){ pagarDiaria(parseInt(this.getAttribute('data-idx'))); });
-  });
-  document.querySelectorAll('.btn-del-reg').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      var arr = this.getAttribute('data-arr');
-      var idx = parseInt(this.getAttribute('data-idx'));
-      excluirRegistro(arr, idx);
-    });
-  });
-  document.getElementById('l-e').innerHTML=le.length?[...le].reverse().map(function(r){
-    var gi=S.rE.indexOf(r);
-    var del=podeExcluir?'<button class="btn-del-reg" data-arr="rE" data-idx="'+gi+'" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer">🗑️</button>':'';
-    return '<div class="ri">'+del+'<div class="rt"><span class="rn">'+(r.co||r.lote||r.faz)+'</span><span style="font-size:14px;font-weight:700;color:'+EC[r.es]+'">'+EI[r.es].em+' E'+r.es+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+' · '+(r.cab||0)+' animais'+(r.obs?' · '+r.obs:'')+'</div></div>';
-  }).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
-  document.querySelectorAll('#l-e .btn-del-reg').forEach(function(b){
-    b.addEventListener('click',function(){ excluirRegistro(this.getAttribute('data-arr'),parseInt(this.getAttribute('data-idx'))); });
-  });
-  document.getElementById('l-t').innerHTML=lt.length?[...lt].reverse().map(function(r){
-    var gi=S.rT.indexOf(r);
-    var del=podeExcluir?'<button class="btn-del-reg" data-arr="rT" data-idx="'+gi+'" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer">🗑️</button>':'';
-    return '<div class="ri">'+del+'<div class="rt"><span class="rn">'+(r.co||'—')+'</span><span class="rv">'+r.q+' '+(r.unid||'kg')+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+' · '+r.pr+' · '+(r.cab||0)+' cab</div></div>';
-  }).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
-  document.querySelectorAll('#l-t .btn-del-reg').forEach(function(b){
-    b.addEventListener('click',function(){ excluirRegistro(this.getAttribute('data-arr'),parseInt(this.getAttribute('data-idx'))); });
-  });
-  document.getElementById('l-ct').innerHTML=lc.length?[...lc].reverse().map(function(r){
-    var gi=S.rC.indexOf(r);
-    var del=podeExcluir?'<button class="btn-del-reg" data-arr="rC" data-idx="'+gi+'" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer">🗑️</button>':'';
-    return '<div class="ri">'+del+'<div class="rt"><span class="rn">'+r.resp+'</span><span class="rv">R$ '+r.total.toFixed(2).replace('.',',')+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+' · '+r.det+'</div></div>';
-  }).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
-  document.querySelectorAll('#l-ct .btn-del-reg').forEach(function(btn){
-    btn.addEventListener('click',function(){ excluirRegistro(this.getAttribute('data-arr'),parseInt(this.getAttribute('data-idx'))); });
-  });
-  } catch(e) { console.error('rPan error:', e); }
+  // ── Filtrar registros por período e fazenda ──
+  var lv, lc, lt, le;
+  try {
+    lv = filtrar(S.rD.filter(function(r){ return r.tipo==='diaria' && !r._apagado; }), perA);
+    lc = filtrar(S.rC, perA);
+    lt = filtrar(S.rT, perA);
+    le = filtrar(S.rE, perA);
+  } catch(e) {
+    lv = []; lc = []; lt = []; le = [];
+    console.error('rPan filtrar error:', e);
+  }
+
+  // ── Cards de resumo ──
+  try {
+    var td = lv.reduce(function(a,r){ return a+r.v; },0);
+    var tc = lc.reduce(function(a,r){ return a+r.total; },0);
+    var eSD = document.getElementById('s-d'); if(eSD) eSD.textContent='R$ '+Math.round(td);
+    var eSDs = document.getElementById('s-ds'); if(eSDs) eSDs.textContent=lv.length+' reg.';
+    var eSC = document.getElementById('s-c'); if(eSC) eSC.textContent='R$ '+Math.round(tc);
+    var eSCs = document.getElementById('s-cs'); if(eSCs) eSCs.textContent=lc.length+' reg.';
+    var eST = document.getElementById('s-t'); if(eST) eST.textContent=lt.length;
+    var eSE = document.getElementById('s-e');
+    var eSEs = document.getElementById('s-es');
+    if(le.length){
+      var m=(le.reduce(function(a,r){ return a+r.es; },0)/le.length).toFixed(1);
+      if(eSE) eSE.innerHTML='<span style="color:'+EC[Math.round(parseFloat(m))]+'">'+m+'</span>';
+      if(eSEs) eSEs.textContent=le.length+' aval.';
+    } else {
+      if(eSE) eSE.textContent='—';
+      if(eSEs) eSEs.textContent='sem reg.';
+    }
+  } catch(e) { console.error('rPan resumo error:', e); }
+
+  // ── Despesas ──
+  try {
+    if (!S.rDesp) S.rDesp = [];
+    var df = document.getElementById('desp-faz');
+    if (df && df.options.length <= 1) {
+      df.innerHTML = '<option value="">Todas</option>' +
+        Object.keys(S.FAZ).map(function(f){ return '<option>'+f+'</option>'; }).join('');
+    }
+    var despFil = filtrar(S.rDesp, perA);
+    var pagar = despFil.filter(function(r){ return r.st==='pagar'; });
+    var pago  = despFil.filter(function(r){ return r.st==='pago'; });
+    var totP  = pagar.reduce(function(a,r){ return a+r.val; },0);
+    var totPg = pago.reduce(function(a,r){ return a+r.val; },0);
+    var eDp=document.getElementById('s-dp'); if(eDp) eDp.textContent='R$ '+Math.round(totP);
+    var eDpg=document.getElementById('s-dpg'); if(eDpg) eDpg.textContent='R$ '+Math.round(totPg);
+    var eDps=document.getElementById('s-dps'); if(eDps) eDps.textContent=pagar.length+' lançadas';
+    var eDpgs=document.getElementById('s-dpgs'); if(eDpgs) eDpgs.textContent=pago.length+' pagas';
+  } catch(e) { console.error('rPan despesas error:', e); }
+
+  // ── Lista de diárias ──
+  try {
+    var ldEl = document.getElementById('l-d');
+    if (ldEl) {
+      if (!lv.length) {
+        ldEl.innerHTML = '<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum registro.</div>';
+      } else {
+        ldEl.innerHTML = lv.slice().reverse().map(function(r){
+          var gi = S.rD.indexOf(r);
+          var av = r.av==='otimo'?'<span class="bdg bg">Ótimo</span>':r.av==='bom'?'<span class="bdg ba">Bom</span>':'<span class="bdg br">Ruim</span>';
+          var pagoBadge = r.pago ? ' <span style="font-size:10px;color:#2E7D32;font-weight:600">✅ Paga</span>' : '';
+          var btnPagar = (!r.pago && r.v>0) ? '<button class="btn-pagar-diaria" data-idx="'+gi+'" style="margin-top:5px;padding:4px 12px;font-size:11px;font-weight:600;background:#2E7D32;color:#fff;border:none;border-radius:6px;cursor:pointer">✅ Marcar como paga</button>' : '';
+          var valStr = r.pago ? '<s style="color:#aaa">R$ '+r.v.toFixed(2).replace('.',',')+'</s>' : 'R$ '+r.v.toFixed(2).replace('.',',');
+          var btnDel = podeExcluir ? '<button class="btn-del-reg" data-arr="rD" data-idx="'+gi+'" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer;margin-left:8px">🗑️</button>' : '';
+          return '<div class="ri">'+btnDel+'<div class="rt"><span class="rn">'+r.n+av+'</span><span class="rv">'+valStr+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+' · '+r.srv+pagoBadge+'</div>'+btnPagar+'</div>';
+        }).join('');
+        ldEl.querySelectorAll('.btn-pagar-diaria').forEach(function(btn){
+          btn.addEventListener('click', function(){ pagarDiaria(parseInt(this.getAttribute('data-idx'))); });
+        });
+        ldEl.querySelectorAll('.btn-del-reg').forEach(function(btn){
+          btn.addEventListener('click', function(){ excluirRegistro(this.getAttribute('data-arr'),parseInt(this.getAttribute('data-idx'))); });
+        });
+      }
+    }
+  } catch(e) { console.error('rPan diarias error:', e); }
+
+  // ── Lista de escores ──
+  try {
+    var leEl = document.getElementById('l-e');
+    if (leEl) {
+      leEl.innerHTML = le.length ? le.slice().reverse().map(function(r){
+        var gi=S.rE.indexOf(r);
+        var del=podeExcluir?'<button class="btn-del-reg" data-arr="rE" data-idx="'+gi+'" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer">🗑️</button>':'';
+        return '<div class="ri">'+del+'<div class="rt"><span class="rn">'+(r.co||r.lote||r.faz)+'</span><span style="font-size:14px;font-weight:700;color:'+EC[r.es]+'">'+EI[r.es].em+' E'+r.es+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+' · '+(r.cab||0)+' animais'+(r.obs?' · '+r.obs:'')+'</div></div>';
+      }).join('') : '<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
+      leEl.querySelectorAll('.btn-del-reg').forEach(function(b){ b.addEventListener('click',function(){ excluirRegistro(this.getAttribute('data-arr'),parseInt(this.getAttribute('data-idx'))); }); });
+    }
+  } catch(e) { console.error('rPan escores error:', e); }
+
+  // ── Lista de tratos ──
+  try {
+    var ltEl = document.getElementById('l-t');
+    if (ltEl) {
+      ltEl.innerHTML = lt.length ? lt.slice().reverse().map(function(r){
+        var gi=S.rT.indexOf(r);
+        var del=podeExcluir?'<button class="btn-del-reg" data-arr="rT" data-idx="'+gi+'" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer">🗑️</button>':'';
+        return '<div class="ri">'+del+'<div class="rt"><span class="rn">'+(r.co||'—')+'</span><span class="rv">'+r.q+' '+(r.unid||'kg')+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+' · '+r.pr+' · '+(r.cab||0)+' cab</div></div>';
+      }).join('') : '<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
+      ltEl.querySelectorAll('.btn-del-reg').forEach(function(b){ b.addEventListener('click',function(){ excluirRegistro(this.getAttribute('data-arr'),parseInt(this.getAttribute('data-idx'))); }); });
+    }
+  } catch(e) { console.error('rPan tratos error:', e); }
+
+  // ── Lista cantina ──
+  try {
+    var lcEl = document.getElementById('l-ct');
+    if (lcEl) {
+      lcEl.innerHTML = lc.length ? lc.slice().reverse().map(function(r){
+        var gi=S.rC.indexOf(r);
+        var del=podeExcluir?'<button class="btn-del-reg" data-arr="rC" data-idx="'+gi+'" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer">🗑️</button>':'';
+        return '<div class="ri">'+del+'<div class="rt"><span class="rn">'+r.resp+'</span><span class="rv">R$ '+r.total.toFixed(2).replace('.',',')+'</span></div><div class="rd">'+r.dt.split('-').reverse().join('/')+' · '+r.faz+' · '+r.det+'</div></div>';
+      }).join('') : '<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';
+      lcEl.querySelectorAll('.btn-del-reg').forEach(function(btn){ btn.addEventListener('click',function(){ excluirRegistro(this.getAttribute('data-arr'),parseInt(this.getAttribute('data-idx'))); }); });
+    }
+  } catch(e) { console.error('rPan cantina error:', e); }
+
+  // ── Lista despesas ──
+  try { rListDesp(); } catch(e) { console.error('rPan rListDesp error:', e); }
+
+  // ── Gráfico ──
+  try { rChart(); } catch(e) { console.error('rPan rChart error:', e); }
 }
 
 function sPer(el,p) { document.querySelectorAll('.pbtn').forEach(b=>b.classList.remove('on')); el.classList.add('on'); perA=p; rPan(); }
@@ -2093,37 +2163,7 @@ sPer = function(el, v) {
 };
 
 // ═══ Patch rPan to add despesas + chart ═══
-var _rPanOrig = rPan;
-rPan = function() {
-  _rPanOrig();
-
-  // Populate desp-faz if empty
-  var df = document.getElementById('desp-faz');
-  if (df && df.options.length <= 1) {
-    df.innerHTML = '<option value="">Todas</option>' +
-      Object.keys(S.FAZ).map(function(f){ return '<option>'+f+'</option>'; }).join('');
-  }
-
-  // Despesas cards
-  if (!S.rDesp) S.rDesp = [];
-  var faz = document.getElementById('pf') ? document.getElementById('pf').value : '';
-  var despFil = (typeof filtrar === 'function') ? filtrar(S.rDesp, perA) : S.rDesp;
-  var pagar = despFil.filter(function(r){ return r.st==='pagar'; });
-  var pago  = despFil.filter(function(r){ return r.st==='pago';  });
-  var totP  = pagar.reduce(function(a,r){ return a+r.val; }, 0);
-  var totPg = pago.reduce(function(a,r){  return a+r.val; }, 0);
-  var eDp  = document.getElementById('s-dp');
-  var eDpg = document.getElementById('s-dpg');
-  var eDps  = document.getElementById('s-dps');
-  var eDpgs = document.getElementById('s-dpgs');
-  if(eDp)   eDp.textContent  = 'R$ '+Math.round(totP);
-  if(eDpg)  eDpg.textContent = 'R$ '+Math.round(totPg);
-  if(eDps)  eDps.textContent  = pagar.length+' lançadas';
-  if(eDpgs) eDpgs.textContent = pago.length+' pagas';
-
-  rListDesp();
-  rChart();
-};
+// rPan patch merged into main function above;
 
 // ═══ DESPESAS ═══
 var despStSel = 'pagar';
