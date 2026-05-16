@@ -272,7 +272,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 16/05/2026 05:00 — FECHAR CONTA ✅</div>
+<div id="ver-banner" style="background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 16/05/2026 05:30 — SELECAO ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1215,6 +1215,7 @@ function salvarCampoUser(i,campo,elId){
 function abrirFecharConta(){
   var m=document.getElementById('fc-modal');
   if(!m)return;
+  window._fcSel={};
   // Popular fazendas
   var sel=document.getElementById('fc-faz');
   var faz=(document.getElementById('pf')||{}).value||'';
@@ -1244,7 +1245,6 @@ function calcularFechamento(){
   var ate=(document.getElementById('fc-ate')||{}).value||'';
   var faz=(document.getElementById('fc-faz')||{}).value||'';
   if(!de||!ate){alert('Selecione o período.');return;}
-  var NL='\n';
 
   function noperiodo(r){
     var dt=r.dt||r.data||'';
@@ -1277,60 +1277,133 @@ function calcularFechamento(){
   var deFmt=de.split('-').reverse().join('/');
   var ateFmt=ate.split('-').reverse().join('/');
 
-  var linhas=[];
-  linhas.push('FECHAMENTO DE CONTA');
-  linhas.push('Fazenda: '+faz);
-  linhas.push('Periodo: '+deFmt+' a '+ateFmt);
-  linhas.push('');
+  // Salvar lista globalmente para uso na seleção
+  window._fcLista = lista;
+  window._fcDe = deFmt;
+  window._fcAte = ateFmt;
+  window._fcFaz = faz;
+  window._fcDe_iso = de;
+  window._fcAte_iso = ate;
 
-  var html='<div style="font-size:12px;color:#888;margin-bottom:8px">'+deFmt+' a '+ateFmt+' - '+faz+'</div>';
+  renderFCLista(lista, totalGeral, deFmt, ateFmt, faz);
+}
+
+function renderFCLista(lista, totalGeral, deFmt, ateFmt, faz){
+  // Todos selecionados por padrão
+  if(!window._fcSel) window._fcSel = {};
+  lista.forEach(function(p){ if(window._fcSel[p.n]===undefined) window._fcSel[p.n]=true; });
+
+  var html='<div style="font-size:12px;color:#888;margin-bottom:8px">Toque para selecionar quem vai na mensagem:</div>';
 
   lista.forEach(function(p){
     var total=p.totalD+p.totalC;
     var usr=S.US.find(function(u){return u.n===p.n;});
     var pix=usr?usr.pix||'':'';
+    var sel=window._fcSel[p.n]!==false;
+    var border=sel?'border-left:3px solid #1B5E20;':'border-left:3px solid #ccc;opacity:.55;';
+    var check=sel?'✅':'⬜';
 
-    html+='<div class="fc-pessoa">';
-    html+='<div class="fc-nome">'+p.n+'</div>';
+    html+='<div class="fc-pessoa" onclick="toggleFCSel(\''+p.n.replace(/'/g,"\\'")+'\')" style="cursor:pointer;'+border+'">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center">';
+    html+='<div class="fc-nome">'+check+' '+p.n+'</div>';
+    html+='<div class="fc-total-val" style="font-size:15px">R$ '+total.toFixed(2).replace('.',',')+'</div>';
+    html+='</div>';
     html+='<div class="fc-det">';
-    if(p.diarias.length)html+='Diarias: '+p.diarias.length+' servicos - R$ '+p.totalD.toFixed(2).replace('.',',')+'<br>';
-    if(p.cantina.length)html+='Cantina: '+p.cantina.length+' dias - R$ '+p.totalC.toFixed(2).replace('.',',')+'<br>';
+    if(p.diarias.length)html+='Diárias: '+p.diarias.length+'x → R$ '+p.totalD.toFixed(2).replace('.',',')+'<br>';
+    if(p.cantina.length)html+='Cantina: '+p.cantina.length+' dias → R$ '+p.totalC.toFixed(2).replace('.',',');
     html+='</div>';
-    html+='<div class="fc-total-val">Total: R$ '+total.toFixed(2).replace('.',',')+'</div>';
-    if(pix)html+='<div class="fc-pix">Pix: '+pix+'</div>';
+    if(pix&&sel)html+='<div class="fc-pix">Pix: '+pix+'</div>';
     html+='</div>';
-
-    linhas.push('Funcionario: '+p.n);
-    if(p.diarias.length)linhas.push('  Diarias ('+p.diarias.length+'x): R$ '+p.totalD.toFixed(2).replace('.',','));
-    if(p.cantina.length)linhas.push('  Cantina ('+p.cantina.length+' dias): R$ '+p.totalC.toFixed(2).replace('.',','));
-    linhas.push('  TOTAL: R$ '+total.toFixed(2).replace('.',','));
-    if(pix)linhas.push('  Pix: '+pix);
-    linhas.push('');
   });
 
-  linhas.push('------------------------');
-  linhas.push('TOTAL GERAL: R$ '+totalGeral.toFixed(2).replace('.',','));
-  linhas.push('');
-  linhas.push('Enviado pelo GPL - Gestao Pecuaria Lucrativa - Rogerio Avelino');
-
-  var msgFinal=linhas.join(NL);
+  // Calcular total dos selecionados
+  var totalSel=lista.filter(function(p){return window._fcSel[p.n]!==false;})
+    .reduce(function(a,p){return a+p.totalD+p.totalC;},0);
 
   var dono=S.US.find(function(u){return u.r==='Dono'&&(!faz||u.fs.length===0||u.fs.includes(faz));});
   var telDono=dono&&dono.tel?dono.tel.replace(/[^\d]/g,''):'';
 
-  var wppUrl=telDono
-    ?'https://wa.me/'+telDono+'?text='+encodeURIComponent(msgFinal)
-    :'https://wa.me/?text='+encodeURIComponent(msgFinal);
-
   html+='<div style="background:#FFF3E0;border-radius:10px;padding:12px;margin-top:8px;border:1px solid #FFB300">';
-  html+='<div style="font-size:14px;font-weight:700;color:#E65100;margin-bottom:8px">Total: R$ '+totalGeral.toFixed(2).replace('.',',')+'</div>';
-  if(!telDono)html+='<div style="font-size:11px;color:#888;margin-bottom:6px">Cadastre o WhatsApp do Dono em Config para envio direto.</div>';
-  html+='<button onclick="window.open(\''+wppUrl.replace(/'/g,"\\'")+'\')" style="width:100%;padding:11px;background:#25D366;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:6px">Enviar WhatsApp ao Dono</button>';
-  html+='<button onclick="navigator.clipboard?navigator.clipboard.writeText(\''+msgFinal.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n')+'\').then(function(){alert(\'Copiado!\');}):alert(\'Use o botao WhatsApp\')" style="width:100%;padding:9px;background:#f5f5f5;color:#333;border:1px solid #ddd;border-radius:10px;font-size:13px;cursor:pointer">Copiar mensagem</button>';
+  html+='<div style="font-size:14px;font-weight:700;color:#E65100;margin-bottom:8px">Total selecionado: R$ '+totalSel.toFixed(2).replace('.',',')+'</div>';
+  if(!telDono)html+='<div style="font-size:11px;color:#888;margin-bottom:6px">Cadastre o WhatsApp do Dono em Config.</div>';
+  html+='<button onclick="enviarFCWpp()" style="width:100%;padding:11px;background:#25D366;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:6px">📲 Enviar WhatsApp ao Dono</button>';
+  html+='<button onclick="copiarFCMsg()" style="width:100%;padding:9px;background:#f5f5f5;color:#333;border:1px solid #ddd;border-radius:10px;font-size:13px;cursor:pointer">📋 Copiar mensagem</button>';
   html+='</div>';
 
   document.getElementById('fc-resultado').innerHTML=html;
 }
+
+function toggleFCSel(nome){
+  if(!window._fcSel) window._fcSel={};
+  window._fcSel[nome] = window._fcSel[nome]===false ? true : false;
+  renderFCLista(window._fcLista,
+    window._fcLista.reduce(function(a,p){return a+p.totalD+p.totalC;},0),
+    window._fcDe, window._fcAte, window._fcFaz);
+}
+
+function gerarFCMsg(){
+  var lista=window._fcLista||[];
+  var faz=window._fcFaz||'';
+  var deFmt=window._fcDe||'';
+  var ateFmt=window._fcAte||'';
+  var NL='\n';
+  var sel=lista.filter(function(p){return window._fcSel&&window._fcSel[p.n]!==false;});
+
+  var linhas=[];
+  linhas.push('FECHAMENTO DE CONTA - A PAGAR');
+  linhas.push('Fazenda: '+faz);
+  linhas.push('Periodo: '+deFmt+' a '+ateFmt);
+  linhas.push('');
+
+  sel.forEach(function(p){
+    var total=p.totalD+p.totalC;
+    var usr=S.US.find(function(u){return u.n===p.n;});
+    var pix=usr?usr.pix||'':'';
+    linhas.push('Funcionario: '+p.n);
+    if(p.diarias.length)linhas.push('  Diarias ('+p.diarias.length+'x): R$ '+p.totalD.toFixed(2).replace('.',','));
+    if(p.cantina.length)linhas.push('  Cantina ('+p.cantina.length+' dias): R$ '+p.totalC.toFixed(2).replace('.',','));
+    linhas.push('  TOTAL A PAGAR: R$ '+total.toFixed(2).replace('.',','));
+    if(pix)linhas.push('  Pix: '+pix);
+    linhas.push('');
+  });
+
+  var totalSel=sel.reduce(function(a,p){return a+p.totalD+p.totalC;},0);
+  linhas.push('------------------------');
+  linhas.push('TOTAL: R$ '+totalSel.toFixed(2).replace('.',','));
+  linhas.push('');
+  linhas.push('GPL - Gestao Pecuaria Lucrativa - Rogerio Avelino');
+
+  // Lançar como despesas "a pagar"
+  sel.forEach(function(p){
+    var total=p.totalD+p.totalC;
+    if(total<=0) return;
+    if(!S.rDesp) S.rDesp=[];
+    var desc='Fechamento: '+p.n+' ('+deFmt+' a '+ateFmt+')';
+    var jaExiste=S.rDesp.some(function(d){return d.desc===desc&&d.faz===faz;});
+    if(!jaExiste){
+      S.rDesp.push({tipo:'despesa',faz:faz,desc:desc,val:total,venc:window._fcAte_iso,st:'pagar',dt:new Date().toISOString().split('T')[0],id:Date.now()+Math.random()});
+    }
+  });
+  salvar();
+
+  return linhas.join(NL);
+}
+
+function enviarFCWpp(){
+  var msg=gerarFCMsg();
+  var faz=window._fcFaz||'';
+  var dono=S.US.find(function(u){return u.r==='Dono'&&(!faz||u.fs.length===0||u.fs.includes(faz));});
+  var tel=dono&&dono.tel?dono.tel.replace(/[^\d]/g,''):'';
+  var url=tel?'https://wa.me/'+tel+'?text='+encodeURIComponent(msg):'https://wa.me/?text='+encodeURIComponent(msg);
+  window.open(url,'_blank');
+}
+
+function copiarFCMsg(){
+  var msg=gerarFCMsg();
+  if(navigator.clipboard)navigator.clipboard.writeText(msg).then(function(){alert('Copiado!');});
+  else{var t=document.createElement('textarea');t.value=msg;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);alert('Copiado!');}
+}
+
 
 function enviarFechamentoWpp(msgEnc,tel){
   var msg=decodeURIComponent(msgEnc);
