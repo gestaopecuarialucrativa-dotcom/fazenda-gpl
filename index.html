@@ -203,7 +203,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 15/05/2026 23:59 — CORRIGIDO ✅</div>
+<div id="ver-banner" style="background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 16/05/2026 00:30 — JSONP ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -622,13 +622,7 @@ function carregarNuvem(cb){
   if(!S.cfgGS||!navigator.onLine){if(cb)cb(false);return;}
   updCloudStatus('loading');
   var url=S.cfgGS+'?acao=carregar';
-  fetch(url,{method:'GET'})
-    .then(function(r){return r.text();})
-    .then(function(t){
-      try{var data=JSON.parse(t);processarDadosNuvem(data,cb);}
-      catch(e){carregarViaJsonp(url,cb);}
-    })
-    .catch(function(){carregarViaJsonp(url,cb);});
+  carregarViaJsonp(url,cb);
 }
 function carregarViaJsonp(url,cb){
   var s=document.createElement('script');
