@@ -234,7 +234,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 16/05/2026 03:30 — FIXED4 ✅</div>
+<div id="ver-banner" style="background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 16/05/2026 04:00 — AGRUPADO ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -517,7 +517,7 @@ const EI=[null,{em:'💩',ti:'Escore 1 — Firmes e secas',re:'💡 Reduzir fibr
 const PL={diaria:'Diária',insumo:'Insumos',medicamento:'Medicamentos',trato:'Trato cocho',escore:'Escore fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Config.'};
 const TABS=[{id:'painel',l:'📊 Painel',p:'painel'},{id:'cantina',l:'🏪 Cantina',p:'cantina'},{id:'estoque',l:'📦 Estoque',p:'estoque'},{id:'config',l:'⚙️ Config.',p:'config'},{id:'consultor',l:'🌿 Visão Geral',p:'config'}];
 const ACTS=[{id:'diaria',l:'Lançar diária',s:'Serviço do dia',ic:'👤',c:'gr',p:'diaria'},{id:'insumo',l:'Insumos',s:'Depósito → campo',ic:'📦',c:'bl',p:'insumo'},{id:'medicamento',l:'Medicamentos',s:'Vacinas e remédios',ic:'💉',c:'am',p:'medicamento'},{id:'trato',l:'Trato de cocho',s:'Proteinado, sal...',ic:'🛠',c:'tl',p:'trato'},{id:'lote',l:'Lotes',s:'Cadastro de lotes',ic:'🐄',c:'gr',p:'config'},{id:'escore',l:'Escore de fezes',s:'Avaliação do gado',ic:'🔬',c:'pu',p:'escore'}];
-const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbxaVjBYJ5_B9PaVDOjFN_ZZvuXBO0ksC_TB_QEP7NwgtYL4CVd04yEIjcv3OeK7lxe3YA/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},'Fazenda Santa Cruz':{cochos:['Lote 01','Lote 02','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+'],gasUrl:'',sheetId:''}},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,medicamento:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:28,peso:406,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio'],'Fazenda Santa Cruz':[]},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbxaVjBYJ5_B9PaVDOjFN_ZZvuXBO0ksC_TB_QEP7NwgtYL4CVd04yEIjcv3OeK7lxe3YA/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{}};
+const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},'Fazenda Santa Cruz':{cochos:['Lote 01','Lote 02','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+'],gasUrl:'',sheetId:''}},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,medicamento:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:28,peso:406,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio'],'Fazenda Santa Cruz':[]},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{}};
 
 let S=null;
 function carregar(){try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=JSON.parse(r);S={...DEFAULT,...s};S.cfgGS=DEFAULT.cfgGS;if(!S.US||!S.US.length)S.US=DEFAULT.US;if(!S.FAZ||!Object.keys(S.FAZ).length)S.FAZ=DEFAULT.FAZ;if(!S.EST||!Object.keys(S.EST).length)S.EST=DEFAULT.EST;if(s.FAZ&&Object.keys(s.FAZ).length)S.FAZ=s.FAZ;if(s.US&&s.US.length)S.US=s.US;['rD','rT','rC','rE','mEst','queue','rDesp','LOTES'].forEach(k=>{if(!Array.isArray(S[k]))S[k]=[]});if(!S.DIARISTAS)S.DIARISTAS={};if(!S.NOTAS)S.NOTAS={};if(!Array.isArray(S.SERVS))S.SERVS=DEFAULT.SERVS;if(!S.PR)S.PR=DEFAULT.PR;}else{S=JSON.parse(JSON.stringify(DEFAULT));}}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}}
@@ -680,7 +680,15 @@ function processarDadosNuvem(data,cb){
       try{
         var cfg=JSON.parse(row[1]);
         if(cfg.FAZ&&Object.keys(cfg.FAZ).length)S.FAZ=cfg.FAZ;
-        if(cfg.US&&cfg.US.length)S.US=cfg.US;
+        if(cfg.US&&cfg.US.length){
+          // Mescla usuários: mantém locais + adiciona novos da nuvem
+          var localUS=S.US||[];
+          cfg.US.forEach(function(u){
+            var existe=localUS.some(function(l){return l.n===u.n;});
+            if(!existe)localUS.push(u);
+          });
+          S.US=localUS;
+        }
         if(cfg.EST)S.EST=cfg.EST;
         if(cfg.SERVS&&cfg.SERVS.length)S.SERVS=cfg.SERVS;
         if(cfg.PR)S.PR=cfg.PR;
@@ -1110,19 +1118,45 @@ rPan = function(){
       });
     }
     
-    // Re-render cantina com botão editar
+    // Re-render cantina agrupada por dia
     var lcEl = document.getElementById('l-ct');
     if(lcEl && lc.length){
-      lcEl.innerHTML = [...lc].reverse().map(function(r){
-        var gi = S.rC.indexOf(r);
-        var valBadge = r.validado ? '<span class="badge-ok">✅ Validado</span>' : '<span class="badge-pend">⏳ Pendente</span>';
-        return '<div class="ri"><div class="rt">'
-          + '<span class="rn">'+(r.resp||r.n||'—')+' '+valBadge+'</span>'
+      // Agrupar por data
+      var porDia = {};
+      lc.forEach(function(r){
+        var dt = r.dt||'';
+        if(!porDia[dt]) porDia[dt] = {total:0, registros:[], dt:dt, faz:r.faz};
+        porDia[dt].total += r.total||0;
+        porDia[dt].registros.push(r);
+      });
+      var diasOrdenados = Object.keys(porDia).sort().reverse();
+      lcEl.innerHTML = diasOrdenados.map(function(dt){
+        var dia = porDia[dt];
+        var dtFmt = dt.split('-').reverse().join('/');
+        var responsaveis = [...new Set(dia.registros.map(function(r){return r.resp||r.n||'—';}))].join(', ');
+        var validados = dia.registros.every(function(r){return r.validado;});
+        var valBadge = validados ? '<span class="badge-ok">✅ Validado</span>' : '<span class="badge-pend">⏳ Pendente</span>';
+        // Detalhes expandíveis
+        var detalheId = 'ct-det-'+dt.replace(/-/g,'');
+        var detHtml = dia.registros.map(function(r){
+          var gi = S.rC.indexOf(r);
+          return '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #f5f5f5">'
+            + '<span style="font-size:11px;color:#666">'+(r.det||'—')+'</span>'
+            + '<div style="display:flex;align-items:center;gap:4px">'
+            + '<span style="font-size:12px;font-weight:600;color:#2E7D32">R$ '+r.total.toFixed(2).replace('.',',')+'</span>'
+            + '<button class="btn-edit" onclick="abrirEdicao(&quot;rC&quot;,'+gi+')" style="padding:2px 6px;font-size:10px">✏️</button>'
+            + '</div></div>';
+        }).join('');
+        return '<div class="ri">'
+          + '<div class="rt" onclick="var d=document.getElementById(&quot;'+detalheId+'&quot;);d.style.display=d.style.display===\'none\'?\'block\':\'none\'" style="cursor:pointer">'
+          + '<span class="rn">'+responsaveis+' '+valBadge+'</span>'
           + '<div style="display:flex;align-items:center;gap:4px">'
-          + '<span class="rv">R$ '+r.total.toFixed(2).replace('.',',')+'</span>'
-          + '<button class="btn-edit" onclick="abrirEdicao(&quot;rC&quot;,'+gi+')">✏️</button>'
+          + '<span class="rv">R$ '+dia.total.toFixed(2).replace('.',',')+'</span>'
+          + '<span style="color:#aaa;font-size:12px">▾</span>'
           + '</div></div>'
-          + '<div class="rd">'+((r.dt||'').split('-').reverse().join('/'))+ ' · '+r.faz+' · '+(r.det||'')+'</div></div>';
+          + '<div class="rd">'+dtFmt+' · '+dia.faz+' · '+dia.registros.length+' refeições</div>'
+          + '<div id="'+detalheId+'" style="display:none;margin-top:6px;padding:6px;background:#f9f9f9;border-radius:8px">'+detHtml+'</div>'
+          + '</div>';
       }).join('');
     }
   }, 150);
