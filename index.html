@@ -1710,7 +1710,7 @@ function rPanLista(){
         ? '<span style="background:#FFEBEE;color:#C62828;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700">❌ Reprovado</span>'
         : '<span style="background:#FFF3E0;color:#E65100;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700">⏳ Pendente</span>';
       
-      return '<div onclick="abrirDetalheCantinaDia('+JSON.stringify(dia.dt)+','+JSON.stringify(dia.faz)+')" style="background:#fff;border-radius:12px;padding:13px;margin-bottom:8px;border:1px solid #e0e0e0;cursor:pointer;border-left:4px solid '+(todoVal?'#2E7D32':algRep?'#C62828':'#FFB300')+';">'
+      return '<div data-dt="'+dia.dt+'" data-faz="'+dia.faz+'" onclick="var e=this;abrirDetalheCantinaDia(e.getAttribute(&quot;data-dt&quot;),e.getAttribute(&quot;data-faz&quot;))" style="background:#fff;border-radius:12px;padding:13px;margin-bottom:8px;border:1px solid #e0e0e0;cursor:pointer;border-left:4px solid '+(todoVal?'#2E7D32':algRep?'#C62828':'#FFB300')+';">'
         +'<div style="display:flex;justify-content:space-between;align-items:flex-start">'
         +'<div><div style="font-size:14px;font-weight:700">'+resp+'</div>'
         +'<div style="font-size:12px;color:#666;margin-top:2px">'+dia.regs.length+' refeições</div>'
