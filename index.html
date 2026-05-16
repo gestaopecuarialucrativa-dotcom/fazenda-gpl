@@ -169,6 +169,15 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 .edit-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center}
 .edit-modal.open{display:flex}
 .edit-box{background:#fff;border-radius:16px;padding:22px;width:95%;max-width:420px;max-height:90vh;overflow-y:auto}
+
+.fc-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.65);z-index:9999;align-items:flex-start;justify-content:center;padding:10px;overflow-y:auto}
+.fc-modal.open{display:flex}
+.fc-box{background:#fff;border-radius:16px;padding:20px;width:100%;max-width:440px;margin:auto}
+.fc-pessoa{background:#f8f8f8;border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid #1B5E20}
+.fc-nome{font-size:14px;font-weight:700;color:#1B5E20}
+.fc-det{font-size:11px;color:#666;margin:4px 0;line-height:1.7}
+.fc-total-val{font-size:18px;font-weight:800;color:#1B5E20}
+.fc-pix{font-size:11px;background:#E8F5E9;border-radius:6px;padding:4px 8px;color:#1B5E20;font-family:monospace;margin-top:4px;display:inline-block}
 </style>
 </head>
 <body>
@@ -185,6 +194,35 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <button id="edit-save" style="flex:1;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">💾 Salvar</button>
 <button id="edit-del" style="padding:11px 16px;background:#C62828;color:#fff;border:none;border-radius:10px;font-size:14px;cursor:pointer">🗑️</button>
 </div>
+</div>
+</div>
+
+
+<!-- Modal Fechar Conta -->
+<div class="fc-modal" id="fc-modal">
+<div class="fc-box">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <span style="font-size:16px;font-weight:700;color:#1B5E20">💰 Fechar Conta</span>
+    <span id="fc-close" style="cursor:pointer;font-size:24px;color:#888">×</span>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+    <div><div style="font-size:12px;color:#666;margin-bottom:4px">Data início</div>
+    <input type="date" id="fc-de" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div>
+    <div><div style="font-size:12px;color:#666;margin-bottom:4px">Data fim</div>
+    <input type="date" id="fc-ate" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div>
+  </div>
+  <div style="margin-bottom:12px">
+    <div style="font-size:12px;color:#666;margin-bottom:4px">Fazenda</div>
+    <select id="fc-faz" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px"></select>
+  </div>
+  <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+    <button onclick="setFCPer('semana')" style="flex:1;padding:7px;background:#f0f0f0;border:1px solid #ddd;border-radius:8px;font-size:12px;cursor:pointer">7 dias</button>
+    <button onclick="setFCPer('quinzena')" style="flex:1;padding:7px;background:#f0f0f0;border:1px solid #ddd;border-radius:8px;font-size:12px;cursor:pointer">15 dias</button>
+    <button onclick="setFCPer('mes')" style="flex:1;padding:7px;background:#f0f0f0;border:1px solid #ddd;border-radius:8px;font-size:12px;cursor:pointer">Mês atual</button>
+    <button onclick="setFCPer('mes30')" style="flex:1;padding:7px;background:#f0f0f0;border:1px solid #ddd;border-radius:8px;font-size:12px;cursor:pointer">30 dias</button>
+  </div>
+  <button onclick="calcularFechamento()" style="width:100%;padding:12px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:14px">📊 Calcular período</button>
+  <div id="fc-resultado"></div>
 </div>
 </div>
 
@@ -234,7 +272,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 16/05/2026 04:00 — AGRUPADO ✅</div>
+<div id="ver-banner" style="background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 16/05/2026 05:00 — FECHAR CONTA ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -410,6 +448,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="card"><div class="stit">🏪 Cantina</div><div id="l-ct"><div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div></div></div>
 <button class="xbtn" onclick="expCSV()">⬇️ Exportar CSV</button>
 <button class="xbtn" style="background:#C62828;color:#fff;border-color:#C62828" onclick="abrirRelatorioFiltrado()">📊 Relatório com filtro de data</button>
+<button class="xbtn" style="background:#E65100;color:#fff;border-color:#E65100" onclick="abrirFecharConta()">💰 Fechar Conta e notificar Dono</button>
 <button class="xbtn" style="background:#1B5E20;color:#fff;border-color:#1B5E20" onclick="gerarReciboPDF()">🧾 Gerar recibo</button>
 <div class="card" style="margin-top:10px"><div class="stit">📊 Desembolso (últimos 7 dias)</div><canvas id="chart-desembolso" height="200" style="width:100%;display:block"></canvas></div>
 <div class="card" style="margin-top:10px">
@@ -1102,13 +1141,14 @@ rPan = function(){
       ldEl.innerHTML = [...lv].reverse().map(function(r){
         var gi = S.rD.indexOf(r);
         var av = r.av==='otimo'?'<span class="bdg bg">Ótimo</span>':r.av==='bom'?'<span class="bdg ba">Bom</span>':'<span class="bdg br">Ruim</span>';
-        var valBadge = r.validado ? '<span class="badge-ok">✅ Validado</span>' : '<span class="badge-pend">⏳ Pendente</span>';
+        var isPE2 = CU&&(CU.r==='Consultor'||CU.r==='Dono');
+        var valBadge = isPE2 ? (r.validado ? '<span class="badge-ok">✅ Validado</span>' : '<span class="badge-pend">⏳ Pendente</span>') : '';
         var pg = r.pago ? ' <span style="font-size:10px;color:#2E7D32;font-weight:600">✅ Paga</span>' : '';
         var btnPg = (!r.pago&&r.v>0) ? '<button class="btn-pagar-diaria" data-idx="'+gi+'" style="margin-top:5px;padding:4px 12px;font-size:11px;font-weight:600;background:#2E7D32;color:#fff;border:none;border-radius:6px;cursor:pointer">✅ Marcar como paga</button>' : '';
         return '<div class="ri"><div class="rt"><span class="rn">'+r.n+av+valBadge+'</span>'
           + '<div style="display:flex;align-items:center;gap:4px">'
           + (r.pago?'<s style="color:#aaa;font-size:12px">':'')+'<span class="rv">R$ '+r.v.toFixed(2).replace('.',',')+'</span>'+(r.pago?'</s>':'')
-          + '<button class="btn-edit" onclick="abrirEdicao(&quot;rD&quot;,'+gi+')">✏️</button>'
+          + (CU&&(CU.r==='Consultor'||CU.r==='Dono') ? '<button class="btn-edit" onclick="abrirEdicao(&quot;rD&quot;,'+gi+')">✏️</button>' : '')
           + '</div></div>'
           + '<div class="rd">'+((r.dt||'').split('-').reverse().join('/'))+ ' · '+r.faz+' · '+r.srv+pg+'</div>'
           + btnPg+'</div>';
@@ -1135,7 +1175,8 @@ rPan = function(){
         var dtFmt = dt.split('-').reverse().join('/');
         var responsaveis = [...new Set(dia.registros.map(function(r){return r.resp||r.n||'—';}))].join(', ');
         var validados = dia.registros.every(function(r){return r.validado;});
-        var valBadge = validados ? '<span class="badge-ok">✅ Validado</span>' : '<span class="badge-pend">⏳ Pendente</span>';
+        var isPE = CU&&(CU.r==='Consultor'||CU.r==='Dono');
+        var valBadge = isPE ? (validados ? '<span class="badge-ok">✅ Validado</span>' : '<span class="badge-pend">⏳ Pendente</span>') : '';
         // Detalhes expandíveis
         var detalheId = 'ct-det-'+dt.replace(/-/g,'');
         var detHtml = dia.registros.map(function(r){
@@ -1144,7 +1185,7 @@ rPan = function(){
             + '<span style="font-size:11px;color:#666">'+(r.det||'—')+'</span>'
             + '<div style="display:flex;align-items:center;gap:4px">'
             + '<span style="font-size:12px;font-weight:600;color:#2E7D32">R$ '+r.total.toFixed(2).replace('.',',')+'</span>'
-            + '<button class="btn-edit" onclick="abrirEdicao(&quot;rC&quot;,'+gi+')" style="padding:2px 6px;font-size:10px">✏️</button>'
+            + (CU&&(CU.r==='Consultor'||CU.r==='Dono') ? '<button class="btn-edit" onclick="abrirEdicao(&quot;rC&quot;,'+gi+')" style="padding:2px 6px;font-size:10px">✏️</button>' : '')
             + '</div></div>';
         }).join('');
         return '<div class="ri">'
@@ -1161,6 +1202,155 @@ rPan = function(){
     }
   }, 150);
 };
+
+
+// ═══ FECHAR CONTA ═══
+function salvarCampoUser(i,campo,elId){
+  var v=(document.getElementById(elId)||{}).value||'';
+  S.US[i][campo]=v;salvar();
+  var el=document.getElementById(elId);
+  if(el){el.style.borderColor='#2E7D32';setTimeout(function(){el.style.borderColor='#ddd';},1000);}
+}
+
+function abrirFecharConta(){
+  var m=document.getElementById('fc-modal');
+  if(!m)return;
+  // Popular fazendas
+  var sel=document.getElementById('fc-faz');
+  var faz=(document.getElementById('pf')||{}).value||'';
+  sel.innerHTML=Object.keys(S.FAZ).map(function(f){return'<option value="'+f+'"'+(f===faz?' selected':'')+'>'+f+'</option>';}).join('');
+  // Datas padrão: últimos 15 dias
+  setFCPer('quinzena');
+  document.getElementById('fc-resultado').innerHTML='';
+  m.classList.add('open');
+}
+
+function setFCPer(p){
+  var hoje=new Date();
+  var ini=new Date();
+  if(p==='semana') ini.setDate(hoje.getDate()-7);
+  else if(p==='quinzena') ini.setDate(hoje.getDate()-15);
+  else if(p==='mes') ini=new Date(hoje.getFullYear(),hoje.getMonth(),1);
+  else if(p==='mes30') ini.setDate(hoje.getDate()-30);
+  var fmt=function(d){return d.toISOString().split('T')[0];};
+  var deEl=document.getElementById('fc-de');
+  var ateEl=document.getElementById('fc-ate');
+  if(deEl)deEl.value=fmt(ini);
+  if(ateEl)ateEl.value=fmt(hoje);
+}
+
+function calcularFechamento(){
+  var de=(document.getElementById('fc-de')||{}).value||'';
+  var ate=(document.getElementById('fc-ate')||{}).value||'';
+  var faz=(document.getElementById('fc-faz')||{}).value||'';
+  if(!de||!ate){alert('Selecione o período.');return;}
+  var NL='\n';
+
+  function noperiodo(r){
+    var dt=r.dt||r.data||'';
+    return dt>=de&&dt<=ate&&(!faz||r.faz===faz);
+  }
+  var diarias=(S.rD||[]).filter(function(r){return r.tipo==='diaria'&&!r._apagado&&noperiodo(r);});
+  var cantinas=(S.rC||[]).filter(noperiodo);
+
+  var pessoas={};
+  diarias.forEach(function(r){
+    var n=r.n||'?';
+    if(!pessoas[n])pessoas[n]={n:n,diarias:[],cantina:[],totalD:0,totalC:0};
+    pessoas[n].diarias.push(r);
+    pessoas[n].totalD+=r.v||0;
+  });
+  cantinas.forEach(function(r){
+    var n=r.resp||r.n||'Cantina';
+    if(!pessoas[n])pessoas[n]={n:n,diarias:[],cantina:[],totalD:0,totalC:0};
+    pessoas[n].cantina.push(r);
+    pessoas[n].totalC+=r.total||0;
+  });
+
+  var lista=Object.values(pessoas);
+  if(!lista.length){
+    document.getElementById('fc-resultado').innerHTML='<div style="text-align:center;color:#888;padding:16px;font-size:13px">Nenhum registro no período.</div>';
+    return;
+  }
+
+  var totalGeral=lista.reduce(function(a,p){return a+p.totalD+p.totalC;},0);
+  var deFmt=de.split('-').reverse().join('/');
+  var ateFmt=ate.split('-').reverse().join('/');
+
+  var linhas=[];
+  linhas.push('FECHAMENTO DE CONTA');
+  linhas.push('Fazenda: '+faz);
+  linhas.push('Periodo: '+deFmt+' a '+ateFmt);
+  linhas.push('');
+
+  var html='<div style="font-size:12px;color:#888;margin-bottom:8px">'+deFmt+' a '+ateFmt+' - '+faz+'</div>';
+
+  lista.forEach(function(p){
+    var total=p.totalD+p.totalC;
+    var usr=S.US.find(function(u){return u.n===p.n;});
+    var pix=usr?usr.pix||'':'';
+
+    html+='<div class="fc-pessoa">';
+    html+='<div class="fc-nome">'+p.n+'</div>';
+    html+='<div class="fc-det">';
+    if(p.diarias.length)html+='Diarias: '+p.diarias.length+' servicos - R$ '+p.totalD.toFixed(2).replace('.',',')+'<br>';
+    if(p.cantina.length)html+='Cantina: '+p.cantina.length+' dias - R$ '+p.totalC.toFixed(2).replace('.',',')+'<br>';
+    html+='</div>';
+    html+='<div class="fc-total-val">Total: R$ '+total.toFixed(2).replace('.',',')+'</div>';
+    if(pix)html+='<div class="fc-pix">Pix: '+pix+'</div>';
+    html+='</div>';
+
+    linhas.push('Funcionario: '+p.n);
+    if(p.diarias.length)linhas.push('  Diarias ('+p.diarias.length+'x): R$ '+p.totalD.toFixed(2).replace('.',','));
+    if(p.cantina.length)linhas.push('  Cantina ('+p.cantina.length+' dias): R$ '+p.totalC.toFixed(2).replace('.',','));
+    linhas.push('  TOTAL: R$ '+total.toFixed(2).replace('.',','));
+    if(pix)linhas.push('  Pix: '+pix);
+    linhas.push('');
+  });
+
+  linhas.push('------------------------');
+  linhas.push('TOTAL GERAL: R$ '+totalGeral.toFixed(2).replace('.',','));
+  linhas.push('');
+  linhas.push('Enviado pelo GPL - Gestao Pecuaria Lucrativa - Rogerio Avelino');
+
+  var msgFinal=linhas.join(NL);
+
+  var dono=S.US.find(function(u){return u.r==='Dono'&&(!faz||u.fs.length===0||u.fs.includes(faz));});
+  var telDono=dono&&dono.tel?dono.tel.replace(/[^\d]/g,''):'';
+
+  var wppUrl=telDono
+    ?'https://wa.me/'+telDono+'?text='+encodeURIComponent(msgFinal)
+    :'https://wa.me/?text='+encodeURIComponent(msgFinal);
+
+  html+='<div style="background:#FFF3E0;border-radius:10px;padding:12px;margin-top:8px;border:1px solid #FFB300">';
+  html+='<div style="font-size:14px;font-weight:700;color:#E65100;margin-bottom:8px">Total: R$ '+totalGeral.toFixed(2).replace('.',',')+'</div>';
+  if(!telDono)html+='<div style="font-size:11px;color:#888;margin-bottom:6px">Cadastre o WhatsApp do Dono em Config para envio direto.</div>';
+  html+='<button onclick="window.open(\''+wppUrl.replace(/'/g,"\\'")+'\')" style="width:100%;padding:11px;background:#25D366;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:6px">Enviar WhatsApp ao Dono</button>';
+  html+='<button onclick="navigator.clipboard?navigator.clipboard.writeText(\''+msgFinal.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n')+'\').then(function(){alert(\'Copiado!\');}):alert(\'Use o botao WhatsApp\')" style="width:100%;padding:9px;background:#f5f5f5;color:#333;border:1px solid #ddd;border-radius:10px;font-size:13px;cursor:pointer">Copiar mensagem</button>';
+  html+='</div>';
+
+  document.getElementById('fc-resultado').innerHTML=html;
+}
+
+function enviarFechamentoWpp(msgEnc,tel){
+  var msg=decodeURIComponent(msgEnc);
+  var url=tel?'https://wa.me/'+tel.replace(/\D/g,'')+'?text='+encodeURIComponent(msg):'https://wa.me/?text='+encodeURIComponent(msg);
+  window.open(url,'_blank');
+}
+
+function copiarFechamento(msgEnc){
+  var msg=decodeURIComponent(msgEnc);
+  if(navigator.clipboard)navigator.clipboard.writeText(msg).then(function(){alert('✅ Mensagem copiada!');});
+  else{var t=document.createElement('textarea');t.value=msg;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);alert('✅ Copiada!');}
+}
+
+// Init modal fechar conta
+document.addEventListener('DOMContentLoaded',function(){
+  var fc=document.getElementById('fc-modal');
+  var cl=document.getElementById('fc-close');
+  if(cl)cl.onclick=function(){fc.classList.remove('open');};
+  if(fc)fc.onclick=function(e){if(e.target===fc)fc.classList.remove('open');};
+});
 
 </script>
 </body>
