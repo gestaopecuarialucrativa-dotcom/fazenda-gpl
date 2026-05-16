@@ -272,7 +272,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 16/05/2026 09:00 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 16/05/2026 09:30 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -724,7 +724,39 @@ function carregarNuvem(cb){
     delete window[cbName];
     var el=document.getElementById(cbName);
     if(el&&el.parentNode)el.parentNode.removeChild(el);
-    processarDadosNuvem(data,cb);
+    // Processar dados inline
+    if(!data){updCloudStatus('err');if(cb)cb(false);return;}
+    if(data.CONFIG&&data.CONFIG.length>0){
+      var row=data.CONFIG[0];
+      if(row&&row[1]){
+        try{
+          var cfg=JSON.parse(row[1]);
+          if(cfg.FAZ&&Object.keys(cfg.FAZ).length)S.FAZ=cfg.FAZ;
+          if(cfg.US&&cfg.US.length){
+            var lu=S.US||[];
+            cfg.US.forEach(function(u){if(!lu.some(function(l){return l.n===u.n;}))lu.push(u);});
+            S.US=lu;
+          }
+          if(cfg.EST)S.EST=cfg.EST;
+          if(cfg.SERVS&&cfg.SERVS.length)S.SERVS=cfg.SERVS;
+          if(cfg.PR)S.PR=cfg.PR;
+          if(cfg.LOTES)S.LOTES=cfg.LOTES;
+          if(cfg.DIARISTAS)S.DIARISTAS=cfg.DIARISTAS;
+          if(cfg.rD&&cfg.rD.length)S.rD=cfg.rD;
+          if(cfg.rT&&cfg.rT.length)S.rT=cfg.rT;
+          if(cfg.rC&&cfg.rC.length)S.rC=cfg.rC;
+          if(cfg.rE&&cfg.rE.length)S.rE=cfg.rE;
+          if(cfg.rDesp&&cfg.rDesp.length)S.rDesp=cfg.rDesp;
+          if(cfg.mEst)S.mEst=cfg.mEst;
+          if(cfg.NOTAS)S.NOTAS=cfg.NOTAS;
+        }catch(ex){}
+      }
+    }
+    // Mesclar dados das abas individuais
+    ['rC','rD','rT','rE'].forEach(function(k){if(data[k]&&data[k].length){if(!S[k])S[k]=[];data[k].forEach(function(r){var existe=S[k].some(function(x){return x.dt===r.dt&&(x.resp||x.n)===(r.resp||r.n)&&(x.total||x.v)===(r.total||r.v);});if(!existe)S[k].push(r);});}});
+    salvarLocal();
+    updCloudStatus('ok');
+    if(cb)cb(true);
   };
   
   var s=document.createElement('script');
