@@ -272,7 +272,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 16/05/2026 07:00 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 16/05/2026 08:00 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -521,6 +521,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <button class="sbtn" style="margin-top:8px;background:#185FA5" onclick="forcarCarregarNuvem()">☁️ Carregar dados da nuvem agora</button>
 <button class="sbtn" style="margin-top:8px;background:#2E7D32" onclick="forcarSalvarNuvem()">💾 Salvar dados na nuvem agora</button>
 <button class="sbtn" style="margin-top:8px;background:#C62828" onclick="limparTudoLocal()">🗑️ Limpar dados locais e recarregar</button>
+<button class="sbtn" style="margin-top:8px;background:#7B1FA2" onclick="gerarArquivoSync()">📱 Gerar arquivo para sincronizar celular</button>
 <div class="ok" id="ok-cloud">✅ Concluído!</div>
 <div class="ok" id="ok-integ">✅ Integração salva!</div>
 </div>
@@ -711,20 +712,40 @@ function carregarNuvem(cb){
   carregarViaJsonp(url,cb);
 }
 function carregarViaJsonp(url,cb){
-  var s=document.createElement('script');
   var cbName='gpl_cb_'+Date.now();
+  // Limpar callback anterior se existir
+  Object.keys(window).filter(function(k){return k.startsWith('gpl_cb_');}).forEach(function(k){delete window[k];});
+  
+  var timeout = setTimeout(function(){
+    delete window[cbName];
+    var s=document.getElementById(cbName);
+    if(s)s.parentNode.removeChild(s);
+    updCloudStatus('err');
+    if(cb)cb(false);
+  }, 10000);
+  
   window[cbName]=function(data){
-    try{document.head.removeChild(s);}catch(e){}
+    clearTimeout(timeout);
+    var s=document.getElementById(cbName);
+    if(s)s.parentNode.removeChild(s);
     delete window[cbName];
     processarDadosNuvem(data,cb);
   };
-  s.src=url+'&callback='+cbName;
+  
+  var s=document.createElement('script');
+  s.id=cbName;
+  s.type='text/javascript';
+  s.charset='utf-8';
+  // Usar acao=carregar e callback para JSONP
+  var sep = url.indexOf('?')>=0 ? '&' : '?';
+  s.src=url+sep+'acao=carregar&callback='+cbName+'&t='+Date.now();
   s.onerror=function(){
-    try{document.head.removeChild(s);}catch(e){}
+    clearTimeout(timeout);
+    delete window[cbName];
     updCloudStatus('err');
     if(cb)cb(false);
   };
-  document.head.appendChild(s);
+  document.body.appendChild(s);
 }
 
 function processarDadosNuvem(data,cb){
@@ -1490,6 +1511,26 @@ envCt = function(){
   _envCtOrig();
   setTimeout(rCtHist, 200);
 };
+
+
+// ═══ SYNC VIA ARQUIVO (para Safari) ═══
+function gerarArquivoSync(){
+  // Gera um arquivo HTML com os dados embutidos para sincronizar o celular
+  var dados = JSON.stringify(S);
+  var tag='script';
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>GPL Sync</title></head><body>'
+    + '<'+tag+'>'
+    + 'localStorage.setItem("gpl_v17_data",'+JSON.stringify(dados)+');'
+    + 'alert("Dados sincronizados! Feche esta pagina e abra o GPL.");'
+    + 'window.location="https://gestaopecuarialucrativa-dotcom.github.io/fazenda-gpl/";'
+    + '</'+tag+'></body></html>';
+  var blob = new Blob([html], {type:'text/html'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'gpl-sync.html';
+  a.click();
+  alert('📱 Abra o arquivo gpl-sync.html no celular para sincronizar os dados.');
+}
 
 </script>
 </body>
