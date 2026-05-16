@@ -203,7 +203,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 15/05/2026 23:45 — CORRIGIDO ✅</div>
+<div id="ver-banner" style="background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 15/05/2026 23:59 — CORRIGIDO ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -779,40 +779,57 @@ rPan = function(){
 
 // ═══ RELATÓRIO COM FILTRO DE DATA ═══
 function abrirRelatorioFiltrado(){
-  var existing=document.getElementById('modal-relatorio');
-  if(existing)existing.remove();
-  var modal=document.createElement('div');
-  modal.id='modal-relatorio';
-  modal.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
-  var fazOpts=Object.keys(S.FAZ).map(function(f){return'<option value="'+f+'">'+f+'</option>';}).join('');
+  var ex=document.getElementById('modal-relatorio');
+  if(ex)ex.remove();
+  
   var hoje=new Date().toISOString().split('T')[0];
-  var mesAtras=new Date();mesAtras.setMonth(mesAtras.getMonth()-1);
-  var mesAtrasStr=mesAtras.toISOString().split('T')[0];
-  modal.innerHTML='<div style="background:#fff;border-radius:16px;padding:22px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto">'
+  var ma=new Date();ma.setMonth(ma.getMonth()-1);
+  var maStr=ma.toISOString().split('T')[0];
+  
+  var overlay=document.createElement('div');
+  overlay.id='modal-relatorio';
+  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  
+  var box=document.createElement('div');
+  box.style.cssText='background:#fff;border-radius:16px;padding:22px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto';
+  
+  var fazOpts='<option value="">Todas</option>'+Object.keys(S.FAZ).map(function(f){return'<option value="'+f+'">'+f+'</option>';}).join('');
+  
+  box.innerHTML=''
     +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'
-    +'<span style="font-size:16px;font-weight:700;color:#1B5E20">📊 Relatório com filtro</span>'
-    +'<span id="btn-fechar-rel" style="cursor:pointer;font-size:20px;color:#888">×</span>'
+    +'<span style="font-size:16px;font-weight:700;color:#1B5E20">&#x1F4CA; Relatório com filtro</span>'
+    +'<span id="rel-close" style="cursor:pointer;font-size:24px;color:#888;line-height:1">&#x00D7;</span>'
     +'</div>'
     +'<div style="margin-bottom:10px"><div style="font-size:12px;color:#666;margin-bottom:4px">Fazenda</div>'
-    +'<select id="rel-faz" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px"><option value="">Todas</option>'+fazOpts+'</select></div>'
+    +'<select id="rel-faz" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px">'+fazOpts+'</select></div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
-    +'<div><div style="font-size:12px;color:#666;margin-bottom:4px">Data início</div><input type="date" id="rel-de" value="'+mesAtrasStr+'" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div>'
-    +'<div><div style="font-size:12px;color:#666;margin-bottom:4px">Data fim</div><input type="date" id="rel-ate" value="'+hoje+'" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div>'
+    +'<div><div style="font-size:12px;color:#666;margin-bottom:4px">Data início</div>'
+    +'<input type="date" id="rel-de" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div>'
+    +'<div><div style="font-size:12px;color:#666;margin-bottom:4px">Data fim</div>'
+    +'<input type="date" id="rel-ate" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div>'
     +'</div>'
-    +'<div style="margin-bottom:10px"><div style="font-size:12px;color:#666;margin-bottom:4px">Tipo</div>'
+    +'<div style="margin-bottom:12px"><div style="font-size:12px;color:#666;margin-bottom:6px">Tipo</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'
-    +'<label style="display:flex;align-items:center;gap:6px;padding:8px;border:1px solid #ddd;border-radius:8px;cursor:pointer"><input type="checkbox" id="rel-diaria" checked> Diárias</label>'
-    +'<label style="display:flex;align-items:center;gap:6px;padding:8px;border:1px solid #ddd;border-radius:8px;cursor:pointer"><input type="checkbox" id="rel-cantina" checked> Cantina</label>'
-    +'<label style="display:flex;align-items:center;gap:6px;padding:8px;border:1px solid #ddd;border-radius:8px;cursor:pointer"><input type="checkbox" id="rel-trato" checked> Tratos</label>'
-    +'<label style="display:flex;align-items:center;gap:6px;padding:8px;border:1px solid #ddd;border-radius:8px;cursor:pointer"><input type="checkbox" id="rel-escore" checked> Escores</label>'
+    +'<label style="display:flex;align-items:center;gap:6px;padding:8px;border:1px solid #ddd;border-radius:8px"><input type="checkbox" id="rel-diaria" checked> Diárias</label>'
+    +'<label style="display:flex;align-items:center;gap:6px;padding:8px;border:1px solid #ddd;border-radius:8px"><input type="checkbox" id="rel-cantina" checked> Cantina</label>'
+    +'<label style="display:flex;align-items:center;gap:6px;padding:8px;border:1px solid #ddd;border-radius:8px"><input type="checkbox" id="rel-trato" checked> Tratos</label>'
+    +'<label style="display:flex;align-items:center;gap:6px;padding:8px;border:1px solid #ddd;border-radius:8px"><input type="checkbox" id="rel-escore" checked> Escores</label>'
     +'</div></div>'
-    +'<button id="btn-gerar-pdf-rel" style="width:100%;padding:12px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px">📄 Gerar PDF</button>'
-    +'<button id="btn-gerar-csv-rel" style="width:100%;padding:10px;background:#f5f5f5;color:#333;border:1px solid #ddd;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer">⬇️ Exportar CSV</button>'
-    +'</div>';
-  document.body.appendChild(modal);
-  document.getElementById('btn-fechar-rel').onclick=function(){modal.remove();};
-  document.getElementById('btn-gerar-pdf-rel').onclick=gerarRelatorioFiltrado;
-  document.getElementById('btn-gerar-csv-rel').onclick=gerarCSVFiltrado;
+    +'<button id="rel-pdf-btn" style="width:100%;padding:12px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px">&#x1F4C4; Gerar PDF</button>'
+    +'<button id="rel-csv-btn" style="width:100%;padding:10px;background:#f5f5f5;color:#333;border:1px solid #ddd;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer">&#x2B07; Exportar CSV</button>';
+  
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  
+  // Setar datas após inserir no DOM
+  document.getElementById('rel-de').value=maStr;
+  document.getElementById('rel-ate').value=hoje;
+  
+  // Event listeners
+  document.getElementById('rel-close').onclick=function(){overlay.remove();};
+  overlay.onclick=function(e){if(e.target===overlay)overlay.remove();};
+  document.getElementById('rel-pdf-btn').onclick=gerarRelatorioFiltrado;
+  document.getElementById('rel-csv-btn').onclick=gerarCSVFiltrado;
 }
 
 function getRelFiltro(){
