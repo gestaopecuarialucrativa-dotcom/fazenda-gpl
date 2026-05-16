@@ -272,7 +272,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 16/05/2026 08:00 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 16/05/2026 09:00 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -638,7 +638,7 @@ function calcCt(){const p=S.PR;let t=0;if(cobT==='ref')t=QT.cafe*p.cafe+QT.almoc
 
 // ═══ ENVIOS ═══
 function getFazGasUrl(faz){if(faz&&S.FAZ[faz]&&S.FAZ[faz].gasUrl)return S.FAZ[faz].gasUrl;return S.cfgGS||'';}
-function enviarDado(d){const r={...d,timestamp:new Date().toISOString()};if(navigator.onLine&&S.cfgGS){const url=getFazGasUrl(d.faz||'');fetch(url+'?'+new URLSearchParams({data:JSON.stringify(r)}),{method:'GET',mode:'no-cors'}).then(()=>atualizarSync()).catch(()=>{S.queue.push(r);salvar();atualizarSync();});}else{S.queue.push(r);salvar();atualizarSync();}}
+function enviarDado(d){if(!d||!d.tipo)return;const r={...d,timestamp:new Date().toISOString()};if(navigator.onLine&&S.cfgGS){const url=getFazGasUrl(d.faz||'');fetch(url+'?'+new URLSearchParams({data:JSON.stringify(r)}),{method:'GET',mode:'no-cors'}).then(()=>atualizarSync()).catch(()=>{S.queue.push(r);salvar();atualizarSync();});}else{S.queue.push(r);salvar();atualizarSync();}}
 function baixar(lista,dt,loc){lista.forEach(x=>{if(x.p&&S.EST[x.p]&&x.q>0){S.EST[x.p].q=Math.max(0,parseFloat((S.EST[x.p].q-x.q).toFixed(2)));S.mEst.push({p:x.p,q:x.q,u:S.EST[x.p].u,t:'saida',dt,loc});}});salvar();}
 function envD(){const n=(document.getElementById('d-nome')||{}).value||'';const v=parseFloat((document.getElementById('d-val')||{}).value)||0;const faz=(document.getElementById('d-faz')||{}).value||(CU&&CU.fs&&CU.fs.length===1?CU.fs[0]:getFL()[0]||'');const dt=(document.getElementById('d-data')||{}).value||TD;if(!n||!srvSel||!avSel){alert('Preencha nome, serviço e avaliação.');return;}if(n&&faz){if(!S.DIARISTAS)S.DIARISTAS={};if(!S.DIARISTAS[faz])S.DIARISTAS[faz]=[];if(!S.DIARISTAS[faz].includes(n))S.DIARISTAS[faz].push(n);}const r={tipo:'diaria',faz,n,dt,srv:srvSel==='Outro'?(document.getElementById('d-out')||{}).value:srvSel,v,av:avSel,obs:(document.getElementById('d-obs')||{}).value};S.rD.push(r);// despesa criada pelo Fechar Conta
 enviarDado(r);showOk('ok-d');document.getElementById('d-val').value='';document.getElementById('d-obs').value='';document.querySelectorAll('#d-servs .bopt,.avbtn').forEach(b=>b.classList.remove('sel'));srvSel='';avSel='';setTimeout(()=>{sp('home',false);rUlt();},1600);}
@@ -708,81 +708,36 @@ function salvarNuvem(cb){if(!S.cfgGS){if(cb)cb(false);return;}updCloudStatus('sa
 function carregarNuvem(cb){
   if(!S.cfgGS||!navigator.onLine){if(cb)cb(false);return;}
   updCloudStatus('loading');
-  var url=S.cfgGS+'?acao=carregar';
-  carregarViaJsonp(url,cb);
-}
-function carregarViaJsonp(url,cb){
   var cbName='gpl_cb_'+Date.now();
-  // Limpar callback anterior se existir
-  Object.keys(window).filter(function(k){return k.startsWith('gpl_cb_');}).forEach(function(k){delete window[k];});
+  var url=S.cfgGS+'?acao=carregar&callback='+cbName+'&t='+Date.now();
   
-  var timeout = setTimeout(function(){
+  var timeout=setTimeout(function(){
     delete window[cbName];
-    var s=document.getElementById(cbName);
-    if(s)s.parentNode.removeChild(s);
+    var el=document.getElementById(cbName);
+    if(el&&el.parentNode)el.parentNode.removeChild(el);
     updCloudStatus('err');
     if(cb)cb(false);
-  }, 10000);
+  },12000);
   
   window[cbName]=function(data){
     clearTimeout(timeout);
-    var s=document.getElementById(cbName);
-    if(s)s.parentNode.removeChild(s);
     delete window[cbName];
+    var el=document.getElementById(cbName);
+    if(el&&el.parentNode)el.parentNode.removeChild(el);
     processarDadosNuvem(data,cb);
   };
   
   var s=document.createElement('script');
   s.id=cbName;
-  s.type='text/javascript';
-  s.charset='utf-8';
-  // Usar acao=carregar e callback para JSONP
-  var sep = url.indexOf('?')>=0 ? '&' : '?';
-  s.src=url+sep+'acao=carregar&callback='+cbName+'&t='+Date.now();
+  s.src=url;
   s.onerror=function(){
     clearTimeout(timeout);
     delete window[cbName];
+    if(s.parentNode)s.parentNode.removeChild(s);
     updCloudStatus('err');
     if(cb)cb(false);
   };
   document.body.appendChild(s);
-}
-
-function processarDadosNuvem(data,cb){
-  if(!data){updCloudStatus('err');if(cb)cb(false);return;}
-  if(data.CONFIG&&data.CONFIG.length>0){
-    var row=data.CONFIG[0];
-    if(row&&row[1]){
-      try{
-        var cfg=JSON.parse(row[1]);
-        if(cfg.FAZ&&Object.keys(cfg.FAZ).length)S.FAZ=cfg.FAZ;
-        if(cfg.US&&cfg.US.length){
-          // Mescla usuários: mantém locais + adiciona novos da nuvem
-          var localUS=S.US||[];
-          cfg.US.forEach(function(u){
-            var existe=localUS.some(function(l){return l.n===u.n;});
-            if(!existe)localUS.push(u);
-          });
-          S.US=localUS;
-        }
-        if(cfg.EST)S.EST=cfg.EST;
-        if(cfg.SERVS&&cfg.SERVS.length)S.SERVS=cfg.SERVS;
-        if(cfg.PR)S.PR=cfg.PR;
-        if(cfg.LOTES)S.LOTES=cfg.LOTES;
-        if(cfg.DIARISTAS)S.DIARISTAS=cfg.DIARISTAS;
-        if(cfg.rD&&cfg.rD.length)S.rD=cfg.rD;
-        if(cfg.rT&&cfg.rT.length)S.rT=cfg.rT;
-        if(cfg.rC&&cfg.rC.length)S.rC=cfg.rC;
-        if(cfg.rE&&cfg.rE.length)S.rE=cfg.rE;
-        if(cfg.rDesp&&cfg.rDesp.length)S.rDesp=cfg.rDesp;
-        if(cfg.mEst)S.mEst=cfg.mEst;
-        if(cfg.NOTAS)S.NOTAS=cfg.NOTAS;
-        salvarLocal();
-        updCloudStatus('ok');
-        if(cb)cb(true);
-      }catch(e){updCloudStatus('err');if(cb)cb(false);}
-    }else{updCloudStatus('ok');if(cb)cb(false);}
-  }else{updCloudStatus('ok');if(cb)cb(false);}
 }
 
 function forcarCarregarNuvem(){if(!S.cfgGS){alert('Configure a URL do Apps Script primeiro.');return;}carregarNuvem(ok=>{if(ok){popAll();rUlt();showOk('ok-cloud');alert('✅ Dados carregados da nuvem!');}else alert('⚠️ Não foi possível carregar. Verifique a URL e a internet.');});}
