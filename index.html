@@ -691,22 +691,28 @@ function rPixDiaristas(){
   if(!S.PIX_DIARISTAS)S.PIX_DIARISTAS={};
   var el=document.getElementById('pix-diaristas-lista');
   if(!el)return;
-  var keys=Object.keys(S.PIX_DIARISTAS);
-  // Também listar diaristas sem Pix
   var todos=[];
   Object.values(S.DIARISTAS||{}).forEach(function(arr){arr.forEach(function(n){if(!todos.includes(n))todos.push(n);});});
-  if(!keys.length&&!todos.length){el.innerHTML='<div style="font-size:12px;color:#aaa;padding:6px">Nenhum diarista cadastrado.</div>';return;}
-  var all=[...new Set([...keys,...todos])];
-  el.innerHTML=all.map(function(nome){
+  Object.keys(S.PIX_DIARISTAS).forEach(function(n){if(!todos.includes(n))todos.push(n);});
+  if(!todos.length){el.innerHTML='<div style="font-size:12px;color:#aaa;padding:6px">Nenhum diarista cadastrado.</div>';return;}
+  el.innerHTML=todos.map(function(nome){
     var pix=S.PIX_DIARISTAS[nome]||'';
+    var nomeEnc=encodeURIComponent(nome);
     return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #f0f0f0">'
       +'<div style="flex:1"><div style="font-size:13px;font-weight:600">'+nome+'</div>'
       +(pix?'<div style="font-size:11px;color:#2E7D32;font-family:monospace">'+pix+'</div>':'<div style="font-size:11px;color:#aaa">Sem Pix</div>')
       +'</div>'
-      +'<button onclick="editarPixInline(\''+nome.replace(/'/g,"\\'")+ '\',this)" style="padding:4px 10px;background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9;border-radius:6px;font-size:11px;cursor:pointer">✏️</button>'
-      +'<button onclick="deletarPix(\''+nome.replace(/'/g,"\\'")+ '\')" style="padding:4px 8px;background:#FFEBEE;color:#C62828;border:1px solid #FFCDD2;border-radius:6px;font-size:11px;cursor:pointer">🗑️</button>'
+      +'<button data-nome="'+nomeEnc+'" class="btn-pix-edit" style="padding:4px 10px;background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9;border-radius:6px;font-size:11px;cursor:pointer">✏️</button>'
+      +'<button data-nome="'+nomeEnc+'" class="btn-pix-del" style="padding:4px 8px;background:#FFEBEE;color:#C62828;border:1px solid #FFCDD2;border-radius:6px;font-size:11px;cursor:pointer">🗑️</button>'
       +'</div>';
   }).join('');
+  // Eventos via delegação
+  el.querySelectorAll('.btn-pix-edit').forEach(function(btn){
+    btn.onclick=function(){editarPixInline(decodeURIComponent(this.getAttribute('data-nome')));}
+  });
+  el.querySelectorAll('.btn-pix-del').forEach(function(btn){
+    btn.onclick=function(){deletarPix(decodeURIComponent(this.getAttribute('data-nome')));}
+  });
 }
 
 function editarPixInline(nome,btn){
