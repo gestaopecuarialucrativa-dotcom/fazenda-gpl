@@ -750,53 +750,32 @@ function initSync(){atualizarSync();window.addEventListener('online',()=>{atuali
 // ═══ NUVEM ═══
 function updCloudStatus(st){const el=document.getElementById('cloud-status');if(!el)return;const icons={saving:'☁️ Salvando...',loading:'☁️ Carregando...',ok:'✅ Nuvem OK',err:'⚠️ Offline'};el.textContent=icons[st]||'';el.style.color=st==='err'?'#C62828':(st==='ok'?'#2E7D32':'#888');}
 function salvarNuvem(cb){if(!S.cfgGS){if(cb)cb(false);return;}updCloudStatus('saving');const cfg={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:S.LOTES,DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT,rD:S.rD,rT:S.rT,rC:S.rC,rE:S.rE,rDesp:S.rDesp,mEst:S.mEst,NOTAS:S.NOTAS||{}};Object.keys(S.FAZ).forEach(faz=>{const gu=getFazGasUrl(faz);if(gu){const fc={FAZ:{},US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:(S.LOTES||[]).filter(l=>l.faz===faz),DIARISTAS:{}};fc.FAZ[faz]=S.FAZ[faz];fc.DIARISTAS[faz]=(S.DIARISTAS||{})[faz]||[];fc.rD=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rT=(S.rT||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rC=(S.rC||[]).filter(r=>r.faz===faz);fc.rE=(S.rE||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rDesp=(S.rDesp||[]).filter(r=>r.faz===faz);fetch(gu+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(fc)),{method:'GET',mode:'no-cors'}).catch(()=>{});}});fetch(S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfg)),{method:'GET',mode:'no-cors'}).then(()=>{updCloudStatus('ok');if(cb)cb(true);}).catch(e=>{updCloudStatus('err');if(cb)cb(false);});}
-function carregarNuvem(cb){
+function carregarNuvem(cb){function carregarNuvem(cb){
   if(!S.cfgGS||!navigator.onLine){if(cb)cb(false);return;}
   updCloudStatus('loading');
-  var cbName='gpl_cb_'+Date.now();
-  var url=S.cfgGS+'?acao=carregar&callback='+cbName+'&t='+Date.now();
-  
-  var timeout=setTimeout(function(){
-    delete window[cbName];
-    var el=document.getElementById(cbName);
-    if(el&&el.parentNode)el.parentNode.removeChild(el);
-    updCloudStatus('err');
-    if(cb)cb(false);
-  },12000);
-  
-  window[cbName]=function(data){
-    clearTimeout(timeout);
-    delete window[cbName];
-    var el=document.getElementById(cbName);
-    if(el&&el.parentNode)el.parentNode.removeChild(el);
-    // Processar dados inline
-    if(!data){updCloudStatus('err');if(cb)cb(false);return;}
-    if(data.CONFIG&&data.CONFIG.length>0){
-      var row=data.CONFIG[0];
-      if(row&&row[1]){
-        try{
-          var cfg=JSON.parse(row[1]);
-          if(cfg.FAZ&&Object.keys(cfg.FAZ).length)S.FAZ=cfg.FAZ;
-          if(cfg.US&&cfg.US.length){
-            var lu=S.US||[];
-            cfg.US.forEach(function(u){if(!lu.some(function(l){return l.n===u.n;}))lu.push(u);});
-            S.US=lu;
-          }
-          if(cfg.EST)S.EST=cfg.EST;
-          if(cfg.SERVS&&cfg.SERVS.length)S.SERVS=cfg.SERVS;
-          if(cfg.PR)S.PR=cfg.PR;
-          if(cfg.LOTES)S.LOTES=cfg.LOTES;
-          if(cfg.DIARISTAS)S.DIARISTAS=cfg.DIARISTAS;
-          if(cfg.rD&&cfg.rD.length)S.rD=cfg.rD;
-          if(cfg.rT&&cfg.rT.length)S.rT=cfg.rT;
-          if(cfg.rC&&cfg.rC.length)S.rC=cfg.rC;
-          if(cfg.rE&&cfg.rE.length)S.rE=cfg.rE;
-          if(cfg.rDesp&&cfg.rDesp.length)S.rDesp=cfg.rDesp;
-          if(cfg.mEst)S.mEst=cfg.mEst;
-          if(cfg.NOTAS)S.NOTAS=cfg.NOTAS;
-        }catch(ex){}
-      }
-    }
+  var url=S.cfgGS+'?acao=carregar&t='+Date.now();
+  fetch(url)
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(!data){updCloudStatus('err');if(cb)cb(false);return;}
+      if(data.FAZ&&Object.keys(data.FAZ).length)S.FAZ=data.FAZ;
+      if(data.US&&data.US.length){var lu=S.US||[];data.US.forEach(function(u){if(!lu.some(function(l){return l.n===u.n;}))lu.push(u);});S.US=lu;}
+      if(data.EST)S.EST=data.EST;
+      if(data.SERVS&&data.SERVS.length)S.SERVS=data.SERVS;
+      if(data.PR)S.PR=data.PR;
+      if(data.LOTES)S.LOTES=data.LOTES;
+      if(data.DIARISTAS)S.DIARISTAS=data.DIARISTAS;
+      if(data.rD&&data.rD.length)S.rD=data.rD;
+      if(data.rT&&data.rT.length)S.rT=data.rT;
+      if(data.rC&&data.rC.length)S.rC=data.rC;
+      if(data.rE&&data.rE.length)S.rE=data.rE;
+      if(data.rDesp&&data.rDesp.length)S.rDesp=data.rDesp;
+      if(data.mEst)S.mEst=data.mEst;
+      if(data.NOTAS)S.NOTAS=data.NOTAS;
+      salvarLocal();updCloudStatus('ok');if(cb)cb(true);
+    })
+    .catch(function(){updCloudStatus('err');if(cb)cb(false);});
+}}
     // Mesclar dados das abas individuais
     ['rC','rD','rT','rE'].forEach(function(k){if(data[k]&&data[k].length){if(!S[k])S[k]=[];data[k].forEach(function(r){var existe=S[k].some(function(x){return x.dt===r.dt&&(x.resp||x.n)===(r.resp||r.n)&&(x.total||x.v)===(r.total||r.v);});if(!existe)S[k].push(r);});}});
     salvarLocal();
