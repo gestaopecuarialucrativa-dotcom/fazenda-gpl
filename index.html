@@ -1880,6 +1880,23 @@ document.addEventListener('DOMContentLoaded', function(){
   if(dm) dm.onclick = function(e){ if(e.target===dm) fecharDetModal(); };
 });
 
+  function iniciarSistema(){
+  try{carregar();}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}
+  var GAS='https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec';
+  if(!S.cfgGS||S.cfgGS.length<10)S.cfgGS=GAS;
+  var ld=document.createElement('div');
+  ld.id='gpl-ld';
+  ld.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(160deg,#f0f9e8,#e8f5e0);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;font-family:system-ui,sans-serif';
+  ld.innerHTML='<div style="font-size:48px;margin-bottom:16px">🌿</div><div style="font-size:17px;font-weight:700;color:#1B5E20;margin-bottom:6px">Gestão Pecuária Lucrativa</div><div style="font-size:13px;color:#888;margin-bottom:4px">Rogério Avelino</div><div id="gpl-ld-msg" style="font-size:13px;color:#2E7D32;margin:16px 0;font-weight:600">☁️ Sincronizando dados...</div><div style="width:36px;height:36px;border:4px solid #e0e0e0;border-top-color:#2E7D32;border-radius:50%;animation:gplspin 1s linear infinite"></div><style>@keyframes gplspin{to{transform:rotate(360deg)}}</style>';
+  document.body.appendChild(ld);
+  function esconder(){var el=document.getElementById('gpl-ld');if(el){el.style.opacity='0';el.style.transition='opacity .4s';setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},400);}}
+  function entrar(){esconder();try{initLogin();}catch(ex){mostrarFazendas();}}
+  if(navigator.onLine&&S.cfgGS){
+    var t=setTimeout(function(){var msg=document.getElementById('gpl-ld-msg');if(msg)msg.textContent='⚡ Sem nuvem - dados locais';setTimeout(entrar,800);},9000);
+    carregarNuvem(function(ok){clearTimeout(t);var msg=document.getElementById('gpl-ld-msg');if(ok){if(msg)msg.textContent='✅ Dados atualizados!';salvarLocal();}else{if(msg)msg.textContent='⚡ Usando dados locais';}setTimeout(entrar,600);});
+  }else{var msg=document.getElementById('gpl-ld-msg');if(msg)msg.textContent='⚡ Modo offline';setTimeout(entrar,800);}
+}
+iniciarSistema();
 </script>
 </body>
 </html>
