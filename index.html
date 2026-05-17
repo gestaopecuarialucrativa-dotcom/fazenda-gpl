@@ -726,9 +726,20 @@ function editarPixInline(nome,btn){
 }
 
 function deletarPix(nome){
-  if(!confirm('Remover Pix de '+nome+'?'))return;
+  if(!confirm('Remover "'+nome+'" completamente? (Pix e da lista de diaristas)'))return;
+  // Remove o Pix
   if(S.PIX_DIARISTAS)delete S.PIX_DIARISTAS[nome];
-  salvar();rPixDiaristas();
+  // Remove da lista de diaristas de todas as fazendas
+  if(S.DIARISTAS){
+    Object.keys(S.DIARISTAS).forEach(function(faz){
+      S.DIARISTAS[faz]=S.DIARISTAS[faz].filter(function(n){return n!==nome;});
+    });
+  }
+  salvar();
+  rPixDiaristas();
+  // Atualizar lista de nomes no formulário de diária
+  try{updDiariaNome();}catch(e){}
+  alert('✅ "'+nome+'" removido!');
 }
 function editarPix(nome){if(!S.PIX_DIARISTAS)S.PIX_DIARISTAS={};var atual=S.PIX_DIARISTAS[nome]||'';var novo=prompt('Chave Pix de '+nome+':',atual);if(novo===null)return;if(novo.trim())S.PIX_DIARISTAS[nome]=novo.trim();else delete S.PIX_DIARISTAS[nome];salvar();alert('Pix salvo!');}
 function addDiarista(){const faz=(document.getElementById('d-faz')||{}).value||'';const n=prompt('Nome do diarista:');if(!n||!n.trim())return;const pix=prompt('Chave Pix de '+n.trim()+' (Enter para pular):');if(!S.DIARISTAS)S.DIARISTAS={};if(!S.DIARISTAS[faz])S.DIARISTAS[faz]=[];if(!S.PIX_DIARISTAS)S.PIX_DIARISTAS={};if(!S.DIARISTAS[faz].includes(n.trim()))S.DIARISTAS[faz].push(n.trim());if(pix&&pix.trim())S.PIX_DIARISTAS[n.trim()]=pix.trim();salvar();updDiariaNome();}
