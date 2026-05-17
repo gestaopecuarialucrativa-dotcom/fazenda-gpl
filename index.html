@@ -750,52 +750,59 @@ function initSync(){atualizarSync();window.addEventListener('online',()=>{atuali
 // ═══ NUVEM ═══
 function updCloudStatus(st){const el=document.getElementById('cloud-status');if(!el)return;const icons={saving:'☁️ Salvando...',loading:'☁️ Carregando...',ok:'✅ Nuvem OK',err:'⚠️ Offline'};el.textContent=icons[st]||'';el.style.color=st==='err'?'#C62828':(st==='ok'?'#2E7D32':'#888');}
 function salvarNuvem(cb){if(!S.cfgGS){if(cb)cb(false);return;}updCloudStatus('saving');const cfg={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:S.LOTES,DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT,rD:S.rD,rT:S.rT,rC:S.rC,rE:S.rE,rDesp:S.rDesp,mEst:S.mEst,NOTAS:S.NOTAS||{}};Object.keys(S.FAZ).forEach(faz=>{const gu=getFazGasUrl(faz);if(gu){const fc={FAZ:{},US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:(S.LOTES||[]).filter(l=>l.faz===faz),DIARISTAS:{}};fc.FAZ[faz]=S.FAZ[faz];fc.DIARISTAS[faz]=(S.DIARISTAS||{})[faz]||[];fc.rD=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rT=(S.rT||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rC=(S.rC||[]).filter(r=>r.faz===faz);fc.rE=(S.rE||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rDesp=(S.rDesp||[]).filter(r=>r.faz===faz);fetch(gu+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(fc)),{method:'GET',mode:'no-cors'}).catch(()=>{});}});fetch(S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfg)),{method:'GET',mode:'no-cors'}).then(()=>{updCloudStatus('ok');if(cb)cb(true);}).catch(e=>{updCloudStatus('err');if(cb)cb(false);});}
-function carregarNuvem(cb){function carregarNuvem(cb){
+function carregarNuvem(cb){
   if(!S.cfgGS||!navigator.onLine){if(cb)cb(false);return;}
   updCloudStatus('loading');
-  var url=S.cfgGS+'?acao=carregar&t='+Date.now();
-  fetch(url)
+  function processar(data){
+    if(!data){updCloudStatus('err');if(cb)cb(false);return;}
+    var cfg=data;
+    if(!data.FAZ&&data.CONFIG&&data.CONFIG.length>0){
+      try{cfg=JSON.parse(data.CONFIG[0][1]);}catch(ex){}
+    }
+    if(cfg.FAZ&&Object.keys(cfg.FAZ).length)S.FAZ=cfg.FAZ;
+    if(cfg.US&&cfg.US.length){var lu=S.US||[];cfg.US.forEach(function(u){if(!lu.some(function(l){return l.n===u.n;}))lu.push(u);});S.US=lu;}
+    if(cfg.EST)S.EST=cfg.EST;
+    if(cfg.SERVS&&cfg.SERVS.length)S.SERVS=cfg.SERVS;
+    if(cfg.PR)S.PR=cfg.PR;
+    if(cfg.LOTES)S.LOTES=cfg.LOTES;
+    if(cfg.DIARISTAS)S.DIARISTAS=cfg.DIARISTAS;
+    if(cfg.rD&&cfg.rD.length)S.rD=cfg.rD;
+    if(cfg.rT&&cfg.rT.length)S.rT=cfg.rT;
+    if(cfg.rC&&cfg.rC.length)S.rC=cfg.rC;
+    if(cfg.rE&&cfg.rE.length)S.rE=cfg.rE;
+    if(cfg.rDesp&&cfg.rDesp.length)S.rDesp=cfg.rDesp;
+    if(cfg.mEst)S.mEst=cfg.mEst;
+    if(cfg.NOTAS)S.NOTAS=cfg.NOTAS;
+    salvarLocal();updCloudStatus('ok');if(cb)cb(true);
+  }
+  function usarJSONP(){
+    var cbName='gpl_cb_'+Date.now();
+    var url=S.cfgGS+'?acao=carregar&callback='+cbName+'&t='+Date.now();
+    var t=setTimeout(function(){
+      delete window[cbName];var el=document.getElementById(cbName);
+      if(el&&el.parentNode)el.parentNode.removeChild(el);
+      updCloudStatus('err');if(cb)cb(false);
+    },10000);
+    window[cbName]=function(data){
+      clearTimeout(t);delete window[cbName];
+      var el=document.getElementById(cbName);
+      if(el&&el.parentNode)el.parentNode.removeChild(el);
+      processar(data);
+    };
+    var s=document.createElement('script');
+    s.id=cbName;s.src=url;
+    s.onerror=function(){
+      clearTimeout(t);delete window[cbName];
+      if(s.parentNode)s.parentNode.removeChild(s);
+      updCloudStatus('err');if(cb)cb(false);
+    };
+    document.body.appendChild(s);
+  }
+  fetch(S.cfgGS+'?acao=carregar&t='+Date.now())
     .then(function(r){return r.json();})
-    .then(function(data){
-      if(!data){updCloudStatus('err');if(cb)cb(false);return;}
-      if(data.FAZ&&Object.keys(data.FAZ).length)S.FAZ=data.FAZ;
-      if(data.US&&data.US.length){var lu=S.US||[];data.US.forEach(function(u){if(!lu.some(function(l){return l.n===u.n;}))lu.push(u);});S.US=lu;}
-      if(data.EST)S.EST=data.EST;
-      if(data.SERVS&&data.SERVS.length)S.SERVS=data.SERVS;
-      if(data.PR)S.PR=data.PR;
-      if(data.LOTES)S.LOTES=data.LOTES;
-      if(data.DIARISTAS)S.DIARISTAS=data.DIARISTAS;
-      if(data.rD&&data.rD.length)S.rD=data.rD;
-      if(data.rT&&data.rT.length)S.rT=data.rT;
-      if(data.rC&&data.rC.length)S.rC=data.rC;
-      if(data.rE&&data.rE.length)S.rE=data.rE;
-      if(data.rDesp&&data.rDesp.length)S.rDesp=data.rDesp;
-      if(data.mEst)S.mEst=data.mEst;
-      if(data.NOTAS)S.NOTAS=data.NOTAS;
-      salvarLocal();updCloudStatus('ok');if(cb)cb(true);
-    })
-    .catch(function(){updCloudStatus('err');if(cb)cb(false);});
-}}
-    // Mesclar dados das abas individuais
-    ['rC','rD','rT','rE'].forEach(function(k){if(data[k]&&data[k].length){if(!S[k])S[k]=[];data[k].forEach(function(r){var existe=S[k].some(function(x){return x.dt===r.dt&&(x.resp||x.n)===(r.resp||r.n)&&(x.total||x.v)===(r.total||r.v);});if(!existe)S[k].push(r);});}});
-    salvarLocal();
-    updCloudStatus('ok');
-    if(cb)cb(true);
-  };
-  
-  var s=document.createElement('script');
-  s.id=cbName;
-  s.src=url;
-  s.onerror=function(){
-    clearTimeout(timeout);
-    delete window[cbName];
-    if(s.parentNode)s.parentNode.removeChild(s);
-    updCloudStatus('err');
-    if(cb)cb(false);
-  };
-  document.body.appendChild(s);
+    .then(function(data){processar(data);})
+    .catch(function(){usarJSONP();});
 }
-
 function forcarCarregarNuvem(){if(!S.cfgGS){alert('Configure a URL do Apps Script primeiro.');return;}carregarNuvem(ok=>{if(ok){popAll();rUlt();showOk('ok-cloud');alert('✅ Dados carregados da nuvem!');}else alert('⚠️ Não foi possível carregar. Verifique a URL e a internet.');});}
 function forcarSalvarNuvem(){if(!S.cfgGS){alert('Configure a URL do Apps Script primeiro.');return;}salvarNuvem(()=>showOk('ok-cloud'));}
 function limparTudoLocal(){if(!confirm('⚠️ Isso vai apagar TODOS os dados locais e recarregar da planilha.\n\nContinuar?'))return;for(let i=localStorage.length-1;i>=0;i--){const k=localStorage.key(i);if(k&&k.indexOf('gpl_')===0)localStorage.removeItem(k);}S=JSON.parse(JSON.stringify(DEFAULT));if(S.cfgGS)carregarNuvem(ok=>{alert(ok?'✅ Dados recarregados!':'⚠️ Não foi possível carregar.');location.reload();});else{alert('✅ Dados locais limpos.');location.reload();}}
@@ -862,28 +869,8 @@ function enviarRelatorioWpp(){const fazendas=Object.keys(S.FAZ);let msg='🌿 *G
 function showOk(id){const m=document.getElementById(id);if(!m)return;m.style.display='block';setTimeout(()=>m.style.display='none',3000);}
 
 // ═══ INIT ═══
-function iniciarSistema(){
-  try{carregar();}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}
-  var GAS='https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec';
-  if(!S.cfgGS||S.cfgGS.length<10)S.cfgGS=GAS;
-  var ld=document.createElement('div');
-  ld.id='gpl-ld';
-  ld.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(160deg,#f0f9e8,#e8f5e0);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;font-family:system-ui,sans-serif';
-  ld.innerHTML='<div style="font-size:48px;margin-bottom:16px">\u{1F33F}</div>'
-    +'<div style="font-size:17px;font-weight:700;color:#1B5E20;margin-bottom:6px">Gest\u00e3o Pecu\u00e1ria Lucrativa</div>'
-    +'<div style="font-size:13px;color:#888;margin-bottom:4px">Rog\u00e9rio Avelino</div>'
-    +'<div id="gpl-ld-msg" style="font-size:13px;color:#2E7D32;margin:16px 0;font-weight:600">\u2601\uFE0F Sincronizando dados...</div>'
-    +'<div style="width:36px;height:36px;border:4px solid #e0e0e0;border-top-color:#2E7D32;border-radius:50%;animation:gplspin 1s linear infinite"></div>'
-    +'<style>@keyframes gplspin{to{transform:rotate(360deg)}}</style>';
-  document.body.appendChild(ld);
-  function esconder(){var el=document.getElementById('gpl-ld');if(el){el.style.opacity='0';el.style.transition='opacity .4s';setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},400);}}
-  function entrar(){esconder();try{initLogin();}catch(ex){mostrarFazendas();}}
-  if(navigator.onLine&&S.cfgGS){
-    var t=setTimeout(function(){var msg=document.getElementById('gpl-ld-msg');if(msg)msg.textContent='\u26A1 Modo offline (sem nuvem)';setTimeout(entrar,800);},9000);
-    carregarNuvem(function(ok){clearTimeout(t);var msg=document.getElementById('gpl-ld-msg');if(ok){if(msg)msg.textContent='\u2705 Dados atualizados!';salvarLocal();}else{if(msg)msg.textContent='\u26A1 Usando dados locais';}setTimeout(entrar,600);});
-  }else{var msg=document.getElementById('gpl-ld-msg');if(msg)msg.textContent='\u26A1 Modo offline';setTimeout(entrar,800);}
-}
-iniciarSistema();
+try{carregar();}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}
+if(S.cfgGS&&navigator.onLine){carregarNuvem(ok=>{try{initLogin();}catch(e){mostrarFazendas();}});}else{try{initLogin();}catch(e){mostrarFazendas();}}
 
 // ═══ PAINEL A PAGAR - destaque ═══
 function rPagarDestaque(){
@@ -1859,21 +1846,22 @@ document.addEventListener('DOMContentLoaded', function(){
   if(dm) dm.onclick = function(e){ if(e.target===dm) fecharDetModal(); };
 });
 
-  function iniciarSistema(){
+
+function iniciarSistema(){
   try{carregar();}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}
   var GAS='https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec';
   if(!S.cfgGS||S.cfgGS.length<10)S.cfgGS=GAS;
   var ld=document.createElement('div');
   ld.id='gpl-ld';
   ld.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(160deg,#f0f9e8,#e8f5e0);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;font-family:system-ui,sans-serif';
-  ld.innerHTML='<div style="font-size:48px;margin-bottom:16px">🌿</div><div style="font-size:17px;font-weight:700;color:#1B5E20;margin-bottom:6px">Gestão Pecuária Lucrativa</div><div style="font-size:13px;color:#888;margin-bottom:4px">Rogério Avelino</div><div id="gpl-ld-msg" style="font-size:13px;color:#2E7D32;margin:16px 0;font-weight:600">☁️ Sincronizando dados...</div><div style="width:36px;height:36px;border:4px solid #e0e0e0;border-top-color:#2E7D32;border-radius:50%;animation:gplspin 1s linear infinite"></div><style>@keyframes gplspin{to{transform:rotate(360deg)}}</style>';
+  ld.innerHTML='<div style="font-size:48px;margin-bottom:16px">&#x1F33F;</div><div style="font-size:17px;font-weight:700;color:#1B5E20;margin-bottom:6px">Gest&#227;o Pecu&#225;ria Lucrativa</div><div style="font-size:13px;color:#888;margin-bottom:4px">Rog&#233;rio Avelino</div><div id="gpl-ld-msg" style="font-size:13px;color:#2E7D32;margin:16px 0;font-weight:600">&#9729;&#65039; Sincronizando dados...</div><div style="width:36px;height:36px;border:4px solid #e0e0e0;border-top-color:#2E7D32;border-radius:50%;animation:gplspin 1s linear infinite"></div><style>@keyframes gplspin{to{transform:rotate(360deg)}}</style>';
   document.body.appendChild(ld);
   function esconder(){var el=document.getElementById('gpl-ld');if(el){el.style.opacity='0';el.style.transition='opacity .4s';setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},400);}}
   function entrar(){esconder();try{initLogin();}catch(ex){mostrarFazendas();}}
   if(navigator.onLine&&S.cfgGS){
-    var t=setTimeout(function(){var msg=document.getElementById('gpl-ld-msg');if(msg)msg.textContent='⚡ Sem nuvem - dados locais';setTimeout(entrar,800);},9000);
-    carregarNuvem(function(ok){clearTimeout(t);var msg=document.getElementById('gpl-ld-msg');if(ok){if(msg)msg.textContent='✅ Dados atualizados!';salvarLocal();}else{if(msg)msg.textContent='⚡ Usando dados locais';}setTimeout(entrar,600);});
-  }else{var msg=document.getElementById('gpl-ld-msg');if(msg)msg.textContent='⚡ Modo offline';setTimeout(entrar,800);}
+    var t=setTimeout(function(){var msg=document.getElementById('gpl-ld-msg');if(msg)msg.textContent='Modo offline';setTimeout(entrar,800);},9000);
+    carregarNuvem(function(ok){clearTimeout(t);var msg=document.getElementById('gpl-ld-msg');if(ok){if(msg)msg.textContent='Dados atualizados!';salvarLocal();}else{if(msg)msg.textContent='Usando dados locais';}setTimeout(entrar,600);});
+  }else{var msg=document.getElementById('gpl-ld-msg');if(msg)msg.textContent='Modo offline';setTimeout(entrar,800);}
 }
 iniciarSistema();
 </script>
