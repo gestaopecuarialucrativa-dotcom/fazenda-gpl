@@ -289,7 +289,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 18/05/2026 v2.5 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 18/05/2026 v2.6 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -749,6 +749,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 </div>
 </div>
 <div class="card"><div class="stit">👥 Usuários e PIN</div><div id="ucfg-l"></div><button class="savb" style="width:100%;margin-top:9px;background:#2d7a1f;color:#fff;border-color:#2d7a1f;font-weight:700" onclick="addUser()">＋ Novo usuário</button></div>
+<div class="card"><div class="stit">💰 Pix dos Diaristas</div><div id="pix-diaristas-l"><div style="font-size:12px;color:#aaa;padding:6px">Carregando...</div></div></div>
 <div class="card"><div class="stit">📋 Tipos de serviço</div><div id="serv-l"></div><div class="addr"><input type="text" id="ns" placeholder="Nome do serviço" style="flex:1"><button class="savb" onclick="addServ()">Add</button></div></div>
 <div class="card">
 <div class="stit">🧾 Preços cantina (R$)</div>
@@ -810,7 +811,7 @@ function doLogout(){CU=null;loginFaz=null;loginUser=null;pinBuf='';document.getE
 
 // ═══ NAVEGAÇÃO ═══
 function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',medicamento:'Medicamentos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);
-if(id==='mapa')setTimeout(function(){try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}},100);if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();},50);window.scrollTo(0,0);}
+if(id==='mapa')setTimeout(function(){try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}},100);if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();},50);window.scrollTo(0,0);}
 function goBack(){if(prevPage)sp(prevPage,false);else sp('home',false);}
 function isV(u){return u.p.diaria||u.p.insumo||u.p.medicamento||u.p.trato||u.p.escore;}
 function isA(u){return u.p.cantina||u.p.estoque||u.p.painel||u.p.config;}
@@ -1194,10 +1195,11 @@ function abrirMapaModal(a, contId){
       +'<div style="color:#555">'+lote.qtd+' animais · '+(lote.peso||0)+' kg/cab · '+ua+' UA</div></div>';
   }
 
-  corpo += '<div style="margin-top:10px">'
-    +'<div style="font-size:12px;color:#666;margin-bottom:6px">Alocar lote neste piquete:</div>'
-    +'<select id="mapa-sel-lote" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:8px">'+opts+'</select>'
-    +'<button onclick="mapaAlocar()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:8px">✅ Confirmar alocação</button>'
+  corpo += '<div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">'
+    +'<div style="font-size:12px;color:#666;margin-bottom:2px">Alocar lote neste piquete:</div>'
+    +'<select id="mapa-sel-lote" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px">'+opts+'</select>'
+    +'<button onclick="mapaAlocar()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">✅ Confirmar alocação</button>'
+    +(aloc?'<button onclick="abrirTratoMapa(\''+a.id+'\')" style="width:100%;padding:11px;background:#E65100;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">🌾 Lançar Trato / Suplementação</button>':'')
     +(aloc?'<button onclick="mapaRetirar()" style="width:100%;padding:10px;background:none;color:#C62828;border:1px solid #C62828;border-radius:10px;font-size:13px;cursor:pointer">🚫 Retirar gado daqui</button>':'')
     +'</div>';
 
@@ -1509,8 +1511,9 @@ function sDespSt(el,v){['db-pagar','db-pago'].forEach(id=>{const b=document.getE
 function filtDesp(el,v){['df-todas','df-pagar','df-pago'].forEach(id=>{const b=document.getElementById(id);if(b)b.classList.remove('on');});el.classList.add('on');despFiltSel=v;rListDesp();}
 function envDesp(){const desc=((document.getElementById('desp-desc')||{}).value||'').trim();const val=parseFloat((document.getElementById('desp-val')||{}).value)||0;const venc=(document.getElementById('desp-venc')||{}).value||'';const faz=(document.getElementById('desp-faz')||{}).value||'';if(!desc||!val||!venc){alert('Preencha descrição, valor e vencimento.');return;}if(!S.rDesp)S.rDesp=[];S.rDesp.push({tipo:'despesa',faz,desc,val,venc,st:despStSel,dt:TD,id:Date.now()});salvar();rListDesp();rPan();['desp-desc','desp-val','desp-venc'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});showOk('ok-desp');}
 function pagarDesp(id){if(!S.rDesp)return;const r=S.rDesp.find(x=>x.id===id);if(r){r.st='pago';r.pago_por=CU?CU.n.split(' ')[0]:'';r.pago_dt_iso=TD;salvar();rListDesp();rPan();}}
+function estornarDesp(id){if(!confirm('↩️ Desfazer baixa? A despesa voltará para "A pagar".'))return;const r=(S.rDesp||[]).find(x=>x.id===id);if(r){r.st='pagar';delete r.pago_por;delete r.pago_dt_iso;salvar();rListDesp();rPan();}}
 function apagarDesp(id){if(!confirm('Apagar esta despesa?'))return;S.rDesp=S.rDesp.filter(r=>r.id!==id);salvar();rListDesp();rPan();}
-function rListDesp(){if(!S.rDesp)S.rDesp=[];const faz=(document.getElementById('pf')||{}).value||'';const ms=document.getElementById('df-mes');if(ms){const meses={};S.rDesp.forEach(r=>{const m=(r.venc||r.dt||'').substring(0,7);if(m)meses[m]=true;});const ma=ms.value;ms.innerHTML='<option value="">Todos os meses</option>'+Object.keys(meses).sort().reverse().map(m=>{const p=m.split('-');return`<option value="${m}" ${m===ma?'selected':''}>${p[1]}/${p[0]}</option>`;}).join('');}const mf=ms?ms.value:'';let lista=S.rDesp.filter(r=>!faz||r.faz===faz);if(despFiltSel!=='todas')lista=lista.filter(r=>r.st===despFiltSel);if(mf)lista=lista.filter(r=>(r.venc||r.dt||'').substring(0,7)===mf);lista=lista.slice().sort((a,b)=>(a.venc||'')>(b.venc||'')?1:-1);const el=document.getElementById('l-desp');if(!el)return;if(!lista.length){el.innerHTML='<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhuma despesa.</div>';return;}const pe=CU&&(CU.r==='Consultor'||CU.r==='Dono');el.innerHTML=lista.map(r=>{const pg=r.st==='pago';const vf=r.venc?r.venc.split('-').reverse().join('/'):'—';const bd=pe?`<button onclick="apagarDesp(${r.id})" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer;margin-left:6px">🗑️</button>`:'';return`<div class="desp-item ${r.st}"><div class="desp-hd">${bd}<span class="desp-nm">${r.desc}</span><span class="desp-vl">${pg?'<s style="color:#aaa">':''}R$ ${r.val.toFixed(2).replace('.',',')}${pg?'</s>':''}</span></div><div class="desp-sb">${r.faz||''} · Venc: ${vf} · ${pg?'✅ Pago':'⏳ A pagar'}${r.pago_por?' · por '+r.pago_por:''}</div>${!pg?`<button class="desp-ok" onclick="pagarDesp(${r.id})">✅ Marcar como pago</button>`:''}</div>`;}).join('');}
+function rListDesp(){if(!S.rDesp)S.rDesp=[];const faz=(document.getElementById('pf')||{}).value||'';const ms=document.getElementById('df-mes');if(ms){const meses={};S.rDesp.forEach(r=>{const m=(r.venc||r.dt||'').substring(0,7);if(m)meses[m]=true;});const ma=ms.value;ms.innerHTML='<option value="">Todos os meses</option>'+Object.keys(meses).sort().reverse().map(m=>{const p=m.split('-');return`<option value="${m}" ${m===ma?'selected':''}>${p[1]}/${p[0]}</option>`;}).join('');}const mf=ms?ms.value:'';let lista=S.rDesp.filter(r=>!faz||r.faz===faz);if(despFiltSel!=='todas')lista=lista.filter(r=>r.st===despFiltSel);if(mf)lista=lista.filter(r=>(r.venc||r.dt||'').substring(0,7)===mf);lista=lista.slice().sort((a,b)=>(a.venc||'')>(b.venc||'')?1:-1);const el=document.getElementById('l-desp');if(!el)return;if(!lista.length){el.innerHTML='<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhuma despesa.</div>';return;}const pe=CU&&(CU.r==='Consultor'||CU.r==='Dono');el.innerHTML=lista.map(r=>{const pg=r.st==='pago';const vf=r.venc?r.venc.split('-').reverse().join('/'):'—';const bd=pe?`<button onclick="apagarDesp(${r.id})" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer;margin-left:6px">🗑️</button>`:'';return`<div class="desp-item ${r.st}"><div class="desp-hd">${bd}<span class="desp-nm">${r.desc}</span><span class="desp-vl">${pg?'<s style="color:#aaa">':''}R$ ${r.val.toFixed(2).replace('.',',')}${pg?'</s>':''}</span></div><div class="desp-sb">${r.faz||''} · Venc: ${vf} · ${pg?'✅ Pago':'⏳ A pagar'}${r.pago_por?' · por '+r.pago_por:''}</div>${!pg?`<button class="desp-ok" onclick="pagarDesp(${r.id})">✅ Marcar como pago</button>`:pe?`<button onclick="estornarDesp(${r.id})" style="margin-top:4px;padding:4px 12px;font-size:11px;background:none;border:1px solid #FF6F00;color:#FF6F00;border-radius:6px;cursor:pointer">↩️ Estornar</button>`:''}</div>`;}).join('');}
 
 // ═══ GRÁFICO ═══
 function rChart(){}
@@ -1549,6 +1552,11 @@ function showOk(id){const m=document.getElementById(id);if(!m)return;m.style.dis
 
 // ═══ INIT ═══
 try{carregar();}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}
+// Forçar 6 lotes reais se ainda tiver versão antiga (1 lote)
+if(!S.LOTES||S.LOTES.length<=1){S.LOTES=JSON.parse(JSON.stringify(DEFAULT.LOTES));salvarLocal();}
+if(!S.PIX_D)S.PIX_D={};
+if(!S.AREAS)S.AREAS={};
+if(!S.MAPA_ALOC)S.MAPA_ALOC={};
 if(S.cfgGS&&navigator.onLine){carregarNuvem(ok=>{try{initLogin();}catch(e){mostrarFazendas();}try{popAll();}catch(e){}});}else{try{initLogin();}catch(e){mostrarFazendas();}}
 
 // ═══ PAINEL A PAGAR - destaque ═══
@@ -2568,6 +2576,104 @@ function gerarPDFPesquisa(){
   var w=window.open('','_blank');
   w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Relatório GPL</title><style>body{font-family:Arial,sans-serif;padding:20px;color:#222}h1{color:#1B5E20;font-size:18px}h2{color:#1B5E20;font-size:14px;margin-top:18px}table{width:100%;border-collapse:collapse;font-size:12px}th{background:#1B5E20;color:#fff;padding:7px;text-align:left}td{padding:6px;border-bottom:1px solid #eee}.tot{font-size:14px;font-weight:700;color:#1B5E20;margin-top:10px}.footer{margin-top:30px;font-size:10px;color:#aaa;text-align:center}</style></head><body><h1>📊 Relatório — Gestão Pecuária Lucrativa</h1><p style="font-size:12px;color:#666">Período: '+deFmt+' a '+ateFmt+'</p>'+(rowsD?'<h2>💰 Diárias</h2><table><tr><th>Data</th><th>Diarista</th><th>Serviço</th><th>Fazenda</th><th>Valor</th><th>Status</th></tr>'+rowsD+'</table><p class="tot">Total Diárias: R$ '+d.totalD.toFixed(2).replace('.',',')+'</p>':'')+(rowsC?'<h2>🍽 Cantina</h2><table><tr><th>Data</th><th>Responsável</th><th>Tipo</th><th>Fazenda</th><th>Valor</th><th>Status</th></tr>'+rowsC+'</table><p class="tot">Total Cantina: R$ '+d.totalC.toFixed(2).replace('.',',')+'</p>':'')+'<p class="tot" style="font-size:16px;border-top:2px solid #1B5E20;padding-top:10px">TOTAL GERAL: R$ '+d.totalG.toFixed(2).replace('.',',')+'</p><div class="footer">GPL — Gestão Pecuária Lucrativa · Rogério Avelino · Gerado em '+new Date().toLocaleDateString('pt-BR')+'</div></body></html>');
   w.document.close(); setTimeout(function(){w.print();},500);
+}
+
+// ═══ TRATO NO MAPA ═══
+function abrirTratoMapa(areaId){
+  fecharMapaModal();
+  var area = MAPA_AREAS.find(function(a){return a.id===areaId;});
+  if(!area) return;
+  var aloc = S.MAPA_ALOC&&S.MAPA_ALOC[areaId];
+  var lote = aloc ? (S.LOTES||[]).find(function(l){return l.nome===aloc;}) : null;
+  if(!lote){alert('Nenhum lote alocado nesta área.');return;}
+  var faz = lote.faz||'';
+  var prods = (S.FAZ&&S.FAZ[faz]&&S.FAZ[faz].prods)||['Mineral','Proteinado','Ração'];
+
+  // Abrir modal de trato
+  var modal = document.getElementById('mapa-modal');
+  document.getElementById('mapa-modal-titulo').textContent = '🌾 Trato — '+area.label;
+  document.getElementById('mapa-modal-corpo').innerHTML =
+    '<div style="background:#E8F5E9;border-radius:8px;padding:8px;margin-bottom:10px;font-size:13px">'
+    +'<b>🐄 '+lote.nome+'</b> · '+lote.qtd+' animais · '+area.label+'</div>'
+    +'<div style="margin-bottom:8px"><div style="font-size:12px;color:#666;margin-bottom:4px">Produto</div>'
+    +'<select id="trato-prod" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px">'
+    +prods.map(function(p){return'<option>'+p+'</option>';}).join('')+'</select></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
+    +'<div><div style="font-size:12px;color:#666;margin-bottom:4px">Quantidade</div>'
+    +'<input type="number" id="trato-qtd" placeholder="0.0" step="0.1" min="0" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div>'
+    +'<div><div style="font-size:12px;color:#666;margin-bottom:4px">Unidade</div>'
+    +'<select id="trato-unid" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px">'
+    +'<option value="kg">kg</option><option value="saco">saco(s)</option><option value="L">litros</option></select></div></div>'
+    +'<div style="margin-bottom:10px"><div style="font-size:12px;color:#666;margin-bottom:6px">🪣 Leitura do cocho</div>'
+    +'<div style="display:flex;gap:6px">'
+    +'<button onclick="selCocho(this,\'vazio\')" style="flex:1;padding:10px;background:#FFEBEE;color:#C62828;border:2px solid #FFCDD2;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer" id="cocho-vazio">🔴 Vazio</button>'
+    +'<button onclick="selCocho(this,\'meio\')" style="flex:1;padding:10px;background:#FFF8E1;color:#F57F17;border:2px solid #FFE082;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer" id="cocho-meio">🟡 Metade</button>'
+    +'<button onclick="selCocho(this,\'cheio\')" style="flex:1;padding:10px;background:#E8F5E9;color:#1B5E20;border:2px solid #A5D6A7;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer" id="cocho-cheio">🟢 Cheio</button>'
+    +'</div></div>'
+    +'<input type="hidden" id="trato-cocho" value="">'
+    +'<button onclick="salvarTratoMapa(\''+areaId+'\',\''+lote.nome+'\',\''+faz+'\')" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">💾 Salvar trato</button>';
+  modal.style.display='flex';
+}
+
+var cochoSel='';
+function selCocho(btn, val){
+  cochoSel=val;
+  document.getElementById('trato-cocho').value=val;
+  ['vazio','meio','cheio'].forEach(function(v){
+    var b=document.getElementById('cocho-'+v);
+    if(b) b.style.opacity= v===val?'1':'0.4';
+  });
+}
+
+function salvarTratoMapa(areaId, loteNome, faz){
+  var prod=(document.getElementById('trato-prod')||{}).value||'';
+  var qtd=parseFloat((document.getElementById('trato-qtd')||{}).value)||0;
+  var unid=(document.getElementById('trato-unid')||{}).value||'kg';
+  var cocho=(document.getElementById('trato-cocho')||{}).value||'';
+  if(!qtd||!prod){alert('Preencha produto e quantidade.');return;}
+  if(!S.rT)S.rT=[];
+  S.rT.push({tipo:'trato',faz:faz,co:loteNome,pasto:areaId,pr:prod,q:qtd,unid:unid,cocho:cocho,dt:TD,resp:CU?CU.n:''});
+  salvar();fecharMapaModal();
+  alert('✅ Trato salvo! '+prod+' · '+qtd+' '+unid+(cocho?' · Cocho: '+cocho:''));
+}
+
+// ═══ PIX DIARISTAS ═══
+function rPixDiaristas(){
+  var c=document.getElementById('pix-diaristas-l');
+  if(!c)return;
+  if(!S.PIX_D)S.PIX_D={};
+  var todos=[];
+  Object.values(S.DIARISTAS||{}).forEach(function(arr){arr.forEach(function(n){if(!todos.includes(n))todos.push(n);});});
+  if(!todos.length){c.innerHTML='<div style="font-size:12px;color:#aaa;padding:6px">Nenhum diarista cadastrado.</div>';return;}
+  c.innerHTML=todos.map(function(n){
+    var k=n.replace(/[^a-zA-Z0-9]/g,'_');
+    var d=S.PIX_D[n]||{};
+    var chave=typeof d==='string'?d:d.chave||'';
+    var titular=typeof d==='string'?'':d.titular||'';
+    return'<div style="background:#f9f9f9;border:1px solid #eee;border-radius:10px;padding:10px;margin-bottom:8px">'
+      +'<div style="font-size:13px;font-weight:700;margin-bottom:8px">👤 '+n+'</div>'
+      +'<div style="display:flex;flex-direction:column;gap:6px">'
+      +'<div style="display:flex;gap:6px;align-items:center"><span style="font-size:12px;color:#555;min-width:80px">💰 Chave Pix</span><input type="text" id="pix-d-'+k+'" placeholder="CPF, email, tel..." value="'+chave+'" style="flex:1;padding:5px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div>'
+      +'<div style="display:flex;gap:6px;align-items:center"><span style="font-size:12px;color:#555;min-width:80px">🪪 Titular</span><input type="text" id="tit-d-'+k+'" placeholder="Nome do titular" value="'+titular+'" style="flex:1;padding:5px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div>'
+      +'<button class="savb" style="width:100%" onclick="salvarPixDiarista(\''+n.replace(/'/g,"\\'")+"','"+k+'\')">💾 Salvar</button>'
+      +'</div></div>';
+  }).join('');
+}
+
+function salvarPixDiarista(nome,k){
+  if(!S.PIX_D)S.PIX_D={};
+  var chave=(document.getElementById('pix-d-'+k)||{}).value||'';
+  var titular=(document.getElementById('tit-d-'+k)||{}).value||'';
+  S.PIX_D[nome]={chave:chave.trim(),titular:titular.trim()};
+  salvar();alert('✅ Pix de '+nome+' salvo!');
+}
+
+// ═══ ESTORNAR DIÁRIA PAGA ═══
+function estornarDiaria(gi){
+  if(!confirm('↩️ Desfazer baixa desta diária?'))return;
+  var r=S.rD[gi];if(!r)return;
+  r.pago=false;delete r.pago_por;delete r.pago_dt;
+  salvar();rPan();rUlt();
 }
 
 </script>
