@@ -194,7 +194,8 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <div style="display:flex;gap:8px;margin-top:16px" id="det-btns">
     <button id="det-val" style="flex:1;padding:11px;background:#2E7D32;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">✅ Validar</button>
     <button id="det-edit" style="flex:1;padding:11px;background:#1565C0;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">✏️ Editar</button>
-    <button id="det-rep" style="padding:11px 14px;background:#C62828;color:#fff;border:none;border-radius:10px;font-size:14px;cursor:pointer">❌</button>
+    <button id="det-rep" style="padding:11px 14px;background:#E65100;color:#fff;border:none;border-radius:10px;font-size:14px;cursor:pointer">❌</button>
+    <button id="det-del" style="padding:11px 14px;background:#B71C1C;color:#fff;border:none;border-radius:10px;font-size:14px;cursor:pointer">🗑️</button>
   </div>
 </div>
 </div>
@@ -431,6 +432,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="pbtn on" onclick="sCtHist(this,'hoje')">Hoje</div>
 <div class="pbtn" onclick="sCtHist(this,'semana')">7 dias</div>
 <div class="pbtn" onclick="sCtHist(this,'mes')">Mês</div>
+<div class="pbtn" onclick="sCtHist(this,'tudo')">Tudo</div>
 </div>
 <div id="ct-hist-lista"><div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum lançamento.</div></div>
 <div style="margin-top:8px;padding-top:8px;border-top:1px solid #f0f0f0;display:flex;justify-content:space-between">
@@ -686,7 +688,7 @@ function calcCt(){const p=S.PR;let t=0;if(cobT==='ref')t=QT.cafe*p.cafe+QT.almoc
 function getFazGasUrl(faz){if(faz&&S.FAZ[faz]&&S.FAZ[faz].gasUrl)return S.FAZ[faz].gasUrl;return S.cfgGS||'';}
 function enviarDado(d){if(!d||!d.tipo)return;const r={...d,timestamp:new Date().toISOString()};if(navigator.onLine&&S.cfgGS){const url=getFazGasUrl(d.faz||'');fetch(url+'?'+new URLSearchParams({data:JSON.stringify(r)}),{method:'GET',mode:'no-cors'}).then(()=>atualizarSync()).catch(()=>{S.queue.push(r);salvar();atualizarSync();});}else{S.queue.push(r);salvar();atualizarSync();}}
 function baixar(lista,dt,loc){lista.forEach(x=>{if(x.p&&S.EST[x.p]&&x.q>0){S.EST[x.p].q=Math.max(0,parseFloat((S.EST[x.p].q-x.q).toFixed(2)));S.mEst.push({p:x.p,q:x.q,u:S.EST[x.p].u,t:'saida',dt,loc});}});salvar();}
-function envD(){const n=(document.getElementById('d-nome')||{}).value||'';const v=parseFloat((document.getElementById('d-val')||{}).value)||0;const faz=(document.getElementById('d-faz')||{}).value||(CU&&CU.fs&&CU.fs.length===1?CU.fs[0]:getFL()[0]||'');const dt=(document.getElementById('d-data')||{}).value||TD;if(!n||!srvSel||!avSel){alert('Preencha nome, serviço e avaliação.');return;}if(n&&faz){if(!S.DIARISTAS)S.DIARISTAS={};if(!S.DIARISTAS[faz])S.DIARISTAS[faz]=[];if(!S.DIARISTAS[faz].includes(n))S.DIARISTAS[faz].push(n);}const r={tipo:'diaria',faz,n,dt,srv:srvSel==='Outro'?(document.getElementById('d-out')||{}).value:srvSel,v,av:avSel,obs:(document.getElementById('d-obs')||{}).value};S.rD.push(r);// despesa criada pelo Fechar Conta
+function envD(){const n=(document.getElementById('d-nome')||{}).value||'';const v=parseFloat((document.getElementById('d-val')||{}).value)||0;const faz=(document.getElementById('d-faz')||{}).value||(CU&&CU.fs&&CU.fs.length===1?CU.fs[0]:getFL()[0]||'');const dt=(document.getElementById('d-data')||{}).value||TD;if(!n||!srvSel||!avSel){alert('Preencha nome, serviço e avaliação.');return;}if(n&&faz){if(!S.DIARISTAS)S.DIARISTAS={};if(!S.DIARISTAS[faz])S.DIARISTAS[faz]=[];if(!S.DIARISTAS[faz].includes(n))S.DIARISTAS[faz].push(n);}const r={tipo:'diaria',faz,n,dt,srv:srvSel==='Outro'?(document.getElementById('d-out')||{}).value:srvSel,v,av:avSel,obs:(document.getElementById('d-obs')||{}).value,lancadoPor:CU?CU.n:''};S.rD.push(r);// despesa criada pelo Fechar Conta
 enviarDado(r);showOk('ok-d');document.getElementById('d-val').value='';document.getElementById('d-obs').value='';document.querySelectorAll('#d-servs .bopt,.avbtn').forEach(b=>b.classList.remove('sel'));srvSel='';avSel='';setTimeout(()=>{sp('home',false);rUlt();},1600);}
 function envI(){const ins=[...document.querySelectorAll('#ins-l .ir')].map(r=>({p:r.querySelector('.ip').value,q:parseFloat(r.querySelector('.iq').value)||0,u:r.querySelector('.iu').value})).filter(x=>x.p&&x.q>0);if(!ins.length){alert('Adicione pelo menos um produto.');return;}const dt=(document.getElementById('i-data')||{}).value||TD;const dest=(document.getElementById('i-dest')||{}).value;baixar(ins,dt,dest);const r={tipo:'insumo',faz:(document.getElementById('i-faz')||{}).value,n:CU.n,dt,ins,dest};S.rD.push(r);enviarDado(r);showOk('ok-i');document.getElementById('i-dest').value='';document.getElementById('ins-l').innerHTML=`<div class="ir"><div style="flex:2"><div class="lbl">Produto</div><select class="ip" onchange="updInsInfo(this)"></select></div><div style="flex:1"><div class="lbl">Qtd</div><input type="number" class="iq" placeholder="0" min="0" step="0.5"></div><div style="flex:1"><div class="lbl">Unid.</div><select class="iu"><option>saco</option><option>kg</option><option>litro</option></select></div></div><div class="ins-info" style="display:none"></div>`;updInsProd();setTimeout(()=>{sp('home',false);rUlt();},1600);}
 function envM(){const nome=(document.getElementById('m-nome')||{}).value||'';const lote=(document.getElementById('m-lote')||{}).value||'';let nanim=parseInt((document.getElementById('m-nanim')||{}).value)||0;if(!nanim&&lote){const lt=(S.LOTES||[]).find(l=>l.nome===lote);if(lt)nanim=lt.qtd;}if(!nome){alert('Informe o nome do remédio.');return;}const r={tipo:'medicamento',faz:(document.getElementById('m-faz')||{}).value,n:CU.n,dt:(document.getElementById('m-data')||{}).value||TD,nome,lote,nanim,dose:((document.getElementById('m-dose')||{}).value||'')+' '+((document.getElementById('m-dose-unid')||{}).value||''),aplicou:(document.getElementById('m-aplicou')||{}).value||CU.n,obs:(document.getElementById('m-obs')||{}).value};S.rD.push(r);enviarDado(r);showOk('ok-m');['m-nome','m-nanim','m-dose','m-aplicou','m-obs'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});setTimeout(()=>{sp('home',false);rUlt();},1600);}
@@ -697,7 +699,49 @@ function entEst(){const p=(document.getElementById('ep')||{}).value;const q=pars
 
 // ═══ RENDER ═══
 function rEst(){const el=document.getElementById('est-l');if(!el)return;el.innerHTML=Object.entries(S.EST).map(([nome,d])=>{const pc=Math.min(100,Math.round(d.q/Math.max(d.q,d.min*3)*100));const cl=d.q<=d.min?'l':d.q<=d.min*2?'m':'';const badge=d.q<=d.min?`<span class="lb">⚠️ Baixo!</span>`:d.q<=d.min*2?`<span class="wb">Atenção</span>`:'';return`<div class="er"><div style="flex:1"><div style="font-size:13px;font-weight:700">${nome} ${badge}</div><div style="font-size:11px;color:#888;margin-top:2px">${d.q} ${d.u} · mín ${d.min}<div class="ebw"><div class="ebar ${cl}" style="width:${pc}%;height:100%"></div></div></div></div><div style="text-align:right;padding-left:10px"><div style="font-size:18px;font-weight:700;color:${d.q<=d.min?'#CC2200':'#2d7a1f'}">${d.q}<div style="font-size:10px;font-weight:400;color:#888">${d.u}</div></div><button onclick="editarProdutoEst('${nome}')" style="margin-top:4px;padding:2px 8px;font-size:10px;background:#f0f0f0;border:none;border-radius:5px;cursor:pointer">✏️</button></div></div>`;}).join('');const ml=document.getElementById('mov-l');if(!ml)return;ml.innerHTML=S.mEst.length?[...S.mEst].reverse().slice(0,20).map(m=>`<div class="ri"><div class="rt"><span class="rn">${m.p}</span><span style="font-size:13px;font-weight:700;color:${m.t==='entrada'?'#2d7a1f':'#CC2200'}">${m.t==='entrada'?'+':'-'}${m.q} ${m.u}</span></div><div class="rd">${m.dt.split('-').reverse().join('/')} · ${m.t==='entrada'?'Entrada':'Saída → '+m.loc}</div></div>`).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:12px">Nenhuma.</div>';}
-function rUlt(){const fa=CU&&CU.fs&&CU.fs.length===1?CU.fs[0]:'';const isVaq=CU&&CU.r==='Vaqueiro';const corte=new Date();corte.setDate(corte.getDate()-15);const cs=corte.toISOString().split('T')[0];const todos=[...S.rD,...S.rC,...S.rT,...S.rE].filter(r=>{const dt=r.dt||r.data||'';if(r._apagado)return false;if(fa&&r.faz&&r.faz!==fa)return false;if(dt<cs)return false;if(isVaq&&r.tipo==='cantina'&&r.resp&&r.resp!==CU.n)return false;if(isVaq&&r.tipo==='diaria'&&r.n&&r.n!==CU.n)return false;return true;}).sort((a,b)=>(b.dt||'')>(a.dt||'')?1:-1).slice(0,20);const c=document.getElementById('vult');if(!c)return;c.innerHTML=todos.length?todos.map(r=>{if(r.tipo==='escore')return`<div class="ri"><div class="rt"><span class="rn">Escore <span style="background:${EC[r.es]};color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:3px;font-weight:700">E${r.es}</span></span></div><div class="rd">${(r.dt||'').split('-').reverse().join('/')} · ${r.co||r.faz}</div></div>`;if(r.tipo==='trato')return`<div class="ri"><div class="rt"><span class="rn">Trato <span class="bdg bt">${r.co}</span></span></div><div class="rd">${(r.dt||'').split('-').reverse().join('/')} · ${r.pr} ${r.q}${r.unid||''}</div></div>`;if(r.tipo==='insumo')return`<div class="ri"><div class="rn">Insumos <span class="bdg bp">Depósito</span></div><div class="rd">${(r.dt||'').split('-').reverse().join('/')} · ${(r.ins||[]).map(x=>x.q+' '+x.u+' '+x.p).join(', ')}</div></div>`;if(r.tipo==='cantina')return`<div class="ri"><div class="rt"><span class="rn">Cantina</span><span class="rv">R$ ${r.total.toFixed(2).replace('.',',')}</span></div><div class="rd">${(r.dt||'').split('-').reverse().join('/')} · ${r.faz} · ${r.resp}</div></div>`;const av=r.av==='otimo'?'<span class="bdg bg">Ótimo</span>':r.av==='bom'?'<span class="bdg ba">Bom</span>':'<span class="bdg br">Ruim</span>';return`<div class="ri"><div class="rt"><span class="rn">${r.srv||''}${av}</span><span class="rv">R$ ${(r.v||0).toFixed(2).replace('.',',')}</span></div><div class="rd">${(r.dt||'').split('-').reverse().join('/')} · ${r.faz}</div></div>`;}).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum lançamento ainda.</div>';}
+function rUlt(){
+  var fa=CU&&CU.fs&&CU.fs.length===1?CU.fs[0]:'';
+  var isVaq=CU&&CU.r==='Vaqueiro';
+  var c=document.getElementById('vult');
+  if(!c)return;
+
+  if(isVaq){
+    // Vaqueiro: só diárias que ELE lançou e que estão "a pagar" (não pagas)
+    var diarias=(S.rD||[]).filter(function(r){
+      if(r._apagado||r.tipo!=='diaria')return false;
+      if(fa&&r.faz&&r.faz!==fa)return false;
+      var lancou=(r.lancadoPor&&r.lancadoPor===CU.n)||(r.n&&r.n===CU.n);
+      if(!lancou)return false;
+      return !r.pago;
+    }).sort(function(a,b){return (b.dt||'')>(a.dt||'')?1:-1;});
+
+    c.innerHTML=diarias.length?diarias.map(function(r){
+      var av=r.av==='otimo'?'<span class="bdg bg">Ótimo</span>':r.av==='bom'?'<span class="bdg ba">Bom</span>':'<span class="bdg br">Ruim</span>';
+      return '<div class="ri"><div class="rt"><span class="rn">'+r.n+' — '+(r.srv||'')+''+av+'</span><span class="rv">R$ '+(r.v||0).toFixed(2).replace('.',',')+'</span></div><div class="rd">'+(r.dt||'').split('-').reverse().join('/')+' · '+r.faz+'</div></div>';
+    }).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum lançamento a pagar.</div>';
+    return;
+  }
+
+  // Admin/Consultor: todos os lançamentos recentes
+  var corte=new Date();corte.setDate(corte.getDate()-15);
+  var cs=corte.toISOString().split('T')[0];
+  var todos=[...S.rD,...S.rC,...S.rT,...S.rE].filter(function(r){
+    var dt=r.dt||r.data||'';
+    if(r._apagado)return false;
+    if(fa&&r.faz&&r.faz!==fa)return false;
+    if(dt<cs)return false;
+    return true;
+  }).sort(function(a,b){return (b.dt||'')>(a.dt||'')?1:-1;}).slice(0,20);
+
+  c.innerHTML=todos.length?todos.map(function(r){
+    if(r.tipo==='escore')return'<div class="ri"><div class="rt"><span class="rn">Escore <span style="background:'+EC[r.es]+';color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:3px;font-weight:700">E'+r.es+'</span></span></div><div class="rd">'+(r.dt||'').split('-').reverse().join('/')+' · '+(r.co||r.faz)+'</div></div>';
+    if(r.tipo==='trato')return'<div class="ri"><div class="rt"><span class="rn">Trato <span class="bdg bt">'+r.co+'</span></span></div><div class="rd">'+(r.dt||'').split('-').reverse().join('/')+' · '+r.pr+' '+r.q+(r.unid||'')+'</div></div>';
+    if(r.tipo==='insumo')return'<div class="ri"><div class="rn">Insumos <span class="bdg bp">Depósito</span></div><div class="rd">'+(r.dt||'').split('-').reverse().join('/')+' · '+(r.ins||[]).map(function(x){return x.q+' '+x.u+' '+x.p;}).join(', ')+'</div></div>';
+    if(r.tipo==='cantina')return'<div class="ri"><div class="rt"><span class="rn">Cantina</span><span class="rv">R$ '+r.total.toFixed(2).replace('.',',')+'</span></div><div class="rd">'+(r.dt||'').split('-').reverse().join('/')+' · '+r.faz+' · '+r.resp+'</div></div>';
+    var av=r.av==='otimo'?'<span class="bdg bg">Ótimo</span>':r.av==='bom'?'<span class="bdg ba">Bom</span>':'<span class="bdg br">Ruim</span>';
+    return'<div class="ri"><div class="rt"><span class="rn">'+(r.srv||'')+''+av+'</span><span class="rv">R$ '+(r.v||0).toFixed(2).replace('.',',')+'</span></div><div class="rd">'+(r.dt||'').split('-').reverse().join('/')+' · '+r.faz+'</div></div>';
+  }).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum lançamento ainda.</div>';
+}
 
 function getSafra(){const now=new Date();const y=now.getMonth()>=6?now.getFullYear():now.getFullYear()-1;return{inicio:new Date(y,6,1),fim:new Date(y+1,5,30),label:y+'/'+(y+1)};}
 function filtrar(lista,per){const now=new Date();const faz=(document.getElementById('pf')||{}).value||'';if(per==='safra'){const sf=getSafra();return lista.filter(r=>{const dt=r.dt||r.data;const d=new Date(dt+'T00:00:00');if(faz&&r.faz!==faz)return false;return d>=sf.inicio&&d<=sf.fim;});}return lista.filter(r=>{const dt=r.dt||r.data;const d=new Date(dt+'T00:00:00');if(faz&&r.faz!==faz)return false;if(per==='dia')return dt===TD;if(per==='semana'){const s=new Date(now);s.setDate(now.getDate()-7);return d>=s;}if(per==='quinzena'){const s=new Date(now);s.setDate(now.getDate()-15);return d>=s;}return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});}
@@ -1573,6 +1617,7 @@ function rCtHist(){
     var dt = r.dt||'';
     if(ctHistPer==='hoje') return dt===hoje;
     if(ctHistPer==='semana'){var s=new Date(now);s.setDate(now.getDate()-7);return dt>=s.toISOString().split('T')[0];}
+    if(ctHistPer==='tudo') return true;
     return dt.substring(0,7)===hoje.substring(0,7);
   });
   var el = document.getElementById('ct-hist-lista');
@@ -1817,11 +1862,13 @@ function abrirDetalheLancamento(arr, gi){
   var btnVal = document.getElementById('det-val');
   var btnEdit = document.getElementById('det-edit');
   var btnRep = document.getElementById('det-rep');
+  var btnDel = document.getElementById('det-del');
   
   btnVal.style.display = r.validado ? 'none' : '';
   btnVal.onclick = function(){ validarLancamento(arr, gi); };
   btnEdit.onclick = function(){ fecharDetModal(); abrirEdicao(arr, gi); };
   btnRep.onclick = function(){ reprovarLancamento(arr, gi); };
+  btnDel.onclick = function(){ excluirLancamento(arr, gi); };
   
   modal.classList.add('open');
 }
@@ -1862,6 +1909,7 @@ function abrirDetalheCantinaDia(dt, faz){
   var btnVal = document.getElementById('det-val');
   var btnEdit = document.getElementById('det-edit');
   var btnRep = document.getElementById('det-rep');
+  var btnDel = document.getElementById('det-del');
   
   var jaValidado = regs.every(function(r){return r.validado;});
   btnVal.style.display = jaValidado ? 'none' : '';
@@ -1878,8 +1926,26 @@ function abrirDetalheCantinaDia(dt, faz){
     salvar(); fecharDetModal(); rPan();
     alert('❌ Cantina reprovada.');
   };
+  btnDel.onclick = function(){
+    if(!confirm('🗑️ Excluir este registro? Não tem como desfazer.')) return;
+    regs.forEach(function(r){r._apagado=true;});
+    salvar(); fecharDetModal(); rPan();
+    alert('🗑️ Registro excluído.');
+  };
   
   modal.classList.add('open');
+}
+
+function excluirLancamento(arr, gi){
+  if(!confirm('🗑️ Excluir este registro? Não tem como desfazer.')) return;
+  var r = S[arr][gi];
+  if(!r) return;
+  r._apagado = true;
+  salvar();
+  fecharDetModal();
+  rPan();
+  rUlt();
+  alert('🗑️ Registro excluído.');
 }
 
 function validarLancamento(arr, gi){
