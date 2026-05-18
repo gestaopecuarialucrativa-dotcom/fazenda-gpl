@@ -583,6 +583,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 </div>
 </div>
 <div class="card"><div class="stit">👥 Usuários e PIN</div><div id="ucfg-l"></div><button class="savb" style="width:100%;margin-top:9px;background:#2d7a1f;color:#fff;border-color:#2d7a1f;font-weight:700" onclick="addUser()">＋ Novo usuário</button></div>
+<div class="card"><div class="stit">💰 Pix dos Diaristas</div><div id="pix-diaristas-l"></div></div>
 <div class="card"><div class="stit">📋 Tipos de serviço</div><div id="serv-l"></div><div class="addr"><input type="text" id="ns" placeholder="Nome do serviço" style="flex:1"><button class="savb" onclick="addServ()">Add</button></div></div>
 <div class="card">
 <div class="stit">🧾 Preços cantina (R$)</div>
@@ -618,7 +619,7 @@ const ACTS=[{id:'diaria',l:'Lançar diária',s:'Serviço do dia',ic:'👤',c:'gr
 const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},'Fazenda Santa Cruz':{cochos:['Lote 01','Lote 02','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+'],gasUrl:'',sheetId:''}},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,medicamento:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:28,peso:406,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio'],'Fazenda Santa Cruz':[]},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{}};
 
 let S=null;
-function carregar(){try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=JSON.parse(r);S={...DEFAULT,...s};S.cfgGS=DEFAULT.cfgGS;if(!S.US||!S.US.length)S.US=DEFAULT.US;if(!S.FAZ||!Object.keys(S.FAZ).length)S.FAZ=DEFAULT.FAZ;if(!S.EST||!Object.keys(S.EST).length)S.EST=DEFAULT.EST;if(s.FAZ&&Object.keys(s.FAZ).length)S.FAZ=s.FAZ;if(s.US&&s.US.length)S.US=s.US;['rD','rT','rC','rE','mEst','queue','rDesp','LOTES'].forEach(k=>{if(!Array.isArray(S[k]))S[k]=[]});if(!S.DIARISTAS)S.DIARISTAS={};if(!S.NOTAS)S.NOTAS={};if(!Array.isArray(S.SERVS))S.SERVS=DEFAULT.SERVS;if(!S.PR)S.PR=DEFAULT.PR;}else{S=JSON.parse(JSON.stringify(DEFAULT));}}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}}
+function carregar(){try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=JSON.parse(r);S={...DEFAULT,...s};S.cfgGS=DEFAULT.cfgGS;if(!S.US||!S.US.length)S.US=DEFAULT.US;if(!S.FAZ||!Object.keys(S.FAZ).length)S.FAZ=DEFAULT.FAZ;if(!S.EST||!Object.keys(S.EST).length)S.EST=DEFAULT.EST;if(s.FAZ&&Object.keys(s.FAZ).length)S.FAZ=s.FAZ;if(s.US&&s.US.length)S.US=s.US;['rD','rT','rC','rE','mEst','queue','rDesp','LOTES'].forEach(k=>{if(!Array.isArray(S[k]))S[k]=[]});if(!S.DIARISTAS)S.DIARISTAS={};if(!S.NOTAS)S.NOTAS={};if(!S.PIX_D)S.PIX_D={};if(!Array.isArray(S.SERVS))S.SERVS=DEFAULT.SERVS;if(!S.PR)S.PR=DEFAULT.PR;}else{S=JSON.parse(JSON.stringify(DEFAULT));}}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}}
 function salvarLocal(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(S));return true;}catch(e){return false;}}
 function salvar(){salvarLocal();if(S.cfgGS&&navigator.onLine){clearTimeout(salvar._t);salvar._t=setTimeout(()=>salvarNuvem(null),2000);}return true;}
 salvar._t=null;
@@ -643,7 +644,7 @@ function entrar(i){CU=S.US[i];document.getElementById('login-screen').style.disp
 function doLogout(){CU=null;loginFaz=null;loginUser=null;pinBuf='';document.getElementById('app').style.display='none';document.getElementById('tabs').style.display='none';document.getElementById('login-screen').style.display='flex';document.getElementById('step-faz').style.display='block';document.getElementById('step-user').style.display='none';document.getElementById('step-pin').style.display='none';if(window.history&&window.history.replaceState)window.history.replaceState({},document.title,window.location.pathname);mostrarFazendas();}
 
 // ═══ NAVEGAÇÃO ═══
-function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',medicamento:'Medicamentos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>rListLotes(),50);if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();},50);window.scrollTo(0,0);}
+function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',medicamento:'Medicamentos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>rListLotes(),50);if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();},50);window.scrollTo(0,0);}
 function goBack(){if(prevPage)sp(prevPage,false);else sp('home',false);}
 function isV(u){return u.p.diaria||u.p.insumo||u.p.medicamento||u.p.trato||u.p.escore;}
 function isA(u){return u.p.cantina||u.p.estoque||u.p.painel||u.p.config;}
@@ -664,7 +665,7 @@ function updMedLote(){const faz=(document.getElementById('m-faz')||{}).value||''
 function updPrecosCt(){calcCt();}
 function updDiariaNome(){const faz=(document.getElementById('d-faz')||{}).value||'';const sel=document.getElementById('d-nome');if(!sel)return;const dl=getDiaristas(faz);sel.innerHTML='<option value="">Selecione...</option>'+dl.map(n=>`<option>${n}</option>`).join('');if(CU&&CU.r==='Vaqueiro'){if(!dl.includes(CU.n)){const o=document.createElement('option');o.value=CU.n;o.textContent=CU.n;sel.appendChild(o);}sel.value=CU.n;}}
 function getDiaristas(faz){if(!S.DIARISTAS)S.DIARISTAS={};return S.DIARISTAS[faz]||[];}
-function addDiarista(){const faz=(document.getElementById('d-faz')||{}).value||'';const n=prompt('Nome do diarista:');if(!n||!n.trim())return;if(!S.DIARISTAS)S.DIARISTAS={};if(!S.DIARISTAS[faz])S.DIARISTAS[faz]=[];if(!S.DIARISTAS[faz].includes(n.trim())){S.DIARISTAS[faz].push(n.trim());salvar();updDiariaNome();}}
+function addDiarista(){const faz=(document.getElementById('d-faz')||{}).value||'';const n=prompt('Nome do diarista:');if(!n||!n.trim())return;if(!S.DIARISTAS)S.DIARISTAS={};if(!S.DIARISTAS[faz])S.DIARISTAS[faz]=[];if(!S.DIARISTAS[faz].includes(n.trim())){S.DIARISTAS[faz].push(n.trim());salvar();updDiariaNome();try{rPixDiaristas();}catch(e){}}}
 
 // ═══ FORM ═══
 let avSel='',srvSel='',coSel='',esSel=0,esTSel='';
@@ -715,8 +716,41 @@ function editFaz(antiga){const nova=prompt('Novo nome:',antiga);if(!nova||!nova.
 function delFaz(f){if(!confirm('Excluir "'+f+'"?'))return;delete S.FAZ[f];S.US.forEach(u=>{u.fs=u.fs.filter(x=>x!==f);});salvar();rFazCfg();popAll();rUcfg();rLinksUsuarios();alert('✅ Excluída!');}
 function addCo(faz){const k=faz.replace(/[\s']/g,'_');const v=(document.getElementById('nc-'+k)||{}).value?.trim();if(!v)return;if(!S.FAZ[faz].cochos)S.FAZ[faz].cochos=[];S.FAZ[faz].cochos.push(v);salvar();document.getElementById('chl-'+k).innerHTML=S.FAZ[faz].cochos.map(c=>`<span class="chip">${c} <span class="cdel" onclick="delCo('${faz}','${c}')">×</span></span>`).join('');document.getElementById('nc-'+k).value='';updTrato();updEsCo();}
 function delCo(f,c){S.FAZ[f].cochos=S.FAZ[f].cochos.filter(x=>x!==c);salvar();rFazCfg();}
-function rUcfg(){const c=document.getElementById('ucfg-l');if(!c)return;c.innerHTML=S.US.map((u,i)=>{const fazOpts=Object.keys(S.FAZ).map(f=>`<option value="${f}" ${u.fs.includes(f)?'selected':''}>${f}</option>`).join('');return`<div class="ucfg"><div style="display:flex;align-items:center;gap:9px;margin-bottom:7px"><div class="av ${u.c}" style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px">${u.i}</div><div style="flex:1;cursor:pointer" onclick="tUp(${i})"><div style="font-size:13px;font-weight:700">${u.n}</div><div style="font-size:11px;color:#888">${u.fs.length?'🏠 '+u.fs.join(' · '):'Todas as fazendas'}</div></div><div style="display:flex;gap:5px"><span onclick="editUser(${i})" style="font-size:11px;background:#E6F1FB;color:#0C447C;padding:3px 8px;border-radius:8px;cursor:pointer">✏️</span>${i>0?`<span onclick="delUser(${i})" style="font-size:11px;background:#FCEBEB;color:#CC2200;padding:3px 8px;border-radius:8px;cursor:pointer">🗑</span>`:''}<span onclick="tUp(${i})" style="color:#888;padding:3px 4px;cursor:pointer">▾</span></div></div><div id="up-${i}" style="display:none;border-top:1px solid #eee;padding-top:9px"><div class="prow"><span style="font-size:13px;font-weight:600">🔑 PIN</span><div style="display:flex;gap:6px;align-items:center"><input type="password" style="width:90px;letter-spacing:4px;font-size:16px;font-weight:700;text-align:center;padding:5px;border:1px solid #ddd;border-radius:8px" id="pin-u-${i}" value="${u.pin}" maxlength="4"><button class="savb" onclick="salvarPin(${i})">Salvar</button></div></div><div class="prow"><span>🏠 Fazenda</span><select style="width:170px" onchange="trocarFaz(${i},this.value)"><option value="">Todas</option>${fazOpts}</select></div><div class="prow"><span>👤 Perfil</span><select style="width:140px" onchange="trocarRole(${i},this.value)"><option ${u.r==='Consultor'?'selected':''}>Consultor</option><option ${u.r==='Dono'?'selected':''}>Dono</option><option ${u.r==='Vaqueiro'?'selected':''}>Vaqueiro</option><option ${u.r==='Cantina'?'selected':''}>Cantina</option></select></div>${Object.entries(PL).map(([k,l])=>`<div class="prow"><span>${l}</span><div class="sw ${u.p[k]?'on':''}" onclick="tPerm(${i},'${k}')"><div class="swk"></div></div></div>`).join('')}</div></div>`;}).join('');}
+function rUcfg(){const c=document.getElementById('ucfg-l');if(!c)return;c.innerHTML=S.US.map((u,i)=>{const fazOpts=Object.keys(S.FAZ).map(f=>`<option value="${f}" ${u.fs.includes(f)?'selected':''}>${f}</option>`).join('');return`<div class="ucfg"><div style="display:flex;align-items:center;gap:9px;margin-bottom:7px"><div class="av ${u.c}" style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px">${u.i}</div><div style="flex:1;cursor:pointer" onclick="tUp(${i})"><div style="font-size:13px;font-weight:700">${u.n}</div><div style="font-size:11px;color:#888">${u.fs.length?'🏠 '+u.fs.join(' · '):'Todas as fazendas'}</div></div><div style="display:flex;gap:5px"><span onclick="editUser(${i})" style="font-size:11px;background:#E6F1FB;color:#0C447C;padding:3px 8px;border-radius:8px;cursor:pointer">✏️</span>${i>0?`<span onclick="delUser(${i})" style="font-size:11px;background:#FCEBEB;color:#CC2200;padding:3px 8px;border-radius:8px;cursor:pointer">🗑</span>`:''}<span onclick="tUp(${i})" style="color:#888;padding:3px 4px;cursor:pointer">▾</span></div></div><div id="up-${i}" style="display:none;border-top:1px solid #eee;padding-top:9px"><div class="prow"><span style="font-size:13px;font-weight:600">🔑 PIN</span><div style="display:flex;gap:6px;align-items:center"><input type="password" style="width:90px;letter-spacing:4px;font-size:16px;font-weight:700;text-align:center;padding:5px;border:1px solid #ddd;border-radius:8px" id="pin-u-${i}" value="${u.pin}" maxlength="4"><button class="savb" onclick="salvarPin(${i})">Salvar</button></div></div><div class="prow"><span>📱 WhatsApp</span><div style="display:flex;gap:6px;align-items:center"><input type="tel" placeholder="5599..." style="width:150px;padding:5px;border:1px solid #ddd;border-radius:8px;font-size:13px" id="tel-u-${i}" value="${u.tel||''}"><button class="savb" onclick="salvarTelPix(${i})">Salvar</button></div></div><div class="prow"><span>💰 Pix</span><div style="display:flex;gap:6px;align-items:center"><input type="text" placeholder="CPF, email, tel..." style="width:150px;padding:5px;border:1px solid #ddd;border-radius:8px;font-size:13px" id="pix-u-${i}" value="${u.pix||''}"><button class="savb" onclick="salvarTelPix(${i})">Salvar</button></div></div><div class="prow"><span>🏠 Fazenda</span><select style="width:170px" onchange="trocarFaz(${i},this.value)"><option value="">Todas</option>${fazOpts}</select></div><div class="prow"><span>👤 Perfil</span><select style="width:140px" onchange="trocarRole(${i},this.value)"><option ${u.r==='Consultor'?'selected':''}>Consultor</option><option ${u.r==='Dono'?'selected':''}>Dono</option><option ${u.r==='Vaqueiro'?'selected':''}>Vaqueiro</option><option ${u.r==='Cantina'?'selected':''}>Cantina</option></select></div>${Object.entries(PL).map(([k,l])=>`<div class="prow"><span>${l}</span><div class="sw ${u.p[k]?'on':''}" onclick="tPerm(${i},'${k}')"><div class="swk"></div></div></div>`).join('')}</div></div>`;}).join('');}
 function tUp(i){const d=document.getElementById('up-'+i);d.style.display=d.style.display==='none'?'block':'none';}
+function salvarTelPix(i){
+  var tel=(document.getElementById('tel-u-'+i)||{}).value||'';
+  var pix=(document.getElementById('pix-u-'+i)||{}).value||'';
+  S.US[i].tel=tel.trim();
+  S.US[i].pix=pix.trim();
+  salvar();
+  alert('✅ WhatsApp e Pix salvos!');
+}
+
+function rPixDiaristas(){
+  var c=document.getElementById('pix-diaristas-l');
+  if(!c)return;
+  if(!S.PIX_D)S.PIX_D={};
+  var todos=[];
+  Object.values(S.DIARISTAS||{}).forEach(function(arr){
+    arr.forEach(function(n){if(!todos.includes(n))todos.push(n);});
+  });
+  if(!todos.length){c.innerHTML='<div style="font-size:12px;color:#aaa;padding:6px">Nenhum diarista cadastrado ainda.</div>';return;}
+  c.innerHTML=todos.map(function(n){
+    var k=n.replace(/[^a-zA-Z0-9]/g,'_');
+    var pix=S.PIX_D[n]||'';
+    return '<div class="prow" style="margin-bottom:6px"><span style="font-size:13px;min-width:100px">👤 '+n+'</span><div style="display:flex;gap:6px;align-items:center;flex:1"><input type="text" id="pix-d-'+k+'" placeholder="CPF, email, tel..." value="'+pix+'" style="flex:1;padding:5px;border:1px solid #ddd;border-radius:8px;font-size:13px"><button class="savb" onclick="salvarPixDiarista(\''+n.replace(/'/g,"\\'")+"','"+k+'\')">Salvar</button></div></div>';
+  }).join('');
+}
+
+function salvarPixDiarista(nome,k){
+  if(!S.PIX_D)S.PIX_D={};
+  var val=(document.getElementById('pix-d-'+k)||{}).value||'';
+  S.PIX_D[nome]=val.trim();
+  salvar();
+  alert('✅ Pix de '+nome+' salvo!');
+}
+
 function tPerm(i,p){S.US[i].p[p]=S.US[i].p[p]?0:1;salvar();rUcfg();}
 function salvarPin(i){const v=(document.getElementById('pin-u-'+i)||{}).value;if(v.length!==4||!/^\d{4}$/.test(v)){alert('PIN deve ter 4 números.');return;}S.US[i].pin=v;salvar();alert('✅ PIN salvo!');}
 function trocarFaz(i,faz){S.US[i].fs=faz?[faz]:[];salvar();rUcfg();rLinksUsuarios();alert('✅ Fazenda atualizada!');}
@@ -749,7 +783,7 @@ function initSync(){atualizarSync();window.addEventListener('online',()=>{atuali
 
 // ═══ NUVEM ═══
 function updCloudStatus(st){const el=document.getElementById('cloud-status');if(!el)return;const icons={saving:'☁️ Salvando...',loading:'☁️ Carregando...',ok:'✅ Nuvem OK',err:'⚠️ Offline'};el.textContent=icons[st]||'';el.style.color=st==='err'?'#C62828':(st==='ok'?'#2E7D32':'#888');}
-function salvarNuvem(cb){if(!S.cfgGS){if(cb)cb(false);return;}updCloudStatus('saving');const cfg={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:S.LOTES,DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT,rD:S.rD,rT:S.rT,rC:S.rC,rE:S.rE,rDesp:S.rDesp,mEst:S.mEst,NOTAS:S.NOTAS||{}};Object.keys(S.FAZ).forEach(faz=>{const gu=getFazGasUrl(faz);if(gu){const fc={FAZ:{},US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:(S.LOTES||[]).filter(l=>l.faz===faz),DIARISTAS:{}};fc.FAZ[faz]=S.FAZ[faz];fc.DIARISTAS[faz]=(S.DIARISTAS||{})[faz]||[];fc.rD=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rT=(S.rT||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rC=(S.rC||[]).filter(r=>r.faz===faz);fc.rE=(S.rE||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rDesp=(S.rDesp||[]).filter(r=>r.faz===faz);fetch(gu+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(fc)),{method:'GET',mode:'no-cors'}).catch(()=>{});}});fetch(S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfg)),{method:'GET',mode:'no-cors'}).then(()=>{updCloudStatus('ok');if(cb)cb(true);}).catch(e=>{updCloudStatus('err');if(cb)cb(false);});}
+function salvarNuvem(cb){if(!S.cfgGS){if(cb)cb(false);return;}updCloudStatus('saving');const cfg={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:S.LOTES,DIARISTAS:S.DIARISTAS,PIX_D:S.PIX_D||{},cfgGS:S.cfgGS,cfgGHT:S.cfgGHT,rD:S.rD,rT:S.rT,rC:S.rC,rE:S.rE,rDesp:S.rDesp,mEst:S.mEst,NOTAS:S.NOTAS||{}};Object.keys(S.FAZ).forEach(faz=>{const gu=getFazGasUrl(faz);if(gu){const fc={FAZ:{},US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:(S.LOTES||[]).filter(l=>l.faz===faz),DIARISTAS:{}};fc.FAZ[faz]=S.FAZ[faz];fc.DIARISTAS[faz]=(S.DIARISTAS||{})[faz]||[];fc.rD=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rT=(S.rT||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rC=(S.rC||[]).filter(r=>r.faz===faz);fc.rE=(S.rE||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rDesp=(S.rDesp||[]).filter(r=>r.faz===faz);fetch(gu+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(fc)),{method:'GET',mode:'no-cors'}).catch(()=>{});}});fetch(S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfg)),{method:'GET',mode:'no-cors'}).then(()=>{updCloudStatus('ok');if(cb)cb(true);}).catch(e=>{updCloudStatus('err');if(cb)cb(false);});}
 function carregarNuvem(cb){
   if(!S.cfgGS||!navigator.onLine){if(cb)cb(false);return;}
   updCloudStatus('loading');
@@ -787,6 +821,7 @@ function carregarNuvem(cb){
           if(cfg.PR)S.PR=cfg.PR;
           if(cfg.LOTES)S.LOTES=cfg.LOTES;
           if(cfg.DIARISTAS)S.DIARISTAS=cfg.DIARISTAS;
+          if(cfg.PIX_D)S.PIX_D=cfg.PIX_D;
           if(cfg.rD&&cfg.rD.length)S.rD=cfg.rD;
           if(cfg.rT&&cfg.rT.length)S.rT=cfg.rT;
           if(cfg.rC&&cfg.rC.length)S.rC=cfg.rC;
@@ -1367,8 +1402,7 @@ function renderFCLista(lista, totalGeral, deFmt, ateFmt, faz){
 
   lista.forEach(function(p){
     var total=p.totalD+p.totalC;
-    var usr=S.US.find(function(u){return u.n===p.n;});
-    var pix=usr?usr.pix||'':'';
+    var pix=(S.PIX_D&&S.PIX_D[p.n])||'';
     var sel=window._fcSel[p.n]!==false;
     var border=sel?'border-left:3px solid #1B5E20;':'border-left:3px solid #ccc;opacity:.55;';
     var check=sel?'✅':'⬜';
@@ -1428,9 +1462,8 @@ function gerarFCMsg(){
 
   sel.forEach(function(p){
     var total=p.totalD+p.totalC;
-    var usr=S.US.find(function(u){return u.n===p.n;});
-    var pix=usr?usr.pix||'':'';
-    linhas.push('Funcionario: '+p.n);
+    var pix=(S.PIX_D&&S.PIX_D[p.n])||'';
+    linhas.push('Diarista: '+p.n);
     if(p.diarias.length)linhas.push('  Diarias ('+p.diarias.length+'x): R$ '+p.totalD.toFixed(2).replace('.',','));
     if(p.cantina.length)linhas.push('  Cantina ('+p.cantina.length+' dias): R$ '+p.totalC.toFixed(2).replace('.',','));
     linhas.push('  TOTAL A PAGAR: R$ '+total.toFixed(2).replace('.',','));
