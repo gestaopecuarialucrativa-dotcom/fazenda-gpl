@@ -738,15 +738,24 @@ function rPixDiaristas(){
   if(!todos.length){c.innerHTML='<div style="font-size:12px;color:#aaa;padding:6px">Nenhum diarista cadastrado ainda.</div>';return;}
   c.innerHTML=todos.map(function(n){
     var k=n.replace(/[^a-zA-Z0-9]/g,'_');
-    var pix=S.PIX_D[n]||'';
-    return '<div class="prow" style="margin-bottom:6px"><span style="font-size:13px;min-width:100px">👤 '+n+'</span><div style="display:flex;gap:6px;align-items:center;flex:1"><input type="text" id="pix-d-'+k+'" placeholder="CPF, email, tel..." value="'+pix+'" style="flex:1;padding:5px;border:1px solid #ddd;border-radius:8px;font-size:13px"><button class="savb" onclick="salvarPixDiarista(\''+n.replace(/'/g,"\\'")+"','"+k+'\')">Salvar</button></div></div>';
+    var d=S.PIX_D[n]||{};
+    var pix=typeof d==='string'?d:d.chave||'';
+    var titular=typeof d==='string'?'':d.titular||'';
+    return '<div style="background:#f9f9f9;border:1px solid #eee;border-radius:10px;padding:10px;margin-bottom:8px">'+
+      '<div style="font-size:13px;font-weight:700;margin-bottom:8px">👤 '+n+'</div>'+
+      '<div style="display:flex;flex-direction:column;gap:6px">'+
+      '<div style="display:flex;gap:6px;align-items:center"><span style="font-size:12px;color:#555;min-width:90px">💰 Chave Pix</span><input type="text" id="pix-d-'+k+'" placeholder="CPF, email, tel, aleatória..." value="'+pix+'" style="flex:1;padding:5px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div>'+
+      '<div style="display:flex;gap:6px;align-items:center"><span style="font-size:12px;color:#555;min-width:90px">🪪 Titular</span><input type="text" id="tit-d-'+k+'" placeholder="Nome do titular da chave" value="'+titular+'" style="flex:1;padding:5px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div>'+
+      '<button class="savb" style="width:100%;margin-top:2px" onclick="salvarPixDiarista(\''+n.replace(/'/g,"\\'")+"','"+k+'\')">💾 Salvar</button>'+
+      '</div></div>';
   }).join('');
 }
 
 function salvarPixDiarista(nome,k){
   if(!S.PIX_D)S.PIX_D={};
-  var val=(document.getElementById('pix-d-'+k)||{}).value||'';
-  S.PIX_D[nome]=val.trim();
+  var chave=(document.getElementById('pix-d-'+k)||{}).value||'';
+  var titular=(document.getElementById('tit-d-'+k)||{}).value||'';
+  S.PIX_D[nome]={chave:chave.trim(),titular:titular.trim()};
   salvar();
   alert('✅ Pix de '+nome+' salvo!');
 }
@@ -1462,12 +1471,14 @@ function gerarFCMsg(){
 
   sel.forEach(function(p){
     var total=p.totalD+p.totalC;
-    var pix=(S.PIX_D&&S.PIX_D[p.n])||'';
-    linhas.push('Diarista: '+p.n);
+    var d=(S.PIX_D&&S.PIX_D[p.n])||{};
+    var pix=typeof d==='string'?d:d.chave||'';
+    var titular=typeof d==='string'?'':d.titular||'';
+    var pixInfo=pix?(pix+(titular&&titular!==p.n?' ('+titular+')':'')):''
+    linhas.push('Diarista: '+p.n+(pixInfo?' | Pix: '+pixInfo:''));
     if(p.diarias.length)linhas.push('  Diarias ('+p.diarias.length+'x): R$ '+p.totalD.toFixed(2).replace('.',','));
     if(p.cantina.length)linhas.push('  Cantina ('+p.cantina.length+' dias): R$ '+p.totalC.toFixed(2).replace('.',','));
     linhas.push('  TOTAL A PAGAR: R$ '+total.toFixed(2).replace('.',','));
-    if(pix)linhas.push('  Pix: '+pix);
     linhas.push('');
   });
 
