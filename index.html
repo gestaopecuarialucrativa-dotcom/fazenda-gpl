@@ -458,24 +458,49 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <select id="pf" onchange="rPan()" style="flex:1;padding:9px;border:1.5px solid #ddd;border-radius:9px;font-size:13px">
     <option value="">Todas as fazendas</option>
   </select>
-  <select id="pan-per" onchange="rPan()" style="flex:1;padding:9px;border:1.5px solid #ddd;border-radius:9px;font-size:13px">
-    <option value="15">Últimos 15 dias</option>
-    <option value="7">Últimos 7 dias</option>
-    <option value="30">Últimos 30 dias</option>
-    <option value="mes">Mês atual</option>
-    <option value="tudo">Tudo</option>
-  </select>
+  <button onclick="abrirPesquisaPeriodo()" style="padding:9px 14px;background:#1B5E20;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer">🔍 Pesquisar</button>
+</div>
+
+<!-- MODAL PESQUISA POR PERÍODO -->
+<div id="modal-pesquisa" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:9999;overflow-y:auto">
+<div style="background:#fff;border-radius:16px;margin:20px auto;max-width:420px;padding:20px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <span style="font-size:16px;font-weight:700;color:#1B5E20">🔍 Pesquisar por período</span>
+    <span onclick="fecharPesquisa()" style="cursor:pointer;font-size:24px;color:#888">×</span>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+    <div><div style="font-size:12px;color:#666;margin-bottom:4px">Data início</div><input type="date" id="peq-de" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div>
+    <div><div style="font-size:12px;color:#666;margin-bottom:4px">Data fim</div><input type="date" id="peq-ate" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div>
+  </div>
+  <div style="margin-bottom:12px">
+    <div style="font-size:12px;color:#666;margin-bottom:6px">Tipo</div>
+    <div style="display:flex;gap:8px">
+      <label style="display:flex;align-items:center;gap:5px;font-size:13px"><input type="checkbox" id="peq-diaria" checked> 💰 Diárias</label>
+      <label style="display:flex;align-items:center;gap:5px;font-size:13px"><input type="checkbox" id="peq-cantina" checked> 🍽 Cantina</label>
+    </div>
+  </div>
+  <div style="margin-bottom:16px">
+    <div style="font-size:12px;color:#666;margin-bottom:6px">Status</div>
+    <div style="display:flex;gap:6px">
+      <div class="pbtn on" id="peq-st-todas" onclick="sPeqSt(this,'todas')" style="flex:1;padding:8px;text-align:center;font-size:12px">Todas</div>
+      <div class="pbtn" id="peq-st-pagar" onclick="sPeqSt(this,'pagar')" style="flex:1;padding:8px;text-align:center;font-size:12px">⏳ A pagar</div>
+      <div class="pbtn" id="peq-st-pago" onclick="sPeqSt(this,'pago')" style="flex:1;padding:8px;text-align:center;font-size:12px">✅ Pagas</div>
+    </div>
+  </div>
+  <button onclick="executarPesquisa()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">🔍 Buscar</button>
+  <div id="peq-resultado" style="margin-top:12px"></div>
+</div>
 </div>
 
 <!-- CARDS RESUMO -->
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
   <div style="background:#fff;border-radius:12px;padding:12px;border:1px solid #e0e0e0">
-    <div style="font-size:11px;color:#888">💰 Diárias</div>
+    <div style="font-size:11px;color:#888">💰 Diárias a pagar</div>
     <div style="font-size:20px;font-weight:800;color:#1B5E20" id="ps-d">R$ 0</div>
     <div style="font-size:11px;color:#aaa" id="ps-dn">0 reg.</div>
   </div>
   <div style="background:#fff;border-radius:12px;padding:12px;border:1px solid #e0e0e0">
-    <div style="font-size:11px;color:#888">🍽 Cantina</div>
+    <div style="font-size:11px;color:#888">🍽 Cantina a pagar</div>
     <div style="font-size:20px;font-weight:800;color:#1B5E20" id="ps-c">R$ 0</div>
     <div style="font-size:11px;color:#aaa" id="ps-cn">0 reg.</div>
   </div>
@@ -1684,20 +1709,12 @@ function getPanFaz(){
 
 function filtrarPan(lista){
   var faz = getPanFaz();
-  var per = getPanPer();
-  var hoje = new Date();
-  var hojeStr = hoje.toISOString().split('T')[0];
-  
   return lista.filter(function(r){
     if(faz && r.faz !== faz) return false;
     if(r._apagado) return false;
-    var dt = r.dt||'';
-    if(per === 'tudo') return true;
-    if(per === 'mes') return dt.substring(0,7) === hojeStr.substring(0,7);
-    var dias = parseInt(per)||15;
-    var ini = new Date(hoje);
-    ini.setDate(hoje.getDate()-dias);
-    return dt >= ini.toISOString().split('T')[0];
+    // Só mostra "a pagar" — não validado e não pago
+    if(r.tipo==='diaria') return !r.pago;
+    return !r.validado && !r.pago;
   });
 }
 
@@ -1984,6 +2001,131 @@ document.addEventListener('DOMContentLoaded', function(){
   if(dc) dc.onclick = fecharDetModal;
   if(dm) dm.onclick = function(e){ if(e.target===dm) fecharDetModal(); };
 });
+
+var peqSt = 'todas';
+function sPeqSt(el, st){
+  peqSt = st;
+  document.querySelectorAll('#modal-pesquisa .pbtn').forEach(function(b){b.classList.remove('on');});
+  el.classList.add('on');
+}
+
+function abrirPesquisaPeriodo(){
+  var hoje = new Date().toISOString().split('T')[0];
+  var mesAtras = new Date();mesAtras.setDate(mesAtras.getDate()-30);
+  var el = document.getElementById('peq-de');
+  var el2 = document.getElementById('peq-ate');
+  if(el) el.value = mesAtras.toISOString().split('T')[0];
+  if(el2) el2.value = hoje;
+  document.getElementById('peq-resultado').innerHTML = '';
+  document.getElementById('modal-pesquisa').style.display = 'block';
+}
+
+function fecharPesquisa(){
+  document.getElementById('modal-pesquisa').style.display = 'none';
+}
+
+function executarPesquisa(){
+  var de = (document.getElementById('peq-de')||{}).value||'';
+  var ate = (document.getElementById('peq-ate')||{}).value||'';
+  var useDiaria = (document.getElementById('peq-diaria')||{}).checked;
+  var useCantina = (document.getElementById('peq-cantina')||{}).checked;
+  var faz = getPanFaz();
+
+  function filtroBase(r){
+    if(r._apagado) return false;
+    if(faz && r.faz !== faz) return false;
+    var dt = r.dt||'';
+    if(de && dt < de) return false;
+    if(ate && dt > ate) return false;
+    return true;
+  }
+  function filtroStatus(r){
+    var pago = r.pago || r.validado;
+    if(peqSt === 'pagar') return !pago;
+    if(peqSt === 'pago') return !!pago;
+    return true;
+  }
+
+  var diarias = useDiaria ? (S.rD||[]).filter(function(r){return r.tipo==='diaria'&&filtroBase(r)&&filtroStatus(r);}) : [];
+  var cantinas = useCantina ? (S.rC||[]).filter(function(r){return filtroBase(r)&&filtroStatus(r);}) : [];
+  var todos = [...diarias,...cantinas].sort(function(a,b){return (b.dt||'')>(a.dt||'')?1:-1;});
+
+  var totalD = diarias.reduce(function(a,r){return a+(r.v||0);},0);
+  var totalC = cantinas.reduce(function(a,r){return a+(r.total||0);},0);
+  var totalG = totalD + totalC;
+
+  var el = document.getElementById('peq-resultado');
+  if(!todos.length){
+    el.innerHTML='<div style="text-align:center;color:#888;padding:16px;font-size:13px">Nenhum registro encontrado.</div>';
+    return;
+  }
+
+  window._peqDados = {diarias:diarias, cantinas:cantinas, de:de, ate:ate, totalD:totalD, totalC:totalC, totalG:totalG};
+
+  var html = '<div style="background:#f0f9e8;border-radius:10px;padding:10px;margin-bottom:10px;display:flex;justify-content:space-between">'
+    +'<div style="font-size:12px;color:#555">💰 Diárias: <b>R$ '+totalD.toFixed(2).replace('.',',')+'</b><br>🍽 Cantina: <b>R$ '+totalC.toFixed(2).replace('.',',')+'</b></div>'
+    +'<div style="font-size:18px;font-weight:800;color:#1B5E20">R$ '+totalG.toFixed(2).replace('.',',')+'</div>'
+    +'</div>';
+
+  html += todos.map(function(r){
+    var dtFmt=(r.dt||'').split('-').reverse().join('/');
+    var pago = r.pago||r.validado;
+    var stBadge = pago
+      ? '<span style="background:#E3F2FD;color:#1565C0;font-size:10px;padding:2px 7px;border-radius:8px;font-weight:700">✅ Pago</span>'
+      : '<span style="background:#FFF3E0;color:#E65100;font-size:10px;padding:2px 7px;border-radius:8px;font-weight:700">⏳ A pagar</span>';
+    if(r.tipo==='diaria'){
+      return '<div style="background:#fff;border-radius:10px;padding:11px;margin-bottom:6px;border:1px solid #e0e0e0;display:flex;justify-content:space-between;align-items:center">'
+        +'<div><div style="font-size:13px;font-weight:700">'+r.n+'</div>'
+        +'<div style="font-size:11px;color:#666">'+r.srv+' · '+dtFmt+' · '+r.faz+'</div>'
+        +'<div style="margin-top:3px">'+stBadge+'</div></div>'
+        +'<div style="font-size:16px;font-weight:800;color:#1B5E20">R$ '+(r.v||0).toFixed(2).replace('.',',')+'</div></div>';
+    } else {
+      return '<div style="background:#fff;border-radius:10px;padding:11px;margin-bottom:6px;border:1px solid #e0e0e0;display:flex;justify-content:space-between;align-items:center">'
+        +'<div><div style="font-size:13px;font-weight:700">🍽 '+(r.resp||r.n||'—')+'</div>'
+        +'<div style="font-size:11px;color:#666">Cantina · '+dtFmt+' · '+r.faz+'</div>'
+        +'<div style="margin-top:3px">'+stBadge+'</div></div>'
+        +'<div style="font-size:16px;font-weight:800;color:#1B5E20">R$ '+(r.total||0).toFixed(2).replace('.',',')+'</div></div>';
+    }
+  }).join('');
+
+  html += '<button onclick="gerarPDFPesquisa()" style="width:100%;padding:11px;background:#C62828;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px">📄 Gerar Relatório PDF</button>';
+  el.innerHTML = html;
+}
+
+function gerarPDFPesquisa(){
+  var d = window._peqDados;
+  if(!d){alert('Faça uma pesquisa primeiro.');return;}
+  var deFmt=(d.de||'').split('-').reverse().join('/');
+  var ateFmt=(d.ate||'').split('-').reverse().join('/');
+
+  var rowsD = d.diarias.map(function(r){
+    return '<tr><td>'+(r.dt||'').split('-').reverse().join('/')+'</td><td>'+r.n+'</td><td>'+r.srv+'</td><td>'+r.faz+'</td>'
+      +'<td style="text-align:right">R$ '+(r.v||0).toFixed(2).replace('.',',')+'</td>'
+      +'<td>'+(r.pago?'✅ Pago':'⏳ A pagar')+'</td></tr>';
+  }).join('');
+
+  var rowsC = d.cantinas.map(function(r){
+    return '<tr><td>'+(r.dt||'').split('-').reverse().join('/')+'</td><td>'+(r.resp||r.n||'—')+'</td><td>Cantina</td><td>'+r.faz+'</td>'
+      +'<td style="text-align:right">R$ '+(r.total||0).toFixed(2).replace('.',',')+'</td>'
+      +'<td>'+(r.validado||r.pago?'✅ Pago':'⏳ A pagar')+'</td></tr>';
+  }).join('');
+
+  var w = window.open('','_blank');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Relatório GPL</title>'
+    +'<style>body{font-family:Arial,sans-serif;padding:20px;color:#222}h1{color:#1B5E20;font-size:18px}h2{color:#1B5E20;font-size:14px;margin-top:18px}table{width:100%;border-collapse:collapse;font-size:12px}th{background:#1B5E20;color:#fff;padding:7px;text-align:left}td{padding:6px;border-bottom:1px solid #eee}.tot{font-size:14px;font-weight:700;color:#1B5E20;margin-top:10px}.footer{margin-top:30px;font-size:10px;color:#aaa;text-align:center}</style>'
+    +'</head><body>'
+    +'<h1>📊 Relatório — Gestão Pecuária Lucrativa</h1>'
+    +'<p style="font-size:12px;color:#666">Período: '+deFmt+' a '+ateFmt+'</p>'
+    +(rowsD?'<h2>💰 Diárias</h2><table><tr><th>Data</th><th>Diarista</th><th>Serviço</th><th>Fazenda</th><th>Valor</th><th>Status</th></tr>'+rowsD+'</table><p class="tot">Total Diárias: R$ '+d.totalD.toFixed(2).replace('.',',')+'</p>':'')
+    +(rowsC?'<h2>🍽 Cantina</h2><table><tr><th>Data</th><th>Responsável</th><th>Tipo</th><th>Fazenda</th><th>Valor</th><th>Status</th></tr>'+rowsC+'</table><p class="tot">Total Cantina: R$ '+d.totalC.toFixed(2).replace('.',',')+'</p>':'')
+    +'<p class="tot" style="font-size:16px;border-top:2px solid #1B5E20;padding-top:10px">TOTAL GERAL: R$ '+d.totalG.toFixed(2).replace('.',',')+'</p>'
+    +'<div class="footer">GPL — Gestão Pecuária Lucrativa · Rogério Avelino · Gerado em '+new Date().toLocaleDateString('pt-BR')+'</div>'
+    +'</body></html>');
+  w.document.close();
+  setTimeout(function(){w.print();},500);
+}
+
+
 
 </script>
 </body>
