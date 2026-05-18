@@ -324,7 +324,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div id="pg-insumo" class="pg" style="display:none">
 <div class="card" id="ins-cad-card">
 <div class="stit">📋 Cadastrar produto</div>
-<div class="info-box" style="font-size:11px">Consultor cadastra os produtos. Vaqueiro só lança a quantidade.</div>
+<div class="info-box" style="font-size:11px">Consultor cadastra os produtos. Colaborador só lança a quantidade.</div>
 <div class="fg"><div class="lbl">Fazenda</div><select id="i-cad-faz" onchange="rListProdutos()"></select></div>
 <div style="display:flex;gap:8px;flex-wrap:wrap"><div style="flex:2;min-width:140px"><div class="lbl">Nome do produto</div><input type="text" id="i-cad-nome" placeholder="Ex: Proteinado Bovmax"></div><div style="flex:1;min-width:70px"><div class="lbl">Unidade</div><select id="i-cad-unid"><option>kg</option><option>saco</option><option>litro</option><option>unid.</option></select></div></div>
 <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap"><div style="flex:1;min-width:80px"><div class="lbl">Estoque atual</div><input type="number" id="i-cad-estq" placeholder="0" min="0" step="0.5"></div><div style="flex:1;min-width:80px"><div class="lbl">Estoque mínimo</div><input type="number" id="i-cad-min" placeholder="0" min="0" step="0.5"></div></div>
@@ -782,7 +782,7 @@ const EI=[null,{em:'💩',ti:'Escore 1 — Firmes e secas',re:'💡 Reduzir fibr
 const PL={diaria:'Diária',insumo:'Insumos',medicamento:'Medicamentos',trato:'Trato cocho',escore:'Escore fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Config.'};
 const TABS=[{id:'painel',l:'📊 Painel',p:'painel'},{id:'cantina',l:'🏪 Cantina',p:'cantina'},{id:'estoque',l:'📦 Estoque',p:'estoque'},{id:'mapa',l:'🗺️ Mapa',p:'painel'},{id:'config',l:'⚙️ Config.',p:'config'},{id:'consultor',l:'🌿 Visão Geral',p:'config'}];
 const ACTS=[{id:'diaria',l:'Lançar diária',s:'Serviço do dia',ic:'👤',c:'gr',p:'diaria'},{id:'insumo',l:'Insumos',s:'Depósito → campo',ic:'📦',c:'bl',p:'insumo'},{id:'medicamento',l:'Medicamentos',s:'Vacinas e remédios',ic:'💉',c:'am',p:'medicamento'},{id:'trato',l:'Trato de cocho',s:'Proteinado, sal...',ic:'🛠',c:'tl',p:'trato'},{id:'lote',l:'Lotes',s:'Cadastro de lotes',ic:'🐄',c:'gr',p:'config'},{id:'escore',l:'Escore de fezes',s:'Avaliação do gado',ic:'🔬',c:'pu',p:'escore'}];
-const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},'Fazenda Santa Cruz':{cochos:['Lote 01','Lote 02','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+'],gasUrl:'',sheetId:''}},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,medicamento:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:38,peso:402,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 02',qtd:85,peso:360,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 03',qtd:79,peso:316,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 04',qtd:61,peso:269,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 05',qtd:69,peso:228,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 06',qtd:121,peso:204,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio'],'Fazenda Santa Cruz':[]},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{}};
+const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},'Fazenda Santa Cruz':{cochos:['Lote 01','Lote 02','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+'],gasUrl:'',sheetId:''}},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,medicamento:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Colaborador',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:38,peso:402,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 02',qtd:85,peso:360,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 03',qtd:79,peso:316,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 04',qtd:61,peso:269,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 05',qtd:69,peso:228,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 06',qtd:121,peso:204,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio'],'Fazenda Santa Cruz':[]},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{}};
 
 let S=null;
 function carregar(){try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=JSON.parse(r);S={...DEFAULT,...s};S.cfgGS=DEFAULT.cfgGS;if(!S.US||!S.US.length)S.US=DEFAULT.US;if(!S.FAZ||!Object.keys(S.FAZ).length)S.FAZ=DEFAULT.FAZ;if(!S.EST||!Object.keys(S.EST).length)S.EST=DEFAULT.EST;if(s.FAZ&&Object.keys(s.FAZ).length)S.FAZ=s.FAZ;if(s.US&&s.US.length)S.US=s.US;['rD','rT','rC','rE','mEst','queue','rDesp','LOTES'].forEach(k=>{if(!Array.isArray(S[k]))S[k]=[]});if(!S.DIARISTAS)S.DIARISTAS={};if(!S.NOTAS)S.NOTAS={};if(!S.AREAS)S.AREAS={};if(!S.MAPA_ALOC)S.MAPA_ALOC={};if(!Array.isArray(S.SERVS))S.SERVS=DEFAULT.SERVS;if(!S.PR)S.PR=DEFAULT.PR;}else{S=JSON.parse(JSON.stringify(DEFAULT));}}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}}
@@ -823,14 +823,14 @@ function goTab(id){document.querySelectorAll('.tab').forEach(t=>t.classList.remo
 function getFL(){return CU&&CU.fs.length?CU.fs:Object.keys(S.FAZ);}
 function getPF(f){return S.FAZ[f]?S.FAZ[f].prods:Object.keys(S.EST);}
 function getCF(f){return S.FAZ[f]?S.FAZ[f].cochos:[];}
-function popAll(){try{const fl=getFL();const isC=CU&&CU.r==='Consultor';const uF=(!isC&&CU&&CU.fs&&CU.fs.length===1)?CU.fs[0]:null;['d-faz','i-faz','m-faz','t-faz','es-faz','ct-faz','lt-faz','ar-faz','i-cad-faz'].forEach(id=>{const s=document.getElementById(id);if(!s)return;s.innerHTML=fl.map(f=>`<option>${f}</option>`).join('');if(uF){s.value=uF;const fg=s.closest?s.closest('.fg'):null;if(fg)fg.style.display='none';}else{const fg=s.closest?s.closest('.fg'):null;if(fg)fg.style.display='';}});const pf=document.getElementById('pf');if(pf){if(isC){pf.innerHTML='<option value="">Todas</option>'+fl.map(f=>`<option value="${f}">${f}</option>`).join('');pf.disabled=false;}else{const f=uF||fl[0]||'';pf.innerHTML=`<option value="${f}">${f}</option>`;pf.disabled=true;}}const df=document.getElementById('desp-faz');if(df)df.innerHTML='<option value="">Todas</option>'+fl.map(f=>`<option>${f}</option>`).join('');const dn=document.getElementById('d-nome');if(dn){const faz=document.getElementById('d-faz')?document.getElementById('d-faz').value:'';const dl=getDiaristas(faz||uF||'');dn.innerHTML='<option value="">Selecione...</option>'+dl.map(n=>`<option>${n}</option>`).join('');if(CU&&CU.r==='Vaqueiro'){if(!dl.includes(CU.n)){const o=document.createElement('option');o.value=CU.n;o.textContent=CU.n;dn.appendChild(o);}dn.value=CU.n;}}const cr=document.getElementById('ct-resp');if(cr){cr.innerHTML='<option value="">Selecione...</option>'+S.US.map(u=>`<option>${u.n}</option>`).join('');if(CU)cr.value=CU.n;}updTrato();updEsCo();updMedLote();updInsProd();updInsCadFaz();const ep=document.getElementById('ep');if(ep)ep.innerHTML='<option value="">Selecione...</option>'+Object.keys(S.EST).map(p=>`<option>${p}</option>`).join('');['d-data','i-data','m-data','t-data','es-data','ct-data','ed'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=TD;});const vc=document.getElementById('val-cafe');const va=document.getElementById('val-almoco');const vj=document.getElementById('val-janta');if(vc&&!vc.value)vc.value=S.PR.cafe;if(va&&!va.value)va.value=S.PR.almoco;if(vj&&!vj.value)vj.value=S.PR.janta;popServs();const cc=document.getElementById('ins-cad-card');if(cc)cc.style.display=(CU&&CU.p&&CU.p.config)?'block':'none';}catch(e){console.error('popAll:',e);}}
+function popAll(){try{const fl=getFL();const isC=CU&&CU.r==='Consultor';const uF=(!isC&&CU&&CU.fs&&CU.fs.length===1)?CU.fs[0]:null;['d-faz','i-faz','m-faz','t-faz','es-faz','ct-faz','lt-faz','ar-faz','i-cad-faz'].forEach(id=>{const s=document.getElementById(id);if(!s)return;s.innerHTML=fl.map(f=>`<option>${f}</option>`).join('');if(uF){s.value=uF;const fg=s.closest?s.closest('.fg'):null;if(fg)fg.style.display='none';}else{const fg=s.closest?s.closest('.fg'):null;if(fg)fg.style.display='';}});const pf=document.getElementById('pf');if(pf){if(isC){pf.innerHTML='<option value="">Todas</option>'+fl.map(f=>`<option value="${f}">${f}</option>`).join('');pf.disabled=false;}else{const f=uF||fl[0]||'';pf.innerHTML=`<option value="${f}">${f}</option>`;pf.disabled=true;}}const df=document.getElementById('desp-faz');if(df)df.innerHTML='<option value="">Todas</option>'+fl.map(f=>`<option>${f}</option>`).join('');const dn=document.getElementById('d-nome');if(dn){const faz=document.getElementById('d-faz')?document.getElementById('d-faz').value:'';const dl=getDiaristas(faz||uF||'');dn.innerHTML='<option value="">Selecione...</option>'+dl.map(n=>`<option>${n}</option>`).join('');if(CU&&CU.r==='Colaborador'){if(!dl.includes(CU.n)){const o=document.createElement('option');o.value=CU.n;o.textContent=CU.n;dn.appendChild(o);}dn.value=CU.n;}}const cr=document.getElementById('ct-resp');if(cr){cr.innerHTML='<option value="">Selecione...</option>'+S.US.map(u=>`<option>${u.n}</option>`).join('');if(CU)cr.value=CU.n;}updTrato();updEsCo();updMedLote();updInsProd();updInsCadFaz();const ep=document.getElementById('ep');if(ep)ep.innerHTML='<option value="">Selecione...</option>'+Object.keys(S.EST).map(p=>`<option>${p}</option>`).join('');['d-data','i-data','m-data','t-data','es-data','ct-data','ed'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=TD;});const vc=document.getElementById('val-cafe');const va=document.getElementById('val-almoco');const vj=document.getElementById('val-janta');if(vc&&!vc.value)vc.value=S.PR.cafe;if(va&&!va.value)va.value=S.PR.almoco;if(vj&&!vj.value)vj.value=S.PR.janta;popServs();const cc=document.getElementById('ins-cad-card');if(cc)cc.style.display=(CU&&CU.p&&CU.p.config)?'block':'none';}catch(e){console.error('popAll:',e);}}
 function popServs(){const so=document.getElementById('d-servs');if(!so)return;so.innerHTML=S.SERVS.map(s=>`<div class="bopt" onclick="sSrv(this,'${s}')">${s}</div>`).join('');}
 function updInsProd(){const faz=document.getElementById('i-faz')?document.getElementById('i-faz').value:getFL()[0]||'';document.querySelectorAll('.ip').forEach(s=>{const v=s.value;s.innerHTML='<option value="">Sel...</option>'+getPF(faz).map(p=>`<option>${p}</option>`).join('');if(v)s.value=v;});}
 function updTrato(){const faz=(document.getElementById('t-faz')||{}).value||'';const tc=document.getElementById('t-cocho');if(!tc)return;const lotes=(S.LOTES||[]).filter(l=>!faz||l.faz===faz);tc.innerHTML='<option value="">Selecione o lote...</option>'+lotes.map(l=>`<option>${l.nome} (${l.qtd} animais)</option>`).join('');const tp=document.getElementById('t-prod');if(!tp)return;tp.innerHTML='<option value="">Selecione...</option>'+getPF(faz).map(p=>`<option>${p}</option>`).join('');}
 function updEsCo(){const faz=(document.getElementById('es-faz')||{}).value||'';const ec=document.getElementById('es-cocho');if(!ec)return;const lotes=(S.LOTES||[]).filter(l=>!faz||l.faz===faz);ec.innerHTML='<option value="">Selecione o lote...</option>'+(lotes.length?lotes.map(l=>`<option>${l.nome}</option>`).join(''):getCF(faz).map(c=>`<option>${c}</option>`).join(''));}
 function updMedLote(){const faz=(document.getElementById('m-faz')||{}).value||'';const sel=document.getElementById('m-lote');if(!sel)return;sel.innerHTML='<option value="">Selecione o lote...</option>'+(S.LOTES||[]).filter(l=>!faz||l.faz===faz).map(l=>`<option>${l.nome} (${l.qtd} animais)</option>`).join('');}
 function updPrecosCt(){calcCt();}
-function updDiariaNome(){const faz=(document.getElementById('d-faz')||{}).value||'';const sel=document.getElementById('d-nome');if(!sel)return;const dl=getDiaristas(faz);sel.innerHTML='<option value="">Selecione...</option>'+dl.map(n=>`<option>${n}</option>`).join('');if(CU&&CU.r==='Vaqueiro'){if(!dl.includes(CU.n)){const o=document.createElement('option');o.value=CU.n;o.textContent=CU.n;sel.appendChild(o);}sel.value=CU.n;}}
+function updDiariaNome(){const faz=(document.getElementById('d-faz')||{}).value||'';const sel=document.getElementById('d-nome');if(!sel)return;const dl=getDiaristas(faz);sel.innerHTML='<option value="">Selecione...</option>'+dl.map(n=>`<option>${n}</option>`).join('');if(CU&&CU.r==='Colaborador'){if(!dl.includes(CU.n)){const o=document.createElement('option');o.value=CU.n;o.textContent=CU.n;sel.appendChild(o);}sel.value=CU.n;}}
 function getDiaristas(faz){if(!S.DIARISTAS)S.DIARISTAS={};return S.DIARISTAS[faz]||[];}
 function addDiarista(){const faz=(document.getElementById('d-faz')||{}).value||'';const n=prompt('Nome do diarista:');if(!n||!n.trim())return;if(!S.DIARISTAS)S.DIARISTAS={};if(!S.DIARISTAS[faz])S.DIARISTAS[faz]=[];if(!S.DIARISTAS[faz].includes(n.trim())){S.DIARISTAS[faz].push(n.trim());salvar();updDiariaNome();}}
 
@@ -866,7 +866,7 @@ function entEst(){const p=(document.getElementById('ep')||{}).value;const q=pars
 function rEst(){const el=document.getElementById('est-l');if(!el)return;el.innerHTML=Object.entries(S.EST).map(([nome,d])=>{const pc=Math.min(100,Math.round(d.q/Math.max(d.q,d.min*3)*100));const cl=d.q<=d.min?'l':d.q<=d.min*2?'m':'';const badge=d.q<=d.min?`<span class="lb">⚠️ Baixo!</span>`:d.q<=d.min*2?`<span class="wb">Atenção</span>`:'';return`<div class="er"><div style="flex:1"><div style="font-size:13px;font-weight:700">${nome} ${badge}</div><div style="font-size:11px;color:#888;margin-top:2px">${d.q} ${d.u} · mín ${d.min}<div class="ebw"><div class="ebar ${cl}" style="width:${pc}%;height:100%"></div></div></div></div><div style="text-align:right;padding-left:10px"><div style="font-size:18px;font-weight:700;color:${d.q<=d.min?'#CC2200':'#2d7a1f'}">${d.q}<div style="font-size:10px;font-weight:400;color:#888">${d.u}</div></div><button onclick="editarProdutoEst('${nome}')" style="margin-top:4px;padding:2px 8px;font-size:10px;background:#f0f0f0;border:none;border-radius:5px;cursor:pointer">✏️</button></div></div>`;}).join('');const ml=document.getElementById('mov-l');if(!ml)return;ml.innerHTML=S.mEst.length?[...S.mEst].reverse().slice(0,20).map(m=>`<div class="ri"><div class="rt"><span class="rn">${m.p}</span><span style="font-size:13px;font-weight:700;color:${m.t==='entrada'?'#2d7a1f':'#CC2200'}">${m.t==='entrada'?'+':'-'}${m.q} ${m.u}</span></div><div class="rd">${m.dt.split('-').reverse().join('/')} · ${m.t==='entrada'?'Entrada':'Saída → '+m.loc}</div></div>`).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:12px">Nenhuma.</div>';}
 function rUlt(){
   var fa=CU&&CU.fs&&CU.fs.length===1?CU.fs[0]:'';
-  var isVaq=CU&&CU.r==='Vaqueiro';
+  var isVaq=CU&&CU.r==='Colaborador';
   var c=document.getElementById('vult');
   if(!c)return;
   if(isVaq){
@@ -918,15 +918,15 @@ function editFaz(antiga){const nova=prompt('Novo nome:',antiga);if(!nova||!nova.
 function delFaz(f){if(!confirm('Excluir "'+f+'"?'))return;delete S.FAZ[f];S.US.forEach(u=>{u.fs=u.fs.filter(x=>x!==f);});salvar();rFazCfg();popAll();rUcfg();rLinksUsuarios();alert('✅ Excluída!');}
 function addCo(faz){const k=faz.replace(/[\s']/g,'_');const v=(document.getElementById('nc-'+k)||{}).value?.trim();if(!v)return;if(!S.FAZ[faz].cochos)S.FAZ[faz].cochos=[];S.FAZ[faz].cochos.push(v);salvar();document.getElementById('chl-'+k).innerHTML=S.FAZ[faz].cochos.map(c=>`<span class="chip">${c} <span class="cdel" onclick="delCo('${faz}','${c}')">×</span></span>`).join('');document.getElementById('nc-'+k).value='';updTrato();updEsCo();}
 function delCo(f,c){S.FAZ[f].cochos=S.FAZ[f].cochos.filter(x=>x!==c);salvar();rFazCfg();}
-function rUcfg(){const c=document.getElementById('ucfg-l');if(!c)return;c.innerHTML=S.US.map((u,i)=>{const fazOpts=Object.keys(S.FAZ).map(f=>`<option value="${f}" ${u.fs.includes(f)?'selected':''}>${f}</option>`).join('');return`<div class="ucfg"><div style="display:flex;align-items:center;gap:9px;margin-bottom:7px"><div class="av ${u.c}" style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px">${u.i}</div><div style="flex:1;cursor:pointer" onclick="tUp(${i})"><div style="font-size:13px;font-weight:700">${u.n}</div><div style="font-size:11px;color:#888">${u.fs.length?'🏠 '+u.fs.join(' · '):'Todas as fazendas'}</div></div><div style="display:flex;gap:5px"><span onclick="editUser(${i})" style="font-size:11px;background:#E6F1FB;color:#0C447C;padding:3px 8px;border-radius:8px;cursor:pointer">✏️</span>${i>0?`<span onclick="delUser(${i})" style="font-size:11px;background:#FCEBEB;color:#CC2200;padding:3px 8px;border-radius:8px;cursor:pointer">🗑</span>`:''}<span onclick="tUp(${i})" style="color:#888;padding:3px 4px;cursor:pointer">▾</span></div></div><div id="up-${i}" style="display:none;border-top:1px solid #eee;padding-top:9px"><div class="prow"><span style="font-size:13px;font-weight:600">🔑 PIN</span><div style="display:flex;gap:6px;align-items:center"><input type="password" style="width:90px;letter-spacing:4px;font-size:16px;font-weight:700;text-align:center;padding:5px;border:1px solid #ddd;border-radius:8px" id="pin-u-${i}" value="${u.pin}" maxlength="4"><button class="savb" onclick="salvarPin(${i})">Salvar</button></div></div><div class="prow"><span>🏠 Fazenda</span><select style="width:170px" onchange="trocarFaz(${i},this.value)"><option value="">Todas</option>${fazOpts}</select></div><div class="prow"><span>👤 Perfil</span><select style="width:140px" onchange="trocarRole(${i},this.value)"><option ${u.r==='Consultor'?'selected':''}>Consultor</option><option ${u.r==='Dono'?'selected':''}>Dono</option><option ${u.r==='Vaqueiro'?'selected':''}>Vaqueiro</option><option ${u.r==='Cantina'?'selected':''}>Cantina</option></select></div>${Object.entries(PL).map(([k,l])=>`<div class="prow"><span>${l}</span><div class="sw ${u.p[k]?'on':''}" onclick="tPerm(${i},'${k}')"><div class="swk"></div></div></div>`).join('')}</div></div>`;}).join('');}
+function rUcfg(){const c=document.getElementById('ucfg-l');if(!c)return;c.innerHTML=S.US.map((u,i)=>{const fazOpts=Object.keys(S.FAZ).map(f=>`<option value="${f}" ${u.fs.includes(f)?'selected':''}>${f}</option>`).join('');return`<div class="ucfg"><div style="display:flex;align-items:center;gap:9px;margin-bottom:7px"><div class="av ${u.c}" style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px">${u.i}</div><div style="flex:1;cursor:pointer" onclick="tUp(${i})"><div style="font-size:13px;font-weight:700">${u.n}</div><div style="font-size:11px;color:#888">${u.fs.length?'🏠 '+u.fs.join(' · '):'Todas as fazendas'}</div></div><div style="display:flex;gap:5px"><span onclick="editUser(${i})" style="font-size:11px;background:#E6F1FB;color:#0C447C;padding:3px 8px;border-radius:8px;cursor:pointer">✏️</span>${i>0?`<span onclick="delUser(${i})" style="font-size:11px;background:#FCEBEB;color:#CC2200;padding:3px 8px;border-radius:8px;cursor:pointer">🗑</span>`:''}<span onclick="tUp(${i})" style="color:#888;padding:3px 4px;cursor:pointer">▾</span></div></div><div id="up-${i}" style="display:none;border-top:1px solid #eee;padding-top:9px"><div class="prow"><span style="font-size:13px;font-weight:600">🔑 PIN</span><div style="display:flex;gap:6px;align-items:center"><input type="password" style="width:90px;letter-spacing:4px;font-size:16px;font-weight:700;text-align:center;padding:5px;border:1px solid #ddd;border-radius:8px" id="pin-u-${i}" value="${u.pin}" maxlength="4"><button class="savb" onclick="salvarPin(${i})">Salvar</button></div></div><div class="prow"><span>🏠 Fazenda</span><select style="width:170px" onchange="trocarFaz(${i},this.value)"><option value="">Todas</option>${fazOpts}</select></div><div class="prow"><span>👤 Perfil</span><select style="width:140px" onchange="trocarRole(${i},this.value)"><option ${u.r==='Consultor'?'selected':''}>Consultor</option><option ${u.r==='Dono'?'selected':''}>Dono</option><option ${u.r==='Colaborador'?'selected':''}'>Colaborador</option><option ${u.r==='Cantina'?'selected':''}>Cantina</option></select></div>${Object.entries(PL).map(([k,l])=>`<div class="prow"><span>${l}</span><div class="sw ${u.p[k]?'on':''}" onclick="tPerm(${i},'${k}')"><div class="swk"></div></div></div>`).join('')}</div></div>`;}).join('');}
 function tUp(i){const d=document.getElementById('up-'+i);d.style.display=d.style.display==='none'?'block':'none';}
 function tPerm(i,p){S.US[i].p[p]=S.US[i].p[p]?0:1;salvar();rUcfg();}
 function salvarPin(i){const v=(document.getElementById('pin-u-'+i)||{}).value;if(v.length!==4||!/^\d{4}$/.test(v)){alert('PIN deve ter 4 números.');return;}S.US[i].pin=v;salvar();alert('✅ PIN salvo!');}
 function trocarFaz(i,faz){S.US[i].fs=faz?[faz]:[];salvar();rUcfg();rLinksUsuarios();alert('✅ Fazenda atualizada!');}
-function trocarRole(i,role){S.US[i].r=role;const ps={'Vaqueiro':{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,config:0},'Cantina':{diaria:0,insumo:0,medicamento:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,config:0},'Dono':{diaria:0,insumo:0,medicamento:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,config:0},'Consultor':{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,config:1}};if(ps[role])S.US[i].p=ps[role];salvar();rUcfg();}
+function trocarRole(i,role){S.US[i].r=role;const ps={'Colaborador':{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,config:0},'Cantina':{diaria:0,insumo:0,medicamento:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,config:0},'Dono':{diaria:0,insumo:0,medicamento:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,config:0},'Consultor':{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,config:1}};if(ps[role])S.US[i].p=ps[role];salvar();rUcfg();}
 function editUser(i){const n=prompt('Novo nome:',S.US[i].n);if(!n||!n.trim())return;S.US[i].n=n.trim();S.US[i].i=n.trim().split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();salvar();rUcfg();rLinksUsuarios();alert('✅ Atualizado!');}
 function delUser(i){if(!confirm('Excluir "'+S.US[i].n+'"?'))return;S.US.splice(i,1);salvar();rUcfg();rLinksUsuarios();alert('✅ Excluído!');}
-function addUser(){const n=prompt('Nome completo:');if(!n||!n.trim())return;const pin=prompt('PIN (4 números):');if(!pin||!/^\d{4}$/.test(pin)){alert('PIN inválido.');return;}const role=prompt('1-Vaqueiro 2-Cantina 3-Dono 4-Consultor','1');const roles=['Vaqueiro','Cantina','Dono','Consultor'];const r=roles[parseInt(role)-1]||'Vaqueiro';const ps={'Vaqueiro':{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,config:0},'Cantina':{diaria:0,insumo:0,medicamento:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,config:0},'Dono':{diaria:0,insumo:0,medicamento:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,config:0},'Consultor':{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,config:1}};const ini=n.trim().split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();const cores=['av-g','av-b','av-a','av-p','av-t'];S.US.push({n:n.trim(),i:ini,c:cores[S.US.length%5],r,pin,fs:[],p:ps[r]});salvar();rUcfg();rLinksUsuarios();alert('✅ '+n.trim()+' adicionado! PIN: '+pin);}
+function addUser(){const n=prompt('Nome completo:');if(!n||!n.trim())return;const pin=prompt('PIN (4 números):');if(!pin||!/^\d{4}$/.test(pin)){alert('PIN inválido.');return;}const role=prompt('1-Colaborador 2-Cantina 3-Dono 4-Consultor','1');const roles=['Colaborador','Cantina','Dono','Consultor'];const r=roles[parseInt(role)-1]||'Colaborador';const ps={'Colaborador':{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,config:0},'Cantina':{diaria:0,insumo:0,medicamento:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,config:0},'Dono':{diaria:0,insumo:0,medicamento:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,config:0},'Consultor':{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,config:1}};const ini=n.trim().split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();const cores=['av-g','av-b','av-a','av-p','av-t'];S.US.push({n:n.trim(),i:ini,c:cores[S.US.length%5],r,pin,fs:[],p:ps[r]});salvar();rUcfg();rLinksUsuarios();alert('✅ '+n.trim()+' adicionado! PIN: '+pin);}
 function rServL(){const c=document.getElementById('serv-l');if(!c)return;c.innerHTML=S.SERVS.map(s=>`<span class="chip">${s} <span class="cdel" onclick="delServ('${s}')">×</span></span>`).join('');}
 function addServ(){const s=(document.getElementById('ns')||{}).value?.trim();if(!s)return;S.SERVS.push(s);salvar();rServL();popServs();document.getElementById('ns').value='';}
 function delServ(s){S.SERVS=S.SERVS.filter(x=>x!==s);salvar();rServL();popServs();}
@@ -1104,69 +1104,142 @@ function _renderPinsNoContainer(contId, resumoId){
     var aloc = S.MAPA_ALOC[a.id];
     var lote = aloc ? lotes.find(function(l){return l.nome===aloc;}) : null;
     var qtd = lote ? (lote.qtd||0) : 0;
-    if(!lote || qtd<=0) return;
-    ocupados++;
+    var ocupado = !!lote && qtd>0;
+    if(ocupado) ocupados++;
 
-    // Cor por módulo
-    var cores = {1:{bg:'#1B5E20',bd:'#4CAF50'},2:{bg:'#B71C1C',bd:'#EF5350'},3:{bg:'#4A148C',bd:'#CE93D8'},4:{bg:'#827717',bd:'#F9A825'}};
-    var cor = a.tipo==='modulo' ? (cores[a.modulo]||cores[1]) : {bg:'#2E7D32',bd:'#66BB6A'};
-    var labelShort = a.label.replace('MOD:0','M').replace('MOD:','M').replace('/P:0','/P').replace('/P:','/'+'P');
+    // Cores por módulo
+    var cores = {
+      1:{bg:'#1B5E20',bd:'#4CAF50',bgV:'rgba(27,94,32,0.18)'},
+      2:{bg:'#B71C1C',bd:'#EF5350',bgV:'rgba(183,28,28,0.18)'},
+      3:{bg:'#4A148C',bd:'#CE93D8',bgV:'rgba(74,20,140,0.18)'},
+      4:{bg:'#827717',bd:'#F9A825',bgV:'rgba(130,119,23,0.18)'}
+    };
+    var cor = a.tipo==='modulo' ? (cores[a.modulo]||cores[1]) : {bg:'#2E7D32',bd:'#66BB6A',bgV:'rgba(46,125,50,0.18)'};
 
-    // Wrapper clicável
+    var labelShort = a.label
+      .replace('MOD:0','MOD:').replace('/P:0','/P:')
+      .replace('PA 0','PA ');
+
+    // Overlay sempre clicável (com ou sem gado)
     var pin = document.createElement('button');
-    pin.type = 'button';
-    pin.style.cssText = 'position:absolute;transform:translate(-50%,-100%);cursor:pointer;z-index:10;background:none;border:none;padding:0;-webkit-tap-highlight-color:rgba(0,0,0,0);touch-action:manipulation;';
-    pin.style.left = a.x+'%';
-    pin.style.top = a.y+'%';
+    pin.type='button';
+    pin.setAttribute('aria-label', a.label);
+    pin.style.cssText = [
+      'position:absolute',
+      'left:'+a.x+'%',
+      'top:'+a.y+'%',
+      'transform:translate(-50%,-50%)',
+      'cursor:pointer',
+      'z-index:10',
+      'background:none',
+      'border:none',
+      'padding:0',
+      '-webkit-tap-highlight-color:transparent',
+      'touch-action:manipulation',
+      'outline:none'
+    ].join(';');
 
-    // Caixa
-    var box = document.createElement('div');
-    box.style.cssText = 'background:'+cor.bg+';border:2px solid '+cor.bd+';border-radius:8px;padding:5px 8px;text-align:center;min-width:52px;box-shadow:0 3px 10px rgba(0,0,0,0.5);';
-    var emoji = document.createElement('div');
-    emoji.textContent = '🐄';
-    emoji.style.cssText = 'font-size:16px;line-height:1;';
-    var lbl = document.createElement('div');
-    lbl.textContent = labelShort;
-    lbl.style.cssText = 'font-size:8px;font-weight:700;color:#fff;opacity:0.85;line-height:1.3;';
-    var num = document.createElement('div');
-    num.textContent = qtd;
-    num.style.cssText = 'font-size:13px;font-weight:800;color:#fff;line-height:1.3;';
-    var nome = document.createElement('div');
-    nome.textContent = lote.nome;
-    nome.style.cssText = 'font-size:8px;color:'+cor.bd+';font-weight:600;';
-    box.appendChild(emoji);box.appendChild(lbl);box.appendChild(num);box.appendChild(nome);
+    if(ocupado){
+      // Pin completo com gado
+      var box = document.createElement('div');
+      box.style.cssText = [
+        'background:'+cor.bg,
+        'border:2.5px solid '+cor.bd,
+        'border-radius:10px',
+        'padding:5px 8px',
+        'text-align:center',
+        'min-width:54px',
+        'box-shadow:0 3px 12px rgba(0,0,0,0.55)',
+        'display:flex',
+        'flex-direction:column',
+        'align-items:center',
+        'gap:1px'
+      ].join(';');
 
-    // Haste
-    var haste = document.createElement('div');
-    haste.style.cssText = 'width:2px;height:8px;background:'+cor.bd+';margin:0 auto;';
-    var ponto = document.createElement('div');
-    ponto.style.cssText = 'width:6px;height:6px;border-radius:50%;background:'+cor.bd+';margin:0 auto;';
+      var eRow = document.createElement('div');
+      eRow.textContent='🐄';
+      eRow.style.cssText='font-size:18px;line-height:1;';
 
-    pin.appendChild(box);pin.appendChild(haste);pin.appendChild(ponto);
+      var lRow = document.createElement('div');
+      lRow.textContent=labelShort;
+      lRow.style.cssText='font-size:8px;font-weight:700;color:rgba(255,255,255,0.85);line-height:1.2;';
 
-    // Clique — closure correta
+      var nRow = document.createElement('div');
+      nRow.textContent=qtd+' cab';
+      nRow.style.cssText='font-size:11px;font-weight:800;color:#fff;line-height:1.2;';
+
+      var lNome = document.createElement('div');
+      lNome.textContent=lote.nome;
+      lNome.style.cssText='font-size:8px;color:'+cor.bd+';font-weight:700;line-height:1.2;';
+
+      box.appendChild(eRow);box.appendChild(lRow);box.appendChild(nRow);box.appendChild(lNome);
+
+      var haste=document.createElement('div');
+      haste.style.cssText='width:2px;height:7px;background:'+cor.bd+';margin:0 auto;';
+      var dot=document.createElement('div');
+      dot.style.cssText='width:6px;height:6px;border-radius:50%;background:'+cor.bd+';margin:0 auto;';
+
+      pin.appendChild(box);pin.appendChild(haste);pin.appendChild(dot);
+
+    } else {
+      // Marcador pequeno vazio — sempre visível e clicável
+      var emptyBox = document.createElement('div');
+      emptyBox.style.cssText = [
+        'background:'+cor.bgV,
+        'border:1.5px dashed '+cor.bd,
+        'border-radius:8px',
+        'padding:3px 6px',
+        'text-align:center',
+        'min-width:42px',
+        'box-shadow:0 1px 4px rgba(0,0,0,0.3)',
+        'display:flex',
+        'flex-direction:column',
+        'align-items:center',
+        'gap:1px'
+      ].join(';');
+
+      var emLbl=document.createElement('div');
+      emLbl.textContent=labelShort;
+      emLbl.style.cssText='font-size:8px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.8);line-height:1.3;';
+
+      var emIcon=document.createElement('div');
+      emIcon.textContent='＋';
+      emIcon.style.cssText='font-size:10px;color:rgba(255,255,255,0.7);line-height:1;';
+
+      emptyBox.appendChild(emLbl);emptyBox.appendChild(emIcon);
+      pin.appendChild(emptyBox);
+    }
+
+    // Evento de clique — funciona em mobile e desktop
     (function(area, cid){
-      pin.addEventListener('click', function(e){
+      var touchMoved=false;
+      pin.addEventListener('touchstart',function(){touchMoved=false;},{passive:true});
+      pin.addEventListener('touchmove',function(){touchMoved=true;},{passive:true});
+      pin.addEventListener('touchend',function(e){
+        if(!touchMoved){e.preventDefault();abrirMapaModal(area,cid);}
+      },{passive:false});
+      pin.addEventListener('click',function(e){
         e.preventDefault();e.stopPropagation();
-        abrirMapaModal(area, cid);
+        abrirMapaModal(area,cid);
       });
     })(a, contId);
 
     cont.appendChild(pin);
   });
 
-  var res = document.getElementById(resumoId);
-  if(res) res.textContent = ocupados ? ocupados+' piquete(s) com gado' : 'Nenhum gado alocado — toque em + para alocar';
+  var res=document.getElementById(resumoId);
+  if(res) res.textContent=ocupados?ocupados+' piquete(s) com gado':'Toque em qualquer área do mapa para alocar gado';
 }
 
 function _sincMapa(){
   _renderPinsNoContainer('mapa-pins','mapa-resumo');
   _renderPinsNoContainer('mapa-pins-main','mapa-main-resumo');
-  try{ rUlt(); }catch(e){}
+  try{rUlt();}catch(e){}
 }
 
-function rMapa(){ _renderPinsNoContainer('mapa-pins','mapa-resumo'); }
-function rMapaMain(){ _renderPinsNoContainer('mapa-pins-main','mapa-main-resumo'); }
+function rMapa(){_renderPinsNoContainer('mapa-pins','mapa-resumo');}
+function rMapaMain(){_renderPinsNoContainer('mapa-pins-main','mapa-main-resumo');}
+
 
 function abrirMapaModal(a, contId){
   mapaAreaAtual = {area:a, contId:contId||'mapa-pins'};
@@ -1527,7 +1600,7 @@ function gerarRelatorioPDF(){const faz=(document.getElementById('pf')||{}).value
 .edit-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center}
 .edit-modal.open{display:flex}
 .edit-box{background:#fff;border-radius:16px;padding:22px;width:95%;max-width:420px;max-height:90vh;overflow-y:auto}
-</style></head><body><div style="display:flex;justify-content:space-between;margin-bottom:16px"><div><div style="font-size:20px;font-weight:bold;color:#1B5E20">Gestão Pecuária Lucrativa</div><div style="color:#666;font-size:11px">Rogério Avelino</div></div><div style="text-align:right;font-size:11px;color:#666">Emitido em: ${new Date().toLocaleDateString('pt-BR')}<br>Fazenda: ${faz}</div></div><table><tr><th>Data</th><th>Vaqueiro</th><th>Serviço</th><th>Fazenda</th><th>Valor</th><th>Status</th></tr>${rows}</table><div class="total">Total diárias: R$ ${totalD.toFixed(2).replace('.',',')}</div><div class="total">Total cantina: R$ ${totalC.toFixed(2).replace('.',',')}</div><br><button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;font-size:13px">🖨️ Imprimir / Salvar PDF</button></body></html>`;const w=window.open('','_blank');w.document.write(html);w.document.close();}
+</style></head><body><div style="display:flex;justify-content:space-between;margin-bottom:16px"><div><div style="font-size:20px;font-weight:bold;color:#1B5E20">Gestão Pecuária Lucrativa</div><div style="color:#666;font-size:11px">Rogério Avelino</div></div><div style="text-align:right;font-size:11px;color:#666">Emitido em: ${new Date().toLocaleDateString('pt-BR')}<br>Fazenda: ${faz}</div></div><table><tr><th>Data</th><th>Colaborador</th><th>Serviço</th><th>Fazenda</th><th>Valor</th><th>Status</th></tr>${rows}</table><div class="total">Total diárias: R$ ${totalD.toFixed(2).replace('.',',')}</div><div class="total">Total cantina: R$ ${totalC.toFixed(2).replace('.',',')}</div><br><button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;font-size:13px">🖨️ Imprimir / Salvar PDF</button></body></html>`;const w=window.open('','_blank');w.document.write(html);w.document.close();}
 function gerarReciboPDF(){const faz=(document.getElementById('pf')||{}).value||'';let lv=filtrar(S.rD.filter(r=>r.tipo==='diaria'),perA);if(faz)lv=lv.filter(r=>r.faz===faz);const por={};lv.forEach(r=>{if(!por[r.n])por[r.n]=[];por[r.n].push(r);});const dono=(S.US.find(u=>u.r==='Dono'&&(!faz||u.fs.includes(faz)))||{}).n||faz;const recibos=Object.keys(por).map(nome=>{const regs=por[nome];const total=regs.reduce((a,r)=>a+r.v,0);const rows=regs.map(r=>`<tr><td>${(r.dt||'').split('-').reverse().join('/')}</td><td>${r.srv}</td><td style="text-align:right">R$ ${r.v.toFixed(2).replace('.',',')}</td></tr>`).join('');return`<div style="border:1px solid #ccc;border-radius:8px;padding:20px;margin-bottom:30px;page-break-inside:avoid"><div style="display:flex;justify-content:space-between"><strong style="font-size:16px;color:#1B5E20">RECIBO</strong><div style="font-size:11px;color:#666">${new Date().toLocaleDateString('pt-BR')}</div></div><div style="margin:12px 0"><strong>Pagador:</strong> ${dono} — ${faz}</div><div style="margin-bottom:12px"><strong>Beneficiário:</strong> ${nome}</div><table style="width:100%;border-collapse:collapse;font-size:12px"><tr><th style="background:#1B5E20;color:#fff;padding:5px 8px;text-align:left">Data</th><th style="background:#1B5E20;color:#fff;padding:5px 8px;text-align:left">Serviço</th><th style="background:#1B5E20;color:#fff;padding:5px 8px;text-align:right">Valor</th></tr>${rows}</table><div style="margin-top:12px;font-size:15px;font-weight:bold;color:#1B5E20">Total: R$ ${total.toFixed(2).replace('.',',')}</div><div style="margin-top:30px;border-top:1px solid #eee;padding-top:12px;display:flex;justify-content:space-between"><div style="text-align:center;width:45%"><div style="border-top:1px solid #333;margin-top:30px;padding-top:5px;font-size:11px">${dono}<br>Fazendeiro</div></div><div style="text-align:center;width:45%"><div style="border-top:1px solid #333;margin-top:30px;padding-top:5px;font-size:11px">${nome}<br>Prestador de serviço</div></div></div></div>`;}).join('');const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recibos</title><style>body{font-family:Arial;padding:20px;font-size:13px}@media print{button{display:none}}
 .badge-pend{background:#FFF3E0;color:#E65100;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;border:1px solid #FFB300}
 .badge-ok{background:#E8F5E9;color:#2E7D32;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700}
@@ -1734,9 +1807,9 @@ function gerarRelatorioFiltrado(){
     + '<div class="total" style="background:#FFF3E0">💸 A pagar<br><b style="font-size:18px;color:#C62828">R$ '+f.diarias.filter(function(r){return!r.pago;}).reduce(function(a,r){return a+r.v;},0).toFixed(2).replace('.',',')+'</b><br><span style="color:#888;font-size:10px">diárias pendentes</span></div>'
     + '</div>';
   
-  if(rowsDiaria) html += '<h2>👤 Diárias</h2><table><tr><th>Data</th><th>Vaqueiro</th><th>Serviço</th><th>Fazenda</th><th>Valor</th><th>Status</th></tr>'+rowsDiaria+'</table>';
+  if(rowsDiaria) html += '<h2>👤 Diárias</h2><table><tr><th>Data</th><th>Colaborador</th><th>Serviço</th><th>Fazenda</th><th>Valor</th><th>Status</th></tr>'+rowsDiaria+'</table>';
   if(rowsCantina) html += '<h2>🏪 Cantina</h2><table><tr><th>Data</th><th>Responsável</th><th>Tipo</th><th>Fazenda</th><th>Valor</th><th>Status</th></tr>'+rowsCantina+'</table>';
-  if(rowsTrato) html += '<h2>🛠 Tratos de cocho</h2><table><tr><th>Data</th><th>Vaqueiro</th><th>Detalhe</th><th>Fazenda</th><th>Valor</th><th>Lote</th></tr>'+rowsTrato+'</table>';
+  if(rowsTrato) html += '<h2>🛠 Tratos de cocho</h2><table><tr><th>Data</th><th>Colaborador</th><th>Detalhe</th><th>Fazenda</th><th>Valor</th><th>Lote</th></tr>'+rowsTrato+'</table>';
   
   html += '<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:14px;margin-top:10px">🖨️ Imprimir / Salvar PDF</button>';
   html += '</body></html>';
