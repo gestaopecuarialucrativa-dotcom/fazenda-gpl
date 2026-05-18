@@ -700,13 +700,13 @@ function rUlt(){
   if(!c)return;
 
   if(isVaq){
-    // Vaqueiro: só diárias que ELE lançou e que estão "a pagar" (não pagas)
+    // Vaqueiro: mostra todas as diárias a pagar da(s) fazenda(s) dele
     var diarias=(S.rD||[]).filter(function(r){
       if(r._apagado||r.tipo!=='diaria')return false;
       if(fa&&r.faz&&r.faz!==fa)return false;
-    // Aceita: lancadoPor === nome do usuário, OU n === nome do usuário (diárias antigas sem lancadoPor)
-      var lancou=(r.lancadoPor&&r.lancadoPor===CU.n)||((!r.lancadoPor)&&r.n&&r.n===CU.n);
-      if(!lancou)return false;
+      // Se tem lancadoPor preenchido, filtra por quem lançou
+      // Se não tem lancadoPor (registro antigo), mostra tudo da fazenda
+      if(r.lancadoPor&&r.lancadoPor!==CU.n)return false;
       return !r.pago;
     }).sort(function(a,b){return (b.dt||'')>(a.dt||'')?1:-1;});
 
@@ -983,7 +983,7 @@ function rPagarDestaque(){
   if(!S.rDesp) return;
   var faz = (document.getElementById('pf')||{}).value||'';
   // Só despesas de fechamento (evita duplicar com diárias)
-  var apagar = (S.rDesp||[]).filter(function(r){ return r.st==='pagar' && (!faz||r.faz===faz); });
+  var apagar = (S.rDesp||[]).filter(function(r){ return r.st==='pagar' && !r._apagado && (!faz||r.faz===faz); });
   var total = apagar.reduce(function(a,r){return a+r.val;},0);
   // Diárias não pagas que NÃO estão em nenhum fechamento
   var temFechamento = apagar.some(function(r){return r.desc&&r.desc.startsWith('Fechamento:');});
@@ -1932,6 +1932,14 @@ function excluirLancamento(arr, gi){
   var r = S[arr][gi];
   if(!r) return;
   r._apagado = true;
+  // Se for diária, remove também a despesa vinculada em rDesp
+  if(r.tipo==='diaria' && S.rDesp){
+    S.rDesp.forEach(function(d){
+      if(d.faz===r.faz && d.val===r.v && (d.desc==='Diária: '+r.n||d.desc&&d.desc.indexOf(r.n)>=0) && d.st==='pagar'){
+        d._apagado=true;
+      }
+    });
+  }
   salvar();
   fecharDetModal();
   rPan();
