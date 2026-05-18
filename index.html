@@ -289,7 +289,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 18/05/2026 v2.0 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 18/05/2026 v2.2 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -554,6 +554,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div style="display:flex;gap:0;margin-bottom:14px;background:#f0f0f0;border-radius:10px;padding:3px">
   <div class="tgo on" id="ltab-lotes" onclick="sLoteTab('lotes')" style="flex:1">🐄 Lotes</div>
   <div class="tgo" id="ltab-areas" onclick="sLoteTab('areas')" style="flex:1">🌿 Áreas</div>
+  <div class="tgo" id="ltab-mapa" onclick="sLoteTab('mapa')" style="flex:1">🗺️ Mapa</div>
 </div>
 
 <!-- SUB-PAINEL LOTES -->
@@ -658,6 +659,34 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 </div>
 </div><!-- fim lote-sub-areas -->
 
+<!-- SUB-PAINEL MAPA -->
+<div id="lote-sub-mapa" style="display:none">
+<div style="background:#2d5a1b;border-radius:12px;overflow:hidden;position:relative;min-height:380px">
+  <div id="mapa-pins" style="position:absolute;inset:0;width:100%;height:100%"></div>
+  <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.5);padding:6px 10px;display:flex;gap:10px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#fff"><div style="width:12px;height:12px;border-radius:3px;background:#1B5E20;border:1px solid #4CAF50"></div>Com gado</div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#fff"><div style="width:12px;height:12px;border-radius:3px;background:#E8F5E9;border:1px solid #2E7D32"></div>Módulo vazio</div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#fff"><div style="width:12px;height:12px;border-radius:3px;background:rgba(255,255,255,0.4);border:1px dashed #aaa"></div>Pasto vazio</div>
+    <div style="margin-left:auto;font-size:10px;color:#A5D6A7;font-weight:600" id="mapa-resumo">0 com gado</div>
+  </div>
+</div>
+<div style="margin-top:8px;padding:8px;background:#f9f9f9;border-radius:10px;border:1px solid #eee">
+  <div style="font-size:11px;color:#888;margin-bottom:4px">Toque em um piquete para alocar ou mover o gado</div>
+  <div style="font-size:12px;color:#1B5E20;font-weight:600" id="mapa-status">Selecione um piquete no mapa</div>
+</div>
+</div>
+
+<!-- MODAL MAPA -->
+<div id="mapa-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:flex-end;justify-content:center">
+<div style="background:#fff;border-radius:16px 16px 0 0;padding:16px;width:100%;max-width:420px;max-height:75vh;overflow-y:auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <span style="font-size:15px;font-weight:700;color:#1B5E20" id="mapa-modal-titulo">Piquete</span>
+    <span onclick="fecharMapaModal()" style="cursor:pointer;font-size:22px;color:#888;padding:4px">×</span>
+  </div>
+  <div id="mapa-modal-corpo"></div>
+</div>
+</div>
+
 </div><!-- fim pg-lote -->
 
 <!-- CONSULTOR — irmão ✅ -->
@@ -730,10 +759,10 @@ const EI=[null,{em:'💩',ti:'Escore 1 — Firmes e secas',re:'💡 Reduzir fibr
 const PL={diaria:'Diária',insumo:'Insumos',medicamento:'Medicamentos',trato:'Trato cocho',escore:'Escore fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Config.'};
 const TABS=[{id:'painel',l:'📊 Painel',p:'painel'},{id:'cantina',l:'🏪 Cantina',p:'cantina'},{id:'estoque',l:'📦 Estoque',p:'estoque'},{id:'config',l:'⚙️ Config.',p:'config'},{id:'consultor',l:'🌿 Visão Geral',p:'config'}];
 const ACTS=[{id:'diaria',l:'Lançar diária',s:'Serviço do dia',ic:'👤',c:'gr',p:'diaria'},{id:'insumo',l:'Insumos',s:'Depósito → campo',ic:'📦',c:'bl',p:'insumo'},{id:'medicamento',l:'Medicamentos',s:'Vacinas e remédios',ic:'💉',c:'am',p:'medicamento'},{id:'trato',l:'Trato de cocho',s:'Proteinado, sal...',ic:'🛠',c:'tl',p:'trato'},{id:'lote',l:'Lotes',s:'Cadastro de lotes',ic:'🐄',c:'gr',p:'config'},{id:'escore',l:'Escore de fezes',s:'Avaliação do gado',ic:'🔬',c:'pu',p:'escore'}];
-const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},'Fazenda Santa Cruz':{cochos:['Lote 01','Lote 02','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+'],gasUrl:'',sheetId:''}},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,medicamento:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:28,peso:406,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio'],'Fazenda Santa Cruz':[]},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{}};
+const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},'Fazenda Santa Cruz':{cochos:['Lote 01','Lote 02','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+'],gasUrl:'',sheetId:''}},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,medicamento:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:38,peso:402,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 02',qtd:85,peso:360,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 03',qtd:79,peso:316,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 04',qtd:61,peso:269,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 05',qtd:69,peso:228,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 06',qtd:121,peso:204,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio'],'Fazenda Santa Cruz':[]},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{}};
 
 let S=null;
-function carregar(){try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=JSON.parse(r);S={...DEFAULT,...s};S.cfgGS=DEFAULT.cfgGS;if(!S.US||!S.US.length)S.US=DEFAULT.US;if(!S.FAZ||!Object.keys(S.FAZ).length)S.FAZ=DEFAULT.FAZ;if(!S.EST||!Object.keys(S.EST).length)S.EST=DEFAULT.EST;if(s.FAZ&&Object.keys(s.FAZ).length)S.FAZ=s.FAZ;if(s.US&&s.US.length)S.US=s.US;['rD','rT','rC','rE','mEst','queue','rDesp','LOTES'].forEach(k=>{if(!Array.isArray(S[k]))S[k]=[]});if(!S.DIARISTAS)S.DIARISTAS={};if(!S.NOTAS)S.NOTAS={};if(!S.AREAS)S.AREAS={};if(!Array.isArray(S.SERVS))S.SERVS=DEFAULT.SERVS;if(!S.PR)S.PR=DEFAULT.PR;}else{S=JSON.parse(JSON.stringify(DEFAULT));}}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}}
+function carregar(){try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=JSON.parse(r);S={...DEFAULT,...s};S.cfgGS=DEFAULT.cfgGS;if(!S.US||!S.US.length)S.US=DEFAULT.US;if(!S.FAZ||!Object.keys(S.FAZ).length)S.FAZ=DEFAULT.FAZ;if(!S.EST||!Object.keys(S.EST).length)S.EST=DEFAULT.EST;if(s.FAZ&&Object.keys(s.FAZ).length)S.FAZ=s.FAZ;if(s.US&&s.US.length)S.US=s.US;['rD','rT','rC','rE','mEst','queue','rDesp','LOTES'].forEach(k=>{if(!Array.isArray(S[k]))S[k]=[]});if(!S.DIARISTAS)S.DIARISTAS={};if(!S.NOTAS)S.NOTAS={};if(!S.AREAS)S.AREAS={};if(!S.MAPA_ALOC)S.MAPA_ALOC={};if(!Array.isArray(S.SERVS))S.SERVS=DEFAULT.SERVS;if(!S.PR)S.PR=DEFAULT.PR;}else{S=JSON.parse(JSON.stringify(DEFAULT));}}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}}
 function salvarLocal(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(S));return true;}catch(e){return false;}}
 function salvar(){salvarLocal();if(S.cfgGS&&navigator.onLine){clearTimeout(salvar._t);salvar._t=setTimeout(()=>salvarNuvem(null),2000);}return true;}
 salvar._t=null;
@@ -899,7 +928,7 @@ function initSync(){atualizarSync();window.addEventListener('online',()=>{atuali
 
 // ═══ NUVEM ═══
 function updCloudStatus(st){const el=document.getElementById('cloud-status');if(!el)return;const icons={saving:'☁️ Salvando...',loading:'☁️ Carregando...',ok:'✅ Nuvem OK',err:'⚠️ Offline'};el.textContent=icons[st]||'';el.style.color=st==='err'?'#C62828':(st==='ok'?'#2E7D32':'#888');}
-function salvarNuvem(cb){if(!S.cfgGS){if(cb)cb(false);return;}updCloudStatus('saving');const cfg={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:S.LOTES,AREAS:S.AREAS||{},DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT,rD:S.rD,rT:S.rT,rC:S.rC,rE:S.rE,rDesp:S.rDesp,mEst:S.mEst,NOTAS:S.NOTAS||{}};Object.keys(S.FAZ).forEach(faz=>{const gu=getFazGasUrl(faz);if(gu){const fc={FAZ:{},US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:(S.LOTES||[]).filter(l=>l.faz===faz),DIARISTAS:{}};fc.FAZ[faz]=S.FAZ[faz];fc.DIARISTAS[faz]=(S.DIARISTAS||{})[faz]||[];fc.rD=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rT=(S.rT||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rC=(S.rC||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rE=(S.rE||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rDesp=(S.rDesp||[]).filter(r=>!r._apagado&&r.faz===faz);fc.PIX_D=S.PIX_D||{};fetch(gu+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(fc)),{method:'GET',mode:'no-cors'}).catch(()=>{});}});fetch(S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfg)),{method:'GET',mode:'no-cors'}).then(()=>{updCloudStatus('ok');if(cb)cb(true);}).catch(e=>{updCloudStatus('err');if(cb)cb(false);});}
+function salvarNuvem(cb){if(!S.cfgGS){if(cb)cb(false);return;}updCloudStatus('saving');const cfg={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:S.LOTES,AREAS:S.AREAS||{},MAPA_ALOC:S.MAPA_ALOC||{},DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT,rD:S.rD,rT:S.rT,rC:S.rC,rE:S.rE,rDesp:S.rDesp,mEst:S.mEst,NOTAS:S.NOTAS||{}};Object.keys(S.FAZ).forEach(faz=>{const gu=getFazGasUrl(faz);if(gu){const fc={FAZ:{},US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:(S.LOTES||[]).filter(l=>l.faz===faz),DIARISTAS:{}};fc.FAZ[faz]=S.FAZ[faz];fc.DIARISTAS[faz]=(S.DIARISTAS||{})[faz]||[];fc.rD=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rT=(S.rT||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rC=(S.rC||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rE=(S.rE||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rDesp=(S.rDesp||[]).filter(r=>!r._apagado&&r.faz===faz);fc.PIX_D=S.PIX_D||{};fetch(gu+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(fc)),{method:'GET',mode:'no-cors'}).catch(()=>{});}});fetch(S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfg)),{method:'GET',mode:'no-cors'}).then(()=>{updCloudStatus('ok');if(cb)cb(true);}).catch(e=>{updCloudStatus('err');if(cb)cb(false);});}
 function carregarNuvem(cb){
   if(!S.cfgGS||!navigator.onLine){if(cb)cb(false);return;}
   updCloudStatus('loading');
@@ -937,6 +966,7 @@ function carregarNuvem(cb){
           if(cfg.PR)S.PR=cfg.PR;
           if(cfg.LOTES)S.LOTES=cfg.LOTES;
           if(cfg.AREAS)S.AREAS=cfg.AREAS;
+          if(cfg.MAPA_ALOC)S.MAPA_ALOC=cfg.MAPA_ALOC;
           if(cfg.DIARISTAS)S.DIARISTAS=cfg.DIARISTAS;
           if(cfg.rD&&cfg.rD.length)S.rD=cfg.rD;
           if(cfg.rT&&cfg.rT.length)S.rT=cfg.rT;
@@ -981,15 +1011,192 @@ function sLoteTab(t){
   loteTab=t;
   document.getElementById('lote-sub-lotes').style.display=t==='lotes'?'block':'none';
   document.getElementById('lote-sub-areas').style.display=t==='areas'?'block':'none';
+  document.getElementById('lote-sub-mapa').style.display=t==='mapa'?'block':'none';
   document.getElementById('ltab-lotes').classList.toggle('on',t==='lotes');
   document.getElementById('ltab-areas').classList.toggle('on',t==='areas');
+  document.getElementById('ltab-mapa').classList.toggle('on',t==='mapa');
   if(t==='areas'){
     var arFaz=document.getElementById('ar-faz');
     var ltFaz=document.getElementById('lt-faz');
     if(arFaz&&ltFaz)arFaz.value=ltFaz.value;
-    rListAreas();
-    updTLLotes();
+    rListAreas();updTLLotes();
   }
+  if(t==='mapa') setTimeout(rMapa,50);
+}
+
+// ═══ MAPA INTERATIVO ═══
+var MAPA_AREAS = [
+  {id:'P01',label:'P 01',tipo:'pasto',ha:6.74,x:65.1,y:11.5},
+  {id:'P02',label:'P 02',tipo:'pasto',ha:28.2,x:47.4,y:25.7},
+  {id:'P03_2',label:'P 03.2',tipo:'pasto',ha:7.39,x:32.9,y:29.1},
+  {id:'P03_1',label:'P 03.1',tipo:'pasto',ha:4.81,x:45.8,y:35.3},
+  {id:'M01P01',label:'MOD:01/P:01',tipo:'modulo',modulo:1,piquete:1,ha:4.54,x:33.9,y:41.1},
+  {id:'M01P02',label:'MOD:01/P:02',tipo:'modulo',modulo:1,piquete:2,ha:4.25,x:25.8,y:35.2},
+  {id:'M01P03',label:'MOD:01/P:03',tipo:'modulo',modulo:1,piquete:3,ha:5.13,x:19.0,y:38.8},
+  {id:'M01P04',label:'MOD:01/P:04',tipo:'modulo',modulo:1,piquete:4,ha:5.85,x:29.2,y:46.7},
+  {id:'M02P01',label:'MOD:02/P:01',tipo:'modulo',modulo:2,piquete:1,ha:6.1,x:19.5,y:53.5},
+  {id:'M02P02',label:'MOD:02/P:02',tipo:'modulo',modulo:2,piquete:2,ha:5.34,x:12.0,y:45.9},
+  {id:'M02P03',label:'MOD:02/P:03',tipo:'modulo',modulo:2,piquete:3,ha:5.66,x:6.1,y:52.4},
+  {id:'M02P04',label:'MOD:02/P:04',tipo:'modulo',modulo:2,piquete:4,ha:5.5,x:10.9,y:61.3},
+  {id:'P14',label:'P 14',tipo:'pasto',ha:13.16,x:62.6,y:29.7},
+  {id:'P13',label:'P 13',tipo:'pasto',ha:6.30,x:56.0,y:37.5},
+  {id:'P12',label:'P 12',tipo:'pasto',ha:10.0,x:81.8,y:50.9},
+  {id:'P07',label:'P 07',tipo:'pasto',ha:8.92,x:44.7,y:47.5},
+  {id:'P06',label:'P 06',tipo:'pasto',ha:8.0,x:29.2,y:71.4},
+  {id:'P08',label:'P 08',tipo:'pasto',ha:10.0,x:36.3,y:78.5},
+  {id:'P09',label:'P 09',tipo:'pasto',ha:12.0,x:55.7,y:90.0},
+  {id:'M04P01',label:'MOD:04/P:01',tipo:'modulo',modulo:4,piquete:1,ha:10.0,x:49.8,y:73.7},
+  {id:'P11',label:'P 11',tipo:'pasto',ha:8.0,x:81.1,y:66.0},
+  {id:'P10',label:'P 10',tipo:'pasto',ha:8.0,x:88.9,y:59.6},
+  {id:'P15',label:'P 15',tipo:'pasto',ha:8.0,x:49.1,y:59.2}
+];
+
+var mapaAreaAtual = null;
+
+function rMapa(){
+  var cont = document.getElementById('mapa-pins');
+  if(!cont) return;
+  if(!S.MAPA_ALOC) S.MAPA_ALOC={};
+  var lotes = S.LOTES||[];
+  var ocupados=0;
+  cont.innerHTML='';
+
+  var wrap = cont.parentElement;
+  if(wrap) wrap.style.paddingBottom='85%';
+
+  MAPA_AREAS.forEach(function(a){
+    var aloc = S.MAPA_ALOC[a.id];
+    var lote = aloc ? lotes.find(function(l){return l.nome===aloc;}) : null;
+    var qtd = lote ? (lote.qtd||0) : 0;
+    var ocupado = !!lote && qtd>0;
+
+    // Só renderiza pin se tiver gado alocado
+    if(!ocupado) return;
+    ocupados++;
+
+    var ua = ((qtd*(lote.peso||0))/450).toFixed(1);
+    var pin = document.createElement('div');
+    pin.style.cssText = 'position:absolute;transform:translate(-50%,-100%);cursor:pointer;z-index:2;';
+    pin.style.left = a.x+'%';
+    pin.style.top = a.y+'%';
+    pin.onclick = function(){ abrirMapaModal(a); };
+
+    pin.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center">'
+      +'<div style="background:#1B5E20;border:1.5px solid #4CAF50;border-radius:8px;padding:4px 7px;text-align:center;min-width:52px;box-shadow:0 2px 6px rgba(0,0,0,0.4)">'
+      +'<div style="font-size:16px;line-height:1">🐄</div>'
+      +'<div style="font-size:8px;font-weight:700;color:#A5D6A7;line-height:1.3">'+a.label.replace('MOD:0','M').replace('/P:0','/P')+'</div>'
+      +'<div style="font-size:12px;font-weight:700;color:#fff;line-height:1.3">'+qtd+'</div>'
+      +'<div style="font-size:8px;color:#81C784">'+ua+' UA</div>'
+      +'</div>'
+      +'<div style="width:2px;height:8px;background:#4CAF50;margin:0 auto"></div>'
+      +'<div style="width:5px;height:5px;border-radius:50%;background:#4CAF50"></div>'
+      +'</div>';
+    cont.appendChild(pin);
+  });
+
+  // Botão para ver todos / adicionar gado
+  var btnAdd = document.createElement('div');
+  btnAdd.style.cssText = 'position:absolute;bottom:40px;right:8px;background:#1B5E20;color:#fff;border-radius:20px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid #4CAF50';
+  btnAdd.textContent = '+ Alocar gado';
+  btnAdd.onclick = function(){ abrirSelPiquete(); };
+  cont.appendChild(btnAdd);
+
+  var res = document.getElementById('mapa-resumo');
+  if(res) res.textContent = ocupados ? ocupados+' piquete(s) com gado' : 'Nenhum gado alocado — toque em + para alocar';
+}
+
+function abrirMapaModal(a){
+  mapaAreaAtual = a;
+  if(!S.MAPA_ALOC) S.MAPA_ALOC={};
+  var lotes = S.LOTES||[];
+  var aloc = S.MAPA_ALOC[a.id];
+  var lote = aloc ? lotes.find(function(l){return l.nome===aloc;}) : null;
+
+  document.getElementById('mapa-modal-titulo').textContent = a.label+' — '+a.ha+' ha';
+
+  var opts = '<option value="">-- sem gado --</option>';
+  lotes.forEach(function(l){
+    opts += '<option value="'+l.nome+'"'+(aloc===l.nome?' selected':'')+'>'
+      +l.nome+' ('+l.qtd+' animais)</option>';
+  });
+
+  var corpo = '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:13px">'
+    +'<span style="color:#666">Tipo</span><span style="font-weight:600">'+(a.tipo==='modulo'?'🔄 Módulo':'🌾 Pasto')+'</span></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:13px">'
+    +'<span style="color:#666">Área</span><span style="font-weight:600">'+a.ha+' ha</span></div>';
+
+  if(lote){
+    var ua = ((lote.qtd*(lote.peso||0))/450).toFixed(1);
+    corpo += '<div style="background:#E8F5E9;border-radius:8px;padding:10px;margin:8px 0;font-size:13px">'
+      +'<div style="font-weight:700;color:#1B5E20;margin-bottom:4px">🐄 '+lote.nome+'</div>'
+      +'<div style="color:#555">'+lote.qtd+' animais · '+(lote.peso||0)+' kg/cab · '+ua+' UA</div></div>';
+  }
+
+  corpo += '<div style="margin-top:10px">'
+    +'<div style="font-size:12px;color:#666;margin-bottom:6px">Alocar lote neste piquete:</div>'
+    +'<select id="mapa-sel-lote" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:8px">'+opts+'</select>'
+    +'<button onclick="mapaAlocar()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:8px">✅ Confirmar alocação</button>'
+    +(aloc?'<button onclick="mapaRetirar()" style="width:100%;padding:10px;background:none;color:#C62828;border:1px solid #C62828;border-radius:10px;font-size:13px;cursor:pointer">🚫 Retirar gado daqui</button>':'')
+    +'</div>';
+
+  document.getElementById('mapa-modal-corpo').innerHTML = corpo;
+  var modal = document.getElementById('mapa-modal');
+  modal.style.display='flex';
+}
+
+function fecharMapaModal(){
+  document.getElementById('mapa-modal').style.display='none';
+  mapaAreaAtual=null;
+}
+
+function mapaAlocar(){
+  if(!mapaAreaAtual) return;
+  var sel = document.getElementById('mapa-sel-lote').value;
+  if(!S.MAPA_ALOC) S.MAPA_ALOC={};
+  if(sel) S.MAPA_ALOC[mapaAreaAtual.id]=sel;
+  else delete S.MAPA_ALOC[mapaAreaAtual.id];
+  salvar();fecharMapaModal();rMapa();
+}
+
+function mapaRetirar(){
+  if(!mapaAreaAtual) return;
+  if(!S.MAPA_ALOC) S.MAPA_ALOC={};
+  delete S.MAPA_ALOC[mapaAreaAtual.id];
+  salvar();fecharMapaModal();rMapa();
+}
+
+function abrirSelPiquete(){
+  if(!S.MAPA_ALOC) S.MAPA_ALOC={};
+  var lotes = S.LOTES||[];
+  // Monta lista de piquetes disponíveis (sem gado)
+  var livres = MAPA_AREAS.filter(function(a){ return !S.MAPA_ALOC[a.id]; });
+
+  var optsP = livres.map(function(a){
+    return '<option value="'+a.id+'">'+a.label+' ('+a.ha+' ha)</option>';
+  }).join('');
+  var optsL = '<option value="">-- selecione --</option>'+lotes.map(function(l){
+    return '<option value="'+l.nome+'">'+l.nome+' ('+l.qtd+' animais)</option>';
+  }).join('');
+
+  document.getElementById('mapa-modal-titulo').textContent = 'Alocar gado no mapa';
+  document.getElementById('mapa-modal-corpo').innerHTML =
+    '<div style="font-size:12px;color:#666;margin-bottom:4px">Piquete / área:</div>'
+    +'<select id="mapa-sel-piq" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:10px">'+optsP+'</select>'
+    +'<div style="font-size:12px;color:#666;margin-bottom:4px">Lote:</div>'
+    +'<select id="mapa-sel-lote2" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:12px">'+optsL+'</select>'
+    +'<button onclick="mapaAlocarDireto()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">✅ Alocar</button>';
+
+  mapaAreaAtual = null;
+  document.getElementById('mapa-modal').style.display='flex';
+}
+
+function mapaAlocarDireto(){
+  var piq = (document.getElementById('mapa-sel-piq')||{}).value;
+  var lote = (document.getElementById('mapa-sel-lote2')||{}).value;
+  if(!piq||!lote){alert('Selecione o piquete e o lote.');return;}
+  if(!S.MAPA_ALOC) S.MAPA_ALOC={};
+  S.MAPA_ALOC[piq]=lote;
+  salvar();fecharMapaModal();rMapa();
 }
 
 function sArTipo(el,t){
