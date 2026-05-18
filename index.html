@@ -289,7 +289,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 18/05/2026 v2.3 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 18/05/2026 v2.4 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -809,7 +809,7 @@ function entrar(i){CU=S.US[i];document.getElementById('login-screen').style.disp
 function doLogout(){CU=null;loginFaz=null;loginUser=null;pinBuf='';document.getElementById('app').style.display='none';document.getElementById('tabs').style.display='none';document.getElementById('login-screen').style.display='flex';document.getElementById('step-faz').style.display='block';document.getElementById('step-user').style.display='none';document.getElementById('step-pin').style.display='none';if(window.history&&window.history.replaceState)window.history.replaceState({},document.title,window.location.pathname);mostrarFazendas();}
 
 // ═══ NAVEGAÇÃO ═══
-function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',medicamento:'Medicamentos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>rListLotes(),50);
+function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',medicamento:'Medicamentos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);
 if(id==='mapa')setTimeout(function(){try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}},100);if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();},50);window.scrollTo(0,0);}
 function goBack(){if(prevPage)sp(prevPage,false);else sp('home',false);}
 function isV(u){return u.p.diaria||u.p.insumo||u.p.medicamento||u.p.trato||u.p.escore;}
@@ -1098,48 +1098,54 @@ function _renderPinsNoContainer(contId, resumoId){
     var aloc = S.MAPA_ALOC[a.id];
     var lote = aloc ? lotes.find(function(l){return l.nome===aloc;}) : null;
     var qtd = lote ? (lote.qtd||0) : 0;
-    var ocupado = !!lote && qtd>0;
-    if(!ocupado) return;
+    if(!lote || qtd<=0) return;
     ocupados++;
 
-    var pin = document.createElement('div');
-    pin.style.cssText = 'position:absolute;transform:translate(-50%,-100%);cursor:pointer;z-index:10;-webkit-tap-highlight-color:transparent;user-select:none;';
+    // Cor por módulo
+    var cores = {1:{bg:'#1B5E20',bd:'#4CAF50'},2:{bg:'#B71C1C',bd:'#EF5350'},3:{bg:'#4A148C',bd:'#CE93D8'},4:{bg:'#827717',bd:'#F9A825'}};
+    var cor = a.tipo==='modulo' ? (cores[a.modulo]||cores[1]) : {bg:'#2E7D32',bd:'#66BB6A'};
+    var labelShort = a.label.replace('MOD:0','M').replace('MOD:','M').replace('/P:0','/P').replace('/P:','/'+'P');
+
+    // Wrapper clicável
+    var pin = document.createElement('button');
+    pin.type = 'button';
+    pin.style.cssText = 'position:absolute;transform:translate(-50%,-100%);cursor:pointer;z-index:10;background:none;border:none;padding:0;-webkit-tap-highlight-color:rgba(0,0,0,0);touch-action:manipulation;';
     pin.style.left = a.x+'%';
     pin.style.top = a.y+'%';
 
-    // Fix mobile: usar closure correta para 'a' e 'contId'
+    // Caixa
+    var box = document.createElement('div');
+    box.style.cssText = 'background:'+cor.bg+';border:2px solid '+cor.bd+';border-radius:8px;padding:5px 8px;text-align:center;min-width:52px;box-shadow:0 3px 10px rgba(0,0,0,0.5);';
+    var emoji = document.createElement('div');
+    emoji.textContent = '🐄';
+    emoji.style.cssText = 'font-size:16px;line-height:1;';
+    var lbl = document.createElement('div');
+    lbl.textContent = labelShort;
+    lbl.style.cssText = 'font-size:8px;font-weight:700;color:#fff;opacity:0.85;line-height:1.3;';
+    var num = document.createElement('div');
+    num.textContent = qtd;
+    num.style.cssText = 'font-size:13px;font-weight:800;color:#fff;line-height:1.3;';
+    var nome = document.createElement('div');
+    nome.textContent = lote.nome;
+    nome.style.cssText = 'font-size:8px;color:'+cor.bd+';font-weight:600;';
+    box.appendChild(emoji);box.appendChild(lbl);box.appendChild(num);box.appendChild(nome);
+
+    // Haste
+    var haste = document.createElement('div');
+    haste.style.cssText = 'width:2px;height:8px;background:'+cor.bd+';margin:0 auto;';
+    var ponto = document.createElement('div');
+    ponto.style.cssText = 'width:6px;height:6px;border-radius:50%;background:'+cor.bd+';margin:0 auto;';
+
+    pin.appendChild(box);pin.appendChild(haste);pin.appendChild(ponto);
+
+    // Clique — closure correta
     (function(area, cid){
-      var tapped = false;
-      pin.addEventListener('touchstart', function(e){
-        tapped = true;
-        e.stopPropagation();
-      }, {passive:true});
-      pin.addEventListener('touchend', function(e){
-        if(tapped){ tapped=false; e.preventDefault(); e.stopPropagation(); abrirMapaModal(area, cid); }
-      }, {passive:false});
       pin.addEventListener('click', function(e){
-        e.stopPropagation();
+        e.preventDefault();e.stopPropagation();
         abrirMapaModal(area, cid);
       });
     })(a, contId);
 
-    var labelShort = a.label.replace('MOD:0','M').replace('MOD:','M').replace('/P:0','/P');
-    // Cor diferente por módulo para diferenciar visualmente
-    var corMod = {1:'#1B5E20',2:'#B71C1C',3:'#4A148C',4:'#827717'}[a.modulo] || '#1B5E20';
-    var bordaMod = {1:'#4CAF50',2:'#EF9A9A',3:'#CE93D8',4:'#F9A825'}[a.modulo] || '#4CAF50';
-    var bg = a.tipo==='pasto' ? '#1B5E20' : corMod;
-    var borda = a.tipo==='pasto' ? '#4CAF50' : bordaMod;
-
-    pin.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;pointer-events:none">'
-      +'<div style="background:'+bg+';border:2px solid '+borda+';border-radius:8px;padding:4px 7px;text-align:center;min-width:52px;box-shadow:0 3px 8px rgba(0,0,0,0.5)">'
-      +'<div style="font-size:16px;line-height:1">🐄</div>'
-      +'<div style="font-size:8px;font-weight:700;color:#fff;opacity:0.85;line-height:1.3">'+labelShort+'</div>'
-      +'<div style="font-size:12px;font-weight:800;color:#fff;line-height:1.3">'+qtd+'</div>'
-      +'<div style="font-size:8px;color:'+borda+';font-weight:600">'+lote.nome+'</div>'
-      +'</div>'
-      +'<div style="width:2px;height:8px;background:'+borda+';margin:0 auto"></div>'
-      +'<div style="width:5px;height:5px;border-radius:50%;background:'+borda+'"></div>'
-      +'</div>';
     cont.appendChild(pin);
   });
 
