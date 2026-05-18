@@ -427,14 +427,9 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 </div>
 <div class="card" id="ct-historico" style="margin-top:8px">
 <div class="stit">🕐 Meus lançamentos</div>
-<div class="psel" style="margin-bottom:8px">
-<div class="pbtn on" onclick="sCtHist(this,'hoje')">Hoje</div>
-<div class="pbtn" onclick="sCtHist(this,'semana')">7 dias</div>
-<div class="pbtn" onclick="sCtHist(this,'mes')">Mês</div>
-</div>
 <div id="ct-hist-lista"><div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum lançamento.</div></div>
 <div style="margin-top:8px;padding-top:8px;border-top:1px solid #f0f0f0;display:flex;justify-content:space-between">
-<span style="font-size:12px;color:#888">Total período:</span>
+<span style="font-size:12px;color:#888">Total a pagar:</span>
 <span style="font-size:14px;font-weight:700;color:#1B5E20" id="ct-hist-total">R$ 0,00</span>
 </div>
 </div>
@@ -462,24 +457,49 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <select id="pf" onchange="rPan()" style="flex:1;padding:9px;border:1.5px solid #ddd;border-radius:9px;font-size:13px">
     <option value="">Todas as fazendas</option>
   </select>
-  <select id="pan-per" onchange="rPan()" style="flex:1;padding:9px;border:1.5px solid #ddd;border-radius:9px;font-size:13px">
-    <option value="15">Últimos 15 dias</option>
-    <option value="7">Últimos 7 dias</option>
-    <option value="30">Últimos 30 dias</option>
-    <option value="mes">Mês atual</option>
-    <option value="tudo">Tudo</option>
-  </select>
+  <button onclick="abrirPesquisaPeriodo()" style="padding:9px 14px;background:#1B5E20;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer">🔍 Pesquisar</button>
+</div>
+
+<!-- MODAL PESQUISA -->
+<div id="modal-pesquisa" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:9999;overflow-y:auto;padding:20px">
+<div style="background:#fff;border-radius:16px;margin:0 auto;max-width:420px;padding:20px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <span style="font-size:16px;font-weight:700;color:#1B5E20">🔍 Pesquisar por período</span>
+    <span onclick="fecharPesquisa()" style="cursor:pointer;font-size:24px;color:#888">×</span>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+    <div><div style="font-size:12px;color:#666;margin-bottom:4px">Data início</div><input type="date" id="peq-de" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div>
+    <div><div style="font-size:12px;color:#666;margin-bottom:4px">Data fim</div><input type="date" id="peq-ate" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div>
+  </div>
+  <div style="margin-bottom:12px">
+    <div style="font-size:12px;color:#666;margin-bottom:6px">Tipo</div>
+    <div style="display:flex;gap:12px">
+      <label style="display:flex;align-items:center;gap:5px;font-size:13px"><input type="checkbox" id="peq-diaria" checked> 💰 Diárias</label>
+      <label style="display:flex;align-items:center;gap:5px;font-size:13px"><input type="checkbox" id="peq-cantina" checked> 🍽 Cantina</label>
+    </div>
+  </div>
+  <div style="margin-bottom:16px">
+    <div style="font-size:12px;color:#666;margin-bottom:6px">Status</div>
+    <div style="display:flex;gap:6px">
+      <div class="pbtn on" id="peq-st-todas" onclick="sPeqSt(this,'todas')" style="flex:1;padding:8px;text-align:center;font-size:12px">Todas</div>
+      <div class="pbtn" id="peq-st-pagar" onclick="sPeqSt(this,'pagar')" style="flex:1;padding:8px;text-align:center;font-size:12px">⏳ A pagar</div>
+      <div class="pbtn" id="peq-st-pago" onclick="sPeqSt(this,'pago')" style="flex:1;padding:8px;text-align:center;font-size:12px">✅ Pagas</div>
+    </div>
+  </div>
+  <button onclick="executarPesquisa()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">🔍 Buscar</button>
+  <div id="peq-resultado"></div>
+</div>
 </div>
 
 <!-- CARDS RESUMO -->
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
   <div style="background:#fff;border-radius:12px;padding:12px;border:1px solid #e0e0e0">
-    <div style="font-size:11px;color:#888">💰 Diárias</div>
+    <div style="font-size:11px;color:#888">💰 Diárias a pagar</div>
     <div style="font-size:20px;font-weight:800;color:#1B5E20" id="ps-d">R$ 0</div>
     <div style="font-size:11px;color:#aaa" id="ps-dn">0 reg.</div>
   </div>
   <div style="background:#fff;border-radius:12px;padding:12px;border:1px solid #e0e0e0">
-    <div style="font-size:11px;color:#888">🍽 Cantina</div>
+    <div style="font-size:11px;color:#888">🍽 Cantina a pagar</div>
     <div style="font-size:20px;font-weight:800;color:#1B5E20" id="ps-c">R$ 0</div>
     <div style="font-size:11px;color:#aaa" id="ps-cn">0 reg.</div>
   </div>
@@ -685,7 +705,7 @@ function calcCt(){const p=S.PR;let t=0;if(cobT==='ref')t=QT.cafe*p.cafe+QT.almoc
 function getFazGasUrl(faz){if(faz&&S.FAZ[faz]&&S.FAZ[faz].gasUrl)return S.FAZ[faz].gasUrl;return S.cfgGS||'';}
 function enviarDado(d){if(!d||!d.tipo)return;const r={...d,timestamp:new Date().toISOString()};if(navigator.onLine&&S.cfgGS){const url=getFazGasUrl(d.faz||'');fetch(url+'?'+new URLSearchParams({data:JSON.stringify(r)}),{method:'GET',mode:'no-cors'}).then(()=>atualizarSync()).catch(()=>{S.queue.push(r);salvar();atualizarSync();});}else{S.queue.push(r);salvar();atualizarSync();}}
 function baixar(lista,dt,loc){lista.forEach(x=>{if(x.p&&S.EST[x.p]&&x.q>0){S.EST[x.p].q=Math.max(0,parseFloat((S.EST[x.p].q-x.q).toFixed(2)));S.mEst.push({p:x.p,q:x.q,u:S.EST[x.p].u,t:'saida',dt,loc});}});salvar();}
-function envD(){const n=(document.getElementById('d-nome')||{}).value||'';const v=parseFloat((document.getElementById('d-val')||{}).value)||0;const faz=(document.getElementById('d-faz')||{}).value||(CU&&CU.fs&&CU.fs.length===1?CU.fs[0]:getFL()[0]||'');const dt=(document.getElementById('d-data')||{}).value||TD;if(!n||!srvSel||!avSel){alert('Preencha nome, serviço e avaliação.');return;}if(n&&faz){if(!S.DIARISTAS)S.DIARISTAS={};if(!S.DIARISTAS[faz])S.DIARISTAS[faz]=[];if(!S.DIARISTAS[faz].includes(n))S.DIARISTAS[faz].push(n);}const r={tipo:'diaria',faz,n,dt,srv:srvSel==='Outro'?(document.getElementById('d-out')||{}).value:srvSel,v,av:avSel,obs:(document.getElementById('d-obs')||{}).value};S.rD.push(r);// despesa criada pelo Fechar Conta
+function envD(){const n=(document.getElementById('d-nome')||{}).value||'';const v=parseFloat((document.getElementById('d-val')||{}).value)||0;const faz=(document.getElementById('d-faz')||{}).value||(CU&&CU.fs&&CU.fs.length===1?CU.fs[0]:getFL()[0]||'');const dt=(document.getElementById('d-data')||{}).value||TD;if(!n||!srvSel||!avSel){alert('Preencha nome, serviço e avaliação.');return;}if(n&&faz){if(!S.DIARISTAS)S.DIARISTAS={};if(!S.DIARISTAS[faz])S.DIARISTAS[faz]=[];if(!S.DIARISTAS[faz].includes(n))S.DIARISTAS[faz].push(n);}const r={tipo:'diaria',faz,n,dt,srv:srvSel==='Outro'?(document.getElementById('d-out')||{}).value:srvSel,v,av:avSel,obs:(document.getElementById('d-obs')||{}).value,lancadoPor:CU?CU.n:''};S.rD.push(r);// despesa criada pelo Fechar Conta
 enviarDado(r);showOk('ok-d');document.getElementById('d-val').value='';document.getElementById('d-obs').value='';document.querySelectorAll('#d-servs .bopt,.avbtn').forEach(b=>b.classList.remove('sel'));srvSel='';avSel='';setTimeout(()=>{sp('home',false);rUlt();},1600);}
 function envI(){const ins=[...document.querySelectorAll('#ins-l .ir')].map(r=>({p:r.querySelector('.ip').value,q:parseFloat(r.querySelector('.iq').value)||0,u:r.querySelector('.iu').value})).filter(x=>x.p&&x.q>0);if(!ins.length){alert('Adicione pelo menos um produto.');return;}const dt=(document.getElementById('i-data')||{}).value||TD;const dest=(document.getElementById('i-dest')||{}).value;baixar(ins,dt,dest);const r={tipo:'insumo',faz:(document.getElementById('i-faz')||{}).value,n:CU.n,dt,ins,dest};S.rD.push(r);enviarDado(r);showOk('ok-i');document.getElementById('i-dest').value='';document.getElementById('ins-l').innerHTML=`<div class="ir"><div style="flex:2"><div class="lbl">Produto</div><select class="ip" onchange="updInsInfo(this)"></select></div><div style="flex:1"><div class="lbl">Qtd</div><input type="number" class="iq" placeholder="0" min="0" step="0.5"></div><div style="flex:1"><div class="lbl">Unid.</div><select class="iu"><option>saco</option><option>kg</option><option>litro</option></select></div></div><div class="ins-info" style="display:none"></div>`;updInsProd();setTimeout(()=>{sp('home',false);rUlt();},1600);}
 function envM(){const nome=(document.getElementById('m-nome')||{}).value||'';const lote=(document.getElementById('m-lote')||{}).value||'';let nanim=parseInt((document.getElementById('m-nanim')||{}).value)||0;if(!nanim&&lote){const lt=(S.LOTES||[]).find(l=>l.nome===lote);if(lt)nanim=lt.qtd;}if(!nome){alert('Informe o nome do remédio.');return;}const r={tipo:'medicamento',faz:(document.getElementById('m-faz')||{}).value,n:CU.n,dt:(document.getElementById('m-data')||{}).value||TD,nome,lote,nanim,dose:((document.getElementById('m-dose')||{}).value||'')+' '+((document.getElementById('m-dose-unid')||{}).value||''),aplicou:(document.getElementById('m-aplicou')||{}).value||CU.n,obs:(document.getElementById('m-obs')||{}).value};S.rD.push(r);enviarDado(r);showOk('ok-m');['m-nome','m-nanim','m-dose','m-aplicou','m-obs'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});setTimeout(()=>{sp('home',false);rUlt();},1600);}
@@ -696,7 +716,42 @@ function entEst(){const p=(document.getElementById('ep')||{}).value;const q=pars
 
 // ═══ RENDER ═══
 function rEst(){const el=document.getElementById('est-l');if(!el)return;el.innerHTML=Object.entries(S.EST).map(([nome,d])=>{const pc=Math.min(100,Math.round(d.q/Math.max(d.q,d.min*3)*100));const cl=d.q<=d.min?'l':d.q<=d.min*2?'m':'';const badge=d.q<=d.min?`<span class="lb">⚠️ Baixo!</span>`:d.q<=d.min*2?`<span class="wb">Atenção</span>`:'';return`<div class="er"><div style="flex:1"><div style="font-size:13px;font-weight:700">${nome} ${badge}</div><div style="font-size:11px;color:#888;margin-top:2px">${d.q} ${d.u} · mín ${d.min}<div class="ebw"><div class="ebar ${cl}" style="width:${pc}%;height:100%"></div></div></div></div><div style="text-align:right;padding-left:10px"><div style="font-size:18px;font-weight:700;color:${d.q<=d.min?'#CC2200':'#2d7a1f'}">${d.q}<div style="font-size:10px;font-weight:400;color:#888">${d.u}</div></div><button onclick="editarProdutoEst('${nome}')" style="margin-top:4px;padding:2px 8px;font-size:10px;background:#f0f0f0;border:none;border-radius:5px;cursor:pointer">✏️</button></div></div>`;}).join('');const ml=document.getElementById('mov-l');if(!ml)return;ml.innerHTML=S.mEst.length?[...S.mEst].reverse().slice(0,20).map(m=>`<div class="ri"><div class="rt"><span class="rn">${m.p}</span><span style="font-size:13px;font-weight:700;color:${m.t==='entrada'?'#2d7a1f':'#CC2200'}">${m.t==='entrada'?'+':'-'}${m.q} ${m.u}</span></div><div class="rd">${m.dt.split('-').reverse().join('/')} · ${m.t==='entrada'?'Entrada':'Saída → '+m.loc}</div></div>`).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:12px">Nenhuma.</div>';}
-function rUlt(){const fa=CU&&CU.fs&&CU.fs.length===1?CU.fs[0]:'';const isVaq=CU&&CU.r==='Vaqueiro';const corte=new Date();corte.setDate(corte.getDate()-15);const cs=corte.toISOString().split('T')[0];const todos=[...S.rD,...S.rC,...S.rT,...S.rE].filter(r=>{const dt=r.dt||r.data||'';if(r._apagado)return false;if(fa&&r.faz&&r.faz!==fa)return false;if(dt<cs)return false;if(isVaq&&r.tipo==='cantina'&&r.resp&&r.resp!==CU.n)return false;if(isVaq&&r.tipo==='diaria'&&r.n&&r.n!==CU.n)return false;return true;}).sort((a,b)=>(b.dt||'')>(a.dt||'')?1:-1).slice(0,20);const c=document.getElementById('vult');if(!c)return;c.innerHTML=todos.length?todos.map(r=>{if(r.tipo==='escore')return`<div class="ri"><div class="rt"><span class="rn">Escore <span style="background:${EC[r.es]};color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:3px;font-weight:700">E${r.es}</span></span></div><div class="rd">${(r.dt||'').split('-').reverse().join('/')} · ${r.co||r.faz}</div></div>`;if(r.tipo==='trato')return`<div class="ri"><div class="rt"><span class="rn">Trato <span class="bdg bt">${r.co}</span></span></div><div class="rd">${(r.dt||'').split('-').reverse().join('/')} · ${r.pr} ${r.q}${r.unid||''}</div></div>`;if(r.tipo==='insumo')return`<div class="ri"><div class="rn">Insumos <span class="bdg bp">Depósito</span></div><div class="rd">${(r.dt||'').split('-').reverse().join('/')} · ${(r.ins||[]).map(x=>x.q+' '+x.u+' '+x.p).join(', ')}</div></div>`;if(r.tipo==='cantina')return`<div class="ri"><div class="rt"><span class="rn">Cantina</span><span class="rv">R$ ${r.total.toFixed(2).replace('.',',')}</span></div><div class="rd">${(r.dt||'').split('-').reverse().join('/')} · ${r.faz} · ${r.resp}</div></div>`;const av=r.av==='otimo'?'<span class="bdg bg">Ótimo</span>':r.av==='bom'?'<span class="bdg ba">Bom</span>':'<span class="bdg br">Ruim</span>';return`<div class="ri"><div class="rt"><span class="rn">${r.srv||''}${av}</span><span class="rv">R$ ${(r.v||0).toFixed(2).replace('.',',')}</span></div><div class="rd">${(r.dt||'').split('-').reverse().join('/')} · ${r.faz}</div></div>`;}).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum lançamento ainda.</div>';}
+function rUlt(){
+  var fa=CU&&CU.fs&&CU.fs.length===1?CU.fs[0]:'';
+  var isVaq=CU&&CU.r==='Vaqueiro';
+  var c=document.getElementById('vult');
+  if(!c)return;
+  if(isVaq){
+    var diarias=(S.rD||[]).filter(function(r){
+      if(r._apagado||r.tipo!=='diaria')return false;
+      if(fa&&r.faz&&r.faz!==fa)return false;
+      if(r.lancadoPor&&r.lancadoPor!==CU.n)return false;
+      return !r.pago;
+    }).sort(function(a,b){return(b.dt||'')>(a.dt||'')?1:-1;});
+    c.innerHTML=diarias.length?diarias.map(function(r){
+      var av=r.av==='otimo'?'<span class="bdg bg">Ótimo</span>':r.av==='bom'?'<span class="bdg ba">Bom</span>':'<span class="bdg br">Ruim</span>';
+      return'<div class="ri"><div class="rt"><span class="rn">'+r.n+' — '+(r.srv||'')+av+'</span><span class="rv">R$ '+(r.v||0).toFixed(2).replace('.',',')+'</span></div><div class="rd">'+(r.dt||'').split('-').reverse().join('/')+' · '+r.faz+'</div></div>';
+    }).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum lançamento a pagar.</div>';
+    return;
+  }
+  var corte=new Date();corte.setDate(corte.getDate()-15);
+  var cs=corte.toISOString().split('T')[0];
+  var todos=[...S.rD,...S.rC,...S.rT,...S.rE].filter(function(r){
+    var dt=r.dt||r.data||'';
+    if(r._apagado)return false;
+    if(fa&&r.faz&&r.faz!==fa)return false;
+    if(dt<cs)return false;
+    return true;
+  }).sort(function(a,b){return(b.dt||'')>(a.dt||'')?1:-1;}).slice(0,20);
+  c.innerHTML=todos.length?todos.map(function(r){
+    if(r.tipo==='escore')return'<div class="ri"><div class="rt"><span class="rn">Escore <span style="background:'+EC[r.es]+';color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;margin-left:3px;font-weight:700">E'+r.es+'</span></span></div><div class="rd">'+(r.dt||'').split('-').reverse().join('/')+' · '+(r.co||r.faz)+'</div></div>';
+    if(r.tipo==='trato')return'<div class="ri"><div class="rt"><span class="rn">Trato <span class="bdg bt">'+r.co+'</span></span></div><div class="rd">'+(r.dt||'').split('-').reverse().join('/')+' · '+r.pr+' '+r.q+(r.unid||'')+'</div></div>';
+    if(r.tipo==='insumo')return'<div class="ri"><div class="rn">Insumos <span class="bdg bp">Depósito</span></div><div class="rd">'+(r.dt||'').split('-').reverse().join('/')+' · '+(r.ins||[]).map(function(x){return x.q+' '+x.u+' '+x.p;}).join(', ')+'</div></div>';
+    if(r.tipo==='cantina')return'<div class="ri"><div class="rt"><span class="rn">Cantina</span><span class="rv">R$ '+r.total.toFixed(2).replace('.',',')+'</span></div><div class="rd">'+(r.dt||'').split('-').reverse().join('/')+' · '+r.faz+' · '+r.resp+'</div></div>';
+    var av=r.av==='otimo'?'<span class="bdg bg">Ótimo</span>':r.av==='bom'?'<span class="bdg ba">Bom</span>':'<span class="bdg br">Ruim</span>';
+    return'<div class="ri"><div class="rt"><span class="rn">'+(r.srv||'')+av+'</span><span class="rv">R$ '+(r.v||0).toFixed(2).replace('.',',')+'</span></div><div class="rd">'+(r.dt||'').split('-').reverse().join('/')+' · '+r.faz+'</div></div>';
+  }).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum lançamento ainda.</div>';
+}
 
 function getSafra(){const now=new Date();const y=now.getMonth()>=6?now.getFullYear():now.getFullYear()-1;return{inicio:new Date(y,6,1),fim:new Date(y+1,5,30),label:y+'/'+(y+1)};}
 function filtrar(lista,per){const now=new Date();const faz=(document.getElementById('pf')||{}).value||'';if(per==='safra'){const sf=getSafra();return lista.filter(r=>{const dt=r.dt||r.data;const d=new Date(dt+'T00:00:00');if(faz&&r.faz!==faz)return false;return d>=sf.inicio&&d<=sf.fim;});}return lista.filter(r=>{const dt=r.dt||r.data;const d=new Date(dt+'T00:00:00');if(faz&&r.faz!==faz)return false;if(per==='dia')return dt===TD;if(per==='semana'){const s=new Date(now);s.setDate(now.getDate()-7);return d>=s;}if(per==='quinzena'){const s=new Date(now);s.setDate(now.getDate()-15);return d>=s;}return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});}
@@ -1502,35 +1557,26 @@ document.addEventListener('DOMContentLoaded',function(){
 
 // ═══ HISTÓRICO CANTINA ═══
 var ctHistPer = 'hoje';
-function sCtHist(el, per){
-  ctHistPer = per;
-  document.querySelectorAll('#ct-historico .pbtn').forEach(function(b){b.classList.remove('on');});
-  el.classList.add('on');
-  rCtHist();
-}
+function sCtHist(el, per){ rCtHist(); }
 function rCtHist(){
   var resp = CU ? CU.n : '';
-  var now = new Date();
-  var hoje = now.toISOString().split('T')[0];
   var lista = (S.rC||[]).filter(function(r){
+    if(r._apagado) return false;
     if(r.resp !== resp && r.n !== resp) return false;
-    var dt = r.dt||'';
-    if(ctHistPer==='hoje') return dt===hoje;
-    if(ctHistPer==='semana'){var s=new Date(now);s.setDate(now.getDate()-7);return dt>=s.toISOString().split('T')[0];}
-    return dt.substring(0,7)===hoje.substring(0,7);
+    return !r.validado && !r.pago;
   });
   var el = document.getElementById('ct-hist-lista');
   var tot = document.getElementById('ct-hist-total');
   if(!el) return;
-  var total = lista.reduce(function(a,r){return a+r.total;},0);
+  var total = lista.reduce(function(a,r){return a+(r.total||0);},0);
   if(tot) tot.textContent = 'R$ '+total.toFixed(2).replace('.',',');
   if(!lista.length){
-    el.innerHTML='<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum lançamento.</div>';
+    el.innerHTML='<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum lançamento a pagar. ✅</div>';
     return;
   }
   el.innerHTML = [...lista].reverse().map(function(r){
     var dtFmt=(r.dt||'').split('-').reverse().join('/');
-    return '<div class="ri"><div class="rt"><span style="font-size:13px;font-weight:600">'+dtFmt+'</span><span class="rv">R$ '+r.total.toFixed(2).replace('.',',')+'</span></div><div class="rd">'+(r.det||'')+'</div></div>';
+    return '<div class="ri"><div class="rt"><span style="font-size:13px;font-weight:600">'+dtFmt+'</span><span class="rv">R$ '+(r.total||0).toFixed(2).replace('.',',')+'</span></div><div class="rd">'+(r.det||'')+'</div></div>';
   }).join('');
 }
 
@@ -1592,20 +1638,11 @@ function getPanFaz(){
 
 function filtrarPan(lista){
   var faz = getPanFaz();
-  var per = getPanPer();
-  var hoje = new Date();
-  var hojeStr = hoje.toISOString().split('T')[0];
-  
   return lista.filter(function(r){
     if(faz && r.faz !== faz) return false;
     if(r._apagado) return false;
-    var dt = r.dt||'';
-    if(per === 'tudo') return true;
-    if(per === 'mes') return dt.substring(0,7) === hojeStr.substring(0,7);
-    var dias = parseInt(per)||15;
-    var ini = new Date(hoje);
-    ini.setDate(hoje.getDate()-dias);
-    return dt >= ini.toISOString().split('T')[0];
+    if(r.tipo==='diaria') return !r.pago;
+    return !r.validado && !r.pago;
   });
 }
 
@@ -1863,6 +1900,65 @@ document.addEventListener('DOMContentLoaded', function(){
   if(dc) dc.onclick = fecharDetModal;
   if(dm) dm.onclick = function(e){ if(e.target===dm) fecharDetModal(); };
 });
+
+// ═══ PESQUISA POR PERÍODO ═══
+var peqSt = 'todas';
+function sPeqSt(el, st){
+  peqSt = st;
+  document.querySelectorAll('#modal-pesquisa .pbtn').forEach(function(b){b.classList.remove('on');});
+  el.classList.add('on');
+}
+function abrirPesquisaPeriodo(){
+  var hoje = new Date().toISOString().split('T')[0];
+  var mesAtras = new Date(); mesAtras.setDate(mesAtras.getDate()-30);
+  var el1 = document.getElementById('peq-de');
+  var el2 = document.getElementById('peq-ate');
+  if(el1) el1.value = mesAtras.toISOString().split('T')[0];
+  if(el2) el2.value = hoje;
+  document.getElementById('peq-resultado').innerHTML = '';
+  document.getElementById('modal-pesquisa').style.display = 'block';
+}
+function fecharPesquisa(){
+  document.getElementById('modal-pesquisa').style.display = 'none';
+}
+function executarPesquisa(){
+  var de = (document.getElementById('peq-de')||{}).value||'';
+  var ate = (document.getElementById('peq-ate')||{}).value||'';
+  var useDiaria = (document.getElementById('peq-diaria')||{}).checked;
+  var useCantina = (document.getElementById('peq-cantina')||{}).checked;
+  var faz = getPanFaz ? getPanFaz() : '';
+  function filtroBase(r){ if(r._apagado)return false; if(faz&&r.faz!==faz)return false; var dt=r.dt||''; if(de&&dt<de)return false; if(ate&&dt>ate)return false; return true; }
+  function filtroStatus(r){ var pago=r.pago||r.validado; if(peqSt==='pagar')return !pago; if(peqSt==='pago')return !!pago; return true; }
+  var diarias = useDiaria?(S.rD||[]).filter(function(r){return r.tipo==='diaria'&&filtroBase(r)&&filtroStatus(r);}):[]; 
+  var cantinas = useCantina?(S.rC||[]).filter(function(r){return filtroBase(r)&&filtroStatus(r);}):[]; 
+  var todos = [...diarias,...cantinas].sort(function(a,b){return(b.dt||'')>(a.dt||'')?1:-1;});
+  var totalD = diarias.reduce(function(a,r){return a+(r.v||0);},0);
+  var totalC = cantinas.reduce(function(a,r){return a+(r.total||0);},0);
+  var totalG = totalD+totalC;
+  var el = document.getElementById('peq-resultado');
+  if(!todos.length){el.innerHTML='<div style="text-align:center;color:#888;padding:16px">Nenhum registro encontrado.</div>';return;}
+  window._peqDados = {diarias:diarias,cantinas:cantinas,de:de,ate:ate,totalD:totalD,totalC:totalC,totalG:totalG};
+  var html = '<div style="background:#f0f9e8;border-radius:10px;padding:10px;margin-bottom:10px;display:flex;justify-content:space-between"><div style="font-size:12px;color:#555">💰 Diárias: <b>R$ '+totalD.toFixed(2).replace('.',',')+'</b><br>🍽 Cantina: <b>R$ '+totalC.toFixed(2).replace('.',',')+'</b></div><div style="font-size:18px;font-weight:800;color:#1B5E20">R$ '+totalG.toFixed(2).replace('.',',')+'</div></div>';
+  html += todos.map(function(r){
+    var dtFmt=(r.dt||'').split('-').reverse().join('/');
+    var pago=r.pago||r.validado;
+    var st=pago?'<span style="background:#E3F2FD;color:#1565C0;font-size:10px;padding:2px 7px;border-radius:8px;font-weight:700">✅ Pago</span>':'<span style="background:#FFF3E0;color:#E65100;font-size:10px;padding:2px 7px;border-radius:8px;font-weight:700">⏳ A pagar</span>';
+    if(r.tipo==='diaria') return '<div style="background:#fff;border-radius:10px;padding:11px;margin-bottom:6px;border:1px solid #e0e0e0;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;font-weight:700">'+r.n+'</div><div style="font-size:11px;color:#666">'+r.srv+' · '+dtFmt+' · '+r.faz+'</div><div style="margin-top:3px">'+st+'</div></div><div style="font-size:16px;font-weight:800;color:#1B5E20">R$ '+(r.v||0).toFixed(2).replace('.',',')+'</div></div>';
+    return '<div style="background:#fff;border-radius:10px;padding:11px;margin-bottom:6px;border:1px solid #e0e0e0;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;font-weight:700">🍽 '+(r.resp||r.n||'—')+'</div><div style="font-size:11px;color:#666">Cantina · '+dtFmt+' · '+r.faz+'</div><div style="margin-top:3px">'+st+'</div></div><div style="font-size:16px;font-weight:800;color:#1B5E20">R$ '+(r.total||0).toFixed(2).replace('.',',')+'</div></div>';
+  }).join('');
+  html += '<button onclick="gerarPDFPesquisa()" style="width:100%;padding:11px;background:#C62828;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px">📄 Gerar Relatório PDF</button>';
+  el.innerHTML = html;
+}
+function gerarPDFPesquisa(){
+  var d = window._peqDados; if(!d){alert('Faça uma pesquisa primeiro.');return;}
+  var deFmt=(d.de||'').split('-').reverse().join('/');
+  var ateFmt=(d.ate||'').split('-').reverse().join('/');
+  var rowsD=d.diarias.map(function(r){return'<tr><td>'+(r.dt||'').split('-').reverse().join('/')+'</td><td>'+r.n+'</td><td>'+r.srv+'</td><td>'+r.faz+'</td><td style="text-align:right">R$ '+(r.v||0).toFixed(2).replace('.',',')+'</td><td>'+(r.pago?'✅ Pago':'⏳ A pagar')+'</td></tr>';}).join('');
+  var rowsC=d.cantinas.map(function(r){return'<tr><td>'+(r.dt||'').split('-').reverse().join('/')+'</td><td>'+(r.resp||r.n||'—')+'</td><td>Cantina</td><td>'+r.faz+'</td><td style="text-align:right">R$ '+(r.total||0).toFixed(2).replace('.',',')+'</td><td>'+(r.validado||r.pago?'✅ Pago':'⏳ A pagar')+'</td></tr>';}).join('');
+  var w=window.open('','_blank');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Relatório GPL</title><style>body{font-family:Arial,sans-serif;padding:20px;color:#222}h1{color:#1B5E20;font-size:18px}h2{color:#1B5E20;font-size:14px;margin-top:18px}table{width:100%;border-collapse:collapse;font-size:12px}th{background:#1B5E20;color:#fff;padding:7px;text-align:left}td{padding:6px;border-bottom:1px solid #eee}.tot{font-size:14px;font-weight:700;color:#1B5E20;margin-top:10px}.footer{margin-top:30px;font-size:10px;color:#aaa;text-align:center}</style></head><body><h1>📊 Relatório — Gestão Pecuária Lucrativa</h1><p style="font-size:12px;color:#666">Período: '+deFmt+' a '+ateFmt+'</p>'+(rowsD?'<h2>💰 Diárias</h2><table><tr><th>Data</th><th>Diarista</th><th>Serviço</th><th>Fazenda</th><th>Valor</th><th>Status</th></tr>'+rowsD+'</table><p class="tot">Total Diárias: R$ '+d.totalD.toFixed(2).replace('.',',')+'</p>':'')+(rowsC?'<h2>🍽 Cantina</h2><table><tr><th>Data</th><th>Responsável</th><th>Tipo</th><th>Fazenda</th><th>Valor</th><th>Status</th></tr>'+rowsC+'</table><p class="tot">Total Cantina: R$ '+d.totalC.toFixed(2).replace('.',',')+'</p>':'')+'<p class="tot" style="font-size:16px;border-top:2px solid #1B5E20;padding-top:10px">TOTAL GERAL: R$ '+d.totalG.toFixed(2).replace('.',',')+'</p><div class="footer">GPL — Gestão Pecuária Lucrativa · Rogério Avelino · Gerado em '+new Date().toLocaleDateString('pt-BR')+'</div></body></html>');
+  w.document.close(); setTimeout(function(){w.print();},500);
+}
 
 </script>
 </body>
