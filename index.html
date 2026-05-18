@@ -289,7 +289,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 18/05/2026 v2.4 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 18/05/2026 v2.5 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -663,10 +663,10 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div id="lote-sub-mapa" style="display:none">
 <div style="background:#2d5a1b;border-radius:12px;overflow:hidden;position:relative;min-height:380px" id="mapa-wrap-lote">
   <img src="https://gestaopecuarialucrativa-dotcom.github.io/fazenda-gpl/mapa.jpeg" 
-    style="width:100%;display:block;opacity:0.92;position:absolute;top:0;left:0;height:100%;object-fit:cover" 
+    style="width:100%;display:block;opacity:0.92;position:absolute;top:0;left:0;height:100%;object-fit:cover;pointer-events:none;" 
     alt="Mapa da fazenda"
     onerror="this.style.display='none'">
-  <div id="mapa-pins" style="position:absolute;inset:0;width:100%;height:100%"></div>
+  <div id="mapa-pins" style="position:absolute;inset:0;width:100%;height:100%;z-index:5"></div>
   <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.5);padding:6px 10px;display:flex;gap:10px;flex-wrap:wrap">
     <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#fff"><div style="width:12px;height:12px;border-radius:3px;background:#1B5E20;border:1px solid #4CAF50"></div>Com gado</div>
     <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#fff"><div style="width:12px;height:12px;border-radius:3px;background:#E8F5E9;border:1px solid #2E7D32"></div>Módulo vazio</div>
@@ -697,10 +697,10 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div id="pg-mapa" class="pg" style="display:none">
 <div style="background:#2d5a1b;border-radius:12px;overflow:hidden;position:relative" id="mapa-wrap-main">
   <img id="mapa-img-sat" src="https://gestaopecuarialucrativa-dotcom.github.io/fazenda-gpl/mapa.jpeg" 
-    style="width:100%;display:block;opacity:0.92" alt="Mapa da fazenda"
+    style="width:100%;display:block;opacity:0.92;pointer-events:none;" alt="Mapa da fazenda"
     onerror="this.style.display='none';document.getElementById('mapa-bg-fallback').style.display='block'">
-  <div id="mapa-bg-fallback" style="display:none;width:100%;padding-bottom:85%;background:#2d5a1b"></div>
-  <div id="mapa-pins-main" style="position:absolute;inset:0;width:100%;height:100%"></div>
+  <div id="mapa-bg-fallback" style="display:none;width:100%;padding-bottom:85%;background:#2d5a1b;pointer-events:none"></div>
+  <div id="mapa-pins-main" style="position:absolute;inset:0;width:100%;height:100%;z-index:5"></div>
   <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.5);padding:6px 10px;display:flex;align-items:center;gap:8px">
     <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#A5D6A7;font-weight:600" id="mapa-main-resumo">0 piquetes com gado</div>
     <button onclick="abrirSelPiquete('main')" style="margin-left:auto;background:#1B5E20;color:#fff;border:1px solid #4CAF50;border-radius:14px;padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer">+ Alocar gado</button>
@@ -987,7 +987,8 @@ function carregarNuvem(cb){
           if(cfg.EST)S.EST=cfg.EST;
           if(cfg.SERVS&&cfg.SERVS.length)S.SERVS=cfg.SERVS;
           if(cfg.PR)S.PR=cfg.PR;
-          if(cfg.LOTES)S.LOTES=cfg.LOTES;
+          if(cfg.LOTES&&cfg.LOTES.length)S.LOTES=cfg.LOTES;
+          else if(!S.LOTES||!S.LOTES.length)S.LOTES=DEFAULT.LOTES;
           if(cfg.AREAS)S.AREAS=cfg.AREAS;
           if(cfg.MAPA_ALOC)S.MAPA_ALOC=cfg.MAPA_ALOC;
           if(cfg.DIARISTAS)S.DIARISTAS=cfg.DIARISTAS;
@@ -1004,6 +1005,10 @@ function carregarNuvem(cb){
     // Mesclar dados das abas individuais
     ['rC','rD','rT','rE'].forEach(function(k){if(data[k]&&data[k].length){if(!S[k])S[k]=[];data[k].forEach(function(r){var existe=S[k].some(function(x){return x.dt===r.dt&&(x.resp||x.n)===(r.resp||r.n)&&(x.total||x.v)===(r.total||r.v);});if(!existe)S[k].push(r);});}});
     salvarLocal();
+    // Se nuvem não tinha LOTES, salva os do DEFAULT agora
+    if(!data.CONFIG||!data.CONFIG.length||!(JSON.parse((data.CONFIG[0]||[null,'{}'])[1]||'{}').LOTES||[]).length){
+      setTimeout(function(){salvarNuvem(null);},2000);
+    }
     updCloudStatus('ok');
     if(cb)cb(true);
   };
@@ -1544,7 +1549,7 @@ function showOk(id){const m=document.getElementById(id);if(!m)return;m.style.dis
 
 // ═══ INIT ═══
 try{carregar();}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}
-if(S.cfgGS&&navigator.onLine){carregarNuvem(ok=>{try{initLogin();}catch(e){mostrarFazendas();}});}else{try{initLogin();}catch(e){mostrarFazendas();}}
+if(S.cfgGS&&navigator.onLine){carregarNuvem(ok=>{try{initLogin();}catch(e){mostrarFazendas();}try{popAll();}catch(e){}});}else{try{initLogin();}catch(e){mostrarFazendas();}}
 
 // ═══ PAINEL A PAGAR - destaque ═══
 function rPagarDestaque(){
