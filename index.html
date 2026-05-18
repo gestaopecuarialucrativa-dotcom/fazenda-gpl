@@ -289,7 +289,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 18/05/2026 v2.2 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 18/05/2026 v2.3 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -689,6 +689,24 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
 </div><!-- fim pg-lote -->
 
+<!-- MAPA INTERATIVO — aba principal -->
+<div id="pg-mapa" class="pg" style="display:none">
+<div style="background:#2d5a1b;border-radius:12px;overflow:hidden;position:relative" id="mapa-wrap-main">
+  <img id="mapa-img-sat" src="https://gestaopecuarialucrativa-dotcom.github.io/fazenda-gpl/mapa.jpeg" 
+    style="width:100%;display:block;opacity:0.92" alt="Mapa da fazenda"
+    onerror="this.style.display='none';document.getElementById('mapa-bg-fallback').style.display='block'">
+  <div id="mapa-bg-fallback" style="display:none;width:100%;padding-bottom:85%;background:#2d5a1b"></div>
+  <div id="mapa-pins-main" style="position:absolute;inset:0;width:100%;height:100%"></div>
+  <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.5);padding:6px 10px;display:flex;align-items:center;gap:8px">
+    <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#A5D6A7;font-weight:600" id="mapa-main-resumo">0 piquetes com gado</div>
+    <button onclick="abrirSelPiquete('main')" style="margin-left:auto;background:#1B5E20;color:#fff;border:1px solid #4CAF50;border-radius:14px;padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer">+ Alocar gado</button>
+  </div>
+</div>
+<div style="margin-top:8px;padding:8px;background:#f9f9f9;border-radius:10px;border:1px solid #eee;font-size:12px;color:#555">
+  Toque em um pin 🐄 para mover ou retirar o gado do piquete
+</div>
+</div>
+
 <!-- CONSULTOR — irmão ✅ -->
 <div id="pg-consultor" class="pg" style="display:none">
 <div id="cons-resumo"></div>
@@ -757,7 +775,7 @@ const TD=new Date().toISOString().split('T')[0];
 const EC=['','#7B3F00','#A0522D','#2d7a1f','#CC8800','#CC2200'];
 const EI=[null,{em:'💩',ti:'Escore 1 — Firmes e secas',re:'💡 Reduzir fibra'},{em:'💩',ti:'Escore 2 — Firmes com espalhamento',re:'💡 Monitorar'},{em:'✅',ti:'Escore 3 — Ideal (panqueca)',re:'💡 Nutrição equilibrada!'},{em:'⚠️',ti:'Escore 4 — Soltas e espalhadas',re:'💡 Revisar proteína e água'},{em:'🚨',ti:'Escore 5 — Diarreia',re:'💡 Ação imediata!'}];
 const PL={diaria:'Diária',insumo:'Insumos',medicamento:'Medicamentos',trato:'Trato cocho',escore:'Escore fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Config.'};
-const TABS=[{id:'painel',l:'📊 Painel',p:'painel'},{id:'cantina',l:'🏪 Cantina',p:'cantina'},{id:'estoque',l:'📦 Estoque',p:'estoque'},{id:'config',l:'⚙️ Config.',p:'config'},{id:'consultor',l:'🌿 Visão Geral',p:'config'}];
+const TABS=[{id:'painel',l:'📊 Painel',p:'painel'},{id:'cantina',l:'🏪 Cantina',p:'cantina'},{id:'estoque',l:'📦 Estoque',p:'estoque'},{id:'mapa',l:'🗺️ Mapa',p:'painel'},{id:'config',l:'⚙️ Config.',p:'config'},{id:'consultor',l:'🌿 Visão Geral',p:'config'}];
 const ACTS=[{id:'diaria',l:'Lançar diária',s:'Serviço do dia',ic:'👤',c:'gr',p:'diaria'},{id:'insumo',l:'Insumos',s:'Depósito → campo',ic:'📦',c:'bl',p:'insumo'},{id:'medicamento',l:'Medicamentos',s:'Vacinas e remédios',ic:'💉',c:'am',p:'medicamento'},{id:'trato',l:'Trato de cocho',s:'Proteinado, sal...',ic:'🛠',c:'tl',p:'trato'},{id:'lote',l:'Lotes',s:'Cadastro de lotes',ic:'🐄',c:'gr',p:'config'},{id:'escore',l:'Escore de fezes',s:'Avaliação do gado',ic:'🔬',c:'pu',p:'escore'}];
 const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},'Fazenda Santa Cruz':{cochos:['Lote 01','Lote 02','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+'],gasUrl:'',sheetId:''}},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,medicamento:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:38,peso:402,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 02',qtd:85,peso:360,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 03',qtd:79,peso:316,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 04',qtd:61,peso:269,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 05',qtd:69,peso:228,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 06',qtd:121,peso:204,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio'],'Fazenda Santa Cruz':[]},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{}};
 
@@ -787,7 +805,8 @@ function entrar(i){CU=S.US[i];document.getElementById('login-screen').style.disp
 function doLogout(){CU=null;loginFaz=null;loginUser=null;pinBuf='';document.getElementById('app').style.display='none';document.getElementById('tabs').style.display='none';document.getElementById('login-screen').style.display='flex';document.getElementById('step-faz').style.display='block';document.getElementById('step-user').style.display='none';document.getElementById('step-pin').style.display='none';if(window.history&&window.history.replaceState)window.history.replaceState({},document.title,window.location.pathname);mostrarFazendas();}
 
 // ═══ NAVEGAÇÃO ═══
-function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',medicamento:'Medicamentos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>rListLotes(),50);if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();},50);window.scrollTo(0,0);}
+function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',medicamento:'Medicamentos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>rListLotes(),50);
+if(id==='mapa')setTimeout(()=>{try{rMapaMain();}catch(e){console.error('rMapa:',e);}},100);if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();},50);window.scrollTo(0,0);}
 function goBack(){if(prevPage)sp(prevPage,false);else sp('home',false);}
 function isV(u){return u.p.diaria||u.p.insumo||u.p.medicamento||u.p.trato||u.p.escore;}
 function isA(u){return u.p.cantina||u.p.estoque||u.p.painel||u.p.config;}
@@ -1026,51 +1045,56 @@ function sLoteTab(t){
 
 // ═══ MAPA INTERATIVO ═══
 var MAPA_AREAS = [
-  {id:'P01',label:'P 01',tipo:'pasto',ha:6.74,x:65.1,y:11.5},
-  {id:'P02',label:'P 02',tipo:'pasto',ha:28.2,x:47.4,y:25.7},
-  {id:'P03_2',label:'P 03.2',tipo:'pasto',ha:7.39,x:32.9,y:29.1},
-  {id:'P03_1',label:'P 03.1',tipo:'pasto',ha:4.81,x:45.8,y:35.3},
+  {id:'P01',label:'PA 01',tipo:'pasto',ha:6.74,x:65.1,y:11.5},
+  {id:'P02',label:'PA 02',tipo:'pasto',ha:28.2,x:47.4,y:25.7},
+  {id:'P03_2',label:'PA 03.2',tipo:'pasto',ha:7.39,x:32.9,y:29.1},
+  {id:'P03_1',label:'PA 03.1',tipo:'pasto',ha:4.81,x:45.8,y:35.3},
   {id:'M01P01',label:'MOD:01/P:01',tipo:'modulo',modulo:1,piquete:1,ha:4.54,x:33.9,y:41.1},
   {id:'M01P02',label:'MOD:01/P:02',tipo:'modulo',modulo:1,piquete:2,ha:4.25,x:25.8,y:35.2},
   {id:'M01P03',label:'MOD:01/P:03',tipo:'modulo',modulo:1,piquete:3,ha:5.13,x:19.0,y:38.8},
   {id:'M01P04',label:'MOD:01/P:04',tipo:'modulo',modulo:1,piquete:4,ha:5.85,x:29.2,y:46.7},
+  {id:'M01P05',label:'MOD:01/P:05',tipo:'modulo',modulo:1,piquete:5,ha:5.0,x:35.5,y:50.2},
+  {id:'M01P06',label:'MOD:01/P:06',tipo:'modulo',modulo:1,piquete:6,ha:4.8,x:26.5,y:54.5},
   {id:'M02P01',label:'MOD:02/P:01',tipo:'modulo',modulo:2,piquete:1,ha:6.1,x:19.5,y:53.5},
   {id:'M02P02',label:'MOD:02/P:02',tipo:'modulo',modulo:2,piquete:2,ha:5.34,x:12.0,y:45.9},
   {id:'M02P03',label:'MOD:02/P:03',tipo:'modulo',modulo:2,piquete:3,ha:5.66,x:6.1,y:52.4},
   {id:'M02P04',label:'MOD:02/P:04',tipo:'modulo',modulo:2,piquete:4,ha:5.5,x:10.9,y:61.3},
-  {id:'P14',label:'P 14',tipo:'pasto',ha:13.16,x:62.6,y:29.7},
-  {id:'P13',label:'P 13',tipo:'pasto',ha:6.30,x:56.0,y:37.5},
-  {id:'P12',label:'P 12',tipo:'pasto',ha:10.0,x:81.8,y:50.9},
-  {id:'P07',label:'P 07',tipo:'pasto',ha:8.92,x:44.7,y:47.5},
-  {id:'P06',label:'P 06',tipo:'pasto',ha:8.0,x:29.2,y:71.4},
-  {id:'P08',label:'P 08',tipo:'pasto',ha:10.0,x:36.3,y:78.5},
-  {id:'P09',label:'P 09',tipo:'pasto',ha:12.0,x:55.7,y:90.0},
-  {id:'M04P01',label:'MOD:04/P:01',tipo:'modulo',modulo:4,piquete:1,ha:10.0,x:49.8,y:73.7},
-  {id:'P11',label:'P 11',tipo:'pasto',ha:8.0,x:81.1,y:66.0},
-  {id:'P10',label:'P 10',tipo:'pasto',ha:8.0,x:88.9,y:59.6},
-  {id:'P15',label:'P 15',tipo:'pasto',ha:8.0,x:49.1,y:59.2}
+  {id:'M03P01',label:'MOD:03/P:01',tipo:'modulo',modulo:3,piquete:1,ha:8.0,x:52.0,y:48.0},
+  {id:'M03P02',label:'MOD:03/P:02',tipo:'modulo',modulo:3,piquete:2,ha:7.5,x:44.0,y:55.0},
+  {id:'M03P03',label:'MOD:03/P:03',tipo:'modulo',modulo:3,piquete:3,ha:8.5,x:52.0,y:62.0},
+  {id:'M03P04',label:'MOD:03/P:04',tipo:'modulo',modulo:3,piquete:4,ha:7.0,x:43.0,y:67.0},
+  {id:'M03P05',label:'MOD:03/P:05',tipo:'modulo',modulo:3,piquete:5,ha:7.8,x:59.0,y:57.0},
+  {id:'M04P01',label:'MOD:04/P:01',tipo:'modulo',modulo:4,piquete:1,ha:10.0,x:76.0,y:62.0},
+  {id:'M04P02',label:'MOD:04/P:02',tipo:'modulo',modulo:4,piquete:2,ha:9.0,x:68.0,y:68.0},
+  {id:'M04P03',label:'MOD:04/P:03',tipo:'modulo',modulo:4,piquete:3,ha:9.5,x:78.0,y:72.0},
+  {id:'M04P04',label:'MOD:04/P:04',tipo:'modulo',modulo:4,piquete:4,ha:8.5,x:69.0,y:78.0},
+  {id:'P14',label:'PA 14',tipo:'pasto',ha:13.16,x:62.6,y:29.7},
+  {id:'P13',label:'PA 13',tipo:'pasto',ha:6.30,x:56.0,y:37.5},
+  {id:'P12',label:'PA 12',tipo:'pasto',ha:10.0,x:88.0,y:42.0},
+  {id:'P07',label:'PA 07',tipo:'pasto',ha:8.92,x:44.7,y:47.5},
+  {id:'P06',label:'PA 06',tipo:'pasto',ha:8.0,x:29.2,y:71.4},
+  {id:'P08',label:'PA 08',tipo:'pasto',ha:10.0,x:36.3,y:78.5},
+  {id:'P09',label:'PA 09',tipo:'pasto',ha:12.0,x:55.7,y:90.0},
+  {id:'P11',label:'PA 11',tipo:'pasto',ha:8.0,x:84.0,y:58.0},
+  {id:'P10',label:'PA 10',tipo:'pasto',ha:8.0,x:92.0,y:50.0},
+  {id:'P15',label:'PA 15',tipo:'pasto',ha:8.0,x:49.1,y:59.2}
 ];
 
 var mapaAreaAtual = null;
 
-function rMapa(){
-  var cont = document.getElementById('mapa-pins');
+function _renderPinsNoContainer(contId, resumoId){
+  var cont = document.getElementById(contId);
   if(!cont) return;
   if(!S.MAPA_ALOC) S.MAPA_ALOC={};
   var lotes = S.LOTES||[];
   var ocupados=0;
   cont.innerHTML='';
 
-  var wrap = cont.parentElement;
-  if(wrap) wrap.style.paddingBottom='85%';
-
   MAPA_AREAS.forEach(function(a){
     var aloc = S.MAPA_ALOC[a.id];
     var lote = aloc ? lotes.find(function(l){return l.nome===aloc;}) : null;
     var qtd = lote ? (lote.qtd||0) : 0;
     var ocupado = !!lote && qtd>0;
-
-    // Só renderiza pin se tiver gado alocado
     if(!ocupado) return;
     ocupados++;
 
@@ -1079,14 +1103,16 @@ function rMapa(){
     pin.style.cssText = 'position:absolute;transform:translate(-50%,-100%);cursor:pointer;z-index:2;';
     pin.style.left = a.x+'%';
     pin.style.top = a.y+'%';
-    pin.onclick = function(){ abrirMapaModal(a); };
+    var cid = contId;
+    pin.onclick = function(){ abrirMapaModal(a, cid); };
 
+    var labelShort = a.label.replace('MOD:0','M').replace('MOD:','M').replace('/P:0','/P');
     pin.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center">'
       +'<div style="background:#1B5E20;border:1.5px solid #4CAF50;border-radius:8px;padding:4px 7px;text-align:center;min-width:52px;box-shadow:0 2px 6px rgba(0,0,0,0.4)">'
       +'<div style="font-size:16px;line-height:1">🐄</div>'
-      +'<div style="font-size:8px;font-weight:700;color:#A5D6A7;line-height:1.3">'+a.label.replace('MOD:0','M').replace('/P:0','/P')+'</div>'
+      +'<div style="font-size:8px;font-weight:700;color:#A5D6A7;line-height:1.3">'+labelShort+'</div>'
       +'<div style="font-size:12px;font-weight:700;color:#fff;line-height:1.3">'+qtd+'</div>'
-      +'<div style="font-size:8px;color:#81C784">'+ua+' UA</div>'
+      +'<div style="font-size:8px;color:#81C784">'+lote.nome+'</div>'
       +'</div>'
       +'<div style="width:2px;height:8px;background:#4CAF50;margin:0 auto"></div>'
       +'<div style="width:5px;height:5px;border-radius:50%;background:#4CAF50"></div>'
@@ -1094,19 +1120,15 @@ function rMapa(){
     cont.appendChild(pin);
   });
 
-  // Botão para ver todos / adicionar gado
-  var btnAdd = document.createElement('div');
-  btnAdd.style.cssText = 'position:absolute;bottom:40px;right:8px;background:#1B5E20;color:#fff;border-radius:20px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid #4CAF50';
-  btnAdd.textContent = '+ Alocar gado';
-  btnAdd.onclick = function(){ abrirSelPiquete(); };
-  cont.appendChild(btnAdd);
-
-  var res = document.getElementById('mapa-resumo');
+  var res = document.getElementById(resumoId);
   if(res) res.textContent = ocupados ? ocupados+' piquete(s) com gado' : 'Nenhum gado alocado — toque em + para alocar';
 }
 
-function abrirMapaModal(a){
-  mapaAreaAtual = a;
+function rMapa(){ _renderPinsNoContainer('mapa-pins','mapa-resumo'); }
+function rMapaMain(){ _renderPinsNoContainer('mapa-pins-main','mapa-main-resumo'); }
+
+function abrirMapaModal(a, contId){
+  mapaAreaAtual = {area:a, contId:contId||'mapa-pins'};
   if(!S.MAPA_ALOC) S.MAPA_ALOC={};
   var lotes = S.LOTES||[];
   var aloc = S.MAPA_ALOC[a.id];
@@ -1153,22 +1175,25 @@ function mapaAlocar(){
   if(!mapaAreaAtual) return;
   var sel = document.getElementById('mapa-sel-lote').value;
   if(!S.MAPA_ALOC) S.MAPA_ALOC={};
-  if(sel) S.MAPA_ALOC[mapaAreaAtual.id]=sel;
-  else delete S.MAPA_ALOC[mapaAreaAtual.id];
-  salvar();fecharMapaModal();rMapa();
+  if(sel) S.MAPA_ALOC[mapaAreaAtual.area.id]=sel;
+  else delete S.MAPA_ALOC[mapaAreaAtual.area.id];
+  salvar();fecharMapaModal();
+  _renderPinsNoContainer(mapaAreaAtual?mapaAreaAtual.contId||'mapa-pins':'mapa-pins','mapa-resumo');
+  _renderPinsNoContainer('mapa-pins-main','mapa-main-resumo');
 }
 
 function mapaRetirar(){
   if(!mapaAreaAtual) return;
   if(!S.MAPA_ALOC) S.MAPA_ALOC={};
-  delete S.MAPA_ALOC[mapaAreaAtual.id];
-  salvar();fecharMapaModal();rMapa();
+  delete S.MAPA_ALOC[mapaAreaAtual.area.id];
+  salvar();fecharMapaModal();
+  _renderPinsNoContainer('mapa-pins','mapa-resumo');
+  _renderPinsNoContainer('mapa-pins-main','mapa-main-resumo');
 }
 
-function abrirSelPiquete(){
+function abrirSelPiquete(contId){
   if(!S.MAPA_ALOC) S.MAPA_ALOC={};
   var lotes = S.LOTES||[];
-  // Monta lista de piquetes disponíveis (sem gado)
   var livres = MAPA_AREAS.filter(function(a){ return !S.MAPA_ALOC[a.id]; });
 
   var optsP = livres.map(function(a){
@@ -1184,19 +1209,21 @@ function abrirSelPiquete(){
     +'<select id="mapa-sel-piq" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:10px">'+optsP+'</select>'
     +'<div style="font-size:12px;color:#666;margin-bottom:4px">Lote:</div>'
     +'<select id="mapa-sel-lote2" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:12px">'+optsL+'</select>'
-    +'<button onclick="mapaAlocarDireto()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">✅ Alocar</button>';
+    +'<button onclick="mapaAlocarDireto(\''+contId+'\')" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">✅ Alocar</button>';
 
   mapaAreaAtual = null;
   document.getElementById('mapa-modal').style.display='flex';
 }
 
-function mapaAlocarDireto(){
+function mapaAlocarDireto(contId){
   var piq = (document.getElementById('mapa-sel-piq')||{}).value;
   var lote = (document.getElementById('mapa-sel-lote2')||{}).value;
   if(!piq||!lote){alert('Selecione o piquete e o lote.');return;}
   if(!S.MAPA_ALOC) S.MAPA_ALOC={};
   S.MAPA_ALOC[piq]=lote;
-  salvar();fecharMapaModal();rMapa();
+  salvar();fecharMapaModal();
+  _renderPinsNoContainer('mapa-pins','mapa-resumo');
+  _renderPinsNoContainer('mapa-pins-main','mapa-main-resumo');
 }
 
 function sArTipo(el,t){
