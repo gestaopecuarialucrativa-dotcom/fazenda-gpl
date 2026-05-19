@@ -672,7 +672,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#fff"><div style="width:12px;height:12px;border-radius:3px;background:#1B5E20;border:1px solid #4CAF50"></div>Com gado</div>
     <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#fff"><div style="width:12px;height:12px;border-radius:3px;background:#E8F5E9;border:1px solid #2E7D32"></div>Módulo vazio</div>
     <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#fff"><div style="width:12px;height:12px;border-radius:3px;background:rgba(255,255,255,0.4);border:1px dashed #aaa"></div>Pasto vazio</div>
-    <div style="margin-left:auto;font-size:10px;color:#A5D6A7;font-weight:600" id="mapa-resumo">0 com gado</div>
+    <button id="btn-modo-consultor2" onclick="toggleModoConsultor('btn-modo-consultor2')" style="padding:4px 10px;background:#1B5E20;color:#fff;border:none;border-radius:16px;font-size:10px;font-weight:700;cursor:pointer;margin-right:4px">✏️ Editor</button><div style="font-size:10px;color:#A5D6A7;font-weight:600" id="mapa-resumo">0 com gado</div>
   </div>
 </div>
 <div style="margin-top:8px;padding:8px;background:#f9f9f9;border-radius:10px;border:1px solid #eee">
@@ -708,7 +708,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <!-- Barra inferior -->
   <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.55);padding:6px 10px;display:flex;align-items:center;gap:8px;z-index:30">
     <span style="font-size:11px;color:#A5D6A7;font-weight:600" id="mapa-main-resumo">Toque em qualquer piquete</span>
-    <button onclick="abrirSelPiquete('main')" style="margin-left:auto;background:#1B5E20;color:#fff;border:1.5px solid #4CAF50;border-radius:14px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation">+ Alocar</button>
+    <button id="btn-modo-consultor" onclick="toggleModoConsultor('btn-modo-consultor')" style="padding:6px 12px;background:#1B5E20;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer">✏️ Modo Consultor</button><button onclick="abrirSelPiquete('main')" style="margin-left:auto;background:#1B5E20;color:#fff;border:1.5px solid #4CAF50;border-radius:14px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation">+ Alocar</button>
   </div>
 </div>
 <div style="margin-top:8px;padding:8px 10px;background:#f0f9e8;border-radius:10px;border:1px solid #c8e6c9;font-size:12px;color:#2E7D32;font-weight:600">
@@ -790,7 +790,7 @@ const ACTS=[{id:'diaria',l:'Lançar diária',s:'Serviço do dia',ic:'👤',c:'gr
 const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},'Fazenda Santa Cruz':{cochos:['Lote 01','Lote 02','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+'],gasUrl:'',sheetId:''}},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,medicamento:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Colaborador',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,medicamento:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:38,peso:402,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 02',qtd:85,peso:360,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 03',qtd:79,peso:316,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 04',qtd:61,peso:269,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 05',qtd:69,peso:228,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 06',qtd:121,peso:204,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio'],'Fazenda Santa Cruz':[]},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{}};
 
 let S=null;
-function carregar(){try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=JSON.parse(r);S={...DEFAULT,...s};S.cfgGS=DEFAULT.cfgGS;if(!S.US||!S.US.length)S.US=DEFAULT.US;if(!S.FAZ||!Object.keys(S.FAZ).length)S.FAZ=DEFAULT.FAZ;if(!S.EST||!Object.keys(S.EST).length)S.EST=DEFAULT.EST;if(s.FAZ&&Object.keys(s.FAZ).length)S.FAZ=s.FAZ;if(s.US&&s.US.length)S.US=s.US;['rD','rT','rC','rE','mEst','queue','rDesp','LOTES'].forEach(k=>{if(!Array.isArray(S[k]))S[k]=[]});if(!S.DIARISTAS)S.DIARISTAS={};if(!S.NOTAS)S.NOTAS={};if(!S.AREAS)S.AREAS={};if(!S.MAPA_ALOC)S.MAPA_ALOC={};if(!Array.isArray(S.SERVS))S.SERVS=DEFAULT.SERVS;if(!S.PR)S.PR=DEFAULT.PR;}else{S=JSON.parse(JSON.stringify(DEFAULT));}}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}}
+function carregar(){try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=JSON.parse(r);S={...DEFAULT,...s};S.cfgGS=DEFAULT.cfgGS;if(!S.US||!S.US.length)S.US=DEFAULT.US;if(!S.FAZ||!Object.keys(S.FAZ).length)S.FAZ=DEFAULT.FAZ;if(!S.EST||!Object.keys(S.EST).length)S.EST=DEFAULT.EST;if(s.FAZ&&Object.keys(s.FAZ).length)S.FAZ=s.FAZ;if(s.US&&s.US.length)S.US=s.US;['rD','rT','rC','rE','mEst','queue','rDesp','LOTES'].forEach(k=>{if(!Array.isArray(S[k]))S[k]=[]});if(!S.DIARISTAS)S.DIARISTAS={};if(!S.NOTAS)S.NOTAS={};if(!S.AREAS)S.AREAS={};if(!S.MAPA_ALOC)S.MAPA_ALOC={};if(!S.MAPA_POS)S.MAPA_POS={};if(!S.MAPA_HA)S.MAPA_HA={};if(!Array.isArray(S.SERVS))S.SERVS=DEFAULT.SERVS;if(!S.PR)S.PR=DEFAULT.PR;}else{S=JSON.parse(JSON.stringify(DEFAULT));}}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}}
 function salvarLocal(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(S));return true;}catch(e){return false;}}
 function salvar(){salvarLocal();if(S.cfgGS&&navigator.onLine){clearTimeout(salvar._t);salvar._t=setTimeout(()=>salvarNuvem(null),2000);}return true;}
 salvar._t=null;
@@ -1067,41 +1067,51 @@ function sLoteTab(t){
 
 // ═══ MAPA INTERATIVO ═══
 var MAPA_AREAS = [
-  // PASTOS (area marrom) PA01-PA10
-  {id:'PA01',label:'PA 01',tipo:'pasto',ha:0,x:14.0,y:16.0},
-  {id:'PA02',label:'PA 02',tipo:'pasto',ha:0,x:32.0,y:8.0},
-  {id:'PA03',label:'PA 03',tipo:'pasto',ha:0,x:27.0,y:22.0},
-  {id:'PA04',label:'PA 04',tipo:'pasto',ha:0,x:41.0,y:30.0},
-  {id:'PA05',label:'PA 05',tipo:'pasto',ha:0,x:48.0,y:22.0},
-  {id:'PA06',label:'PA 06',tipo:'pasto',ha:0,x:48.0,y:35.0},
-  {id:'PA07',label:'PA 07',tipo:'pasto',ha:0,x:55.0,y:27.0},
-  {id:'PA08',label:'PA 08',tipo:'pasto',ha:0,x:61.0,y:18.0},
-  {id:'PA09',label:'PA 09',tipo:'pasto',ha:0,x:70.0,y:12.0},
-  {id:'PA10',label:'PA 10',tipo:'pasto',ha:0,x:82.0,y:20.0},
+  // PASTOS (marrom) PA01-PA10
+  {id:'PA01',label:'PA 01',tipo:'pasto',ha:0,x:12.0,y:14.0},
+  {id:'PA02',label:'PA 02',tipo:'pasto',ha:0,x:11.0,y:30.0},
+  {id:'PA03',label:'PA 03',tipo:'pasto',ha:0,x:28.0,y:11.0},
+  {id:'PA04',label:'PA 04',tipo:'pasto',ha:0,x:33.0,y:28.0},
+  {id:'PA05',label:'PA 05',tipo:'pasto',ha:0,x:43.0,y:26.0},
+  {id:'PA06',label:'PA 06',tipo:'pasto',ha:0,x:44.0,y:38.0},
+  {id:'PA07',label:'PA 07',tipo:'pasto',ha:0,x:52.0,y:21.0},
+  {id:'PA08',label:'PA 08',tipo:'pasto',ha:0,x:57.0,y:11.0},
+  {id:'PA09',label:'PA 09',tipo:'pasto',ha:0,x:75.0,y:10.0},
+  {id:'PA10',label:'PA 10',tipo:'pasto',ha:0,x:83.0,y:22.0},
   // MODULO 1 (verde) 6 piquetes
-  {id:'M01P01',label:'M1/P1',tipo:'modulo',modulo:1,piquete:1,ha:0,x:37.0,y:44.0},
-  {id:'M01P02',label:'M1/P2',tipo:'modulo',modulo:1,piquete:2,ha:0,x:30.0,y:38.0},
-  {id:'M01P03',label:'M1/P3',tipo:'modulo',modulo:1,piquete:3,ha:0,x:22.0,y:44.0},
-  {id:'M01P04',label:'M1/P4',tipo:'modulo',modulo:1,piquete:4,ha:0,x:24.0,y:54.0},
-  {id:'M01P05',label:'M1/P5',tipo:'modulo',modulo:1,piquete:5,ha:0,x:33.0,y:54.0},
-  {id:'M01P06',label:'M1/P6',tipo:'modulo',modulo:1,piquete:6,ha:0,x:40.0,y:50.0},
+  {id:'M01P01',label:'M1/P1',tipo:'modulo',modulo:1,piquete:1,ha:0,x:36.0,y:40.0},
+  {id:'M01P02',label:'M1/P2',tipo:'modulo',modulo:1,piquete:2,ha:0,x:19.0,y:43.0},
+  {id:'M01P03',label:'M1/P3',tipo:'modulo',modulo:1,piquete:3,ha:0,x:18.0,y:52.0},
+  {id:'M01P04',label:'M1/P4',tipo:'modulo',modulo:1,piquete:4,ha:0,x:21.0,y:62.0},
+  {id:'M01P05',label:'M1/P5',tipo:'modulo',modulo:1,piquete:5,ha:0,x:32.0,y:57.0},
+  {id:'M01P06',label:'M1/P6',tipo:'modulo',modulo:1,piquete:6,ha:0,x:32.0,y:47.0},
   // MODULO 2 (vermelho) 4 piquetes
-  {id:'M02P01',label:'M2/P1',tipo:'modulo',modulo:2,piquete:1,ha:0,x:34.0,y:65.0},
-  {id:'M02P02',label:'M2/P2',tipo:'modulo',modulo:2,piquete:2,ha:0,x:24.0,y:62.0},
-  {id:'M02P03',label:'M2/P3',tipo:'modulo',modulo:2,piquete:3,ha:0,x:20.0,y:73.0},
-  {id:'M02P04',label:'M2/P4',tipo:'modulo',modulo:2,piquete:4,ha:0,x:31.0,y:76.0},
+  {id:'M02P01',label:'M2/P1',tipo:'modulo',modulo:2,piquete:1,ha:0,x:36.0,y:68.0},
+  {id:'M02P02',label:'M2/P2',tipo:'modulo',modulo:2,piquete:2,ha:0,x:20.0,y:72.0},
+  {id:'M02P03',label:'M2/P3',tipo:'modulo',modulo:2,piquete:3,ha:0,x:17.0,y:82.0},
+  {id:'M02P04',label:'M2/P4',tipo:'modulo',modulo:2,piquete:4,ha:0,x:33.0,y:82.0},
   // MODULO 3 (roxo) 5 piquetes
   {id:'M03P01',label:'M3/P1',tipo:'modulo',modulo:3,piquete:1,ha:0,x:53.0,y:44.0},
-  {id:'M03P02',label:'M3/P2',tipo:'modulo',modulo:3,piquete:2,ha:0,x:46.0,y:54.0},
-  {id:'M03P03',label:'M3/P3',tipo:'modulo',modulo:3,piquete:3,ha:0,x:53.0,y:63.0},
-  {id:'M03P04',label:'M3/P4',tipo:'modulo',modulo:3,piquete:4,ha:0,x:46.0,y:71.0},
-  {id:'M03P05',label:'M3/P5',tipo:'modulo',modulo:3,piquete:5,ha:0,x:60.0,y:55.0},
-  // MODULO 4 (verde-oliva) 4 piquetes
-  {id:'M04P01',label:'M4/P1',tipo:'modulo',modulo:4,piquete:1,ha:0,x:76.0,y:42.0},
-  {id:'M04P02',label:'M4/P2',tipo:'modulo',modulo:4,piquete:2,ha:0,x:69.0,y:50.0},
-  {id:'M04P03',label:'M4/P3',tipo:'modulo',modulo:4,piquete:3,ha:0,x:79.0,y:55.0},
-  {id:'M04P04',label:'M4/P4',tipo:'modulo',modulo:4,piquete:4,ha:0,x:73.0,y:62.0}
+  {id:'M03P02',label:'M3/P2',tipo:'modulo',modulo:3,piquete:2,ha:0,x:44.0,y:52.0},
+  {id:'M03P03',label:'M3/P3',tipo:'modulo',modulo:3,piquete:3,ha:0,x:48.0,y:63.0},
+  {id:'M03P04',label:'M3/P4',tipo:'modulo',modulo:3,piquete:4,ha:0,x:54.0,y:72.0},
+  {id:'M03P05',label:'M3/P5',tipo:'modulo',modulo:3,piquete:5,ha:0,x:63.0,y:62.0},
+  // MODULO 4 (amarelo-verde) 4 piquetes
+  {id:'M04P01',label:'M4/P1',tipo:'modulo',modulo:4,piquete:1,ha:0,x:88.0,y:36.0},
+  {id:'M04P02',label:'M4/P2',tipo:'modulo',modulo:4,piquete:2,ha:0,x:76.0,y:40.0},
+  {id:'M04P03',label:'M4/P3',tipo:'modulo',modulo:4,piquete:3,ha:0,x:79.0,y:53.0},
+  {id:'M04P04',label:'M4/P4',tipo:'modulo',modulo:4,piquete:4,ha:0,x:86.0,y:60.0}
 ];
+
+// Carrega posições customizadas salvas pelo consultor
+function _getPosArea(a){
+  var pos = S.MAPA_POS && S.MAPA_POS[a.id];
+  return pos ? pos : {x:a.x, y:a.y};
+}
+// Carrega ha customizado salvo
+function _getHaArea(a){
+  return (S.MAPA_HA && S.MAPA_HA[a.id] !== undefined) ? S.MAPA_HA[a.id] : a.ha;
+}
 
 var mapaAreaAtual = null;
 
@@ -1109,97 +1119,190 @@ function _renderPinsNoContainer(contId, resumoId){
   var cont = document.getElementById(contId);
   if(!cont) return;
   if(!S.MAPA_ALOC) S.MAPA_ALOC={};
+  if(!S.MAPA_POS) S.MAPA_POS={};
+  if(!S.MAPA_HA) S.MAPA_HA={};
   var lotes = S.LOTES||[];
   var ocupados=0;
+  var modoEditor = window._mapaEditorAtivo===true;
   cont.innerHTML='';
 
-  // O container tem pointer-events:none, mas cada botão tem pointer-events:auto
   MAPA_AREAS.forEach(function(a){
     var aloc = S.MAPA_ALOC[a.id];
     var lote = aloc ? lotes.find(function(l){return l.nome===aloc;}) : null;
     var qtd = lote ? (lote.qtd||0) : 0;
     var ocupado = !!lote && qtd>0;
+    var ha = (S.MAPA_HA && S.MAPA_HA[a.id]!==undefined) ? S.MAPA_HA[a.id] : a.ha;
+    var pos = (S.MAPA_POS && S.MAPA_POS[a.id]) ? S.MAPA_POS[a.id] : {x:a.x,y:a.y};
     if(ocupado) ocupados++;
 
     var cores = {
-      1:{bg:'#1B5E20',bd:'#4CAF50',bgV:'rgba(27,94,32,0.25)'},
-      2:{bg:'#B71C1C',bd:'#EF5350',bgV:'rgba(183,28,28,0.25)'},
-      3:{bg:'#4A148C',bd:'#CE93D8',bgV:'rgba(74,20,140,0.25)'},
-      4:{bg:'#827717',bd:'#F9A825',bgV:'rgba(130,119,23,0.25)'}
+      1:{bg:'#1B5E20',bd:'#4CAF50',bgV:'rgba(27,94,32,0.15)'},
+      2:{bg:'#B71C1C',bd:'#EF5350',bgV:'rgba(183,28,28,0.15)'},
+      3:{bg:'#4A148C',bd:'#CE93D8',bgV:'rgba(74,20,140,0.15)'},
+      4:{bg:'#827717',bd:'#F9A825',bgV:'rgba(130,119,23,0.15)'}
     };
-    var cor = a.tipo==='modulo'?(cores[a.modulo]||cores[1]):{bg:'#2E7D32',bd:'#66BB6A',bgV:'rgba(46,125,50,0.25)'};
-    var lbl = a.label.replace('MOD:0','M').replace('MOD:','M').replace('/P:0','/P').replace('/P:','/P');
+    var cor = a.tipo==='modulo'?(cores[a.modulo]||cores[1]):{bg:'#3E2723',bd:'#8D6E63',bgV:'rgba(62,39,35,0.15)'};
+    var lbl = a.label;
 
-    // BOTÃO — pointer-events:auto sobrescreve o none do container
     var btn = document.createElement('button');
     btn.type='button';
+    btn.setAttribute('data-aid',a.id);
+    var ptrEv = (!ocupado && !modoEditor) ? 'pointer-events:none' : 'pointer-events:auto';
+    var opac  = (!ocupado && !modoEditor) ? 'opacity:0' : 'opacity:1';
+    var cur   = modoEditor ? 'cursor:grab' : 'cursor:pointer';
     btn.style.cssText=[
       'position:absolute',
-      'left:'+a.x+'%',
-      'top:'+a.y+'%',
+      'left:'+pos.x+'%',
+      'top:'+pos.y+'%',
       'transform:translate(-50%,-50%)',
-      'pointer-events:auto',
-      'cursor:pointer',
-      'z-index:25',
-      'background:none',
-      'border:none',
-      'padding:0',
-      'outline:none',
-      '-webkit-tap-highlight-color:transparent',
-      'touch-action:manipulation'
+      ptrEv, opac, cur,
+      'z-index:25','background:none','border:none','padding:0','outline:none',
+      '-webkit-tap-highlight-color:transparent','touch-action:manipulation','transition:opacity .2s'
     ].join(';');
 
-    // Conteúdo do pin
     var inner = document.createElement('div');
     inner.style.cssText='display:flex;flex-direction:column;align-items:center;pointer-events:none';
 
     var box = document.createElement('div');
     if(ocupado){
       box.style.cssText='background:'+cor.bg+';border:2.5px solid '+cor.bd+';border-radius:9px;padding:4px 7px;text-align:center;min-width:50px;box-shadow:0 3px 12px rgba(0,0,0,0.6)';
-      box.innerHTML='<div style="font-size:16px;line-height:1">🐄</div>'
+      box.innerHTML='<div style="font-size:14px;line-height:1">🐄</div>'
         +'<div style="font-size:8px;font-weight:700;color:#fff;opacity:.9;line-height:1.2">'+lbl+'</div>'
-        +'<div style="font-size:12px;font-weight:800;color:#fff;line-height:1.3">'+qtd+'</div>'
-        +'<div style="font-size:8px;color:'+cor.bd+';font-weight:700">'+lote.nome+'</div>';
+        +'<div style="font-size:13px;font-weight:900;color:#fff;line-height:1.3">'+qtd+'</div>'
+        +'<div style="font-size:7px;color:'+cor.bd+';font-weight:700;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+lote.nome+'</div>'
+        +(ha>0?'<div style="font-size:7px;color:rgba(255,255,255,.55)">'+ha+' ha</div>':'');
+    } else if(modoEditor){
+      box.style.cssText='background:rgba(255,152,0,0.15);border:1.5px dashed #FF9800;border-radius:8px;padding:3px 5px;text-align:center;min-width:40px';
+      box.innerHTML='<div style="font-size:8px;font-weight:700;color:#FFD54F;text-shadow:0 1px 3px rgba(0,0,0,.8);line-height:1.3">'+lbl+'</div>'
+        +(ha>0?'<div style="font-size:7px;color:#FFB74D">'+ha+' ha</div>':'<div style="font-size:9px;color:rgba(255,183,77,.6)">＋</div>');
     } else {
-      box.style.cssText='background:'+cor.bgV+';border:1.5px dashed '+cor.bd+';border-radius:8px;padding:3px 5px;text-align:center;min-width:40px;box-shadow:0 1px 4px rgba(0,0,0,0.4)';
+      box.style.cssText='background:'+cor.bgV+';border:1.5px dashed '+cor.bd+';border-radius:8px;padding:3px 5px;text-align:center;min-width:40px';
       box.innerHTML='<div style="font-size:8px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,1);line-height:1.3">'+lbl+'</div>'
         +'<div style="font-size:11px;color:rgba(255,255,255,0.8)">＋</div>';
     }
 
+    var hasteH=ocupado?7:4; var dotS=ocupado?6:4;
     var haste=document.createElement('div');
-    haste.style.cssText='width:2px;height:'+(ocupado?'7':'4')+'px;background:'+cor.bd+';margin:0 auto';
+    haste.style.cssText='width:2px;height:'+hasteH+'px;background:'+cor.bd+';margin:0 auto';
     var dot=document.createElement('div');
-    dot.style.cssText='width:'+(ocupado?'6':'4')+'px;height:'+(ocupado?'6':'4')+'px;border-radius:50%;background:'+cor.bd+';margin:0 auto';
+    dot.style.cssText='width:'+dotS+'px;height:'+dotS+'px;border-radius:50%;background:'+cor.bd+';margin:0 auto';
 
     inner.appendChild(box);inner.appendChild(haste);inner.appendChild(dot);
     btn.appendChild(inner);
 
-    // Eventos — funciona em mobile e desktop
-    (function(area, cid){
+    (function(area,cid){
       var moved=false;
-      btn.addEventListener('touchstart',function(e){moved=false;},{passive:true});
+      btn.addEventListener('touchstart',function(){moved=false;},{passive:true});
       btn.addEventListener('touchmove',function(){moved=true;},{passive:true});
       btn.addEventListener('touchend',function(e){
-        if(!moved){e.preventDefault();e.stopPropagation();abrirMapaModal(area,cid);}
+        if(!moved){e.preventDefault();e.stopPropagation();
+          if(window._mapaEditorAtivo){_mapaEditorToque(area,btn);return;}
+          abrirMapaModal(area,cid);}
       },{passive:false});
       btn.addEventListener('click',function(e){
         e.preventDefault();e.stopPropagation();
+        if(window._mapaEditorAtivo){_mapaEditorToque(area,btn);return;}
         abrirMapaModal(area,cid);
       });
-    })(a, contId);
+      btn.addEventListener('mousedown',function(e){
+        if(!window._mapaEditorAtivo) return;
+        e.preventDefault();
+        window._mapaDragging={id:area.id,cid:cid};
+      });
+      btn.addEventListener('touchstart',function(e){
+        if(!window._mapaEditorAtivo) return;
+        window._mapaDragging={id:area.id,cid:cid};
+      },{passive:true});
+    })(a,contId);
 
     cont.appendChild(btn);
   });
 
   var res=document.getElementById(resumoId);
-  if(res) res.textContent=ocupados?ocupados+' piquete(s) com gado':'Toque em qualquer área para alocar gado';
+  if(res) res.textContent=ocupados?ocupados+' piquete(s) com gado':(modoEditor?'✏️ Arraste os pins':'Toque em qualquer área para alocar gado');
 }
-
 function _sincMapa(){
   _renderPinsNoContainer('mapa-pins','mapa-resumo');
   _renderPinsNoContainer('mapa-pins-main','mapa-main-resumo');
   try{ rUlt(); }catch(e){}
 }
+// ══════════════════════════════════════════
+// MODO CONSULTOR — POSICIONAMENTO DE PINS
+// ══════════════════════════════════════════
+window._mapaEditorAtivo = false;
+window._mapaDragging = null;
+
+function toggleModoConsultor(btnId){
+  window._mapaEditorAtivo = !window._mapaEditorAtivo;
+  var btn = document.getElementById(btnId||'btn-modo-consultor');
+  var btn2 = document.getElementById('btn-modo-consultor2');
+  var label = window._mapaEditorAtivo ? '🔒 Sair do Editor' : '✏️ Modo Consultor';
+  var style = window._mapaEditorAtivo
+    ? 'padding:6px 12px;background:#FF6F00;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer'
+    : 'padding:6px 12px;background:#1B5E20;color:#fff;border:none;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer';
+  if(btn){btn.textContent=label;btn.style.cssText=style;}
+  if(btn2){btn2.textContent=label;btn2.style.cssText=style;}
+  _sincMapa();
+}
+
+function salvarHaArea(){
+  var inp = document.getElementById('mapa-ha-input');
+  if(!inp||!mapaAreaAtual) return;
+  var val = parseFloat(inp.value)||0;
+  if(!S.MAPA_HA) S.MAPA_HA={};
+  S.MAPA_HA[mapaAreaAtual.area.id] = val;
+  salvar();
+  // Atualiza título do modal
+  var titulo = document.getElementById('mapa-modal-titulo');
+  if(titulo) titulo.textContent = mapaAreaAtual.area.label + (val>0?' — '+val+' ha':'');
+  _sincMapa();
+}
+
+function _mapaEditorToque(area, btn){
+  // No modo editor, toque abre popup de edição de posição
+  if(!window._mapaEditorAtivo) return;
+  abrirMapaModal(area, btn);
+}
+
+// Drag global para modo consultor
+(function(){
+  function getPct(clientX, clientY, wrap){
+    var rect = wrap.getBoundingClientRect();
+    var x = Math.max(0.5, Math.min(99.5, (clientX-rect.left)/rect.width*100));
+    var y = Math.max(0.5, Math.min(99.5, (clientY-rect.top)/rect.height*100));
+    return {x:parseFloat(x.toFixed(1)),y:parseFloat(y.toFixed(1))};
+  }
+  function doMove(clientX, clientY){
+    if(!window._mapaDragging||!window._mapaEditorAtivo) return;
+    var d = window._mapaDragging;
+    var wrap = document.getElementById('mapa-wrap-main')||document.getElementById('mapa-wrap-lote');
+    if(!wrap) return;
+    var p = getPct(clientX, clientY, wrap);
+    if(!S.MAPA_POS) S.MAPA_POS={};
+    S.MAPA_POS[d.id] = p;
+    // Move apenas o botão sem re-render completo
+    var cont = document.getElementById(d.cid);
+    if(cont){
+      var b = cont.querySelector('[data-aid="'+d.id+'"]');
+      if(b){b.style.left=p.x+'%';b.style.top=p.y+'%';}
+    }
+  }
+  document.addEventListener('mousemove',function(e){doMove(e.clientX,e.clientY);});
+  document.addEventListener('touchmove',function(e){
+    if(!window._mapaDragging) return;
+    e.preventDefault();
+    doMove(e.touches[0].clientX,e.touches[0].clientY);
+  },{passive:false});
+  function endDrag(){
+    if(window._mapaDragging){
+      salvar();
+      window._mapaDragging=null;
+      _sincMapa();
+    }
+  }
+  document.addEventListener('mouseup',endDrag);
+  document.addEventListener('touchend',endDrag);
+})();
 
 function rMapa(){ _renderPinsNoContainer('mapa-pins','mapa-resumo'); }
 function rMapaMain(){ _renderPinsNoContainer('mapa-pins-main','mapa-main-resumo'); }
@@ -1211,7 +1314,8 @@ function abrirMapaModal(a, contId){
   var aloc = S.MAPA_ALOC[a.id];
   var lote = aloc ? lotes.find(function(l){return l.nome===aloc;}) : null;
 
-  document.getElementById('mapa-modal-titulo').textContent = a.label+' — '+a.ha+' ha';
+  var ha = (S.MAPA_HA && S.MAPA_HA[a.id]!==undefined) ? S.MAPA_HA[a.id] : a.ha;
+  document.getElementById('mapa-modal-titulo').textContent = a.label+(ha>0?' — '+ha+' ha':'');
 
   var opts = '<option value="">-- sem gado --</option>';
   lotes.forEach(function(l){
@@ -1222,7 +1326,12 @@ function abrirMapaModal(a, contId){
   var corpo = '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:13px">'
     +'<span style="color:#666">Tipo</span><span style="font-weight:600">'+(a.tipo==='modulo'?'🔄 Módulo':'🌾 Pasto')+'</span></div>'
     +'<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:13px">'
-    +'<span style="color:#666">Área</span><span style="font-weight:600">'+a.ha+' ha</span></div>';
+    +'<span style="color:#666">Área</span>'
+    +'<div style="display:flex;align-items:center;gap:6px">'
+    +'<input type="number" id="mapa-ha-input" value="'+(ha||0)+'" min="0" step="0.1" placeholder="0" style="width:70px;padding:5px 8px;border:1px solid #ddd;border-radius:7px;font-size:13px">'
+    +'<span style="font-size:12px;color:#888">ha</span>'
+    +'<button onclick="salvarHaArea()" style="padding:5px 10px;background:#1B5E20;color:#fff;border:none;border-radius:7px;font-size:11px;cursor:pointer">💾</button>'
+    +'</div></div>';
 
   if(lote){
     var ua = ((lote.qtd*(lote.peso||0))/450).toFixed(1);
