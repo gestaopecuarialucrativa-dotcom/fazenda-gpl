@@ -771,7 +771,7 @@ const EI=[null,{em:'💩',ti:'Escore 1 — Firmes e secas',re:'💡 Reduzir fibr
 const PL={diaria:'Diária',insumo:'Insumos',trato:'Trato cocho',escore:'Escore fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',mapa:'Mapa',config:'Config.'};
 const TABS=[{id:'painel',l:'📊 Painel',p:'painel'},{id:'cantina',l:'🏪 Cantina',p:'cantina'},{id:'estoque',l:'📦 Estoque',p:'estoque'},{id:'mapa',l:'🗺️ Mapa',p:'mapa'},{id:'config',l:'⚙️ Config.',p:'config'},{id:'consultor',l:'🌿 Visão Geral',p:'config'}];
 const ACTS=[{id:'diaria',l:'Lançar diária',s:'Serviço do dia',ic:'👤',c:'gr',p:'diaria'},{id:'insumo',l:'Insumos',s:'Depósito → campo',ic:'📦',c:'bl',p:'insumo'},{id:'trato',l:'Trato de cocho',s:'Proteinado, sal...',ic:'🛠',c:'tl',p:'trato'},{id:'lote',l:'Lotes',s:'Cadastro de lotes',ic:'🐄',c:'gr',p:'config'},{id:'escore',l:'Escore de fezes',s:'Avaliação do gado',ic:'🔬',c:'pu',p:'escore'}];
-const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},'Fazenda Santa Cruz':{cochos:['Lote 01','Lote 02','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+'],gasUrl:'',sheetId:''}},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Colaborador',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:38,peso:402,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 02',qtd:85,peso:360,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 03',qtd:79,peso:316,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 04',qtd:61,peso:269,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 05',qtd:69,peso:228,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 06',qtd:121,peso:204,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio'],'Fazenda Santa Cruz':[]},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{}};
+const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},'Fazenda Santa Cruz':{cochos:['Lote 01','Lote 02','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+'],gasUrl:'',sheetId:''}},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Colaborador',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:38,peso:402,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 02',qtd:85,peso:360,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 03',qtd:79,peso:316,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 04',qtd:61,peso:269,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 05',qtd:69,peso:228,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 06',qtd:121,peso:204,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio'],'Fazenda Santa Cruz':[]},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{},AREAS:{},MAPA_ALOC:{}};
 
 let S=null;
 function carregar(){try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=JSON.parse(r);S={...DEFAULT,...s};S.cfgGS=DEFAULT.cfgGS;if(!S.US||!S.US.length)S.US=DEFAULT.US;if(!S.FAZ||!Object.keys(S.FAZ).length)S.FAZ=DEFAULT.FAZ;if(!S.EST||!Object.keys(S.EST).length)S.EST=DEFAULT.EST;if(s.FAZ&&Object.keys(s.FAZ).length)S.FAZ=s.FAZ;if(s.US&&s.US.length)S.US=s.US;['rD','rT','rC','rE','mEst','queue','rDesp','LOTES'].forEach(k=>{if(!Array.isArray(S[k]))S[k]=[]});if(!S.DIARISTAS)S.DIARISTAS={};if(!S.NOTAS)S.NOTAS={};if(!S.AREAS)S.AREAS={};if(!S.MAPA_ALOC)S.MAPA_ALOC={};if(!Array.isArray(S.SERVS))S.SERVS=DEFAULT.SERVS;if(!S.PR)S.PR=DEFAULT.PR;}else{S=JSON.parse(JSON.stringify(DEFAULT));}}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}}
@@ -794,6 +794,7 @@ function pdel(){pinBuf=pinBuf.slice(0,-1);atualizarPinDots();document.getElement
 function atualizarPinDots(){for(let i=0;i<4;i++){const d=document.getElementById('pd'+i);d.classList.toggle('f',i<pinBuf.length);d.classList.remove('e');}}
 function validarPin(){const u=S.US[loginUser];if(pinBuf===u.pin){entrar(loginUser);}else{for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.add('e');document.getElementById('pin-err').textContent='PIN incorreto. Tente novamente.';setTimeout(()=>{pinBuf='';atualizarPinDots();},1000);}}
 function entrar(i){CU=S.US[i];document.getElementById('login-screen').style.display='none';document.getElementById('app').style.display='block';document.getElementById('un').textContent=CU.n.split(' ')[0];
+  aplicarHaAreas();
   var banner=document.getElementById('ver-banner');
   if(banner)banner.style.display=(CU.r==='Consultor')?'block':'none';const v=isV(CU),a=isA(CU);const tb=document.getElementById('tabs');if(a){tb.style.display='flex';buildTabs();}else tb.style.display='none';if(v){document.getElementById('h-nome').textContent='Olá, '+CU.n.split(' ')[0]+'! 👋';document.getElementById('h-data').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});popAll();buildActs();sp('home',false);rUlt();}else{popAll();const first=TABS.find(t=>CU.p[t.p]);if(first)goTab(first.id);}initSync();const cc=document.getElementById('ins-cad-card');if(cc)cc.style.display=(CU.p&&CU.p.config)?'block':'none';}
 function doLogout(){CU=null;loginFaz=null;loginUser=null;pinBuf='';document.getElementById('app').style.display='none';document.getElementById('tabs').style.display='none';document.getElementById('login-screen').style.display='flex';document.getElementById('step-faz').style.display='block';document.getElementById('step-user').style.display='none';document.getElementById('step-pin').style.display='none';if(window.history&&window.history.replaceState)window.history.replaceState({},document.title,window.location.pathname);mostrarFazendas();}
@@ -905,7 +906,121 @@ function pagarDiaria(idx){const r=S.rD[idx];if(!r)return;r.pago=true;r.pago_por=
 function excluirRegistro(arr,idx){if(!confirm('⚠️ Excluir este registro?'))return;if(!S[arr]||idx<0||idx>=S[arr].length)return;S[arr][idx]._apagado=true;salvar();if(S.cfgGS)salvarNuvem(function(){});rPan();if(typeof rListDesp==='function')rListDesp();}
 
 // ═══ CONFIG ═══
-function rFazCfg(){const c=document.getElementById('faz-cfg');if(!c)return;c.innerHTML=Object.entries(S.FAZ).map(([faz,d])=>{const k=faz.replace(/[\s']/g,'_');const lotes=(S.LOTES||[]).filter(l=>l.faz===faz).length;return`<div style="background:#f9f9f9;border-radius:10px;padding:10px;margin-bottom:10px;border:1px solid #e0e0e0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-weight:700;font-size:14px">🏠 ${faz}</span><div style="display:flex;gap:6px"><span onclick="editFaz('${faz}')" style="font-size:11px;background:#E6F1FB;color:#0C447C;padding:3px 8px;border-radius:6px;cursor:pointer">✏️</span><span onclick="delFaz('${faz}')" style="font-size:11px;background:#FCEBEB;color:#CC2200;padding:3px 8px;border-radius:6px;cursor:pointer">🗑️</span></div></div><div style="font-size:11px;color:#666;margin-bottom:6px">${lotes} lote(s)</div><div style="margin-bottom:6px"><div style="font-size:11px;color:#888;margin-bottom:3px">URL Apps Script:</div><div style="display:flex;gap:6px"><input id="gas-${k}" type="text" value="${d.gasUrl||''}" placeholder="https://script.google.com/..." style="flex:1;padding:6px 8px;border:1.5px solid #ddd;border-radius:7px;font-size:11px"><button onclick="salvarGasFaz('${faz}','${k}')" style="padding:6px 10px;background:#1B5E20;color:#fff;border:none;border-radius:7px;font-size:11px;cursor:pointer">💾</button></div></div><div><div style="font-size:11px;color:#888;margin-bottom:3px">Lotes/Cochos:</div><div id="chl-${k}">${(d.cochos||[]).map(c=>`<span class="chip">${c} <span class="cdel" onclick="delCo('${faz}','${c}')">×</span></span>`).join('')}</div><div class="addr"><input type="text" id="nc-${k}" placeholder="Novo cocho/lote" style="flex:1"><button class="savb" onclick="addCo('${faz}')">＋</button></div></div></div>`;}).join('');}
+function rFazCfg(){
+  var c=document.getElementById('faz-cfg');
+  if(!c)return;
+  // Agrupa áreas por módulo para exibir ha
+  var areaHtml = _buildAreaHaForm();
+  c.innerHTML=Object.entries(S.FAZ).map(([faz,d])=>{
+    var k=faz.replace(/[\s']/g,'_');
+    var lotes=(S.LOTES||[]).filter(l=>l.faz===faz).length;
+    return `<div style="background:#f9f9f9;border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid #e0e0e0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-weight:700;font-size:14px">🏠 ${faz}</span>
+        <div style="display:flex;gap:6px">
+          <span onclick="editFaz('${faz}')" style="font-size:11px;background:#E6F1FB;color:#0C447C;padding:3px 8px;border-radius:6px;cursor:pointer">✏️</span>
+          <span onclick="delFaz('${faz}')" style="font-size:11px;background:#FCEBEB;color:#CC2200;padding:3px 8px;border-radius:6px;cursor:pointer">🗑️</span>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#666;margin-bottom:8px">${lotes} lote(s)</div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:3px">URL Apps Script:</div>
+        <div style="display:flex;gap:6px">
+          <input id="gas-${k}" type="text" value="${d.gasUrl||''}" placeholder="https://script.google.com/..." style="flex:1;padding:6px 8px;border:1.5px solid #ddd;border-radius:7px;font-size:11px">
+          <button onclick="salvarGasFaz('${faz}','${k}')" style="padding:6px 10px;background:#1B5E20;color:#fff;border:none;border-radius:7px;font-size:11px;cursor:pointer">💾</button>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:#888;margin-bottom:3px">Lotes/Cochos:</div>
+        <div id="chl-${k}">${(d.cochos||[]).map(c=>`<span class="chip">${c} <span class="cdel" onclick="delCo('${faz}','${c}')">×</span></span>`).join('')}</div>
+        <div class="addr"><input type="text" id="nc-${k}" placeholder="Novo cocho/lote" style="flex:1"><button class="savb" onclick="addCo('${faz}')">＋</button></div>
+      </div>
+    </div>`;
+  }).join('')
+  + areaHtml;
+}
+
+function _buildAreaHaForm(){
+  // Agrupa MAPA_AREAS por tipo/modulo
+  var pastos = MAPA_AREAS.filter(function(a){return a.tipo==='pasto';});
+  var mods = {};
+  MAPA_AREAS.filter(function(a){return a.tipo==='modulo';}).forEach(function(a){
+    if(!mods[a.modulo]) mods[a.modulo]=[];
+    mods[a.modulo].push(a);
+  });
+
+  var html = '<div style="background:#f9f9f9;border-radius:12px;padding:12px;border:1px solid #e0e0e0;margin-bottom:10px">'
+    + '<div style="font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px">📐 Área (ha) por piquete/pasto</div>';
+
+  // Pastos
+  html += '<div style="margin-bottom:10px">'
+    + '<div style="font-size:11px;font-weight:700;color:#5D4037;margin-bottom:6px;padding:4px 8px;background:#EFEBE9;border-radius:6px">Pastos (PA 01 – PA 10)</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
+  pastos.forEach(function(a){
+    var haVal = (S.AREAS&&S.AREAS[a.id]&&S.AREAS[a.id].ha!=null) ? S.AREAS[a.id].ha : a.ha;
+    html += '<div style="display:flex;align-items:center;gap:5px;background:#fff;border:1px solid #eee;border-radius:7px;padding:5px 7px">'
+      + '<span style="font-size:11px;font-weight:700;color:#5D4037;min-width:42px">'+a.label+'</span>'
+      + '<input type="number" step="0.1" min="0" placeholder="0.0" value="'+haVal+'" '
+      + 'id="ha-'+a.id+'" onchange="salvarHaArea(\''+a.id+'\')" '
+      + 'style="flex:1;padding:4px 6px;border:1px solid #ddd;border-radius:6px;font-size:12px;width:60px">'
+      + '<span style="font-size:10px;color:#888">ha</span>'
+      + '</div>';
+  });
+  html += '</div></div>';
+
+  // Módulos
+  var coresMod = {1:{bg:'#E8F5E9',bd:'#4CAF50',txt:'#1B5E20',nome:'Módulo 1 — Verde'},2:{bg:'#FFEBEE',bd:'#EF5350',txt:'#B71C1C',nome:'Módulo 2 — Vermelho'},3:{bg:'#EDE7F6',bd:'#CE93D8',txt:'#4A148C',nome:'Módulo 3 — Roxo'},4:{bg:'#FFFDE7',bd:'#F9A825',txt:'#827717',nome:'Módulo 4 — Verde-oliva'}};
+  Object.keys(mods).sort().forEach(function(m){
+    var c = coresMod[m]||{bg:'#f5f5f5',bd:'#ccc',txt:'#333',nome:'Módulo '+m};
+    html += '<div style="margin-bottom:10px">'
+      + '<div style="font-size:11px;font-weight:700;color:'+c.txt+';margin-bottom:6px;padding:4px 8px;background:'+c.bg+';border-radius:6px;border:1px solid '+c.bd+'">'+c.nome+'</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
+    mods[m].forEach(function(a){
+      var haVal = (S.AREAS&&S.AREAS[a.id]&&S.AREAS[a.id].ha!=null) ? S.AREAS[a.id].ha : a.ha;
+      html += '<div style="display:flex;align-items:center;gap:5px;background:#fff;border:1px solid #eee;border-radius:7px;padding:5px 7px">'
+        + '<span style="font-size:11px;font-weight:700;color:'+c.txt+';min-width:42px">'+a.label+'</span>'
+        + '<input type="number" step="0.1" min="0" placeholder="0.0" value="'+haVal+'" '
+        + 'id="ha-'+a.id+'" onchange="salvarHaArea(\''+a.id+'\')" '
+        + 'style="flex:1;padding:4px 6px;border:1px solid #ddd;border-radius:6px;font-size:12px;width:60px">'
+        + '<span style="font-size:10px;color:#888">ha</span>'
+        + '</div>';
+    });
+    html += '</div></div>';
+  });
+
+  html += '<button onclick="salvarTodasHa()" style="width:100%;padding:10px;background:#1B5E20;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;margin-top:4px">💾 Salvar todas as áreas</button>'
+    + '</div>';
+  return html;
+}
+
+function salvarHaArea(id){
+  if(!S.AREAS) S.AREAS={};
+  var inp = document.getElementById('ha-'+id);
+  var v = inp ? parseFloat(inp.value)||0 : 0;
+  if(!S.AREAS[id]) S.AREAS[id]={};
+  S.AREAS[id].ha = v;
+  // Atualiza MAPA_AREAS em memória
+  var a = MAPA_AREAS.find(function(x){return x.id===id;});
+  if(a) a.ha = v;
+  salvar();
+}
+
+function salvarTodasHa(){
+  if(!S.AREAS) S.AREAS={};
+  MAPA_AREAS.forEach(function(a){
+    var inp = document.getElementById('ha-'+a.id);
+    if(!inp) return;
+    var v = parseFloat(inp.value)||0;
+    if(!S.AREAS[a.id]) S.AREAS[a.id]={};
+    S.AREAS[a.id].ha = v;
+    a.ha = v;
+  });
+  salvar();
+  if(S.cfgGS) salvarNuvem(null);
+  // Feedback visual no botão
+  var btns = document.querySelectorAll('#faz-cfg button');
+  btns.forEach(function(b){ if(b.textContent.indexOf('Salvar todas')>=0){ b.textContent='✅ Salvo!'; setTimeout(function(){b.textContent='💾 Salvar todas as áreas';},1500); } });
+}
 function salvarGasFaz(faz,k){const url=(document.getElementById('gas-'+k)||{}).value?.trim();if(S.FAZ[faz]){S.FAZ[faz].gasUrl=url;salvar();alert('✅ URL salva para '+faz+'!');}}
 function addFaz(){const v=(document.getElementById('nf')||{}).value?.trim();if(!v){alert('Digite o nome.');return;}if(S.FAZ[v]){alert('Já existe!');return;}S.FAZ[v]={cochos:[],prods:Object.keys(S.EST).slice(0,2),gasUrl:''};salvar();rFazCfg();popAll();rLinksUsuarios();document.getElementById('nf').value='';alert('✅ Fazenda "'+v+'" adicionada!');}
 function editFaz(antiga){const nova=prompt('Novo nome:',antiga);if(!nova||!nova.trim()||nova===antiga)return;if(S.FAZ[nova]){alert('Já existe.');return;}S.FAZ[nova]=S.FAZ[antiga];delete S.FAZ[antiga];S.US.forEach(u=>{u.fs=u.fs.map(f=>f===antiga?nova:f);});salvar();rFazCfg();popAll();rUcfg();rLinksUsuarios();alert('✅ Renomeada!');}
@@ -942,6 +1057,14 @@ function fecharQR(){document.getElementById('qr-modal').classList.remove('open')
 // ═══ SYNC ═══
 function atualizarSync(){const dot=document.getElementById('sdot');if(!navigator.onLine){if(dot)dot.className='sdot';}else if(S.queue.length>0){if(dot)dot.className='sdot sy';}else{if(dot)dot.className='sdot on';}const pl=document.getElementById('pend-list');if(pl)pl.innerHTML=S.queue.length?S.queue.map(r=>`<div class="ri"><div class="rt"><span class="rn">${r.tipo} <span class="bdg ba">pendente</span></span></div><div class="rd">${r.dt||'—'} · ${r.faz||''}</div></div>`).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:12px">Nenhum dado pendente. ✅</div>';}
 function syncAgora(){if(!navigator.onLine){alert('Sem internet.');return;}if(!S.cfgGS){alert('Configure o Apps Script.');return;}if(!S.queue.length){alert('Nenhum dado pendente.');return;}function next(i){if(i<0){salvar();atualizarSync();return;}const reg=S.queue.splice(i,1)[0];salvar();const url=getFazGasUrl((reg||{}).faz||'');fetch(url+'?'+new URLSearchParams({data:JSON.stringify(reg)}),{method:'GET',mode:'no-cors'}).then(()=>next(i-1)).catch(()=>next(i-1));}next(S.queue.length-1);}
+// ═══ Aplica hectares salvos em S.AREAS ao MAPA_AREAS ═══
+function aplicarHaAreas(){
+  if(!S.AREAS) return;
+  MAPA_AREAS.forEach(function(a){
+    if(S.AREAS[a.id]&&S.AREAS[a.id].ha!=null) a.ha = S.AREAS[a.id].ha;
+  });
+}
+
 function initSync(){atualizarSync();window.addEventListener('online',()=>{atualizarSync();if(S.queue.length>0)syncAgora();});window.addEventListener('offline',()=>atualizarSync());setInterval(()=>{if(navigator.onLine&&S.queue.length>0&&S.cfgGS)syncAgora();},30000);}
 
 // ═══ NUVEM ═══
@@ -966,42 +1089,44 @@ function carregarNuvem(cb){
     delete window[cbName];
     var el=document.getElementById(cbName);
     if(el&&el.parentNode)el.parentNode.removeChild(el);
-    // Processar dados inline
     if(!data){updCloudStatus('err');if(cb)cb(false);return;}
-    if(data.CONFIG&&data.CONFIG.length>0){
+
+    // ── Detectar formato: JSON direto (novo Apps Script) ou {CONFIG:[[...]]} (legado) ──
+    var cfg = null;
+    if(data.FAZ||data.US||data.rD||data.rC){
+      // Formato direto — o Apps Script retornou o objeto completo
+      cfg = data;
+    } else if(data.CONFIG&&data.CONFIG.length>0){
+      // Formato legado — CONFIG é array de arrays
       var row=data.CONFIG[0];
-      if(row&&row[1]){
-        try{
-          var cfg=JSON.parse(row[1]);
-          if(cfg.FAZ&&Object.keys(cfg.FAZ).length)S.FAZ=cfg.FAZ;
-          if(cfg.US&&cfg.US.length){
-            var lu=S.US||[];
-            cfg.US.forEach(function(u){if(!lu.some(function(l){return l.n===u.n;}))lu.push(u);});
-            S.US=lu;
-          }
-          if(cfg.EST)S.EST=cfg.EST;
-          if(cfg.SERVS&&cfg.SERVS.length)S.SERVS=cfg.SERVS;
-          if(cfg.PR)S.PR=cfg.PR;
-          if(cfg.LOTES&&cfg.LOTES.length)S.LOTES=cfg.LOTES;
-          else if(!S.LOTES||!S.LOTES.length)S.LOTES=DEFAULT.LOTES;
-          if(cfg.AREAS)S.AREAS=cfg.AREAS;
-          if(cfg.MAPA_ALOC)S.MAPA_ALOC=cfg.MAPA_ALOC;
-          if(cfg.DIARISTAS)S.DIARISTAS=cfg.DIARISTAS;
-          if(cfg.rD&&cfg.rD.length)S.rD=cfg.rD;
-          if(cfg.rT&&cfg.rT.length)S.rT=cfg.rT;
-          if(cfg.rC&&cfg.rC.length)S.rC=cfg.rC;
-          if(cfg.rE&&cfg.rE.length)S.rE=cfg.rE;
-          if(cfg.rDesp&&cfg.rDesp.length)S.rDesp=cfg.rDesp;
-          if(cfg.mEst)S.mEst=cfg.mEst;
-          if(cfg.NOTAS)S.NOTAS=cfg.NOTAS;
-        }catch(ex){}
-      }
+      if(row&&row[1]){try{cfg=JSON.parse(row[1]);}catch(ex){}}
     }
-    // Mesclar dados das abas individuais
-    ['rC','rD','rT','rE'].forEach(function(k){if(data[k]&&data[k].length){if(!S[k])S[k]=[];data[k].forEach(function(r){var existe=S[k].some(function(x){return x.dt===r.dt&&(x.resp||x.n)===(r.resp||r.n)&&(x.total||x.v)===(r.total||r.v);});if(!existe)S[k].push(r);});}});
+
+    if(cfg){
+      if(cfg.FAZ&&Object.keys(cfg.FAZ).length)S.FAZ=cfg.FAZ;
+      if(cfg.US&&cfg.US.length)S.US=cfg.US;
+      if(cfg.EST)S.EST=cfg.EST;
+      if(cfg.SERVS&&cfg.SERVS.length)S.SERVS=cfg.SERVS;
+      if(cfg.PR)S.PR=cfg.PR;
+      if(cfg.LOTES&&cfg.LOTES.length)S.LOTES=cfg.LOTES;
+      else if(!S.LOTES||!S.LOTES.length)S.LOTES=DEFAULT.LOTES;
+      if(cfg.AREAS)S.AREAS=cfg.AREAS;
+      if(cfg.MAPA_ALOC)S.MAPA_ALOC=cfg.MAPA_ALOC;
+      if(cfg.DIARISTAS)S.DIARISTAS=cfg.DIARISTAS;
+      if(cfg.rD&&cfg.rD.length)S.rD=cfg.rD;
+      if(cfg.rT&&cfg.rT.length)S.rT=cfg.rT;
+      if(cfg.rC&&cfg.rC.length)S.rC=cfg.rC;
+      if(cfg.rE&&cfg.rE.length)S.rE=cfg.rE;
+      if(cfg.rDesp&&cfg.rDesp.length)S.rDesp=cfg.rDesp;
+      if(cfg.mEst)S.mEst=cfg.mEst;
+      if(cfg.NOTAS)S.NOTAS=cfg.NOTAS;
+      if(cfg.PIX_D)S.PIX_D=cfg.PIX_D;
+    }
+
     salvarLocal();
-    // Se nuvem não tinha LOTES, salva os do DEFAULT agora
-    if(!data.CONFIG||!data.CONFIG.length||!(JSON.parse((data.CONFIG[0]||[null,'{}'])[1]||'{}').LOTES||[]).length){
+    aplicarHaAreas();
+    // Se a nuvem não tem LOTES, salva os locais agora
+    if(cfg&&(!cfg.LOTES||!cfg.LOTES.length)){
       setTimeout(function(){salvarNuvem(null);},2000);
     }
     updCloudStatus('ok');
@@ -1137,23 +1262,11 @@ function _renderPinsNoContainer(contId, resumoId){
 
     var box = document.createElement('div');
     if(ocupado){
-      // Número do lote curto (ex: "L01" de "Lote 01")
-      var loteNum = lote.nome.replace(/[^0-9]/g,'').replace(/^0+/,'') || lote.nome.slice(-2);
-      var loteAbrev = 'L'+('0'+loteNum).slice(-2);
-      box.style.cssText=[
-        'background:'+cor.bg,
-        'border:2.5px solid '+cor.bd,
-        'border-radius:10px',
-        'padding:5px 8px',
-        'text-align:center',
-        'min-width:54px',
-        'box-shadow:0 4px 14px rgba(0,0,0,0.65)',
-        'position:relative'
-      ].join(';');
-      box.innerHTML=''
-        +'<div style="font-size:9px;font-weight:800;color:'+cor.bd+';letter-spacing:.5px;line-height:1;margin-bottom:1px">'+lbl+'</div>'
-        +'<div style="font-size:18px;font-weight:900;color:#fff;line-height:1;letter-spacing:-1px">'+qtd+'</div>'
-        +'<div style="font-size:8px;font-weight:700;color:rgba(255,255,255,.8);line-height:1.2;margin-top:1px">'+loteAbrev+'</div>';
+      box.style.cssText='background:'+cor.bg+';border:2.5px solid '+cor.bd+';border-radius:9px;padding:4px 7px;text-align:center;min-width:50px;box-shadow:0 3px 12px rgba(0,0,0,0.6)';
+      box.innerHTML='<div style="font-size:16px;line-height:1">🐄</div>'
+        +'<div style="font-size:8px;font-weight:700;color:#fff;opacity:.9;line-height:1.2">'+lbl+'</div>'
+        +'<div style="font-size:12px;font-weight:800;color:#fff;line-height:1.3">'+qtd+'</div>'
+        +'<div style="font-size:8px;color:'+cor.bd+';font-weight:700">'+lote.nome+'</div>';
     } else {
       box.style.cssText='background:'+cor.bgV+';border:1.5px dashed '+cor.bd+';border-radius:8px;padding:3px 5px;text-align:center;min-width:40px;box-shadow:0 1px 4px rgba(0,0,0,0.4)';
       box.innerHTML='<div style="font-size:8px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,1);line-height:1.3">'+lbl+'</div>'
@@ -2696,17 +2809,14 @@ function aoClicarNoLoteDoMapa(pasto, lote){
   pastoSelecionadoNoMapa = pasto;
   loteSelecionadoNoMapa  = lote;
   var t = document.getElementById('mapa-opcoes-title');
-  if(t) t.textContent = (lote ? lote+' · ' : '') + pasto;
+  if(t) t.textContent = (lote ? '🐄 '+lote+' · ' : '') + pasto;
   var m = document.getElementById('mapa-opcoes-modal');
-  if(m){
-    m.style.display='flex';
-    m.onclick = function(e){ if(e.target===m) fecharModalOpcoes(); };
-  }
+  if(m) m.classList.add('open');
 }
 
 function fecharModalOpcoes(){
   var m = document.getElementById('mapa-opcoes-modal');
-  if(m) m.style.display='none';
+  if(m) m.classList.remove('open');
 }
 
 function irParaTrato(){
@@ -2742,47 +2852,22 @@ function irParaMudancaPasto(){
 
 </script>
 <!-- ══ MODAL OPÇÕES DO MAPA (vaqueiro) ══ -->
-<div id="mapa-opcoes-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:flex-end;justify-content:center">
-  <div style="background:#fff;border-radius:20px 20px 0 0;padding:0;width:100%;max-width:480px;overflow:hidden;box-shadow:0 -4px 32px rgba(0,0,0,.18)">
-    <!-- Handle -->
-    <div style="display:flex;justify-content:center;padding-top:10px;padding-bottom:2px">
-      <div style="width:36px;height:4px;background:#e0e0e0;border-radius:2px"></div>
+<div class="edit-modal" id="mapa-opcoes-modal">
+  <div class="edit-box" style="max-width:320px;text-align:center">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:15px;font-weight:700;color:#1B5E20" id="mapa-opcoes-title">Área Selecionada</span>
+      <span onclick="fecharModalOpcoes()" style="cursor:pointer;font-size:26px;color:#aaa;line-height:1">&times;</span>
     </div>
-    <!-- Cabeçalho -->
-    <div style="padding:12px 20px 10px;border-bottom:1px solid #f0f0f0">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div style="font-size:11px;color:#888;font-weight:600;letter-spacing:.5px;text-transform:uppercase">Área selecionada</div>
-          <div style="font-size:17px;font-weight:800;color:#1B5E20;margin-top:1px" id="mapa-opcoes-title">—</div>
-        </div>
-        <button onclick="fecharModalOpcoes()" style="width:32px;height:32px;border-radius:50%;background:#f5f5f5;border:none;font-size:18px;color:#888;cursor:pointer;display:flex;align-items:center;justify-content:center">&times;</button>
-      </div>
-    </div>
-    <!-- Ações -->
-    <div style="padding:16px 20px 24px;display:flex;flex-direction:column;gap:10px">
-      <!-- Trato de Cocho -->
-      <button onclick="irParaTrato()" style="display:flex;align-items:center;gap:14px;padding:16px 18px;background:linear-gradient(135deg,#1B5E20,#2E7D32);border:none;border-radius:14px;cursor:pointer;width:100%;text-align:left;box-shadow:0 3px 12px rgba(27,94,32,.3)">
-        <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v4H3z"/><path d="M5 7v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7"/><path d="M9 11h6"/><path d="M12 11v4"/></svg>
-        </div>
-        <div>
-          <div style="font-size:15px;font-weight:800;color:#fff;line-height:1.2">Trato de Cocho</div>
-          <div style="font-size:12px;color:rgba(255,255,255,.75);margin-top:2px">Registrar fornecimento de alimento</div>
-        </div>
-        <div style="margin-left:auto;color:rgba(255,255,255,.6);font-size:18px">›</div>
+    <p style="font-size:13px;color:#666;margin-bottom:18px">O que você deseja fazer nesta área?</p>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <button onclick="irParaTrato()" class="sbtn" style="margin-top:0;background:#2E7D32;font-size:15px;padding:14px 10px;border-radius:14px">
+        🌾 Trato de Cocho
       </button>
-      <!-- Mover / Alocar Gado -->
-      <button onclick="irParaMudancaPasto()" style="display:flex;align-items:center;gap:14px;padding:16px 18px;background:linear-gradient(135deg,#0D47A1,#1565C0);border:none;border-radius:14px;cursor:pointer;width:100%;text-align:left;box-shadow:0 3px 12px rgba(13,71,161,.3)">
-        <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/><path d="M5 19V5"/></svg>
-        </div>
-        <div>
-          <div style="font-size:15px;font-weight:800;color:#fff;line-height:1.2">Mudança de Pasto</div>
-          <div style="font-size:12px;color:rgba(255,255,255,.75);margin-top:2px">Mover ou alocar gado nesta área</div>
-        </div>
-        <div style="margin-left:auto;color:rgba(255,255,255,.6);font-size:18px">›</div>
+      <button onclick="irParaMudancaPasto()" class="sbtn" style="margin-top:0;background:#1565C0;font-size:15px;padding:14px 10px;border-radius:14px">
+        🔄 Mover / Alocar Gado
       </button>
     </div>
+    <button onclick="fecharModalOpcoes()" style="margin-top:14px;width:100%;padding:10px;background:none;border:1px solid #ddd;border-radius:10px;font-size:13px;color:#999;cursor:pointer">Cancelar</button>
   </div>
 </div>
 
