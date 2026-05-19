@@ -178,6 +178,25 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 .fc-det{font-size:11px;color:#666;margin:4px 0;line-height:1.7}
 .fc-total-val{font-size:18px;font-weight:800;color:#1B5E20}
 .fc-pix{font-size:11px;background:#E8F5E9;border-radius:6px;padding:4px 8px;color:#1B5E20;font-family:monospace;margin-top:4px;display:inline-block}
+/* ══ MAPA PINS — copiado do editor que funciona ══ */
+#mapa-wrap-main,#mapa-wrap-lote{position:relative;width:100%;border-radius:12px;overflow:hidden;background:#2d5a1b;user-select:none}
+#mapa-overlay-main,#mapa-overlay-lote{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10}
+.mpin{position:absolute;transform:translate(-50%,-50%);pointer-events:auto;cursor:pointer;z-index:20;background:none;border:none;padding:0;outline:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:opacity .2s}
+.mpin-inner{display:flex;flex-direction:column;align-items:center;pointer-events:none}
+.mpin-box-empty{background:rgba(255,255,255,.06);border:1.5px dashed rgba(255,255,255,.25);border-radius:7px;padding:3px 6px;text-align:center;min-width:38px;opacity:0;transition:all .2s}
+.mpin-box-empty .mplbl{font-size:8px;font-weight:700;color:rgba(255,255,255,.6);white-space:nowrap}
+.mpin-box-empty .mpplus{font-size:10px;color:rgba(255,255,255,.35)}
+.mpin-box-ocupado{border-radius:9px;padding:5px 8px;text-align:center;min-width:52px;box-shadow:0 4px 14px rgba(0,0,0,.65);border-width:2.5px;border-style:solid;animation:mpin-in .25s ease}
+@keyframes mpin-in{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.mpin-box-ocupado .mparea{font-size:8px;font-weight:700;color:rgba(255,255,255,.8);line-height:1.3;white-space:nowrap}
+.mpin-box-ocupado .mpqtd{font-size:18px;font-weight:900;color:#fff;line-height:1.2;letter-spacing:-1px}
+.mpin-box-ocupado .mplote{font-size:8px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;max-width:60px;text-overflow:ellipsis}
+.mpin-haste{width:2px;margin:0 auto}
+.mpin-dot{border-radius:50%;margin:0 auto}
+.mapa-edit-mode .mpin-box-empty{opacity:1;border-color:rgba(255,180,0,.7);background:rgba(255,180,0,.12)}
+.mapa-edit-mode .mpin-box-empty .mplbl{color:rgba(255,200,0,.95)}
+.mapa-edit-mode .mpin{cursor:grab}
+.mapa-edit-mode .mpin.dragging{cursor:grabbing;opacity:.85;z-index:50}
 </style>
 </head>
 <body>
@@ -646,20 +665,19 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
 <!-- SUB-PAINEL MAPA -->
 <div id="lote-sub-mapa" style="display:none">
-<div style="background:#2d5a1b;border-radius:12px;overflow:hidden;position:relative;min-height:380px" id="mapa-wrap-lote">
-  <img src="https://gestaopecuarialucrativa-dotcom.github.io/fazenda-gpl/mapa.jpeg" 
-    style="width:100%;display:block;opacity:0.92;position:absolute;top:0;left:0;height:100%;object-fit:cover;pointer-events:none;" 
-    alt="Mapa da fazenda"
-    onerror="this.style.display='none'">
-  <div id="mapa-pins" style="position:absolute;inset:0;width:100%;height:100%;z-index:5"></div>
-  <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.5);padding:6px 10px;display:flex;align-items:center;gap:8px;z-index:30">
-    <span style="font-size:10px;color:#A5D6A7;font-weight:600" id="mapa-resumo">0 com gado</span>
+<div id="mapa-wrap-lote" style="position:relative;width:100%;border-radius:12px;overflow:hidden;background:#2d5a1b;user-select:none">
+  <img src="https://gestaopecuarialucrativa-dotcom.github.io/fazenda-gpl/mapa.jpeg"
+    style="width:100%;height:auto;display:block;opacity:0.92;pointer-events:none;-webkit-user-drag:none"
+    draggable="false"
+    onerror="this.style.minHeight='320px';this.style.background='#3a6b25';this.removeAttribute('src')">
+  <div id="mapa-pins" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;pointer-events:none"></div>
+  <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.55);padding:6px 10px;display:flex;align-items:center;gap:8px;z-index:30">
+    <span style="font-size:11px;color:#A5D6A7;font-weight:600" id="mapa-resumo">Toque em qualquer piquete</span>
     <button onclick="abrirSelPiquete('mapa-pins')" style="margin-left:auto;background:#1B5E20;color:#fff;border:1.5px solid #4CAF50;border-radius:14px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation">+ Alocar</button>
   </div>
 </div>
 <div style="margin-top:8px;padding:8px;background:#f9f9f9;border-radius:10px;border:1px solid #eee">
   <div style="font-size:11px;color:#888;margin-bottom:4px">Toque em um piquete para alocar ou mover o gado</div>
-  <div style="font-size:12px;color:#1B5E20;font-weight:600" id="mapa-status">Selecione um piquete no mapa</div>
 </div>
 </div>
 
@@ -792,7 +810,6 @@ function pdel(){pinBuf=pinBuf.slice(0,-1);atualizarPinDots();document.getElement
 function atualizarPinDots(){for(let i=0;i<4;i++){const d=document.getElementById('pd'+i);d.classList.toggle('f',i<pinBuf.length);d.classList.remove('e');}}
 function validarPin(){const u=S.US[loginUser];if(pinBuf===u.pin){entrar(loginUser);}else{for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.add('e');document.getElementById('pin-err').textContent='PIN incorreto. Tente novamente.';setTimeout(()=>{pinBuf='';atualizarPinDots();},1000);}}
 function entrar(i){CU=S.US[i];document.getElementById('login-screen').style.display='none';document.getElementById('app').style.display='block';document.getElementById('un').textContent=CU.n.split(' ')[0];
-  try{_aplicarHaAreas();}catch(e){}
   var banner=document.getElementById('ver-banner');
   if(banner)banner.style.display=(CU.r==='Consultor')?'block':'none';const v=isV(CU),a=isA(CU);const tb=document.getElementById('tabs');if(a){tb.style.display='flex';buildTabs();}else tb.style.display='none';if(v){document.getElementById('h-nome').textContent='Olá, '+CU.n.split(' ')[0]+'! 👋';document.getElementById('h-data').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});popAll();buildActs();sp('home',false);rUlt();}else{popAll();const first=TABS.find(t=>CU.p[t.p]);if(first)goTab(first.id);}initSync();const cc=document.getElementById('ins-cad-card');if(cc)cc.style.display=(CU.p&&CU.p.config)?'block':'none';}
 function doLogout(){CU=null;loginFaz=null;loginUser=null;pinBuf='';document.getElementById('app').style.display='none';document.getElementById('tabs').style.display='none';document.getElementById('login-screen').style.display='flex';document.getElementById('step-faz').style.display='block';document.getElementById('step-user').style.display='none';document.getElementById('step-pin').style.display='none';if(window.history&&window.history.replaceState)window.history.replaceState({},document.title,window.location.pathname);mostrarFazendas();}
@@ -904,126 +921,7 @@ function pagarDiaria(idx){const r=S.rD[idx];if(!r)return;r.pago=true;r.pago_por=
 function excluirRegistro(arr,idx){if(!confirm('⚠️ Excluir este registro?'))return;if(!S[arr]||idx<0||idx>=S[arr].length)return;S[arr][idx]._apagado=true;salvar();if(S.cfgGS)salvarNuvem(function(){});rPan();if(typeof rListDesp==='function')rListDesp();}
 
 // ═══ CONFIG ═══
-function rFazCfg(){
-  var c=document.getElementById('faz-cfg');
-  if(!c)return;
-  c.innerHTML=Object.entries(S.FAZ).map(([faz,d])=>{
-    var k=faz.replace(/[\s']/g,'_');
-    var lotes=(S.LOTES||[]).filter(l=>l.faz===faz).length;
-    return`<div style="background:#f9f9f9;border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid #e0e0e0">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <span style="font-weight:700;font-size:14px">🏠 ${faz}</span>
-        <div style="display:flex;gap:6px">
-          <span onclick="editFaz('${faz}')" style="font-size:11px;background:#E6F1FB;color:#0C447C;padding:3px 8px;border-radius:6px;cursor:pointer">✏️</span>
-          <span onclick="delFaz('${faz}')" style="font-size:11px;background:#FCEBEB;color:#CC2200;padding:3px 8px;border-radius:6px;cursor:pointer">🗑️</span>
-        </div>
-      </div>
-      <div style="font-size:11px;color:#666;margin-bottom:8px">${lotes} lote(s)</div>
-      <div style="margin-bottom:8px">
-        <div style="font-size:11px;color:#888;margin-bottom:3px">URL Apps Script:</div>
-        <div style="display:flex;gap:6px">
-          <input id="gas-${k}" type="text" value="${d.gasUrl||''}" placeholder="https://script.google.com/..." style="flex:1;padding:6px 8px;border:1.5px solid #ddd;border-radius:7px;font-size:11px">
-          <button onclick="salvarGasFaz('${faz}','${k}')" style="padding:6px 10px;background:#1B5E20;color:#fff;border:none;border-radius:7px;font-size:11px;cursor:pointer">💾</button>
-        </div>
-      </div>
-      <div>
-        <div style="font-size:11px;color:#888;margin-bottom:3px">Lotes/Cochos:</div>
-        <div id="chl-${k}">${(d.cochos||[]).map(c=>`<span class="chip">${c} <span class="cdel" onclick="delCo('${faz}','${c}')">×</span></span>`).join('')}</div>
-        <div class="addr"><input type="text" id="nc-${k}" placeholder="Novo cocho/lote" style="flex:1"><button class="savb" onclick="addCo('${faz}')">＋</button></div>
-      </div>
-    </div>`;
-  }).join('')
-  + _buildHaSection();
-}
-
-// ── Seção de área (ha) por piquete/pasto ──
-function _buildHaSection(){
-  if(!S.AREAS) S.AREAS={};
-  var pastos = MAPA_AREAS.filter(function(a){return a.tipo==='pasto';});
-  var mods = {};
-  MAPA_AREAS.filter(function(a){return a.tipo==='modulo';}).forEach(function(a){
-    if(!mods[a.modulo]) mods[a.modulo]=[];
-    mods[a.modulo].push(a);
-  });
-
-  var coresMod = {
-    1:{bg:'#E8F5E9',bd:'#4CAF50',txt:'#1B5E20',nome:'Módulo 1 — Verde'},
-    2:{bg:'#FFEBEE',bd:'#EF5350',txt:'#B71C1C',nome:'Módulo 2 — Vermelho'},
-    3:{bg:'#EDE7F6',bd:'#CE93D8',txt:'#4A148C',nome:'Módulo 3 — Roxo'},
-    4:{bg:'#FFFDE7',bd:'#F9A825',txt:'#827717',nome:'Módulo 4 — Verde-oliva'}
-  };
-
-  var html = '<div style="background:#f9f9f9;border-radius:12px;padding:12px;border:1px solid #e0e0e0;margin-bottom:10px">'
-    + '<div style="font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:6px">📐 Área (ha) por piquete/pasto</div>';
-
-  // Pastos
-  html += '<div style="margin-bottom:12px">'
-    + '<div style="font-size:11px;font-weight:700;color:#5D4037;margin-bottom:6px;padding:4px 8px;background:#EFEBE9;border-radius:6px;border-left:3px solid #8D6E63">Pastos — PA 01 a PA 10</div>'
-    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
-  pastos.forEach(function(a){
-    var v = (S.AREAS[a.id]&&S.AREAS[a.id].ha!=null)?S.AREAS[a.id].ha:a.ha;
-    html += '<div style="display:flex;align-items:center;gap:5px;background:#fff;border:1px solid #eee;border-radius:8px;padding:5px 8px">'
-      + '<span style="font-size:11px;font-weight:700;color:#5D4037;min-width:40px">'+a.label+'</span>'
-      + '<input type="number" step="0.1" min="0" placeholder="0.0" value="'+v+'" id="ha-'+a.id+'" onchange="salvarHaArea(\''+a.id+'\')" style="flex:1;padding:4px 6px;border:1px solid #ddd;border-radius:6px;font-size:12px">'
-      + '<span style="font-size:10px;color:#888">ha</span>'
-      + '</div>';
-  });
-  html += '</div></div>';
-
-  // Módulos
-  Object.keys(mods).sort().forEach(function(m){
-    var c = coresMod[m]||{bg:'#f5f5f5',bd:'#ccc',txt:'#333',nome:'Módulo '+m};
-    html += '<div style="margin-bottom:12px">'
-      + '<div style="font-size:11px;font-weight:700;color:'+c.txt+';margin-bottom:6px;padding:4px 8px;background:'+c.bg+';border-radius:6px;border-left:3px solid '+c.bd+'">'+c.nome+'</div>'
-      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">';
-    mods[m].forEach(function(a){
-      var v = (S.AREAS[a.id]&&S.AREAS[a.id].ha!=null)?S.AREAS[a.id].ha:a.ha;
-      html += '<div style="display:flex;align-items:center;gap:5px;background:#fff;border:1px solid #eee;border-radius:8px;padding:5px 8px">'
-        + '<span style="font-size:11px;font-weight:700;color:'+c.txt+';min-width:40px">'+a.label+'</span>'
-        + '<input type="number" step="0.1" min="0" placeholder="0.0" value="'+v+'" id="ha-'+a.id+'" onchange="salvarHaArea(\''+a.id+'\')" style="flex:1;padding:4px 6px;border:1px solid #ddd;border-radius:6px;font-size:12px">'
-        + '<span style="font-size:10px;color:#888">ha</span>'
-        + '</div>';
-    });
-    html += '</div></div>';
-  });
-
-  html += '<button onclick="salvarTodasHa(this)" style="width:100%;padding:10px;background:#1B5E20;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer">💾 Salvar todas as áreas</button>'
-    + '</div>';
-  return html;
-}
-
-function salvarHaArea(id){
-  if(!S.AREAS) S.AREAS={};
-  var inp = document.getElementById('ha-'+id);
-  var v = inp ? parseFloat(inp.value)||0 : 0;
-  if(!S.AREAS[id]) S.AREAS[id]={};
-  S.AREAS[id].ha = v;
-  var a = MAPA_AREAS.find(function(x){return x.id===id;});
-  if(a) a.ha = v;
-  salvar();
-}
-
-function salvarTodasHa(btn){
-  if(!S.AREAS) S.AREAS={};
-  MAPA_AREAS.forEach(function(a){
-    var inp = document.getElementById('ha-'+a.id);
-    if(!inp) return;
-    var v = parseFloat(inp.value)||0;
-    if(!S.AREAS[a.id]) S.AREAS[a.id]={};
-    S.AREAS[a.id].ha = v;
-    a.ha = v;
-  });
-  salvar();
-  if(S.cfgGS) salvarNuvem(null);
-  if(btn){ btn.textContent='✅ Salvo!'; setTimeout(function(){btn.textContent='💾 Salvar todas as áreas';},1800); }
-}
-
-function _aplicarHaAreas(){
-  if(!S.AREAS) return;
-  MAPA_AREAS.forEach(function(a){
-    if(S.AREAS[a.id]&&S.AREAS[a.id].ha!=null) a.ha = S.AREAS[a.id].ha;
-  });
-}
+function rFazCfg(){const c=document.getElementById('faz-cfg');if(!c)return;c.innerHTML=Object.entries(S.FAZ).map(([faz,d])=>{const k=faz.replace(/[\s']/g,'_');const lotes=(S.LOTES||[]).filter(l=>l.faz===faz).length;return`<div style="background:#f9f9f9;border-radius:10px;padding:10px;margin-bottom:10px;border:1px solid #e0e0e0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-weight:700;font-size:14px">🏠 ${faz}</span><div style="display:flex;gap:6px"><span onclick="editFaz('${faz}')" style="font-size:11px;background:#E6F1FB;color:#0C447C;padding:3px 8px;border-radius:6px;cursor:pointer">✏️</span><span onclick="delFaz('${faz}')" style="font-size:11px;background:#FCEBEB;color:#CC2200;padding:3px 8px;border-radius:6px;cursor:pointer">🗑️</span></div></div><div style="font-size:11px;color:#666;margin-bottom:6px">${lotes} lote(s)</div><div style="margin-bottom:6px"><div style="font-size:11px;color:#888;margin-bottom:3px">URL Apps Script:</div><div style="display:flex;gap:6px"><input id="gas-${k}" type="text" value="${d.gasUrl||''}" placeholder="https://script.google.com/..." style="flex:1;padding:6px 8px;border:1.5px solid #ddd;border-radius:7px;font-size:11px"><button onclick="salvarGasFaz('${faz}','${k}')" style="padding:6px 10px;background:#1B5E20;color:#fff;border:none;border-radius:7px;font-size:11px;cursor:pointer">💾</button></div></div><div><div style="font-size:11px;color:#888;margin-bottom:3px">Lotes/Cochos:</div><div id="chl-${k}">${(d.cochos||[]).map(c=>`<span class="chip">${c} <span class="cdel" onclick="delCo('${faz}','${c}')">×</span></span>`).join('')}</div><div class="addr"><input type="text" id="nc-${k}" placeholder="Novo cocho/lote" style="flex:1"><button class="savb" onclick="addCo('${faz}')">＋</button></div></div></div>`;}).join('');}
 function salvarGasFaz(faz,k){const url=(document.getElementById('gas-'+k)||{}).value?.trim();if(S.FAZ[faz]){S.FAZ[faz].gasUrl=url;salvar();alert('✅ URL salva para '+faz+'!');}}
 function addFaz(){const v=(document.getElementById('nf')||{}).value?.trim();if(!v){alert('Digite o nome.');return;}if(S.FAZ[v]){alert('Já existe!');return;}S.FAZ[v]={cochos:[],prods:Object.keys(S.EST).slice(0,2),gasUrl:''};salvar();rFazCfg();popAll();rLinksUsuarios();document.getElementById('nf').value='';alert('✅ Fazenda "'+v+'" adicionada!');}
 function editFaz(antiga){const nova=prompt('Novo nome:',antiga);if(!nova||!nova.trim()||nova===antiga)return;if(S.FAZ[nova]){alert('Já existe.');return;}S.FAZ[nova]=S.FAZ[antiga];delete S.FAZ[antiga];S.US.forEach(u=>{u.fs=u.fs.map(f=>f===antiga?nova:f);});salvar();rFazCfg();popAll();rUcfg();rLinksUsuarios();alert('✅ Renomeada!');}
@@ -1084,46 +982,46 @@ function carregarNuvem(cb){
     delete window[cbName];
     var el=document.getElementById(cbName);
     if(el&&el.parentNode)el.parentNode.removeChild(el);
+    // Processar dados inline
     if(!data){updCloudStatus('err');if(cb)cb(false);return;}
-
-    // ── Detectar formato ──
-    // Novo: Apps Script retorna objeto direto {FAZ,US,rD,rC,...}
-    // Legado: {CONFIG:[[row0col0, jsonString, date]]}
-    var cfg = null;
-    if(data.FAZ || data.US || data.rD !== undefined || data.rC !== undefined){
-      cfg = data; // formato direto
-    } else if(data.CONFIG && data.CONFIG.length > 0){
-      var row = data.CONFIG[0];
-      if(row && row[1]){ try{ cfg = JSON.parse(row[1]); }catch(ex){} }
+    if(data.CONFIG&&data.CONFIG.length>0){
+      var row=data.CONFIG[0];
+      if(row&&row[1]){
+        try{
+          var cfg=JSON.parse(row[1]);
+          if(cfg.FAZ&&Object.keys(cfg.FAZ).length)S.FAZ=cfg.FAZ;
+          if(cfg.US&&cfg.US.length){
+            var lu=S.US||[];
+            cfg.US.forEach(function(u){if(!lu.some(function(l){return l.n===u.n;}))lu.push(u);});
+            S.US=lu;
+          }
+          if(cfg.EST)S.EST=cfg.EST;
+          if(cfg.SERVS&&cfg.SERVS.length)S.SERVS=cfg.SERVS;
+          if(cfg.PR)S.PR=cfg.PR;
+          if(cfg.LOTES&&cfg.LOTES.length)S.LOTES=cfg.LOTES;
+          else if(!S.LOTES||!S.LOTES.length)S.LOTES=DEFAULT.LOTES;
+          if(cfg.AREAS)S.AREAS=cfg.AREAS;
+          if(cfg.MAPA_ALOC)S.MAPA_ALOC=cfg.MAPA_ALOC;
+          if(cfg.DIARISTAS)S.DIARISTAS=cfg.DIARISTAS;
+          if(cfg.rD&&cfg.rD.length)S.rD=cfg.rD;
+          if(cfg.rT&&cfg.rT.length)S.rT=cfg.rT;
+          if(cfg.rC&&cfg.rC.length)S.rC=cfg.rC;
+          if(cfg.rE&&cfg.rE.length)S.rE=cfg.rE;
+          if(cfg.rDesp&&cfg.rDesp.length)S.rDesp=cfg.rDesp;
+          if(cfg.mEst)S.mEst=cfg.mEst;
+          if(cfg.NOTAS)S.NOTAS=cfg.NOTAS;
+        }catch(ex){}
+      }
     }
-
-    if(cfg){
-      if(cfg.FAZ && Object.keys(cfg.FAZ).length) S.FAZ = cfg.FAZ;
-      if(cfg.US  && cfg.US.length) S.US = cfg.US;
-      if(cfg.EST) S.EST = cfg.EST;
-      if(cfg.SERVS && cfg.SERVS.length) S.SERVS = cfg.SERVS;
-      if(cfg.PR) S.PR = cfg.PR;
-      if(cfg.LOTES && cfg.LOTES.length) S.LOTES = cfg.LOTES;
-      else if(!S.LOTES || !S.LOTES.length) S.LOTES = DEFAULT.LOTES;
-      if(cfg.AREAS)     S.AREAS     = cfg.AREAS;
-      if(cfg.MAPA_ALOC) S.MAPA_ALOC = cfg.MAPA_ALOC;
-      if(cfg.DIARISTAS) S.DIARISTAS = cfg.DIARISTAS;
-      if(cfg.rD && cfg.rD.length) S.rD = cfg.rD;
-      if(cfg.rT && cfg.rT.length) S.rT = cfg.rT;
-      if(cfg.rC && cfg.rC.length) S.rC = cfg.rC;
-      if(cfg.rE && cfg.rE.length) S.rE = cfg.rE;
-      if(cfg.rDesp && cfg.rDesp.length) S.rDesp = cfg.rDesp;
-      if(cfg.mEst)  S.mEst  = cfg.mEst;
-      if(cfg.NOTAS) S.NOTAS = cfg.NOTAS;
-      if(cfg.PIX_D) S.PIX_D = cfg.PIX_D;
-    }
-
+    // Mesclar dados das abas individuais
+    ['rC','rD','rT','rE'].forEach(function(k){if(data[k]&&data[k].length){if(!S[k])S[k]=[];data[k].forEach(function(r){var existe=S[k].some(function(x){return x.dt===r.dt&&(x.resp||x.n)===(r.resp||r.n)&&(x.total||x.v)===(r.total||r.v);});if(!existe)S[k].push(r);});}});
     salvarLocal();
-    if(cfg && (!cfg.LOTES || !cfg.LOTES.length)){
-      setTimeout(function(){ salvarNuvem(null); }, 2000);
+    // Se nuvem não tinha LOTES, salva os do DEFAULT agora
+    if(!data.CONFIG||!data.CONFIG.length||!(JSON.parse((data.CONFIG[0]||[null,'{}'])[1]||'{}').LOTES||[]).length){
+      setTimeout(function(){salvarNuvem(null);},2000);
     }
     updCloudStatus('ok');
-    if(cb) cb(true);
+    if(cb)cb(true);
   };
   
   var s=document.createElement('script');
@@ -1167,138 +1065,145 @@ function sLoteTab(t){
 
 // ═══ MAPA INTERATIVO ═══
 var MAPA_AREAS = [
-  // PASTOS (marrom) PA01-PA10
-  {id:'PA01',label:'PA 01',tipo:'pasto',ha:0,x:12.0,y:14.0},
-  {id:'PA02',label:'PA 02',tipo:'pasto',ha:0,x:11.0,y:30.0},
-  {id:'PA03',label:'PA 03',tipo:'pasto',ha:0,x:28.0,y:11.0},
-  {id:'PA04',label:'PA 04',tipo:'pasto',ha:0,x:33.0,y:28.0},
-  {id:'PA05',label:'PA 05',tipo:'pasto',ha:0,x:43.0,y:26.0},
-  {id:'PA06',label:'PA 06',tipo:'pasto',ha:0,x:44.0,y:38.0},
-  {id:'PA07',label:'PA 07',tipo:'pasto',ha:0,x:52.0,y:21.0},
-  {id:'PA08',label:'PA 08',tipo:'pasto',ha:0,x:57.0,y:11.0},
-  {id:'PA09',label:'PA 09',tipo:'pasto',ha:0,x:75.0,y:10.0},
-  {id:'PA10',label:'PA 10',tipo:'pasto',ha:0,x:83.0,y:22.0},
+  // PASTOS (area marrom) PA01-PA10
+  {id:'PA01',label:'PA 01',tipo:'pasto',ha:0,x:14.0,y:16.0},
+  {id:'PA02',label:'PA 02',tipo:'pasto',ha:0,x:32.0,y:8.0},
+  {id:'PA03',label:'PA 03',tipo:'pasto',ha:0,x:27.0,y:22.0},
+  {id:'PA04',label:'PA 04',tipo:'pasto',ha:0,x:41.0,y:30.0},
+  {id:'PA05',label:'PA 05',tipo:'pasto',ha:0,x:48.0,y:22.0},
+  {id:'PA06',label:'PA 06',tipo:'pasto',ha:0,x:48.0,y:35.0},
+  {id:'PA07',label:'PA 07',tipo:'pasto',ha:0,x:55.0,y:27.0},
+  {id:'PA08',label:'PA 08',tipo:'pasto',ha:0,x:61.0,y:18.0},
+  {id:'PA09',label:'PA 09',tipo:'pasto',ha:0,x:70.0,y:12.0},
+  {id:'PA10',label:'PA 10',tipo:'pasto',ha:0,x:82.0,y:20.0},
   // MODULO 1 (verde) 6 piquetes
-  {id:'M01P01',label:'M1/P1',tipo:'modulo',modulo:1,piquete:1,ha:0,x:36.0,y:40.0},
-  {id:'M01P02',label:'M1/P2',tipo:'modulo',modulo:1,piquete:2,ha:0,x:19.0,y:43.0},
-  {id:'M01P03',label:'M1/P3',tipo:'modulo',modulo:1,piquete:3,ha:0,x:18.0,y:52.0},
-  {id:'M01P04',label:'M1/P4',tipo:'modulo',modulo:1,piquete:4,ha:0,x:21.0,y:62.0},
-  {id:'M01P05',label:'M1/P5',tipo:'modulo',modulo:1,piquete:5,ha:0,x:32.0,y:57.0},
-  {id:'M01P06',label:'M1/P6',tipo:'modulo',modulo:1,piquete:6,ha:0,x:32.0,y:47.0},
+  {id:'M01P01',label:'M1/P1',tipo:'modulo',modulo:1,piquete:1,ha:0,x:37.0,y:44.0},
+  {id:'M01P02',label:'M1/P2',tipo:'modulo',modulo:1,piquete:2,ha:0,x:30.0,y:38.0},
+  {id:'M01P03',label:'M1/P3',tipo:'modulo',modulo:1,piquete:3,ha:0,x:22.0,y:44.0},
+  {id:'M01P04',label:'M1/P4',tipo:'modulo',modulo:1,piquete:4,ha:0,x:24.0,y:54.0},
+  {id:'M01P05',label:'M1/P5',tipo:'modulo',modulo:1,piquete:5,ha:0,x:33.0,y:54.0},
+  {id:'M01P06',label:'M1/P6',tipo:'modulo',modulo:1,piquete:6,ha:0,x:40.0,y:50.0},
   // MODULO 2 (vermelho) 4 piquetes
-  {id:'M02P01',label:'M2/P1',tipo:'modulo',modulo:2,piquete:1,ha:0,x:36.0,y:68.0},
-  {id:'M02P02',label:'M2/P2',tipo:'modulo',modulo:2,piquete:2,ha:0,x:20.0,y:72.0},
-  {id:'M02P03',label:'M2/P3',tipo:'modulo',modulo:2,piquete:3,ha:0,x:17.0,y:82.0},
-  {id:'M02P04',label:'M2/P4',tipo:'modulo',modulo:2,piquete:4,ha:0,x:33.0,y:82.0},
+  {id:'M02P01',label:'M2/P1',tipo:'modulo',modulo:2,piquete:1,ha:0,x:34.0,y:65.0},
+  {id:'M02P02',label:'M2/P2',tipo:'modulo',modulo:2,piquete:2,ha:0,x:24.0,y:62.0},
+  {id:'M02P03',label:'M2/P3',tipo:'modulo',modulo:2,piquete:3,ha:0,x:20.0,y:73.0},
+  {id:'M02P04',label:'M2/P4',tipo:'modulo',modulo:2,piquete:4,ha:0,x:31.0,y:76.0},
   // MODULO 3 (roxo) 5 piquetes
   {id:'M03P01',label:'M3/P1',tipo:'modulo',modulo:3,piquete:1,ha:0,x:53.0,y:44.0},
-  {id:'M03P02',label:'M3/P2',tipo:'modulo',modulo:3,piquete:2,ha:0,x:44.0,y:52.0},
-  {id:'M03P03',label:'M3/P3',tipo:'modulo',modulo:3,piquete:3,ha:0,x:48.0,y:63.0},
-  {id:'M03P04',label:'M3/P4',tipo:'modulo',modulo:3,piquete:4,ha:0,x:54.0,y:72.0},
-  {id:'M03P05',label:'M3/P5',tipo:'modulo',modulo:3,piquete:5,ha:0,x:63.0,y:62.0},
+  {id:'M03P02',label:'M3/P2',tipo:'modulo',modulo:3,piquete:2,ha:0,x:46.0,y:54.0},
+  {id:'M03P03',label:'M3/P3',tipo:'modulo',modulo:3,piquete:3,ha:0,x:53.0,y:63.0},
+  {id:'M03P04',label:'M3/P4',tipo:'modulo',modulo:3,piquete:4,ha:0,x:46.0,y:71.0},
+  {id:'M03P05',label:'M3/P5',tipo:'modulo',modulo:3,piquete:5,ha:0,x:60.0,y:55.0},
   // MODULO 4 (verde-oliva) 4 piquetes
-  {id:'M04P01',label:'M4/P1',tipo:'modulo',modulo:4,piquete:1,ha:0,x:88.0,y:36.0},
-  {id:'M04P02',label:'M4/P2',tipo:'modulo',modulo:4,piquete:2,ha:0,x:76.0,y:40.0},
-  {id:'M04P03',label:'M4/P3',tipo:'modulo',modulo:4,piquete:3,ha:0,x:79.0,y:53.0},
-  {id:'M04P04',label:'M4/P4',tipo:'modulo',modulo:4,piquete:4,ha:0,x:86.0,y:60.0},
+  {id:'M04P01',label:'M4/P1',tipo:'modulo',modulo:4,piquete:1,ha:0,x:76.0,y:42.0},
+  {id:'M04P02',label:'M4/P2',tipo:'modulo',modulo:4,piquete:2,ha:0,x:69.0,y:50.0},
+  {id:'M04P03',label:'M4/P3',tipo:'modulo',modulo:4,piquete:3,ha:0,x:79.0,y:55.0},
+  {id:'M04P04',label:'M4/P4',tipo:'modulo',modulo:4,piquete:4,ha:0,x:73.0,y:62.0}
 ];
 
 var mapaAreaAtual = null;
 
+// ══ CORES POR MÓDULO — igual ao editor ══
+var MAPA_CORES = {
+  pasto:{bg:'#2E7D32',bd:'#66BB6A'},
+  1:{bg:'#1B5E20',bd:'#4CAF50'},
+  2:{bg:'#B71C1C',bd:'#EF5350'},
+  3:{bg:'#4A148C',bd:'#CE93D8'},
+  4:{bg:'#827717',bd:'#F9A825'}
+};
+function _corArea(a){ return a.tipo==='pasto'?MAPA_CORES.pasto:(MAPA_CORES[a.modulo]||MAPA_CORES[1]); }
+
+// ══ RENDER PINS — sistema idêntico ao editor ══
 function _renderPinsNoContainer(contId, resumoId){
   var cont = document.getElementById(contId);
   if(!cont) return;
   if(!S.MAPA_ALOC) S.MAPA_ALOC={};
   var lotes = S.LOTES||[];
-  var ocupados=0;
-  cont.innerHTML='';
+  var ocupados = 0;
+  cont.innerHTML = '';
 
-  // O container tem pointer-events:none, mas cada botão tem pointer-events:auto
   MAPA_AREAS.forEach(function(a){
     var aloc = S.MAPA_ALOC[a.id];
     var lote = aloc ? lotes.find(function(l){return l.nome===aloc;}) : null;
-    var qtd = lote ? (lote.qtd||0) : 0;
-    var ocupado = !!lote && qtd>0;
+    var ocupado = !!(lote && (lote.qtd||0)>0);
     if(ocupado) ocupados++;
 
-    var cores = {
-      1:{bg:'#1B5E20',bd:'#4CAF50',bgV:'rgba(27,94,32,0.25)'},
-      2:{bg:'#B71C1C',bd:'#EF5350',bgV:'rgba(183,28,28,0.25)'},
-      3:{bg:'#4A148C',bd:'#CE93D8',bgV:'rgba(74,20,140,0.25)'},
-      4:{bg:'#827717',bd:'#F9A825',bgV:'rgba(130,119,23,0.25)'}
-    };
-    var cor = a.tipo==='modulo'?(cores[a.modulo]||cores[1]):{bg:'#2E7D32',bd:'#66BB6A',bgV:'rgba(46,125,50,0.25)'};
-    var lbl = a.label.replace('MOD:0','M').replace('MOD:','M').replace('/P:0','/P').replace('/P:','/P');
+    var c = _corArea(a);
 
-    // BOTÃO — pointer-events:auto sobrescreve o none do container
     var btn = document.createElement('button');
-    btn.type='button';
-    btn.style.cssText=[
-      'position:absolute',
-      'left:'+a.x+'%',
-      'top:'+a.y+'%',
-      'transform:translate(-50%,-50%)',
-      'pointer-events:auto',
-      'cursor:pointer',
-      'z-index:25',
-      'background:none',
-      'border:none',
-      'padding:0',
-      'outline:none',
-      '-webkit-tap-highlight-color:transparent',
-      'touch-action:manipulation'
-    ].join(';');
+    btn.className = 'mpin';
+    btn.type = 'button';
+    btn.style.left = a.x+'%';
+    btn.style.top  = a.y+'%';
 
-    // Conteúdo do pin
     var inner = document.createElement('div');
-    inner.style.cssText='display:flex;flex-direction:column;align-items:center;pointer-events:none';
+    inner.className = 'mpin-inner';
 
     var box = document.createElement('div');
     if(ocupado){
-      box.style.cssText='background:'+cor.bg+';border:2.5px solid '+cor.bd+';border-radius:9px;padding:4px 7px;text-align:center;min-width:50px;box-shadow:0 3px 12px rgba(0,0,0,0.6)';
-      box.innerHTML='<div style="font-size:16px;line-height:1">🐄</div>'
-        +'<div style="font-size:8px;font-weight:700;color:#fff;opacity:.9;line-height:1.2">'+lbl+'</div>'
-        +'<div style="font-size:12px;font-weight:800;color:#fff;line-height:1.3">'+qtd+'</div>'
-        +'<div style="font-size:8px;color:'+cor.bd+';font-weight:700">'+lote.nome+'</div>';
+      box.className = 'mpin-box-ocupado';
+      box.style.background   = c.bg;
+      box.style.borderColor  = c.bd;
+      // Abreviação do lote: "Lote 01" → "L01"
+      var loteNum = lote.nome.replace(/[^0-9]/g,'').replace(/^0+/,'')||lote.nome.slice(-2);
+      var loteAbrev = 'L'+('0'+loteNum).slice(-2);
+      box.innerHTML =
+        '<div class="mparea">'+a.label+'</div>'+
+        '<div class="mpqtd">'+lote.qtd+'</div>'+
+        '<div class="mplote" style="color:'+c.bd+'">'+loteAbrev+'</div>';
     } else {
-      box.style.cssText='background:'+cor.bgV+';border:1.5px dashed '+cor.bd+';border-radius:8px;padding:3px 5px;text-align:center;min-width:40px;box-shadow:0 1px 4px rgba(0,0,0,0.4)';
-      box.innerHTML='<div style="font-size:8px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,1);line-height:1.3">'+lbl+'</div>'
-        +'<div style="font-size:11px;color:rgba(255,255,255,0.8)">＋</div>';
+      box.className = 'mpin-box-empty';
+      box.innerHTML =
+        '<div class="mplbl">'+a.label+'</div>'+
+        '<div class="mpplus">＋</div>';
     }
 
-    var haste=document.createElement('div');
-    haste.style.cssText='width:2px;height:'+(ocupado?'7':'4')+'px;background:'+cor.bd+';margin:0 auto';
-    var dot=document.createElement('div');
-    dot.style.cssText='width:'+(ocupado?'6':'4')+'px;height:'+(ocupado?'6':'4')+'px;border-radius:50%;background:'+cor.bd+';margin:0 auto';
+    var hasteH = ocupado ? 7 : 4;
+    var dotS   = ocupado ? 6 : 4;
+    var haste  = document.createElement('div');
+    haste.className = 'mpin-haste';
+    haste.style.cssText = 'height:'+hasteH+'px;background:'+c.bd;
+    var dot = document.createElement('div');
+    dot.className = 'mpin-dot';
+    dot.style.cssText = 'width:'+dotS+'px;height:'+dotS+'px;background:'+c.bd;
 
-    inner.appendChild(box);inner.appendChild(haste);inner.appendChild(dot);
+    inner.appendChild(box);
+    inner.appendChild(haste);
+    inner.appendChild(dot);
     btn.appendChild(inner);
 
-    // Eventos — funciona em mobile e desktop
-    (function(area, cid){
-      var moved=false;
-      btn.addEventListener('touchstart',function(e){moved=false;},{passive:true});
-      btn.addEventListener('touchmove',function(){moved=true;},{passive:true});
-      btn.addEventListener('touchend',function(e){
-        if(!moved){e.preventDefault();e.stopPropagation();
-          var isAdm=CU&&(CU.r==='Consultor'||CU.r==='Dono');
-          if(!isAdm&&ocupado){aoClicarNoLoteDoMapa(area.label,aloc||'',cid);}
-          else{abrirMapaModal(area,cid);}
-        }
-      },{passive:false});
-      btn.addEventListener('click',function(e){
-        e.preventDefault();e.stopPropagation();
-        var isAdm=CU&&(CU.r==='Consultor'||CU.r==='Dono');
-        if(!isAdm&&ocupado){aoClicarNoLoteDoMapa(area.label,aloc||'',cid);}
-        else{abrirMapaModal(area,cid);}
+    // ── EVENTOS — exatamente como no editor ──
+    (function(area, cid, isOcupado, alocNome){
+      var dragMoved = false;
+
+      btn.addEventListener('touchstart', function(){ dragMoved=false; }, {passive:true});
+      btn.addEventListener('touchmove',  function(){ dragMoved=true;  }, {passive:true});
+
+      btn.addEventListener('touchend', function(e){
+        if(dragMoved) return;
+        e.preventDefault();
+        e.stopPropagation();
+        var isAdm = CU&&(CU.r==='Consultor'||CU.r==='Dono');
+        if(!isAdm && isOcupado){ aoClicarNoLoteDoMapa(area.label, alocNome||''); }
+        else { abrirMapaModal(area, cid); }
+      }, {passive:false});
+
+      btn.addEventListener('click', function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        var isAdm = CU&&(CU.r==='Consultor'||CU.r==='Dono');
+        if(!isAdm && isOcupado){ aoClicarNoLoteDoMapa(area.label, alocNome||''); }
+        else { abrirMapaModal(area, cid); }
       });
-    })(a, contId);
+    })(a, contId, ocupado, aloc);
 
     cont.appendChild(btn);
   });
 
-  var res=document.getElementById(resumoId);
-  if(res) res.textContent=ocupados?ocupados+' piquete(s) com gado':'Toque em qualquer área para alocar gado';
+  var res = document.getElementById(resumoId);
+  if(res) res.textContent = ocupados
+    ? ocupados+' piquete(s) com gado'
+    : 'Toque em qualquer área para alocar gado';
 }
 
 function _sincMapa(){
@@ -1307,7 +1212,7 @@ function _sincMapa(){
   try{ rUlt(); }catch(e){}
 }
 
-function rMapa(){ _renderPinsNoContainer('mapa-pins','mapa-resumo'); }
+function rMapa()    { _renderPinsNoContainer('mapa-pins','mapa-resumo'); }
 function rMapaMain(){ _renderPinsNoContainer('mapa-pins-main','mapa-main-resumo'); }
 
 function abrirMapaModal(a, contId){
@@ -2797,28 +2702,25 @@ if(!S.PIX_D) S.PIX_D={};
 // ══ MODAL OPÇÕES DO MAPA (vaqueiro) ══
 var pastoSelecionadoNoMapa = '';
 var loteSelecionadoNoMapa  = '';
-var contIdSelecionadoNoMapa = '';
 
-function aoClicarNoLoteDoMapa(pasto, lote, contId){
-  pastoSelecionadoNoMapa  = pasto;
-  loteSelecionadoNoMapa   = lote;
-  contIdSelecionadoNoMapa = contId || 'mapa-pins-main';
+function aoClicarNoLoteDoMapa(pasto, lote){
+  pastoSelecionadoNoMapa = pasto;
+  loteSelecionadoNoMapa  = lote;
   var t = document.getElementById('mapa-opcoes-title');
-  var s = document.getElementById('mapa-opcoes-sub');
-  if(t) t.textContent = pasto;
-  if(s) s.textContent = lote ? lote : '';
+  if(t) t.textContent = (lote ? '🐄 '+lote+' · ' : '') + pasto;
   var m = document.getElementById('mapa-opcoes-modal');
-  if(m){ m.style.display='flex'; m.onclick=function(e){if(e.target===m)fecharModalOpcoes();}; }
+  if(m) m.classList.add('open');
 }
 
 function fecharModalOpcoes(){
   var m = document.getElementById('mapa-opcoes-modal');
-  if(m) m.style.display='none';
+  if(m) m.classList.remove('open');
 }
 
 function irParaTrato(){
   fecharModalOpcoes();
   sp('trato', true, 'mapa');
+  // pré-selecionar lote se existir
   if(loteSelecionadoNoMapa){
     setTimeout(function(){
       var sel = document.getElementById('t-cocho');
@@ -2836,44 +2738,34 @@ function irParaTrato(){
 
 function irParaMudancaPasto(){
   fecharModalOpcoes();
+  // Abrir modal de alocação para a área
   var area = MAPA_AREAS.find(function(a){
     return a.label===pastoSelecionadoNoMapa || a.id===pastoSelecionadoNoMapa;
   });
-  if(area) abrirMapaModal(area, contIdSelecionadoNoMapa);
+  if(area){
+    var contId = document.getElementById('mapa-pins') ? 'mapa-pins' : 'mapa-pins-main';
+    abrirMapaModal(area, contId);
+  }
 }
 
 </script>
 <!-- ══ MODAL OPÇÕES DO MAPA (vaqueiro) ══ -->
-<div id="mapa-opcoes-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;align-items:flex-end;justify-content:center">
-  <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:480px;overflow:hidden;box-shadow:0 -4px 32px rgba(0,0,0,.18)">
-    <div style="display:flex;justify-content:center;padding:10px 0 4px"><div style="width:36px;height:4px;background:#e0e0e0;border-radius:2px"></div></div>
-    <div style="padding:10px 20px 8px;border-bottom:1px solid #f0f0f0">
-      <div style="font-size:10px;color:#888;font-weight:600;letter-spacing:.5px;text-transform:uppercase">Área selecionada</div>
-      <div style="font-size:17px;font-weight:800;color:#1B5E20;margin-top:1px" id="mapa-opcoes-title">—</div>
-      <div style="font-size:12px;color:#666;margin-top:2px;font-weight:600" id="mapa-opcoes-sub"></div>
+<div class="edit-modal" id="mapa-opcoes-modal">
+  <div class="edit-box" style="max-width:320px;text-align:center">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:15px;font-weight:700;color:#1B5E20" id="mapa-opcoes-title">Área Selecionada</span>
+      <span onclick="fecharModalOpcoes()" style="cursor:pointer;font-size:26px;color:#aaa;line-height:1">&times;</span>
     </div>
-    <div style="padding:14px 20px 28px;display:flex;flex-direction:column;gap:10px">
-      <button onclick="irParaTrato()" style="display:flex;align-items:center;gap:14px;padding:15px 18px;background:linear-gradient(135deg,#1B5E20,#2E7D32);border:none;border-radius:14px;cursor:pointer;width:100%;text-align:left;box-shadow:0 3px 12px rgba(27,94,32,.3)">
-        <div style="width:42px;height:42px;border-radius:11px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v4H3z"/><path d="M5 7v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="12" y1="11" x2="12" y2="15"/></svg>
-        </div>
-        <div>
-          <div style="font-size:15px;font-weight:800;color:#fff">Trato de Cocho</div>
-          <div style="font-size:11px;color:rgba(255,255,255,.75);margin-top:2px">Registrar fornecimento de ração</div>
-        </div>
-        <span style="margin-left:auto;color:rgba(255,255,255,.6);font-size:20px">›</span>
+    <p style="font-size:13px;color:#666;margin-bottom:18px">O que você deseja fazer nesta área?</p>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <button onclick="irParaTrato()" class="sbtn" style="margin-top:0;background:#2E7D32;font-size:15px;padding:14px 10px;border-radius:14px">
+        🌾 Trato de Cocho
       </button>
-      <button onclick="irParaMudancaPasto()" style="display:flex;align-items:center;gap:14px;padding:15px 18px;background:linear-gradient(135deg,#0D47A1,#1565C0);border:none;border-radius:14px;cursor:pointer;width:100%;text-align:left;box-shadow:0 3px 12px rgba(13,71,161,.3)">
-        <div style="width:42px;height:42px;border-radius:11px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><polyline points="12 5 19 12 12 19"/><line x1="5" y1="5" x2="5" y2="19"/></svg>
-        </div>
-        <div>
-          <div style="font-size:15px;font-weight:800;color:#fff">Mudança de Pasto</div>
-          <div style="font-size:11px;color:rgba(255,255,255,.75);margin-top:2px">Mover ou realocar gado</div>
-        </div>
-        <span style="margin-left:auto;color:rgba(255,255,255,.6);font-size:20px">›</span>
+      <button onclick="irParaMudancaPasto()" class="sbtn" style="margin-top:0;background:#1565C0;font-size:15px;padding:14px 10px;border-radius:14px">
+        🔄 Mover / Alocar Gado
       </button>
     </div>
+    <button onclick="fecharModalOpcoes()" style="margin-top:14px;width:100%;padding:10px;background:none;border:1px solid #ddd;border-radius:10px;font-size:13px;color:#999;cursor:pointer">Cancelar</button>
   </div>
 </div>
 
