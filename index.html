@@ -1007,7 +1007,7 @@ function initSync(){atualizarSync();window.addEventListener('online',()=>{atuali
 
 // ═══ NUVEM ═══
 function updCloudStatus(st){const el=document.getElementById('cloud-status');if(!el)return;const icons={saving:'☁️ Salvando...',loading:'☁️ Carregando...',ok:'✅ Nuvem OK',err:'⚠️ Offline'};el.textContent=icons[st]||'';el.style.color=st==='err'?'#C62828':(st==='ok'?'#2E7D32':'#888');}
-function salvarNuvem(cb){if(!S.cfgGS){if(cb)cb(false);return;}updCloudStatus('saving');const cfg={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:S.LOTES,AREAS:S.AREAS||{},MAPA_ALOC:S.MAPA_ALOC||{},DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT,rD:S.rD,rT:S.rT,rC:S.rC,rE:S.rE,rDesp:S.rDesp,mEst:S.mEst,NOTAS:S.NOTAS||{}};Object.keys(S.FAZ).forEach(faz=>{const gu=getFazGasUrl(faz);if(gu){const fc={FAZ:{},US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:(S.LOTES||[]).filter(l=>l.faz===faz),DIARISTAS:{}};fc.FAZ[faz]=S.FAZ[faz];fc.DIARISTAS[faz]=(S.DIARISTAS||{})[faz]||[];fc.rD=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rT=(S.rT||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rC=(S.rC||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rE=(S.rE||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rDesp=(S.rDesp||[]).filter(r=>!r._apagado&&r.faz===faz);fc.PIX_D=S.PIX_D||{};fetch(gu+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(fc)),{method:'GET',mode:'no-cors'}).catch(()=>{});}});fetch(S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfg)),{method:'GET',mode:'no-cors'}).then(()=>{updCloudStatus('ok');if(cb)cb(true);}).catch(e=>{updCloudStatus('err');if(cb)cb(false);});}
+function salvarNuvem(cb){if(!S.cfgGS){if(cb)cb(false);return;}updCloudStatus('saving');const cfg={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:S.LOTES,AREAS:S.AREAS||{},MAPA_ALOC:S.MAPA_ALOC||{},MAPA_HA:S.MAPA_HA||{},MAPA_POS:S.MAPA_POS||{},DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT,rD:S.rD,rT:S.rT,rC:S.rC,rE:S.rE,rDesp:S.rDesp,mEst:S.mEst,NOTAS:S.NOTAS||{}};Object.keys(S.FAZ).forEach(faz=>{const gu=getFazGasUrl(faz);if(gu){const fc={FAZ:{},US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:(S.LOTES||[]).filter(l=>l.faz===faz),DIARISTAS:{}};fc.FAZ[faz]=S.FAZ[faz];fc.DIARISTAS[faz]=(S.DIARISTAS||{})[faz]||[];fc.rD=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rT=(S.rT||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rC=(S.rC||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rE=(S.rE||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rDesp=(S.rDesp||[]).filter(r=>!r._apagado&&r.faz===faz);fc.PIX_D=S.PIX_D||{};fetch(gu+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(fc)),{method:'GET',mode:'no-cors'}).catch(()=>{});}});fetch(S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfg)),{method:'GET',mode:'no-cors'}).then(()=>{updCloudStatus('ok');if(cb)cb(true);}).catch(e=>{updCloudStatus('err');if(cb)cb(false);});}
 function carregarNuvem(cb){
   if(!S.cfgGS||!navigator.onLine){if(cb)cb(false);return;}
   updCloudStatus('loading');
@@ -1047,6 +1047,8 @@ function carregarNuvem(cb){
           else if(!S.LOTES||!S.LOTES.length)S.LOTES=DEFAULT.LOTES;
           if(cfg.AREAS)S.AREAS=cfg.AREAS;
           if(cfg.MAPA_ALOC)S.MAPA_ALOC=cfg.MAPA_ALOC;
+          if(cfg.MAPA_HA)S.MAPA_HA=cfg.MAPA_HA;
+          if(cfg.MAPA_POS)S.MAPA_POS=cfg.MAPA_POS;
           if(cfg.DIARISTAS)S.DIARISTAS=cfg.DIARISTAS;
           if(cfg.rD&&cfg.rD.length)S.rD=cfg.rD;
           if(cfg.rT&&cfg.rT.length)S.rT=cfg.rT;
@@ -1060,6 +1062,35 @@ function carregarNuvem(cb){
     }
     // Mesclar dados das abas individuais
     ['rC','rD','rT','rE'].forEach(function(k){if(data[k]&&data[k].length){if(!S[k])S[k]=[];data[k].forEach(function(r){var existe=S[k].some(function(x){return x.dt===r.dt&&(x.resp||x.n)===(r.resp||r.n)&&(x.total||x.v)===(r.total||r.v);});if(!existe)S[k].push(r);});}});
+    // Mesclar lançamentos da aba 'cantina' da planilha que ainda não estão em S.rC
+    if(data.cantina&&data.cantina.length){
+      if(!S.rC)S.rC=[];
+      data.cantina.forEach(function(row){
+        // row = [tipo, faz, resp, dt_serial, det, total, dt_iso]
+        if(!row||row.length<6) return;
+        var resp=row[2]||'';
+        var total=parseFloat(row[5])||0;
+        // Data: prefere ISO (col 6), senão converte serial Excel
+        var dtISO=row[6]?String(row[6]).split('T')[0]:'';
+        if(!dtISO&&row[3]){
+          // Converter serial Excel para YYYY-MM-DD
+          var serial=parseFloat(row[3]);
+          if(serial>40000){
+            var d=new Date(Math.round((serial-25569)*86400*1000));
+            dtISO=d.toISOString().split('T')[0];
+          }
+        }
+        if(!dtISO||!resp||!total) return;
+        var det=row[4]||'';
+        var existe=S.rC.some(function(x){
+          var xdt=(x.dt||'').split('T')[0];
+          return xdt===dtISO&&(x.resp||x.n)===resp&&Math.abs((x.total||0)-total)<0.01;
+        });
+        if(!existe){
+          S.rC.push({tipo:'cantina',faz:row[1]||'',resp:resp,dt:dtISO,det:det,total:total});
+        }
+      });
+    }
     salvarLocal();
     // Se nuvem não tinha LOTES, salva os do DEFAULT agora
     if(!data.CONFIG||!data.CONFIG.length||!(JSON.parse((data.CONFIG[0]||[null,'{}'])[1]||'{}').LOTES||[]).length){
@@ -1190,8 +1221,8 @@ function _renderPinsNoContainer(contId, resumoId){
     btn.type='button';
     btn.setAttribute('data-aid',a.id);
 
-    var ptrEv = (!ocupado && !modoEditor)?'pointer-events:none':'pointer-events:auto';
-    var opac  = (!ocupado && !modoEditor)?'opacity:0':'opacity:1';
+    var ptrEv = 'pointer-events:auto'; // sempre clicável
+    var opac  = (!ocupado && !modoEditor)?'opacity:0.01':'opacity:1';
     var cur   = modoEditor?'cursor:grab':'cursor:pointer';
 
     btn.style.cssText=[
@@ -1238,11 +1269,23 @@ function _renderPinsNoContainer(contId, resumoId){
       btn.addEventListener('touchend',function(e){
         if(!moved){e.preventDefault();e.stopPropagation();
           if(window._mapaEditorAtivo){abrirMapaModal(area,cid);return;}
-          abrirMapaModal(area,cid);}
+          var isVaqueiro = CU && CU.r !== 'Consultor' && CU.r !== 'Dono' && !isA(CU);
+          if(isVaqueiro && ocupado){
+            aoClicarNoLoteDoMapa(area.label, lote ? lote.nome : '');
+          } else {
+            abrirMapaModal(area,cid);
+          }
+        }
       },{passive:false});
       btn.addEventListener('click',function(e){
         e.preventDefault();e.stopPropagation();
-        abrirMapaModal(area,cid);
+        // Vaqueiro vê menu de opções ao tocar em piquete com gado
+        var isVaqueiro = CU && CU.r !== 'Consultor' && CU.r !== 'Dono' && !isA(CU);
+        if(isVaqueiro && ocupado){
+          aoClicarNoLoteDoMapa(area.label, lote ? lote.nome : '');
+        } else {
+          abrirMapaModal(area,cid);
+        }
       });
       btn.addEventListener('mousedown',function(e){
         if(!window._mapaEditorAtivo)return;
@@ -1515,7 +1558,7 @@ function rListAreas(){
   }
   if(!faz || !S.AREAS){el.innerHTML='<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhuma área cadastrada.</div>';return;}
   var lista=(S.AREAS[faz])||[];
-  if(!lista.length){el.innerHTML='<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhuma área cadastrada. Use o formulário acima para adicionar módulos e pastos.</div>';return;}
+  if(!lista.length){el.innerHTML='<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhuma área manual cadastrada. As áreas do mapa estão disponíveis na calculadora de Taxa de Lotação abaixo.</div>';return;}
 
   var modulos=lista.filter(function(a){return a.tipo==='modulo';}).sort(function(a,b){return a.num-b.num;});
   var pastos=lista.filter(function(a){return a.tipo==='pasto';});
@@ -1873,7 +1916,9 @@ function gerarRelatorioPDF(){const faz=(document.getElementById('pf')||{}).value
 .edit-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center}
 .edit-modal.open{display:flex}
 .edit-box{background:#fff;border-radius:16px;padding:22px;width:95%;max-width:420px;max-height:90vh;overflow-y:auto}
-</style></head><body><div style="display:flex;justify-content:space-between;margin-bottom:16px"><div><div style="font-size:20px;font-weight:bold;color:#1B5E20">Gestão Pecuária Lucrativa</div><div style="color:#666;font-size:11px">Rogério Avelino</div></div><div style="text-align:right;font-size:11px;color:#666">Emitido em: ${new Date().toLocaleDateString('pt-BR')}<br>Fazenda: ${faz}</div></div><table><tr><th>Data</th><th>Colaborador</th><th>Serviço</th><th>Fazenda</th><th>Valor</th><th>Status</th></tr>${rows}</table><div class="total">Total diárias: R$ ${totalD.toFixed(2).replace('.',',')}</div><div class="total">Total cantina: R$ ${totalC.toFixed(2).replace('.',',')}</div><br><button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;font-size:13px">🖨️ Imprimir / Salvar PDF</button></body></html>`;const w=window.open('','_blank');w.document.write(html);w.document.close();}
+</style></head><body><div style="display:flex;justify-content:space-between;margin-bottom:16px"><div><div style="font-size:20px;font-weight:bold;color:#1B5E20">Gestão Pecuária Lucrativa</div><div style="color:#666;font-size:11px">Rogério Avelino</div></div><div style="text-align:right;font-size:11px;color:#666">Emitido em: ${new Date().toLocaleDateString('pt-BR')}<br>Fazenda: ${faz}</div></div><table><tr><th>Data</th><th>Colaborador</th><th>Serviço</th><th>Fazenda</th><th>Valor</th><th>Status</th></tr>${rows}</table><div class="total">Total diárias: R$ ${totalD.toFixed(2).replace('.',',')}</div><div class="total">Total cantina: R$ ${totalC.toFixed(2).replace('.',',')}</div><br><button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;font-size:13px">🖨️ Imprimir / Salvar PDF</button>
+
+</body></html>`;const w=window.open('','_blank');w.document.write(html);w.document.close();}
 function gerarReciboPDF(){const faz=(document.getElementById('pf')||{}).value||'';let lv=filtrar(S.rD.filter(r=>r.tipo==='diaria'),perA);if(faz)lv=lv.filter(r=>r.faz===faz);const por={};lv.forEach(r=>{if(!por[r.n])por[r.n]=[];por[r.n].push(r);});const dono=(S.US.find(u=>u.r==='Dono'&&(!faz||u.fs.includes(faz)))||{}).n||faz;const recibos=Object.keys(por).map(nome=>{const regs=por[nome];const total=regs.reduce((a,r)=>a+r.v,0);const rows=regs.map(r=>`<tr><td>${(r.dt||'').split('-').reverse().join('/')}</td><td>${r.srv}</td><td style="text-align:right">R$ ${r.v.toFixed(2).replace('.',',')}</td></tr>`).join('');return`<div style="border:1px solid #ccc;border-radius:8px;padding:20px;margin-bottom:30px;page-break-inside:avoid"><div style="display:flex;justify-content:space-between"><strong style="font-size:16px;color:#1B5E20">RECIBO</strong><div style="font-size:11px;color:#666">${new Date().toLocaleDateString('pt-BR')}</div></div><div style="margin:12px 0"><strong>Pagador:</strong> ${dono} — ${faz}</div><div style="margin-bottom:12px"><strong>Beneficiário:</strong> ${nome}</div><table style="width:100%;border-collapse:collapse;font-size:12px"><tr><th style="background:#1B5E20;color:#fff;padding:5px 8px;text-align:left">Data</th><th style="background:#1B5E20;color:#fff;padding:5px 8px;text-align:left">Serviço</th><th style="background:#1B5E20;color:#fff;padding:5px 8px;text-align:right">Valor</th></tr>${rows}</table><div style="margin-top:12px;font-size:15px;font-weight:bold;color:#1B5E20">Total: R$ ${total.toFixed(2).replace('.',',')}</div><div style="margin-top:30px;border-top:1px solid #eee;padding-top:12px;display:flex;justify-content:space-between"><div style="text-align:center;width:45%"><div style="border-top:1px solid #333;margin-top:30px;padding-top:5px;font-size:11px">${dono}<br>Fazendeiro</div></div><div style="text-align:center;width:45%"><div style="border-top:1px solid #333;margin-top:30px;padding-top:5px;font-size:11px">${nome}<br>Prestador de serviço</div></div></div></div>`;}).join('');const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recibos</title><style>body{font-family:Arial;padding:20px;font-size:13px}@media print{button{display:none}}
 .badge-pend{background:#FFF3E0;color:#E65100;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;border:1px solid #FFB300}
 .badge-ok{background:#E8F5E9;color:#2E7D32;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700}
@@ -1882,7 +1927,9 @@ function gerarReciboPDF(){const faz=(document.getElementById('pf')||{}).value||'
 .edit-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center}
 .edit-modal.open{display:flex}
 .edit-box{background:#fff;border-radius:16px;padding:22px;width:95%;max-width:420px;max-height:90vh;overflow-y:auto}
-</style></head><body><div style="text-align:center;margin-bottom:20px"><strong style="font-size:18px;color:#1B5E20">Gestão Pecuária Lucrativa</strong><br><span style="color:#666;font-size:12px">Rogério Avelino — ${faz||'Todas'}</span></div>${recibos}<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;font-size:13px">🖨️ Imprimir</button></body></html>`;const w=window.open('','_blank');w.document.write(html);w.document.close();}
+</style></head><body><div style="text-align:center;margin-bottom:20px"><strong style="font-size:18px;color:#1B5E20">Gestão Pecuária Lucrativa</strong><br><span style="color:#666;font-size:12px">Rogério Avelino — ${faz||'Todas'}</span></div>${recibos}<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;font-size:13px">🖨️ Imprimir</button>
+
+</body></html>`;const w=window.open('','_blank');w.document.write(html);w.document.close();}
 
 // ═══ CONSULTOR ═══
 function rConsultor(){try{rConsResumo();}catch(e){}try{rConsAlertas();}catch(e){}try{rConsNotas();}catch(e){}}
@@ -2519,11 +2566,14 @@ var ctHistPer = 'hoje';
 function sCtHist(el, per){ rCtHist(); }
 function rCtHist(){
   var resp = CU ? CU.n : '';
+  var isConsultor = CU && CU.r === 'Consultor';
   var lista = (S.rC||[]).filter(function(r){
     if(r._apagado) return false;
-    var rNome = (r.resp||r.n||'').trim().toLowerCase();
-    var uNome = resp.trim().toLowerCase();
-    if(rNome !== uNome) return false;
+    if(!isConsultor){
+      var rNome = (r.resp||r.n||'').trim().toLowerCase();
+      var uNome = resp.trim().toLowerCase();
+      if(rNome !== uNome) return false;
+    }
     return !r.validado && !r.pago;
   });
   var el = document.getElementById('ct-hist-lista');
@@ -2574,7 +2624,7 @@ function gerarArquivoSync(){
     + 'localStorage.setItem("gpl_v17_data",'+JSON.stringify(dados)+');'
     + 'alert("Dados sincronizados! Feche esta pagina e abra o GPL.");'
     + 'window.location="https://gestaopecuarialucrativa-dotcom.github.io/fazenda-gpl/";'
-    + '</'+tag+'></body></html>';
+    + '</'+tag+'>\n\n</body></html>';
   var blob = new Blob([html], {type:'text/html'});
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -2987,6 +3037,76 @@ function salvarPixDiarista(nome,k){
 // Inicializar PIX_D se não existir
 if(!S.PIX_D) S.PIX_D={};
 
+
+// ══ MODAL OPÇÕES DO MAPA ══
+var pastoSelecionadoNoMapa = '';
+var loteSelecionadoNoMapa = '';
+
+function aoClicarNoLoteDoMapa(pasto, lote){
+  pastoSelecionadoNoMapa = pasto;
+  loteSelecionadoNoMapa = lote;
+  var titulo = document.getElementById('mapa-opcoes-title');
+  if(titulo) titulo.textContent = (lote ? '🐄 '+lote+' · ' : '') + '📍 '+pasto;
+  var m = document.getElementById('mapa-opcoes-modal');
+  if(m) m.classList.add('open');
+}
+
+function fecharModalOpcoes(){
+  var m = document.getElementById('mapa-opcoes-modal');
+  if(m) m.classList.remove('open');
+}
+
+function irParaTrato(){
+  fecharModalOpcoes();
+  // Navegar para trato e pré-preencher o lote se existir
+  sp('trato',true,'mapa');
+  if(loteSelecionadoNoMapa){
+    setTimeout(function(){
+      var sel = document.getElementById('t-cocho');
+      if(sel){
+        // Tentar selecionar o lote
+        for(var i=0;i<sel.options.length;i++){
+          if(sel.options[i].text.indexOf(loteSelecionadoNoMapa)>=0){
+            sel.selectedIndex=i;
+            try{updTratoLote();}catch(e){}
+            break;
+          }
+        }
+      }
+    }, 200);
+  }
+}
+
+function irParaMudancaPasto(){
+  fecharModalOpcoes();
+  // Abrir modal de alocação direto
+  if(pastoSelecionadoNoMapa){
+    var area = MAPA_AREAS.find(function(a){return a.label===pastoSelecionadoNoMapa || a.id===pastoSelecionadoNoMapa;});
+    if(area){
+      var contId = (document.getElementById('mapa-pins-main') ? 'mapa-pins-main' : 'mapa-pins');
+      abrirMapaModal(area, contId);
+    }
+  }
+}
+
 </script>
+
+
+
+<!-- ══ MODAL OPÇÕES DO MAPA (vaqueiro) ══ -->
+<div class="edit-modal" id="mapa-opcoes-modal">
+  <div class="edit-box" style="max-width:320px;text-align:center">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:15px;font-weight:700;color:#1B5E20" id="mapa-opcoes-title">Área Selecionada</span>
+      <span onclick="fecharModalOpcoes()" style="cursor:pointer;font-size:24px;color:#888;line-height:1">&times;</span>
+    </div>
+    <p style="font-size:13px;color:#666;margin-bottom:14px">O que você deseja fazer nesta área?</p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button onclick="irParaTrato()" class="sbtn" style="margin-top:0;background:#2E7D32">🌾 Trato de Cocho</button>
+      <button onclick="irParaMudancaPasto()" class="sbtn" style="margin-top:0;background:#1565C0">🔄 Alocar / Mover Gado</button>
+    </div>
+    <button onclick="fecharModalOpcoes()" style="margin-top:12px;background:none;border:1px solid #ddd;border-radius:8px;padding:8px 20px;font-size:12px;color:#888;cursor:pointer;width:100%">Cancelar</button>
+  </div>
+</div>
 </body>
 </html>
