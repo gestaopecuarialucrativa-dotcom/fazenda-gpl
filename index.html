@@ -9,15 +9,12 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;font-size:14px;background:#f0f0f0;color:#1a1a1a;max-width:480px;margin:0 auto;min-height:100vh}
 .hdr{background:linear-gradient(135deg,#1a5c10,#2d7a1f);padding:0 12px;height:52px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.hback{width:32px;height:32px;display:none;align-items:center;justify-content:center;background:rgba(255,255,255,.18);border-radius:8px;cursor:pointer;border:1px solid rgba(255,255,255,.25);color:#fff;font-size:20px;flex-shrink:0}
 .htxt{color:#fff;flex:1;min-width:0}
 .htxt .t1{font-size:9px;opacity:.75;letter-spacing:1px;font-weight:700}
 .htxt .t2{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .htxt .t3{font-size:9px;opacity:.6}
 .sdot{width:8px;height:8px;border-radius:50%;background:#ccc;flex-shrink:0}
 .sdot.on{background:#4aab30;box-shadow:0 0 4px #4aab30}
-.sdot.sy{background:#FFB300;animation:pl .8s infinite}
-@keyframes pl{0%,100%{opacity:1}50%{opacity:.3}}
 .upill{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:4px 10px;font-size:11px;color:#fff;cursor:pointer;flex-shrink:0;font-weight:600}
 .tabs{display:flex;border-bottom:2px solid #e0e0e0;background:#fff;overflow-x:auto}
 .tab{flex:1;padding:8px 2px;text-align:center;cursor:pointer;border-bottom:3px solid transparent;color:#888;white-space:nowrap;min-width:50px;margin-bottom:-2px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px}
@@ -46,9 +43,6 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 .pk.del{font-size:16px;background:#fff}
 .pk.emp{background:transparent;border:none;cursor:default}
 .pin-err{text-align:center;color:#CC2200;font-size:12px;margin-top:6px;min-height:16px;font-weight:600}
-.brow{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.bopt{padding:9px 5px;border:1.5px solid #ddd;border-radius:9px;background:#fff;cursor:pointer;font-size:12px;text-align:center}
-.bopt.sel{background:#EAF3DE;border-color:#2d7a1f;color:#27500A;font-weight:700}
 .sbtn{width:100%;padding:12px;border-radius:10px;background:#2d7a1f;border:none;color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px}
 .sbtn:active{background:#256618}
 .savb{padding:5px 12px;border:1px solid #ddd;border-radius:8px;background:#f5f5f5;color:#333;cursor:pointer;font-size:12px;white-space:nowrap}
@@ -238,7 +232,10 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
       <div class="fg"><div class="lbl">Observações</div><input type="text" id="f-obs" placeholder="Opcional..."></div>
       <button class="sbtn" onclick="salvarFormPrincipal()">💾 Gravar Lançamento</button>
       <div class="ok" id="f-ok">✔️ Gravado com sucesso!</div>
-    </div><div class="pg" id="pg-dia" style="display:none">
+    </div>
+  </div>
+
+  <div class="pg" id="pg-dia" style="display:none">
     <div class="card">
       <div class="stit" style="color:#7B3F00">🤠 Cadastro de Trabalhadores</div>
       <div class="ir" style="align-items: center; gap: 8px;">
@@ -300,8 +297,9 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
     <button class="xbtn" style="background:#FCEBEB;color:#C62828;border-color:#EF9A9A" onclick="logoutSistema()">🚪 Sair da Conta</button>
   </div>
+</div>
 
-</div> <div class="qr-modal" id="qr-modal">
+<div class="qr-modal" id="qr-modal">
   <div class="qr-box" style="text-align:center">
     <h3 id="qr-modal-title" style="margin-bottom:12px; color:#1B5E20">QR Code da Fazenda</h3>
     <div style="background:#fff; width:160px; height:160px; margin:0 auto 12px; display:flex; align-items:center; justify-content:center; border: 4px solid #333; font-weight:bold; border-radius:8px" id="qr-target"></div>
@@ -311,14 +309,13 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 </div>
 
 <script>
-// CONFIGURAÇÃO DO PIN OPERACIONAL
 const CONFIG_PIN = "2026"; 
 let currentPin = "";
 let currentTab = "ini";
 let currentLType = "dia"; 
 let filtroDespesa = "todos";
 
-// ESTRUTURA COMPLETA DO BANCO LOCAL DO SISTEMA GPL
+// GARANTE QUE O LOCALSTORAGE EXISTA ANTES DE TENTAR VALIDAR O PIN
 let fazendas = JSON.parse(localStorage.getItem('gpl_fazendas'));
 if (!fazendas) {
   fazendas = {
@@ -342,7 +339,6 @@ if (!diaristas) {
 let lancamentos = JSON.parse(localStorage.getItem('gpl_lancamentos')) || [];
 let selectedLId = null;
 
-// INICIALIZAÇÃO AUTOMÁTICA
 window.onload = function() {
   renderSelects();
   renderDiaristas();
@@ -351,7 +347,6 @@ window.onload = function() {
   renderLinksFazendas();
 };
 
-// VALIDAÇÃO E INTERAÇÃO DO TECLADO DE PIN
 function pressPin(val) {
   const errDiv = document.getElementById('pin-err');
   errDiv.innerText = "";
@@ -362,14 +357,12 @@ function pressPin(val) {
     if (currentPin.length < 4) currentPin += val;
   }
   
-  // Atualiza as bolinhas de progresso
   for (let i = 0; i < 4; i++) {
     const dot = document.getElementById(`dot-${i}`);
     if (i < currentPin.length) dot.classList.add('f');
     else dot.classList.remove('f');
   }
   
-  // Executa validação ao digitar o 4º dígito
   if (currentPin.length === 4) {
     if (currentPin === CONFIG_PIN) {
       document.getElementById('scr-login').style.display = 'none';
@@ -400,7 +393,6 @@ function logoutSistema() {
   chTab('ini');
 }
 
-// CONTROLADOR DE NAVEGAÇÃO ENTRE ABAS
 function chTab(tabId) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
   document.getElementById(`tab-v-${tabId}`).classList.add('on');
@@ -416,7 +408,6 @@ function chTab(tabId) {
   if(tabId === 'des') renderLancamentos();
 }
 
-// FORMATADOR DE SESSÕES DINÂMICAS DO FORMULÁRIO
 function setLType(type) {
   currentLType = type;
   document.getElementById('tg-tp-dia').classList.toggle('on', type === 'dia');
@@ -434,12 +425,13 @@ function modQ(val) {
   txt.innerText = current;
 }
 
-// MONTAGEM DOS SELECTS COM BASE NOS DADOS CARREGADOS
 function renderSelects() {
   let fSel = document.getElementById('f-fazenda');
   let fcFaz = document.getElementById('fc-faz');
   let dSel = document.getElementById('f-diarista');
   let rSel = document.getElementById('f-resp');
+  
+  if(!fSel) return;
   
   fSel.innerHTML = "";
   fcFaz.innerHTML = "";
@@ -458,7 +450,6 @@ function renderSelects() {
   document.getElementById('f-data').valueAsDate = new Date();
 }
 
-// CONTROLE DE OPERAÇÕES DE DIARISTAS
 function cadastrarDiarista() {
   let nomeInput = document.getElementById('cad-dia-nome');
   let nome = nomeInput.value.trim();
@@ -475,6 +466,7 @@ function cadastrarDiarista() {
 
 function renderDiaristas() {
   let container = document.getElementById('lista-pix-diaristas');
+  if(!container) return;
   container.innerHTML = "";
   
   Object.keys(diaristas).forEach(k => {
@@ -504,7 +496,6 @@ function salvarPixDiarista(k) {
   alert("Dados de pagamento atualizados com sucesso!");
 }
 
-// EXECUÇÃO DO FORMULÁRIO DE LANÇAMENTO PRINCIPAL
 function salvarFormPrincipal() {
   let fId = document.getElementById('f-fazenda').value;
   let data = document.getElementById('f-data').value;
@@ -558,7 +549,6 @@ function salvarFormPrincipal() {
   renderLancamentos();
 }
 
-// FILTRAGEM E EXIBIÇÃO DA PÁGINA DE LANÇAMENTOS
 function setFiltroDes(f) {
   filtroDespesa = f;
   document.querySelectorAll('#p-filtros-des .pbtn').forEach(b => b.classList.remove('on'));
@@ -570,6 +560,7 @@ function setFiltroDes(f) {
 
 function renderLancamentos() {
   let container = document.getElementById('lista-despesas-linhas');
+  if(!container) return;
   container.innerHTML = "";
   
   let filtrados = lancamentos.filter(l => {
@@ -675,7 +666,6 @@ function openEditModal(id) {
   document.getElementById('edit-modal').classList.add('open');
 }
 
-// RELATÓRIOS CONSOLIDADOS DE BENCHMARKING LOCAL
 function renderResumos() {
   let totalGeral = 0;
   let totalPend = 0;
@@ -700,6 +690,7 @@ function renderResumos() {
   document.getElementById('r-total-val').innerText = `R$ ${totalVal.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
   
   let container = document.getElementById('lista-resumo-fazendas');
+  if(!container) return;
   container.innerHTML = "";
   
   Object.keys(fazendas).forEach(k => {
@@ -722,7 +713,6 @@ function renderResumos() {
   });
 }
 
-// FECHAMENTO SELETIVO DE PERÍODOS
 function abrirModalFechamento() {
   document.getElementById('fc-de').valueAsDate = new Date(Date.now() - 15*24*60*60*1000);
   document.getElementById('fc-ate').valueAsDate = new Date();
@@ -786,9 +776,9 @@ function calcularFechamento() {
   });
 }
 
-// LINKS DE COMPARTILHAMENTO EXTERNO (WHATSAPP / QR CODE)
 function renderLinksFazendas() {
   let container = document.getElementById('lista-links-fazendas');
+  if(!container) return;
   container.innerHTML = "";
   
   Object.keys(fazendas).forEach(k => {
@@ -832,7 +822,6 @@ function openQrModal(nomeFaz, url) {
 
 function closeQrModal() { document.getElementById('qr-modal').classList.remove('open'); }
 
-// SWITCHES DE PREFERÊNCIAS CONTROLE LOCAL
 function toggleSw(type) {
   let sw = document.getElementById(`sw-${type}`);
   sw.classList.toggle('on');
@@ -844,4 +833,3 @@ function toggleSw(type) {
 </script>
 </body>
 </html>
-  </div>
