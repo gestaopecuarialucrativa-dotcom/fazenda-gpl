@@ -4,23 +4,23 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#1B5E20">
-<title>GPL — Gestão Pecuária Lucrativa (Backup)</title>
+<title>GPL — Rogério Avelino</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;font-size:14px;background:#f0f0f0;color:#1a1a1a;max-width:480px;margin:0 auto;min-height:100vh}
 .hdr{background:linear-gradient(135deg,#1a5c10,#2d7a1f);padding:0 12px;height:52px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 .hback{width:32px;height:32px;display:none;align-items:center;justify-content:center;background:rgba(255,255,255,.18);border-radius:8px;cursor:pointer;border:1px solid rgba(255,255,255,.25);color:#fff;font-size:20px;flex-shrink:0}
 .htxt{color:#fff;flex:1;min-width:0}
-.htxt .t1{font-size:9px;opacity:.75}
+.htxt .t1{font-size:9px;opacity:.75;letter-spacing:1px;font-weight:700}
 .htxt .t2{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .htxt .t3{font-size:9px;opacity:.6}
 .sdot{width:8px;height:8px;border-radius:50%;background:#ccc;flex-shrink:0}
 .sdot.on{background:#4aab30;box-shadow:0 0 4px #4aab30}
 .sdot.sy{background:#FFB300;animation:pl .8s infinite}
 @keyframes pl{0%,100%{opacity:1}50%{opacity:.3}}
-.upill{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:4px 10px;font-size:11px;color:#fff;cursor:pointer;flex-shrink:0}
+.upill{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:4px 10px;font-size:11px;color:#fff;cursor:pointer;flex-shrink:0;font-weight:600}
 .tabs{display:flex;border-bottom:2px solid #e0e0e0;background:#fff;overflow-x:auto}
-.tab{flex:1;padding:6px 2px;text-align:center;cursor:pointer;border-bottom:3px solid transparent;color:#888;white-space:nowrap;min-width:50px;margin-bottom:-2px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tab{flex:1;padding:8px 2px;text-align:center;cursor:pointer;border-bottom:3px solid transparent;color:#888;white-space:nowrap;min-width:50px;margin-bottom:-2px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px}
 .tab.on{color:#2d7a1f;border-bottom-color:#2d7a1f;font-weight:700}
 .pg{padding:13px}
 .card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:13px;margin-bottom:11px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
@@ -29,10 +29,12 @@ body{font-family:system-ui,sans-serif;font-size:14px;background:#f0f0f0;color:#1
 select,input[type=text],input[type=number],input[type=date]{width:100%;padding:9px 11px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#1a1a1a;font-size:13px;-webkit-appearance:none}
 select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 .stit{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.login-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;background:linear-gradient(160deg,#f0f9e8,#e8f5e0)}
-.login-card{background:#fff;border-radius:16px;padding:22px;width:100%;max-width:340px;box-shadow:0 4px 20px rgba(0,0,0,.12)}
-.login-title{font-size:15px;font-weight:700;text-align:center;margin-bottom:3px}
-.login-sub{font-size:12px;color:#888;text-align:center;margin-bottom:16px}
+.login-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;background:linear-gradient(160deg,#1a5c10,#f0f9e8)}
+.login-card{background:#fff;border-radius:16px;padding:22px;width:100%;max-width:340px;box-shadow:0 6px 25px rgba(0,0,0,.25)}
+.login-brand{text-align:center;margin-bottom:15px}
+.login-brand .b-main{font-size:16px;font-weight:800;color:#1a5c10;letter-spacing:0.5px}
+.login-brand .b-sub{font-size:11px;color:#555;font-weight:600;margin-top:2px;text-transform:uppercase}
+.login-sub{font-size:12px;color:#666;text-align:center;margin-bottom:12px}
 .pin-dots{display:flex;gap:12px;justify-content:center;margin:14px 0}
 .pin-dot{width:18px;height:18px;border-radius:50%;border:2px solid #ddd;background:#fff;transition:all .15s}
 .pin-dot.f{background:#2d7a1f;border-color:#2d7a1f}
@@ -43,25 +45,10 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 .pk:active{background:#e0e0e0;transform:scale(.96)}
 .pk.del{font-size:16px;background:#fff}
 .pk.emp{background:transparent;border:none;cursor:default}
-.pin-err{text-align:center;color:#CC2200;font-size:12px;margin-top:6px;min-height:16px}
-.agrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:13px}
-.abtn{border:1.5px solid #e0e0e0;border-radius:13px;padding:15px 10px;cursor:pointer;text-align:center;background:#fff}
-.abtn:active{opacity:.8;transform:scale(.98)}
-.abtn-l{font-size:13px;font-weight:700;margin-top:2px}
-.abtn-s{font-size:11px;color:#888;margin-top:3px}
-.gr{border-color:#3B6D11;background:#f0f9e8}.gr .abtn-l{color:#27500A}
-.bl{border-color:#185FA5;background:#e8f2fc}.bl .abtn-l{color:#0C447C}
-.am{border-color:#854F0B;background:#fdf3e7}.am .abtn-l{color:#633806}
-.tl{border-color:#0F6E56;background:#e6f5f0}.tl .abtn-l{color:#085041}
-.pu{border-color:#534AB7;background:#eeedfd}.pu .abtn-l{color:#3C3489}
+.pin-err{text-align:center;color:#CC2200;font-size:12px;margin-top:6px;min-height:16px;font-weight:600}
 .brow{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.b3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
 .bopt{padding:9px 5px;border:1.5px solid #ddd;border-radius:9px;background:#fff;cursor:pointer;font-size:12px;text-align:center}
 .bopt.sel{background:#EAF3DE;border-color:#2d7a1f;color:#27500A;font-weight:700}
-.avbtn{padding:10px 4px;border:1.5px solid #ddd;border-radius:9px;background:#fff;cursor:pointer;font-size:12px;text-align:center}
-.avo.sel{background:#EAF3DE;border-color:#3B6D11;color:#27500A;font-weight:700}
-.avb.sel{background:#FAEEDA;border-color:#854F0B;color:#633806;font-weight:700}
-.avr.sel{background:#FCEBEB;border-color:#A32D2D;color:#791F1F;font-weight:700}
 .sbtn{width:100%;padding:12px;border-radius:10px;background:#2d7a1f;border:none;color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px}
 .sbtn:active{background:#256618}
 .savb{padding:5px 12px;border:1px solid #ddd;border-radius:8px;background:#f5f5f5;color:#333;cursor:pointer;font-size:12px;white-space:nowrap}
@@ -71,70 +58,13 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 .qbtn{width:28px;height:28px;border:1px solid #ddd;border-radius:8px;background:#f5f5f5;cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;font-weight:700}
 .qnum{font-size:14px;font-weight:700;min-width:18px;text-align:center}
 .rrow{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f0f0}
-.rrow:last-child{border-bottom:none}
-.ec{border:2px solid #e8e8e8;border-radius:12px;padding:12px;margin-bottom:9px;cursor:pointer;display:flex;gap:12px;align-items:flex-start;background:#fff}
-.ec.sel{border-color:#2d7a1f;background:#f0f9e8}
-.enum{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;margin-top:2px}
-.e1c{background:#7B3F00}.e2c{background:#A0522D}.e3c{background:#2d7a1f}.e4c{background:#CC8800}.e5c{background:#CC2200}
-.etit{font-size:13px;font-weight:700;margin-bottom:3px}
-.edesc{font-size:11px;color:#666;line-height:1.4}
-.etag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:10px;margin-top:5px;font-weight:700}
-.tf{background:#E6F1FB;color:#0C447C}.ti{background:#EAF3DE;color:#27500A}.tp{background:#FAEEDA;color:#633806}.ta{background:#FCEBEB;color:#791F1F}
-.ebox{border-radius:10px;padding:13px;text-align:center;display:none;margin-bottom:12px;border:1.5px solid #ddd;background:#fafafa}
-.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:11px}
-.sc{background:#f8f8f8;border-radius:10px;padding:11px;border:1px solid #eee}
-.sl{font-size:11px;color:#888;margin-bottom:3px}
-.sv{font-size:20px;font-weight:700}
-.ss{font-size:11px;color:#888;margin-top:2px}
-.psel{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap}
-.pbtn{padding:5px 10px;border:1px solid #ddd;border-radius:20px;background:#fff;color:#888;cursor:pointer;font-size:11px;font-weight:600}
-.pbtn.on{border-color:#2d7a1f;color:#2d7a1f;background:#f0f9e8}
-.ri{padding:9px 0;border-bottom:1px solid #f0f0f0}
-.ri:last-child{border-bottom:none}
-.rt{display:flex;justify-content:space-between;align-items:flex-start}
-.rn{font-size:13px;font-weight:700}
-.rv{font-size:12px;font-weight:700;color:#2d7a1f;white-space:nowrap;margin-left:6px}
-.rd{font-size:11px;color:#888;margin-top:2px}
-.bdg{display:inline-block;font-size:10px;padding:2px 7px;border-radius:10px;margin-left:3px;font-weight:600}
-.bg{background:#EAF3DE;color:#27500A}.ba{background:#FAEEDA;color:#633806}.br{background:#FCEBEB;color:#791F1F}.bt{background:#E1F5EE;color:#085041}.bp{background:#EEEDFE;color:#3C3489}
-.er{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f0f0f0}
-.er:last-child{border-bottom:none}
-.ebw{width:60px;height:5px;background:#eee;border-radius:3px;overflow:hidden;display:inline-block;vertical-align:middle;margin-left:5px}
-.ebar{height:100%;border-radius:3px;background:#2d7a1f}
-.ebar.m{background:#CC8800}.ebar.l{background:#CC2200}
-.wb{background:#FAEEDA;color:#633806;font-size:10px;padding:2px 7px;border-radius:8px;font-weight:600;display:inline-block}
-.lb{background:#FCEBEB;color:#791F1F;font-size:10px;padding:2px 7px;border-radius:8px;font-weight:600;display:inline-block}
-.ucfg{background:#f8f8f8;border-radius:10px;padding:10px;margin-bottom:8px;border:1px solid #eee}
-.sw{width:36px;height:20px;background:#ccc;border-radius:10px;cursor:pointer;position:relative;flex-shrink:0;transition:background .2s}
-.sw.on{background:#2d7a1f}
-.swk{position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
-.sw.on .swk{left:18px}
-.prow{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #eee}
-.prow:last-child{border-bottom:none}
-.xbtn{width:100%;padding:10px;border-radius:10px;background:#f5f5f5;border:1px solid #ddd;color:#333;font-size:13px;cursor:pointer;margin-top:7px;font-weight:600}
-.tgbar{display:flex;background:#f0f0f0;border-radius:9px;padding:3px;margin-bottom:11px}
-.tgo{flex:1;padding:7px 4px;text-align:center;font-size:12px;cursor:pointer;border-radius:7px;color:#888;font-weight:600}
-.tgo.on{background:#fff;border:1px solid #ddd;color:#1a1a1a;box-shadow:0 1px 3px rgba(0,0,0,.07)}
-.fsec{border:1px solid #e0e0e0;border-radius:10px;margin-bottom:10px;overflow:hidden}
-.fhdr{background:#f8f8f8;padding:10px 12px;font-size:13px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
-.fbody{padding:12px;display:none;border-top:1px solid #eee}
-.fbody.op{display:block}
-.chip{display:inline-flex;align-items:center;gap:4px;background:#f0f0f0;border:1px solid #e0e0e0;border-radius:20px;padding:3px 9px;font-size:12px;margin:3px}
-.cdel{cursor:pointer;color:#999;font-size:14px}
-.addr{display:flex;gap:6px;margin-top:7px}
-.info-box{background:#f0f7e8;border:1px solid #b8dca0;border-radius:9px;padding:11px;font-size:12px;color:#27500A;margin-bottom:11px;line-height:1.6}
-.code-box{background:#f0f0f0;border-radius:8px;padding:10px;font-size:11px;font-family:monospace;color:#555;word-break:break-all;margin-bottom:6px;cursor:pointer}
-.lnk-card{background:#f8f8f8;border:1px solid #eee;border-radius:10px;padding:10px;margin-bottom:8px}
-.sc-red .sv{color:#C62828!important}
-.sc-grn .sv{color:#2E7D32!important}
-.desp-item{background:#fff;border-radius:8px;border:1px solid #eee;padding:9px 11px;margin-bottom:6px}
+.desp-item{background:#fff;border-radius:8px;border:1px solid #eee;padding:9px 11px;margin-bottom:6px;cursor:pointer}
 .desp-item.pagar{border-left:3px solid #C62828}
 .desp-item.pago{border-left:3px solid #2E7D32}
 .desp-hd{display:flex;justify-content:space-between;align-items:center}
 .desp-nm{font-weight:600;font-size:13px}
-.desp-vl{font-weight:700;font-size:14px;color:#1B5E20}
+.desp-vl{font-weight:700;font-size:14px}
 .desp-sb{font-size:11px;color:#888;margin-top:2px}
-.desp-ok{font-size:11px;padding:3px 10px;border-radius:6px;border:none;background:#2E7D32;color:#fff;cursor:pointer;margin-top:5px}
 .faz-link-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:12px;margin-bottom:10px}
 .faz-link-title{font-weight:700;font-size:14px;color:#1B5E20;margin-bottom:6px}
 .faz-link-url{font-size:10px;color:#888;background:#f5f5f5;border-radius:6px;padding:5px 8px;word-break:break-all;margin-bottom:8px;font-family:monospace}
@@ -143,105 +73,102 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 .btn-copy{background:#E8F5E9;color:#1B5E20}
 .btn-wapp{background:#25D366;color:#fff}
 .btn-qr{background:#f0f0f0;color:#333}
-.qr-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center}
-.qr-modal.open{display:flex}
-.qr-box{background:#fff;border-radius:16px;padding:24px;text-align:center;max-width:300px;width:90%}
-.qr-box h3{margin:0 0 12px;font-size:15px;color:#1B5E20}
-.qr-close{margin-top:14px;padding:8px 24px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
-.av{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;font-weight:700}
-.av-g{background:#EAF3DE;color:#27500A}
-.av-b{background:#E6F1FB;color:#0C447C}
-.av-a{background:#FAEEDA;color:#633806}
-.av-p{background:#EEEDFE;color:#3C3489}
-.av-t{background:#E1F5EE;color:#085041}
 .badge-pend{background:#FFF3E0;color:#E65100;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;border:1px solid #FFB300}
 .badge-ok{background:#E8F5E9;color:#2E7D32;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700}
-.btn-edit{padding:3px 8px;font-size:11px;background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9;border-radius:5px;cursor:pointer;margin-left:4px}
-.btn-val{padding:3px 8px;font-size:11px;background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;border-radius:5px;cursor:pointer;margin-left:4px}
-.edit-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center}
-.edit-modal.open{display:flex}
-.edit-box{background:#fff;border-radius:16px;padding:22px;width:95%;max-width:420px;max-height:90vh;overflow-y:auto}
-.fc-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.65);z-index:9999;align-items:flex-start;justify-content:center;padding:10px;overflow-y:auto}
-.fc-modal.open{display:flex}
-.fc-box{background:#fff;border-radius:16px;padding:20px;width:100%;max-width:440px;margin:auto}
+.edit-modal, .qr-modal, .fc-modal {display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center}
+.edit-modal.open, .qr-modal.open, .fc-modal.open {display:flex}
+.edit-box, .qr-box, .fc-box {background:#fff;border-radius:16px;padding:22px;width:92%;max-width:440px;max-height:90vh;overflow-y:auto}
 .fc-pessoa{background:#f8f8f8;border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid #1B5E20}
 .fc-nome{font-size:14px;font-weight:700;color:#1B5E20}
 .fc-det{font-size:11px;color:#666;margin:4px 0;line-height:1.7}
-.fc-total-val{font-size:18px;font-weight:800;color:#1B5E20}
+.fc-total-val{font-size:17px;font-weight:800;color:#1B5E20}
 .fc-pix{font-size:11px;background:#E8F5E9;border-radius:6px;padding:4px 8px;color:#1B5E20;font-family:monospace;margin-top:4px;display:inline-block}
+.tgbar{display:flex;background:#f0f0f0;border-radius:9px;padding:3px;margin-bottom:11px}
+.tgo{flex:1;padding:7px 4px;text-align:center;font-size:12px;cursor:pointer;border-radius:7px;color:#888;font-weight:600}
+.tgo.on{background:#fff;border:1px solid #ddd;color:#1a1a1a;box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.ucfg{background:#f8f8f8;border-radius:10px;padding:10px;margin-bottom:8px;border:1px solid #eee}
+.sw{width:36px;height:20px;background:#ccc;border-radius:10px;cursor:pointer;position:relative;flex-shrink:0;transition:background .2s}
+.sw.on{background:#2d7a1f}
+.swk{position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:left .15s}
+.sw.on .swk{left:18px}
+.prow{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee}
+.pbtn{padding:5px 10px;border:1px solid #ddd;border-radius:20px;background:#fff;color:#888;cursor:pointer;font-size:11px;font-weight:600}
+.pbtn.on{border-color:#2d7a1f;color:#2d7a1f;background:#f0f9e8}
+.psel{display:flex;gap:5px;margin-bottom:12px}
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:11px}
+.sc{background:#fff;border-radius:10px;padding:11px;border:1px solid #e8e8e8}
+.sl{font-size:11px;color:#666;margin-bottom:3px}
+.sv{font-size:18px;font-weight:700;color:#1a1a1a}
+.sc-red .sv{color:#C62828}
+.sc-grn .sv{color:#2E7D32}
+.xbtn{width:100%;padding:10px;border-radius:10px;background:#f5f5f5;border:1px solid #ddd;color:#333;font-size:13px;cursor:pointer;margin-top:7px;font-weight:600}
 </style>
 </head>
 <body>
 
 <div class="edit-modal" id="det-modal">
-<div class="edit-box" style="max-width:440px">
+<div class="edit-box">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-    <span style="font-size:15px;font-weight:700;color:#1B5E20" id="det-title">Lançamento</span>
-    <span id="det-close" style="cursor:pointer;font-size:24px;color:#888">×</span>
+    <span style="font-size:14px;font-weight:700;color:#1B5E20" id="det-title">Lançamento</span>
+    <span onclick="closeDetModal()" style="cursor:pointer;font-size:24px;color:#888">×</span>
   </div>
   <div id="det-body"></div>
-  <div style="display:flex;gap:8px;margin-top:16px" id="det-btns">
-    <button id="det-val" style="flex:1;padding:11px;background:#2E7D32;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">✅ Validar</button>
-    <button id="det-edit" style="flex:1;padding:11px;background:#1565C0;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">✏️ Editar</button>
-    <button id="det-rep" style="padding:11px 14px;background:#E65100;color:#fff;border:none;border-radius:10px;font-size:14px;cursor:pointer">❌</button>
-    <button id="det-del" style="padding:11px 14px;background:#B71C1C;color:#fff;border:none;border-radius:10px;font-size:14px;cursor:pointer">🗑️</button>
+  <div style="display:flex;gap:8px;margin-top:16px">
+    <button id="det-val" style="flex:1;padding:11px;background:#2E7D32;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">✅ Validar</button>
+    <button id="det-edit" style="flex:1;padding:11px;background:#1565C0;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">✏️ Editar</button>
+    <button id="det-del" style="padding:11px 14px;background:#B71C1C;color:#fff;border:none;border-radius:10px;font-size:13px;cursor:pointer">🗑️</button>
   </div>
 </div>
 </div>
 
 <div class="edit-modal" id="edit-modal">
 <div class="edit-box">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-<span style="font-size:15px;font-weight:700;color:#1B5E20" id="edit-title">Editar lançamento</span>
-<span id="edit-close" style="cursor:pointer;font-size:22px;color:#888">×</span>
-</div>
-<div id="edit-body"></div>
-<div style="display:flex;gap:8px;margin-top:14px">
-<button id="edit-save" style="flex:1;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">💾 Salvar</button>
-<button id="edit-del" style="padding:11px 16px;background:#C62828;color:#fff;border:none;border-radius:10px;font-size:14px;cursor:pointer">🗑️</button>
-</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <span style="font-size:14px;font-weight:700;color:#1B5E20">✏️ Editar Lançamento</span>
+    <span onclick="document.getElementById('edit-modal').classList.remove('open')" style="cursor:pointer;font-size:24px;color:#888">×</span>
+  </div>
+  <div id="edit-body"></div>
+  <button id="edit-save" class="sbtn">💾 Salvar Alterações</button>
 </div>
 </div>
 
 <div class="fc-modal" id="fc-modal">
 <div class="fc-box">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-    <span style="font-size:16px;font-weight:700;color:#1B5E20">💰 Fechar Conta</span>
-    <span id="fc-close" style="cursor:pointer;font-size:24px;color:#888">×</span>
+    <span style="font-size:15px;font-weight:700;color:#1B5E20">💰 Fechar Conta Período</span>
+    <span onclick="document.getElementById('fc-modal').classList.remove('open')" style="cursor:pointer;font-size:24px;color:#888">×</span>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-    <div><div style="font-size:12px;color:#666;margin-bottom:4px">Data início</div>
-    <input type="date" id="fc-de" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div>
-    <div><div style="font-size:12px;color:#666;margin-bottom:4px">Data fim</div>
-    <input type="date" id="fc-ate" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div>
+    <div><div class="lbl">Data início</div><input type="date" id="fc-de"></div>
+    <div><div class="lbl">Data fim</div><input type="date" id="fc-ate"></div>
   </div>
-  <div style="margin-bottom:12px">
-    <div style="font-size:12px;color:#666;margin-bottom:4px">Fazenda</div>
-    <select id="fc-faz" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px"></select>
+  <div class="fg"><div class="lbl">Selecione a Fazenda</div><select id="fc-faz"></select></div>
+  <div style="display:flex;gap:5px;margin-bottom:12px">
+    <button onclick="setFCPer('semana')" style="flex:1;padding:6px;background:#f5f5f5;border:1px solid #ddd;border-radius:6px;font-size:11px;cursor:pointer">7 dias</button>
+    <button onclick="setFCPer('quinzena')" style="flex:1;padding:6px;background:#f5f5f5;border:1px solid #ddd;border-radius:6px;font-size:11px;cursor:pointer">15 dias</button>
+    <button onclick="setFCPer('mes')" style="flex:1;padding:6px;background:#f5f5f5;border:1px solid #ddd;border-radius:6px;font-size:11px;cursor:pointer">Mês Atual</button>
   </div>
-  <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
-    <button onclick="setFCPer('semana')" style="flex:1;padding:7px;background:#f0f0f0;border:1px solid #ddd;border-radius:8px;font-size:12px;cursor:pointer">7 dias</button>
-    <button onclick="setFCPer('quinzena')" style="flex:1;padding:7px;background:#f0f0f0;border:1px solid #ddd;border-radius:8px;font-size:12px;cursor:pointer">15 dias</button>
-    <button onclick="setFCPer('mes')" style="flex:1;padding:7px;background:#f0f0f0;border:1px solid #ddd;border-radius:8px;font-size:12px;cursor:pointer">Mês atual</button>
-    <button onclick="setFCPer('mes30')" style="flex:1;padding:7px;background:#f0f0f0;border:1px solid #ddd;border-radius:8px;font-size:12px;cursor:pointer">30 dias</button>
-  </div>
-  <button onclick="calcularFechamento()" style="width:100%;padding:12px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:14px">📊 Calcular período</button>
-  <div id="fc-resultado"></div>
+  <button onclick="calcularFechamento()" class="sbtn">📊 Processar Fechamento</button>
+  <div id="fc-resultado" style="margin-top:14px"></div>
 </div>
-</div><div class="hdr" id="main-hdr" style="display:none">
-  <div class="hback" id="btn-back">←</div>
+</div>
+
+<div class="hdr" id="main-hdr" style="display:none">
   <div class="htxt">
-    <div class="t1">SISTEMA GPL</div>
-    <div class="t2" id="hdr-title">Rogério Avelino — Consultoria</div>
-    <div class="t3" id="hdr-sub">Gestão Pecuária Lucrativa</div>
+    <div class="t1">CONSULTORIA PECUÁRIA</div>
+    <div class="t2">Rogério Avelino</div>
+    <div class="t3">Gestão Pecuária Lucrativa</div>
   </div>
-  <div class="upill" id="btn-fc-modal">Fechar Conta</div>
+  <div class="upill" onclick="abrirModalFechamento()">Fechar Conta</div>
   <div class="sdot on" id="sync-indicator"></div>
 </div>
 
 <div class="login-screen" id="scr-login">
   <div class="login-card">
-    <div class="login-title">GPL — Gestão Lucrativa</div>
+    <div class="login-brand">
+      <div class="b-main">Rogério Avelino</div>
+      <div class="b-sub">Gestão Pecuária Lucrativa</div>
+    </div>
     <div class="login-sub">Digite o PIN de acesso de 4 dígitos</div>
     <div class="pin-dots">
       <div class="pin-dot" id="dot-0"></div>
@@ -268,37 +195,26 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 </div>
 
 <div class="tabs" id="main-tabs" style="display:none">
-  <div class="tab on" id="tab-v-ini" onclick="chTab('ini')"><span style="font-size:16px">🏠</span><span>Início</span></div>
-  <div class="tab" id="tab-v-dia" onclick="chTab('dia')"><span style="font-size:16px">🤠</span><span>Diaristas</span></div>
-  <div class="tab" id="tab-v-des" onclick="chTab('des')"><span style="font-size:16px">💸</span><span>Despesas</span></div>
-  <div class="tab" id="tab-v-rel" onclick="chTab('rel')"><span style="font-size:16px">📊</span><span>Resumos</span></div>
-  <div class="tab" id="tab-v-cfg" onclick="chTab('cfg')"><span style="font-size:16px">⚙️</span><span>Config</span></div>
+  <div class="tab on" id="tab-v-ini" onclick="chTab('ini')"><span>🏠</span><span>Início</span></div>
+  <div class="tab" id="tab-v-dia" onclick="chTab('dia')"><span>🤠</span><span>Diaristas</span></div>
+  <div class="tab" id="tab-v-des" onclick="chTab('des')"><span>💸</span><span>Lançamentos</span></div>
+  <div class="tab" id="tab-v-rel" onclick="chTab('rel')"><span>📊</span><span>Resumos</span></div>
+  <div class="tab" id="tab-v-cfg" onclick="chTab('cfg')"><span>⚙️</span><span>Config</span></div>
 </div>
 
 <div id="main-content" style="display:none">
-
   <div class="pg" id="pg-ini">
     <div class="card">
-      <div class="stit" style="color:#1B5E20">📌 Novo Lançamento Rápido</div>
+      <div class="stit" style="color:#1B5E20">📌 Novo Lançamento</div>
       <div class="tgbar">
-        <div class="tgo on" id="tg-tp-dia" onclick="setLType('dia')">🤠 Diarista / Serviço</div>
+        <div class="tgo on" id="tg-tp-dia" onclick="setLType('dia')">🤠 Diarista</div>
         <div class="tgo" id="tg-tp-des" onclick="setLType('des')">💸 Despesa Geral</div>
       </div>
+      <div class="fg"><div class="lbl">Fazenda</div><select id="f-fazenda"></select></div>
+      <div class="fg"><div class="lbl">Data</div><input type="date" id="f-data"></div>
       
-      <div class="fg">
-        <div class="lbl">Fazenda Destino</div>
-        <select id="f-fazenda"></select>
-      </div>
-      <div class="fg">
-        <div class="lbl">Data do Fato / Trabalho</div>
-        <input type="date" id="f-data">
-      </div>
-
       <div id="sec-f-dia">
-        <div class="fg">
-          <div class="lbl">Nome do Trabalhador / Diarista</div>
-          <select id="f-diarista"></select>
-        </div>
+        <div class="fg"><div class="lbl">Diarista</div><select id="f-diarista"></select></div>
         <div class="fg">
           <div class="lbl">Quantidade de Diárias</div>
           <div class="ir">
@@ -307,47 +223,27 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
               <span class="qnum" id="f-q-txt">1</span>
               <button class="qbtn" type="button" onclick="modQ(1)">+</button>
             </div>
-            <input type="number" id="f-qtd" value="1" step="0.5" style="display:none">
-            <span style="font-size:12px;color:#666;margin-bottom:6px">diária(s)</span>
+            <input type="number" id="f-qtd" value="1" style="display:none">
           </div>
         </div>
-        <div class="fg">
-          <div class="lbl">Valor Combinado da Diária (R$)</div>
-          <input type="number" id="f-v-dia" placeholder="0,00" step="0.01">
-        </div>
+        <div class="fg"><div class="lbl">Valor da Diária (R$)</div><input type="number" id="f-v-dia" placeholder="0.00" step="0.01"></div>
       </div>
 
       <div id="sec-f-des" style="display:none">
-        <div class="fg">
-          <div class="lbl">Descrição / Categoria da Despesa</div>
-          <input type="text" id="f-desc" placeholder="Ex: Óleo diesel, Sal mineral, Cerca...">
-        </div>
-        <div class="fg">
-          <div class="lbl">Quem Gastou / Responsável</div>
-          <select id="f-resp"></select>
-        </div>
-        <div class="fg">
-          <div class="lbl">Valor Total da Despesa (R$)</div>
-          <input type="number" id="f-v-des" placeholder="0,00" step="0.01">
-        </div>
+        <div class="fg"><div class="lbl">Descrição</div><input type="text" id="f-desc" placeholder="Ex: Óleo Diesel, Sal Mineral..."></div>
+        <div class="fg"><div class="lbl">Responsável pelo Gasto</div><select id="f-resp"></select></div>
+        <div class="fg"><div class="lbl">Valor Total (R$)</div><input type="number" id="f-v-des" placeholder="0.00" step="0.01"></div>
       </div>
 
-      <div class="fg">
-        <div class="lbl">Observações Adicionais (Opcional)</div>
-        <input type="text" id="f-obs" placeholder="Algum detalhe importante...">
-      </div>
-
+      <div class="fg"><div class="lbl">Observações</div><input type="text" id="f-obs" placeholder="Opcional..."></div>
       <button class="sbtn" onclick="salvarFormPrincipal()">💾 Gravar Lançamento</button>
-      <div class="ok" id="f-ok">✔️ Gravado com sucesso localmente!</div>
-    </div>
-  </div>
-
-  <div class="pg" id="pg-dia" style="display:none">
+      <div class="ok" id="f-ok">✔️ Gravado com sucesso!</div>
+    </div><div class="pg" id="pg-dia" style="display:none">
     <div class="card">
       <div class="stit" style="color:#7B3F00">🤠 Cadastro de Trabalhadores</div>
-      <div class="addr">
-        <input type="text" id="cad-dia-nome" placeholder="Nome do novo diarista...">
-        <button class="savb" style="padding:0 14px;background:#7B3F00;color:#fff;border:none" onclick="cadastrarDiarista()">➕</button>
+      <div class="ir" style="align-items: center; gap: 8px;">
+        <input type="text" id="cad-dia-nome" placeholder="Nome do novo diarista..." style="margin-bottom:0">
+        <button class="sbtn" style="width:auto; margin-top:0; padding: 9px 15px;" onclick="cadastrarDiarista()">➕</button>
       </div>
     </div>
     <div class="stit">📋 Configurações de Pix dos Diaristas</div>
@@ -361,25 +257,27 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
       <button class="pbtn" id="f-des-v" onclick="setFiltroDes('validado')">✅ Validados</button>
     </div>
     <div id="lista-despesas-linhas"></div>
-  </div><div class="pg" id="pg-rel" style="display:none">
-    <div class="card bg">
-      <div class="sl">Total Geral em Aberto (Validado)</div>
-      <div class="sv" id="r-total-geral">R$ 0,00</div>
-      <div class="ss">Soma de todas as fazendas e diaristas</div>
+  </div>
+
+  <div class="pg" id="pg-rel" style="display:none">
+    <div class="card" style="background: linear-gradient(135deg, #1A5C10, #2D7A1F); color: #fff;">
+      <div class="sl" style="color: rgba(255,255,255,0.8)">Total Geral Movimentado</div>
+      <div class="sv" id="r-total-geral" style="color:#fff; font-size:24px">R$ 0,00</div>
+      <div class="sl" style="color: rgba(255,255,255,0.6); margin-top: 4px;">Soma total de registros (Validados + Pendentes)</div>
     </div>
     
     <div class="sgrid">
       <div class="sc sc-red">
-        <div class="sl">⏳ Pendentes</div>
-        <div class="sv" style="font-size:16px" id="r-total-pend">R$ 0,00</div>
+        <div class="sl">⏳ Em Aberto / Pendente</div>
+        <div class="sv" style="font-size:15px" id="r-total-pend">R$ 0,00</div>
       </div>
       <div class="sc sc-grn">
-        <div class="sl">✅ Validados</div>
-        <div class="sv" style="font-size:16px" id="r-total-val">R$ 0,00</div>
+        <div class="sl">✅ Confirmado / Validado</div>
+        <div class="sv" style="font-size:15px" id="r-total-val">R$ 0,00</div>
       </div>
     </div>
 
-    <div class="stit">🚜 Distribuição por Fazenda</div>
+    <div class="stit">🚜 Custos por Fazenda</div>
     <div id="lista-resumo-fazendas"></div>
   </div>
 
@@ -387,58 +285,64 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     <div class="card">
       <div class="stit">⚙️ Opções do Sistema</div>
       <div class="prow">
-        <span>Modo de Operação Offline</span>
+        <span>Modo Operação Offline</span>
         <div class="sw on" id="sw-offline" onclick="toggleSw('offline')"><div class="swk"></div></div>
       </div>
       <div class="prow">
-        <span>Sincronismo Automático</span>
+        <span>Sincronismo em Segundo Plano</span>
         <div class="sw" id="sw-autosync" onclick="toggleSw('autosync')"><div class="swk"></div></div>
       </div>
     </div>
 
-    <div class="stit">🔗 Links Exclusivos de Lançamento</div>
-    <div class="lbl" style="margin-bottom:8px">Envie estes links para os gerentes de cada fazenda realizarem lançamentos diretos:</div>
+    <div class="stit">🔗 Links de Lançamento Externo</div>
+    <div class="lbl" style="margin-bottom:8px">Envie estes links exclusivos para os gerentes lançarem dados diretamente de suas fazendas:</div>
     <div id="lista-links-fazendas"></div>
 
-    <button class="xbtn" style="background:#FCEBEB;color:#C62828;border-color:#EF9A9A" onclick="logoutSistema()">🚪 Sair do Sistema</button>
+    <button class="xbtn" style="background:#FCEBEB;color:#C62828;border-color:#EF9A9A" onclick="logoutSistema()">🚪 Sair da Conta</button>
   </div>
 
 </div> <div class="qr-modal" id="qr-modal">
-  <div class="qr-box">
-    <h3 id="qr-modal-title">QR Code da Fazenda</h3>
-    <div style="background:#eee;width:180px;height:180px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:11px;color:#666" id="qr-target">
-      [QR Code Dinâmico]
-    </div>
-    <div style="font-size:11px;color:#666;line-height:1.4" id="qr-modal-desc">Aponte a câmera do celular para abrir o formulário desta fazenda.</div>
-    <button class="qr-close" onclick="closeQrModal()">Fechar</button>
+  <div class="qr-box" style="text-align:center">
+    <h3 id="qr-modal-title" style="margin-bottom:12px; color:#1B5E20">QR Code da Fazenda</h3>
+    <div style="background:#fff; width:160px; height:160px; margin:0 auto 12px; display:flex; align-items:center; justify-content:center; border: 4px solid #333; font-weight:bold; border-radius:8px" id="qr-target"></div>
+    <div style="font-size:11px; color:#666; line-height:1.4; margin-bottom:15px" id="qr-modal-desc"></div>
+    <button class="xbtn" onclick="closeQrModal()">Fechar Janela</button>
   </div>
 </div>
 
 <script>
-// CONFIGURAÇÕES BASE E VARIÁVEIS GERAIS
+// CONFIGURAÇÃO DO PIN OPERACIONAL
 const CONFIG_PIN = "2026"; 
 let currentPin = "";
 let currentTab = "ini";
 let currentLType = "dia"; 
 let filtroDespesa = "todos";
 
-// BANCO DE DADOS EM MEMÓRIA (CARREGADO DO LOCALSTORAGE)
-let fazendas = JSON.parse(localStorage.getItem('gpl_fazendas')) || {
-  "faz_01": { nome: "Fazenda Ananás", cor: "g" },
-  "faz_02": { nome: "Fazenda Estrela", cor: "b" },
-  "faz_03": { nome: "Fazenda Progresso", cor: "a" }
-};
+// ESTRUTURA COMPLETA DO BANCO LOCAL DO SISTEMA GPL
+let fazendas = JSON.parse(localStorage.getItem('gpl_fazendas'));
+if (!fazendas) {
+  fazendas = {
+    "faz_01": { nome: "Fazenda Ananás", cor: "g" },
+    "faz_02": { nome: "Fazenda Estrela", cor: "b" },
+    "faz_03": { nome: "Fazenda Progresso", cor: "a" }
+  };
+  localStorage.setItem('gpl_fazendas', JSON.stringify(fazendas));
+}
 
-let diaristas = JSON.parse(localStorage.getItem('gpl_diaristas')) || {
-  "dia_01": { nome: "Raimundo Nonato", pix: "123.456.789-00", titular: "Raimundo N. Silva" },
-  "dia_02": { nome: "João do Vale", pix: "joao.vale@email.com", titular: "João do Vale Costa" },
-  "dia_03": { nome: "Francisco Souza", pix: "99988877766", titular: "Francisco Souza" }
-};
+let diaristas = JSON.parse(localStorage.getItem('gpl_diaristas'));
+if (!diaristas) {
+  diaristas = {
+    "dia_01": { nome: "Raimundo Nonato", pix: "123.456.789-00", titular: "Raimundo N. Silva" },
+    "dia_02": { nome: "João do Vale", pix: "joao.vale@email.com", titular: "João do Vale Costa" },
+    "dia_03": { nome: "Francisco Souza", pix: "99988877766", titular: "Francisco Souza" }
+  };
+  localStorage.setItem('gpl_diaristas', JSON.stringify(diaristas));
+}
 
 let lancamentos = JSON.parse(localStorage.getItem('gpl_lancamentos')) || [];
 let selectedLId = null;
 
-// INICIALIZAÇÃO DO SISTEMA
+// INICIALIZAÇÃO AUTOMÁTICA
 window.onload = function() {
   renderSelects();
   renderDiaristas();
@@ -447,7 +351,7 @@ window.onload = function() {
   renderLinksFazendas();
 };
 
-// TECLADO DE PIN / LOGIN
+// VALIDAÇÃO E INTERAÇÃO DO TECLADO DE PIN
 function pressPin(val) {
   const errDiv = document.getElementById('pin-err');
   errDiv.innerText = "";
@@ -458,13 +362,14 @@ function pressPin(val) {
     if (currentPin.length < 4) currentPin += val;
   }
   
-  // Atualiza bolinhas visuais
+  // Atualiza as bolinhas de progresso
   for (let i = 0; i < 4; i++) {
     const dot = document.getElementById(`dot-${i}`);
     if (i < currentPin.length) dot.classList.add('f');
     else dot.classList.remove('f');
   }
   
+  // Executa validação ao digitar o 4º dígito
   if (currentPin.length === 4) {
     if (currentPin === CONFIG_PIN) {
       document.getElementById('scr-login').style.display = 'none';
@@ -495,7 +400,7 @@ function logoutSistema() {
   chTab('ini');
 }
 
-// NAVEGAÇÃO DE ABAS
+// CONTROLADOR DE NAVEGAÇÃO ENTRE ABAS
 function chTab(tabId) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
   document.getElementById(`tab-v-${tabId}`).classList.add('on');
@@ -508,9 +413,10 @@ function chTab(tabId) {
   
   currentTab = tabId;
   if(tabId === 'rel') renderResumos();
+  if(tabId === 'des') renderLancamentos();
 }
 
-// ALTERNAR ENTRE DIARISTA E DESPESA NO LABELS
+// FORMATADOR DE SESSÕES DINÂMICAS DO FORMULÁRIO
 function setLType(type) {
   currentLType = type;
   document.getElementById('tg-tp-dia').classList.toggle('on', type === 'dia');
@@ -528,7 +434,7 @@ function modQ(val) {
   txt.innerText = current;
 }
 
-// RENDERIZAR SELETORES DINÂMICOS
+// MONTAGEM DOS SELECTS COM BASE NOS DADOS CARREGADOS
 function renderSelects() {
   let fSel = document.getElementById('f-fazenda');
   let fcFaz = document.getElementById('fc-faz');
@@ -552,7 +458,7 @@ function renderSelects() {
   document.getElementById('f-data').valueAsDate = new Date();
 }
 
-// CONTROLADORES DE BANCO LOCAL
+// CONTROLE DE OPERAÇÕES DE DIARISTAS
 function cadastrarDiarista() {
   let nomeInput = document.getElementById('cad-dia-nome');
   let nome = nomeInput.value.trim();
@@ -575,17 +481,17 @@ function renderDiaristas() {
     let d = diaristas[k];
     container.innerHTML += `
       <div class="ucfg">
-        <div style="font-size:13px;font-weight:700;color:#1B5E20;margin-bottom:8px">👤 ${d.nome}</div>
+        <div style="font-size:13px;font-weight:700;color:#1B5E20;margin-bottom:6px">👤 ${d.nome}</div>
         <div style="display:flex;flex-direction:column;gap:6px">
           <div style="display:flex;gap:6px;align-items:center">
             <span style="font-size:12px;color:#555;min-width:80px">💰 Chave Pix</span>
-            <input type="text" id="pix-d-${k}" placeholder="CPF, e-mail, telefone..." value="${d.pix}" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+            <input type="text" id="pix-d-${k}" placeholder="Chave Pix" value="${d.pix}" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:8px;font-size:13px">
           </div>
           <div style="display:flex;gap:6px;align-items:center">
             <span style="font-size:12px;color:#555;min-width:80px">🪪 Favorecido</span>
-            <input type="text" id="tit-d-${k}" placeholder="Nome do titular" value="${d.titular}" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+            <input type="text" id="tit-d-${k}" placeholder="Titular da conta" value="${d.titular}" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:8px;font-size:13px">
           </div>
-          <button class="savb" style="width:100%;margin-top:2px;background:#2E7D32;color:#fff" onclick="salvarPixDiarista('${k}')">💾 Salvar Dados de Pix</button>
+          <button class="savb" style="width:100%;margin-top:2px;background:#2E7D32;color:#fff;border:none;font-weight:600" onclick="salvarPixDiarista('${k}')">💾 Salvar Pix</button>
         </div>
       </div>`;
   });
@@ -595,10 +501,10 @@ function salvarPixDiarista(k) {
   diaristas[k].pix = document.getElementById(`pix-d-${k}`).value.trim();
   diaristas[k].titular = document.getElementById(`tit-d-${k}`).value.trim();
   localStorage.setItem('gpl_diaristas', JSON.stringify(diaristas));
-  alert("Dados de Pix salvos localmente!");
+  alert("Dados de pagamento atualizados com sucesso!");
 }
 
-// SALVAR FORMULÁRIO PRINCIPAL DE LANÇAMENTO
+// EXECUÇÃO DO FORMULÁRIO DE LANÇAMENTO PRINCIPAL
 function salvarFormPrincipal() {
   let fId = document.getElementById('f-fazenda').value;
   let data = document.getElementById('f-data').value;
@@ -628,7 +534,7 @@ function salvarFormPrincipal() {
     let resp = document.getElementById('f-resp').value;
     let valor = parseFloat(document.getElementById('f-v-des').value) || 0;
     
-    if(!desc) { alert("Informe uma descrição!"); return; }
+    if(!desc) { alert("Escreva a descrição da despesa!"); return; }
     
     novo.descricao = desc;
     novo.responsavel = diaristas[resp].nome;
@@ -638,21 +544,21 @@ function salvarFormPrincipal() {
   lancamentos.push(novo);
   localStorage.setItem('gpl_lancamentos', JSON.stringify(lancamentos));
   
-  // Exibe aviso de sucesso temporário
   let okDiv = document.getElementById('f-ok');
   okDiv.style.display = 'block';
-  setTimeout(() => okDiv.style.display = 'none', 3000);
+  setTimeout(() => okDiv.style.display = 'none', 2500);
   
-  // Limpa campos
   document.getElementById('f-v-dia').value = "";
   document.getElementById('f-v-des').value = "";
   document.getElementById('f-desc').value = "";
   document.getElementById('f-obs').value = "";
+  document.getElementById('f-q-txt').innerText = "1";
+  document.getElementById('f-qtd').value = "1";
   
   renderLancamentos();
 }
 
-// VISUALIZAÇÃO E VALIDAÇÃO DE LANÇAMENTOS
+// FILTRAGEM E EXIBIÇÃO DA PÁGINA DE LANÇAMENTOS
 function setFiltroDes(f) {
   filtroDespesa = f;
   document.querySelectorAll('#p-filtros-des .pbtn').forEach(b => b.classList.remove('on'));
@@ -672,17 +578,16 @@ function renderLancamentos() {
   });
   
   if(filtrados.length === 0) {
-    container.innerHTML = `<div style="text-align:center;color:#888;padding:20px;font-size:12px">Nenhum registro encontrado.</div>`;
+    container.innerHTML = `<div style="text-align:center;color:#888;padding:30px;font-size:12px">Nenhum registro encontrado nesta categoria.</div>`;
     return;
   }
   
-  // Ordenar por data decrescente
   filtrados.sort((a,b) => new Date(b.data) - new Date(a.data));
   
   filtrados.forEach(l => {
-    let fNome = fazendas[l.fazendaId] ? fazendas[l.fazendaId].nome : "Fazenda Oculta";
+    let fNome = fazendas[l.fazendaId] ? fazendas[l.fazendaId].nome : "Fazenda Geral";
     let statusBdg = l.status === 'validado' ? `<span class="badge-ok">✅ Validado</span>` : `<span class="badge-pend">⏳ Pendente</span>`;
-    let icon = l.type === 'dia' ? '🤠' : '💸';
+    let icon = l.tipo === 'dia' ? '🤠' : '💸';
     
     container.innerHTML += `
       <div class="desp-item ${l.status === 'validado' ? 'pago' : 'pagar'}" onclick="openDetModal('${l.id}')">
@@ -700,21 +605,20 @@ function openDetModal(id) {
   let l = lancamentos.find(item => item.id === id);
   if(!l) return;
   
-  document.getElementById('det-title').innerText = l.tipo === 'dia' ? "Detalhe: Diarista" : "Detalhe: Despesa";
+  document.getElementById('det-title').innerText = l.tipo === 'dia' ? "Detalhamento: Diária" : "Detalhamento: Despesa";
   let fNome = fazendas[l.fazendaId] ? fazendas[l.fazendaId].nome : "---";
   
   let body = `
     <div class="rrow"><span class="lbl">Fazenda:</span><strong>${fNome}</strong></div>
-    <div class="rrow"><span class="lbl">Data do Fato:</span><strong>${l.data.split('-').reverse().join('/')}</strong></div>
-    <div class="rrow"><span class="lbl">Descrição:</span><strong>${l.descricao}</strong></div>
-    <div class="rrow"><span class="lbl">Valor Total:</span><strong style="color:#1B5E20;font-size:16px">R$ ${l.total.toLocaleString('pt-BR', {minimumFractionDigits:2})}</strong></div>
+    <div class="rrow"><span class="lbl">Data Ocorrência:</span><strong>${l.data.split('-').reverse().join('/')}</strong></div>
+    <div class="rrow"><span class="lbl">Identificação:</span><strong>${l.descricao}</strong></div>
+    <div class="rrow"><span class="lbl">Total do Registro:</span><strong style="color:#1B5E20;font-size:15px">R$ ${l.total.toLocaleString('pt-BR', {minimumFractionDigits:2})}</strong></div>
     <div class="rrow"><span class="lbl">Observações:</span><span>${l.obs || "Nenhuma"}</span></div>
-    <div class="rrow"><span class="lbl">Status Atual:</span><strong>${l.status.toUpperCase()}</strong></div>
+    <div class="rrow"><span class="lbl">Status de Auditoria:</span><strong>${l.status.toUpperCase()}</strong></div>
   `;
   
   document.getElementById('det-body').innerHTML = body;
   
-  // Controle de botões de validação imediata
   let btnVal = document.getElementById('det-val');
   if(l.status === 'validado') btnVal.style.display = 'none';
   else {
@@ -727,9 +631,8 @@ function openDetModal(id) {
     };
   }
   
-  // Deletar
   document.getElementById('det-del').onclick = function() {
-    if(confirm("Deseja realmente apagar este lançamento?")) {
+    if(confirm("Remover permanentemente este lançamento?")) {
       lancamentos = lancamentos.filter(item => item.id !== id);
       localStorage.setItem('gpl_lancamentos', JSON.stringify(lancamentos));
       closeDetModal();
@@ -737,7 +640,6 @@ function openDetModal(id) {
     }
   };
 
-  // Botão de Editar do Modal Detalhes
   document.getElementById('det-edit').onclick = function() {
     closeDetModal();
     openEditModal(id);
@@ -747,18 +649,16 @@ function openDetModal(id) {
 }
 
 function closeDetModal() { document.getElementById('det-modal').classList.remove('open'); }
-document.getElementById('det-close').onclick = closeDetModal;
 
-// EDICÃO COMPLEMENTAR
 function openEditModal(id) {
   let l = lancamentos.find(item => item.id === id);
   if(!l) return;
   selectedLId = id;
   
   let body = `
-    <div class="fg"><div class="lbl">Descrição</div><input type="text" id="ed-desc" value="${l.descricao}"></div>
-    <div class="fg"><div class="lbl">Valor Total (R$)</div><input type="number" step="0.01" id="ed-total" value="${l.total}"></div>
-    <div class="fg"><div class="lbl">Observações</div><input type="text" id="ed-obs" value="${l.obs || ''}"></div>
+    <div class="fg"><div class="lbl">Descrição do Lançamento</div><input type="text" id="ed-desc" value="${l.descricao}"></div>
+    <div class="fg"><div class="lbl">Valor Financeiro (R$)</div><input type="number" step="0.01" id="ed-total" value="${l.total}"></div>
+    <div class="fg"><div class="lbl">Anotações Gerais</div><input type="text" id="ed-obs" value="${l.obs || ''}"></div>
   `;
   document.getElementById('edit-body').innerHTML = body;
   
@@ -774,9 +674,8 @@ function openEditModal(id) {
   
   document.getElementById('edit-modal').classList.add('open');
 }
-document.getElementById('edit-close').onclick = () => document.getElementById('edit-modal').classList.remove('open');
 
-// PÁGINA DE RELATÓRIOS (RESUMOS)
+// RELATÓRIOS CONSOLIDADOS DE BENCHMARKING LOCAL
 function renderResumos() {
   let totalGeral = 0;
   let totalPend = 0;
@@ -810,12 +709,12 @@ function renderResumos() {
     
     container.innerHTML += `
       <div class="card">
-        <div style="font-weight:700;font-size:13px">${f.nome}</div>
+        <div style="font-weight:700;font-size:13px; color:#1A5C10">🚜 ${f.nome}</div>
         <div style="font-size:16px;font-weight:800;color:#2d7a1f;margin:4px 0">
           R$ ${tFaz.toLocaleString('pt-BR', {minimumFractionDigits:2})}
-          <span style="font-size:11px;color:#888;font-weight:400">(${pct.toFixed(0)}% do total)</span>
+          <span style="font-size:11px;color:#777;font-weight:400">(${pct.toFixed(0)}% do ecossistema)</span>
         </div>
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:#666;margin-top:6px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#666;margin-top:4px">
           <span>⏳ Pendente: R$ ${fazTotais[k].pend.toLocaleString('pt-BR', {minimumFractionDigits:2})}</span>
           <span>✅ Validado: R$ ${fazTotais[k].val.toLocaleString('pt-BR', {minimumFractionDigits:2})}</span>
         </div>
@@ -823,13 +722,12 @@ function renderResumos() {
   });
 }
 
-// MODAL DE FECHAMENTO DE PERÍODO (BOTÃO NO CABEÇALHO)
-document.getElementById('btn-fc-modal').onclick = function() {
+// FECHAMENTO SELETIVO DE PERÍODOS
+function abrirModalFechamento() {
   document.getElementById('fc-de').valueAsDate = new Date(Date.now() - 15*24*60*60*1000);
   document.getElementById('fc-ate').valueAsDate = new Date();
   document.getElementById('fc-modal').classList.add('open');
-};
-document.getElementById('fc-close').onclick = () => document.getElementById('fc-modal').classList.remove('open');
+}
 
 function setFCPer(per) {
   let ate = new Date();
@@ -837,7 +735,6 @@ function setFCPer(per) {
   if(per === 'semana') de.setTime(ate.getTime() - 7*24*60*60*1000);
   if(per === 'quinzena') de.setTime(ate.getTime() - 15*24*60*60*1000);
   if(per === 'mes') de = new Date(ate.getFullYear(), ate.getMonth(), 1);
-  if(per === 'mes30') de.setTime(ate.getTime() - 30*24*60*60*1000);
   
   document.getElementById('fc-de').valueAsDate = de;
   document.getElementById('fc-ate').valueAsDate = ate;
@@ -848,21 +745,18 @@ function calcularFechamento() {
   let ateStr = document.getElementById('fc-ate').value;
   let fId = document.getElementById('fc-faz').value;
   
-  if(!deStr || !ateStr) { alert("Escolha as datas!"); return; }
+  if(!deStr || !ateStr) { alert("Preencha o intervalo!"); return; }
   
   let de = new Date(deStr);
   let ate = new Date(ateStr);
-  
-  // Agrupar por diarista/trabalhador para fechamento consolidado
   let consol = {};
   
   lancamentos.forEach(l => {
     if(l.fazendaId !== fId) return;
     let lData = new Date(l.data);
     if(lData >= de && lData <= ate) {
-      // Cria agrupamento com base no diarista ou responsável pelo gasto
-      let chavePessoa = l.diaristaId ? diaristas[l.diaristaId].nome : (l.responsavel || "Despesas Gerais");
-      let dPix = l.diaristaId ? diaristas[l.diaristaId].pix : "Verificar na Configuração";
+      let chavePessoa = l.diaristaId ? diaristas[l.diaristaId].nome : (l.responsavel || "Custos Diversos");
+      let dPix = l.diaristaId ? diaristas[l.diaristaId].pix : "Consultar Configurações";
       
       if(!consol[chavePessoa]) {
         consol[chavePessoa] = { total: 0, detalhes: [], pix: dPix };
@@ -877,7 +771,7 @@ function calcularFechamento() {
   
   let keys = Object.keys(consol);
   if(keys.length === 0) {
-    resDiv.innerHTML = `<div style="text-align:center;color:#666;font-size:12px;padding:15px">Nenhum lançamento no período selecionado.</div>`;
+    resDiv.innerHTML = `<div style="text-align:center;color:#666;font-size:12px;padding:10px">Sem ocorrências no período escolhido.</div>`;
     return;
   }
   
@@ -887,12 +781,12 @@ function calcularFechamento() {
         <div class="fc-nome">👤 ${p}</div>
         <div class="fc-det">${consol[p].detalhes.join('<br>')}</div>
         <div class="fc-total-val">R$ ${consol[p].total.toLocaleString('pt-BR', {minimumFractionDigits:2})}</div>
-        <div class="fc-pix">🔑 Pix: ${consol[p].pix}</div>
+        <div class="fc-pix">🔑 Chave: ${consol[p].pix}</div>
       </div>`;
   });
 }
 
-// LINKS DE FAZENDA E LINKS EXTERNOS (WHATSAPP E QR CODE)
+// LINKS DE COMPARTILHAMENTO EXTERNO (WHATSAPP / QR CODE)
 function renderLinksFazendas() {
   let container = document.getElementById('lista-links-fazendas');
   container.innerHTML = "";
@@ -907,7 +801,7 @@ function renderLinksFazendas() {
         <div class="faz-link-url" id="url-${k}">${urlFicticia}</div>
         <div class="faz-link-btns">
           <button class="faz-link-btn btn-copy" onclick="copyLink('${k}')">📋 Copiar</button>
-          <button class="faz-link-btn btn-wapp" onclick="sendWhatsapp('${f.nome}', '${urlFicticia}')">📱 WhatsApp</button>
+          <button class="faz-link-btn btn-wapp" onclick="sendWhatsapp('${f.nome}', '${urlFicticia}')">📱 Enviar WhatsApp</button>
           <button class="faz-link-btn btn-qr" onclick="openQrModal('${f.nome}', '${urlFicticia}')">🖼️ QR Code</button>
         </div>
       </div>`;
@@ -916,37 +810,33 @@ function renderLinksFazendas() {
 
 function copyLink(k) {
   let txt = document.getElementById(`url-${k}`).innerText;
-  navigator.clipboard.writeText(txt).then(() => {
-    alert("Link copiado com sucesso!");
-  });
+  navigator.clipboard.writeText(txt).then(() => { alert("Link copiado para a área de transferência!"); });
 }
 
 function sendWhatsapp(nomeFaz, url) {
-  let msg = encodeURIComponent(`Olá! Utilize este link para lançar os diários e despesas da ${nomeFaz}: \n\n${url}`);
+  let msg = encodeURIComponent(`Olá! Use este link direto para lançar diárias e despesas na ${nomeFaz}:\n\n${url}`);
   window.open(`https://api.whatsapp.com/send?text=${msg}`, '_blank');
 }
 
 function openQrModal(nomeFaz, url) {
-  document.getElementById('qr-modal-title').innerText = `QR Code — ${nomeFaz}`;
-  document.getElementById('qr-modal-desc').innerText = `Imprima e cole este QR Code na sede da ${nomeFaz} para facilitar o acesso rápido dos gerentes.`;
-  // Simulador visual de geração de QR Code nativo
+  document.getElementById('qr-modal-title').innerText = `Código de Acesso — ${nomeFaz}`;
+  document.getElementById('qr-modal-desc').innerText = `Imprima e anexe este cartão na sede da ${nomeFaz}. Os gerentes só precisam apontar a câmera do celular para lançar dados instantaneamente.`;
   document.getElementById('qr-target').innerHTML = `
-    <div style="padding:10px;background:#fff;border:2px solid #333;font-weight:700;font-size:10px">
-      GPL APP LINK<br>
-      <span style="font-size:24px">🏁</span><br>
-      ${nomeFaz.toUpperCase()}
+    <div style="padding:15px; background:#fff; text-align:center">
+      <div style="font-size:10px; color:#1B5E20; font-weight:bold; letter-spacing:1px">SISTEMA GPL</div>
+      <div style="font-size:28px; margin:8px 0">📱</div>
+      <div style="font-size:12px; font-weight:bold; color:#333">${nomeFaz.toUpperCase()}</div>
     </div>`;
   document.getElementById('qr-modal').classList.add('open');
 }
 
 function closeQrModal() { document.getElementById('qr-modal').classList.remove('open'); }
 
-// CONTROLE DE INTERRUPTORES (SWITCHES DE CONFIGURAÇÃO)
+// SWITCHES DE PREFERÊNCIAS CONTROLE LOCAL
 function toggleSw(type) {
   let sw = document.getElementById(`sw-${type}`);
   sw.classList.toggle('on');
   let isOn = sw.classList.contains('on');
-  
   if(type === 'offline') {
     document.getElementById('sync-indicator').className = isOn ? 'sdot on' : 'sdot';
   }
@@ -954,3 +844,4 @@ function toggleSw(type) {
 </script>
 </body>
 </html>
+  </div>
