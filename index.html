@@ -3,13 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#1A5C10">
+<meta name="theme-color" content="#1B5E20">
 <title>GPL — Gestão Pecuária Lucrativa</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;font-size:14px;background:#f0f0f0;color:#1a1a1a;max-width:480px;margin:0 auto;min-height:100vh}
-
-/* HEADER COM LOGO ATUALIZADA */
 .hdr{background:linear-gradient(135deg,#1a5c10,#2d7a1f);padding:0 12px;height:65px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 .hback{width:32px;height:32px;display:none;align-items:center;justify-content:center;background:rgba(255,255,255,.18);border-radius:8px;cursor:pointer;border:1px solid rgba(255,255,255,.25);color:#fff;font-size:20px;flex-shrink:0}
 .htxt{color:#fff;flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
@@ -36,7 +34,7 @@ select,input[type=text],input[type=number],input[type=date]{width:100%;padding:1
 select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 .stit{font-size:14px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px;color:#1a5c10}
 
-/* CONTAINER DO MAPA INTERATIVO - 100% FUNCIONAL */
+/* CONTAINER DO MAPA INTERATIVO */
 .map-wrapper {position:relative;width:100%;overflow:hidden;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1);background:#e5e5e5;margin-bottom:12px}
 .map-img {width:100%;display:block;height:auto}
 .map-overlay-container {position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:auto;z-index:10}
@@ -44,7 +42,6 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 .map-paddock-zone .sub-tag {font-size:9px;background:rgba(0,0,0,0.6);padding:1px 4px;border-radius:4px;margin-top:2px;font-weight:normal}
 .map-paddock-zone:active {background:rgba(26,92,16,0.5);transform:scale(0.97)}
 
-/* LOGIN E OUTROS COMPONENTES */
 .login-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;background:linear-gradient(160deg,#f0f9e8,#e8f5e0)}
 .login-card{background:#fff;border-radius:16px;padding:22px;width:100%;max-width:340px;box-shadow:0 4px 20px rgba(0,0,0,.12)}
 .login-title{font-size:15px;font-weight:700;text-align:center;margin-bottom:3px}
@@ -85,7 +82,6 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 .btn-s{background:#f5f5f5;color:#333;border:1px solid #ccc}
 .btn-d{background:#c62828;color:#fff}
 
-/* MODAIS CORRIGIDOS E OTIMIZADOS */
 .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px}
 .modal-box{background:#fff;border-radius:16px;width:100%;max-width:360px;padding:16px;box-shadow:0 4px 24px rgba(0,0,0,0.15);animation:mIn 0.2s ease-out}
 @keyframes mIn{from{transform:scale(0.9);opacity:0}to{transform:scale(1);opacity:1}}
@@ -160,9 +156,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     <div class="tab" id="t-estoque" onclick="setTab('estoque')"><span>📦</span><span>Estoque</span></div>
     <div class="tab" id="t-mapa" onclick="setTab('mapa')"><span>🗺️</span><span>Mapa</span></div>
     <div class="tab" id="t-config" onclick="setTab('config')"><span>⚙️</span><span>Config.</span></div>
-  </div>
-
-  <div id="p-painel" class="pg">
+  </div><div id="p-painel" class="pg">
     <div class="agrid">
       <div class="abtn gr" onclick="openLancar('diaria')">
         <div style="font-size:22px">📋</div>
@@ -178,22 +172,22 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
     <div class="card">
       <div class="stit"><span>📅</span> Lançamentos de Hoje</div>
-      <div id="list-hoje">
-        </div>
+      <div id="list-hoje"></div>
     </div>
   </div>
 
   <div id="p-cantina" class="pg" style="display:none">
     <div class="card">
-      <div class="stit"><span>🥩</span> Controle de Consumo da Cantina</div>
-      <p style="color:#666;font-size:13px;margin-bottom:12px">Registre os consumos de carne e suprimentos da fazenda.</p>
-      </div>
+      <div class="stit"><span>🥩</span> Lançamentos de Cantina</div>
+      <div id="list-cantina-hoje"></div>
+    </div>
   </div>
 
   <div id="p-estoque" class="pg" style="display:none">
     <div class="card">
-      <div class="stit"><span>📦</span> Almoxarifado & Estoque</div>
-      </div>
+      <div class="stit"><span>📦</span> Movimentações de Estoque</div>
+      <div id="list-estoque-hoje"></div>
+    </div>
   </div>
 
   <div id="p-mapa" class="pg" style="display:none">
@@ -219,10 +213,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     <div id="sp-areas" style="display:none">
       <div class="card">
         <div class="stit">🌿 Cadastro de Módulos e Pastos</div>
-        <div class="fg">
-          <span class="lbl">Nome da Área/Pasto</span>
-          <input type="text" id="area-nome" placeholder="Ex: Piquete 01 ou Módulo 1">
-        </div>
+        <div class="fg"><span class="lbl">Nome da Área/Pasto</span><input type="text" id="area-nome" placeholder="Ex: Piquete 01"></div>
         <button class="btn btn-p" onclick="salvarArea()">💾 Salvar Área</button>
       </div>
       <div class="card">
@@ -234,9 +225,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     <div id="sp-mapaview" style="display:none">
       <div class="map-wrapper">
         <img src="https://gestaopecuarialucrativa-dotcom.github.io/Gest-o-Pecu-ria-Lucrativa---Rogerio-Avelino/image_f7ad2f.jpg" class="map-img" alt="Mapa Fazenda">
-        
-        <div class="map-overlay-container" id="map-interactive-layer">
-          </div>
+        <div class="map-overlay-container" id="map-interactive-layer"></div>
       </div>
       <p style="font-size:12px;color:#666;text-align:center;margin-top:4px">⚠️ Toque em qualquer pasto colorido acima para abrir o Modal de Manejo do Gado.</p>
     </div>
@@ -244,7 +233,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
   <div id="p-config" class="pg" style="display:none">
     <div class="card">
-      <div class="stit">⚙️ Cadastro de Colaboradores (Antigo Vaqueiros)</div>
+      <div class="stit">⚙️ Cadastro de Colaboradores</div>
       <div class="fg"><span class="lbl">Nome do Colaborador</span><input type="text" id="cfg-colab-nome" placeholder="Ex: Merenda"></div>
       <div class="fg"><span class="lbl">Chave Pix</span><input type="text" id="cfg-colab-pix" placeholder="CPF, Celular, E-mail"></div>
       <button class="btn btn-p" onclick="salvarColaborador()">➕ Cadastrar Colaborador</button>
@@ -259,22 +248,14 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div id="form-diaria" class="modal-overlay" style="display:none">
   <div class="modal-box">
     <div class="m-title">📋 Lançar Diária de Colaborador</div>
-    <div class="fg">
-      <span class="lbl">Selecione o Colaborador</span>
-      <select id="fd-colab"></select>
-    </div>
-    <div class="fg">
-      <span class="lbl">Valor da Diária (R$)</span>
-      <input type="number" id="fd-valor" value="100">
-    </div>
-    <div class="fg">
-      <span class="lbl">Serviço Realizado</span>
+    <div class="fg"><span class="lbl">Selecione o Colaborador</span><select id="fd-colab"></select></div>
+    <div class="fg"><span class="lbl">Valor da Diária (R$)</span><input type="number" id="fd-valor" value="100"></div>
+    <div class="fg"><span class="lbl">Serviço Realizado</span>
       <select id="fd-servico">
         <option value="Roçagem">Roçagem</option>
         <option value="Marcação">Marcação</option>
         <option value="Aceiro de Cerca">Aceiro de Cerca</option>
         <option value="Curral">Curral</option>
-        <option value="Outro">Outro</option>
       </select>
     </div>
     <div style="display:flex;gap:8px;margin-top:12px">
@@ -299,11 +280,8 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div id="manejo-modal" class="modal-overlay">
   <div class="modal-box">
     <div class="m-title">🐂 Manejo e Movimentação de Gado</div>
-    <div style="margin-bottom:12px;font-size:13px" id="manejo-info-pasto">Pasto Selecionado: </div>
-    <div class="fg">
-      <span class="lbl">Lote de Animais para Alocar</span>
-      <select id="mm-lote-select"></select>
-    </div>
+    <div style="margin-bottom:12px;font-size:13px" id="manejo-info-pasto"></div>
+    <div class="fg"><span class="lbl">Lote de Animais para Alocar</span><select id="mm-lote-select"></select></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-s" style="flex:1" onclick="fecharManejoModal()">Cancelar</button>
       <button class="btn btn-p" style="flex:1" onclick="confirmarManejo()">Alocar no Pasto</button>
@@ -312,34 +290,30 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 </div>
 
 <script>
-// BANCO DE DADOS LOCAL COMPLETO (localStorage)
 let S = JSON.parse(localStorage.getItem('GPL_DATA')) || {
   PIN: "1234",
   COLABORADORES: [{nome:"Fábio", pix:"123"}, {nome:"merenda", pix:"456"}],
   LANCAMENTOS: [],
   LOTES: [{nome:"Lote 01", qtd:38}, {nome:"Lote 02", qtd:85}],
-  AREAS: [{nome:"Módulo 1 - P1"}, {nome:"Módulo 2 - P2"}, {nome:"Módulo 3 - P3"}, {nome:"Módulo 4 - P4"}],
+  AREAS: [{nome:"Módulo 1"}, {nome:"Módulo 2"}, {nome:"Módulo 3"}, {nome:"Módulo 4"}],
   MANEJOS: {}
 };
 
-function salvarBanco(){
-  localStorage.setItem('GPL_DATA', JSON.stringify(S));
-}
+function salvarBanco(){ localStorage.setItem('GPL_DATA', JSON.stringify(S)); }
 
-// LOGICA DE LOGIN POR PIN
 let curPin = "";
 function kPin(n){
   if(curPin.length < 4){
     curPin += n;
-    document.getElementById('dot-'+(curPin.length-1)).classList.add('f');
+    let dot = document.getElementById('dot-'+(curPin.length-1));
+    if(dot) dot.classList.add('f');
   }
-  if(curPin.length === 4){
-    setTimeout(verificarLogin, 200);
-  }
+  if(curPin.length === 4){ setTimeout(verificarLogin, 200); }
 }
 function kDel(){
   if(curPin.length > 0){
-    document.getElementById('dot-'+(curPin.length-1)).classList.remove('f');
+    let dot = document.getElementById('dot-'+(curPin.length-1));
+    if(dot) dot.classList.remove('f');
     curPin = curPin.slice(0, -1);
   }
 }
@@ -348,25 +322,23 @@ function verificarLogin(){
     document.getElementById('app-login').style.display = 'none';
     document.getElementById('app-main').style.display = 'block';
     renderPainelHoje();
-    renderMapaInterativo();
   } else {
-    document.getElementById('login-err').innerText = "PIN Incorreto! Tente novamente.";
+    document.getElementById('login-err').innerText = "PIN Incorreto!";
     curPin = "";
-    for(let i=0;i<4;i++) document.getElementById('dot-'+i).classList.remove('f');
+    for(let i=0;i<4;i++){let d=document.getElementById('dot-'+i); if(d) d.classList.remove('f');}
   }
 }
 function logout(){
   document.getElementById('app-main').style.display = 'none';
   document.getElementById('app-login').style.display = 'flex';
   curPin = "";
-  for(let i=0;i<4;i++) document.getElementById('dot-'+i).classList.remove('f');
-  document.getElementById('login-err').innerText = "";
+  for(let i=0;i<4;i++){let d=document.getElementById('dot-'+i); if(d) d.classList.remove('f');}
 }
 
-// NAVEGAÇÃO DE TABS
 function setTab(tabName){
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
-  document.getElementById('t-'+tabName).classList.add('on');
+  let activeTab = document.getElementById('t-'+tabName);
+  if(activeTab) activeTab.classList.add('on');
   
   document.getElementById('p-painel').style.display = tabName === 'painel' ? 'block' : 'none';
   document.getElementById('p-cantina').style.display = tabName === 'cantina' ? 'block' : 'none';
@@ -381,7 +353,8 @@ function setTab(tabName){
 
 function setSubTab(subName){
   document.querySelectorAll('.subtab').forEach(st => st.classList.remove('on'));
-  document.getElementById('st-'+subName).classList.add('on');
+  let activeSub = document.getElementById('st-'+subName);
+  if(activeSub) activeSub.classList.add('on');
   
   document.getElementById('sp-lotes').style.display = subName === 'lotes' ? 'block' : 'none';
   document.getElementById('sp-areas').style.display = subName === 'areas' ? 'block' : 'none';
@@ -389,145 +362,85 @@ function setSubTab(subName){
   if(subName === 'mapaview') renderMapaInterativo();
 }
 
-// CORREÇÃO CRÍTICA: LANÇAMENTOS DE HOJE ATUALIZANDO EM TEMPO REAL
 function renderPainelHoje(){
   let container = document.getElementById('list-hoje');
-  if(!S.LANCAMENTOS || S.LANCAMENTOS.length === 0){
-    container.innerHTML = `<p style="text-align:center;color:#999;padding:12px">Nenhum lançamento registrado hoje.</p>`;
+  if(!container) return;
+  if(S.LANCAMENTOS.length === 0){
+    container.innerHTML = `<p style="text-align:center;color:#999;padding:12px">Nenhum lançamento hoje.</p>`;
     return;
   }
-  
-  // Exibe todos sem travar filtros rígidos de fuso horário que ocultam dados de Elisângela
-  container.innerHTML = S.LANCAMENTOS.map((l, index) => `
-    <div class="list-item" onclick="abrirDetModal(${index})">
+  container.innerHTML = S.LANCAMENTOS.map((l, idx) => `
+    <div class="list-item" onclick="abrirDetModal(${idx})">
       <div class="list-info">
         <span class="list-main">${l.colaborador} (${l.servico})</span>
-        <span class="list-sub">Data: ${l.data} | Status: <span class="badge b-w">${l.status || 'Pendente'}</span></span>
+        <span class="list-sub">Status: ${l.status || 'Pendente'}</span>
       </div>
       <div class="list-val">R$ ${parseFloat(l.valor).toFixed(2)}</div>
     </div>
   `).join('');
 }
 
-// POPUPS DE LANÇAMENTOS
 function openLancar(tipo){
   if(tipo === 'diaria'){
     let select = document.getElementById('fd-colab');
-    select.innerHTML = S.COLABORADORES.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
+    if(select) select.innerHTML = S.COLABORADORES.map(c => `<option value="${c.nome}">${c.nome}</option>`).join('');
     document.getElementById('form-diaria').style.display = 'flex';
   }
 }
-function closeLancar(){
-  document.getElementById('form-diaria').style.display = 'none';
-}
+function closeLancar(){ document.getElementById('form-diaria').style.display = 'none'; }
+
 function gravarDiaria(){
   let colab = document.getElementById('fd-colab').value;
   let valor = document.getElementById('fd-valor').value;
   let servico = document.getElementById('fd-servico').value;
-  let hoje = new Date().toLocaleDateString('pt-BR');
-
-  S.LANCAMENTOS.unshift({
-    colaborador: colab,
-    valor: valor,
-    servico: servico,
-    data: hoje,
-    status: 'Aguardando validação'
-  });
-  
-  salvarBanco();
-  closeLancar();
-  renderPainelHoje();
+  S.LANCAMENTOS.unshift({ colaborador: colab, valor: valor, servico: servico, data: new Date().toLocaleDateString('pt-BR'), status: 'Pendente' });
+  salvarBanco(); closeLancar(); renderPainelHoje();
 }
 
-// DETALHES E EXCLUSÃO COMPLETA DE LANÇAMENTO
 let registroSelecionadoIndex = null;
-function abrirDetModal(index){
-  registroSelecionadoIndex = index;
-  let l = S.LANCAMENTOS[index];
-  let conteudo = `
-    <p><b>Colaborador:</b> ${l.colaborador}</p>
-    <p><b>Serviço:</b> ${l.servico}</p>
-    <p><b>Valor:</b> R$ ${parseFloat(l.valor).toFixed(2)}</p>
-    <p><b>Data:</b> ${l.data}</p>
-    <p><b>Status:</b> ${l.status}</p>
-  `;
-  document.getElementById('det-modal-conteudo').innerHTML = conteudo;
+function abrirDetModal(idx){
+  registroSelecionadoIndex = idx;
+  let l = S.LANCAMENTOS[idx];
+  document.getElementById('det-modal-conteudo').innerHTML = `<p><b>Colaborador:</b> ${l.colaborador}</p><p><b>Serviço:</b> ${l.servico}</p><p><b>Valor:</b> R$ ${parseFloat(l.valor).toFixed(2)}</p>`;
   document.getElementById('det-modal').style.display = 'flex';
 }
-function fecharDetModal(){
-  document.getElementById('det-modal').style.display = 'none';
-}
+function fecharDetModal(){ document.getElementById('det-modal').style.display = 'none'; }
+
 function validarRegistroActual(){
-  if(registroSelecionadoIndex !== null){
-    S.LANCAMENTOS[registroSelecionadoIndex].status = 'Validado';
-    salvarBanco();
-    fecharDetModal();
-    renderPainelHoje();
-  }
+  if(registroSelecionadoIndex !== null){ S.LANCAMENTOS[registroSelecionadoIndex].status = 'Validado'; salvarBanco(); fecharDetModal(); renderPainelHoje(); }
 }
 function excluirRegistroActual(){
-  if(registroSelecionadoIndex !== null){
-    if(confirm("Tem certeza que deseja excluir permanentemente este lançamento?")){
-      S.LANCAMENTOS.splice(registroSelecionadoIndex, 1);
-      salvarBanco();
-      fecharDetModal();
-      renderPainelHoje();
-    }
-  }
+  if(registroSelecionadoIndex !== null && confirm("Excluir este lançamento?")){ S.LANCAMENTOS.splice(registroSelecionadoIndex, 1); salvarBanco(); fecharDetModal(); renderPainelHoje(); }
 }
 
-// CONFIGURAÇÃO: CADASTRO DE COLABORADORES
 function renderConfigColaboradores(){
   let container = document.getElementById('lista-colaboradores');
-  container.innerHTML = S.COLABORADORES.map(c => `
-    <div class="list-item">
-      <div class="list-info">
-        <span class="list-main">👤 ${c.nome}</span>
-        <span class="list-sub">Pix: ${c.pix}</span>
-      </div>
-    </div>
-  `).join('');
+  if(container) container.innerHTML = S.COLABORADORES.map(c => `<div class="list-item"><div class="list-info"><span class="list-main">👤 ${c.nome}</span></div></div>`).join('');
 }
 function salvarColaborador(){
-  let nome = document.getElementById('cfg-colab-nome').value;
-  let pix = document.getElementById('cfg-colab-pix').value;
-  if(nome){
-    S.COLABORADORES.push({nome: nome, pix: pix});
-    salvarBanco();
-    document.getElementById('cfg-colab-nome').value = '';
-    document.getElementById('cfg-colab-pix').value = '';
-    renderConfigColaboradores();
-  }
+  let n = document.getElementById('cfg-colab-nome').value;
+  let p = document.getElementById('cfg-colab-pix').value;
+  if(n){ S.COLABORADORES.push({nome:n, pix:p}); salvarBanco(); renderConfigColaboradores(); document.getElementById('cfg-colab-nome').value=''; document.getElementById('cfg-colab-pix').value=''; }
 }
 
-// MAPA: CONTROLE DE LOTES E ÁREAS (FIXED)
 function renderLotesLista(){
-  document.getElementById('lista-lotes-dados').innerHTML = S.LOTES.map(l => `
-    <div class="list-item">
-      <div class="list-info"><span class="list-main">🐂 ${l.nome}</span><span class="list-sub">${l.qtd} animais</span></div>
-    </div>
-  `).join('');
+  document.getElementById('lista-lotes-dados').innerHTML = S.LOTES.map(l => `<div class="list-item"><div class="list-info"><span class="list-main">🐂 ${l.nome}</span><span class="list-sub">${l.qtd} cab</span></div></div>`).join('');
 }
 function salvarLote(){
   let n = document.getElementById('lote-nome').value;
   let q = parseInt(document.getElementById('lote-qtd').value) || 0;
-  if(n){ S.LOTES.push({nome:n, qtd:q}); salvarBanco(); renderLotesLista(); document.getElementById('lote-nome').value=''; }
+  if(n){ S.LOTES.push({nome:n, qtd:q}); salvarBanco(); renderLotesLista(); }
 }
+
 function renderAreasLista(){
-  document.getElementById('lista-areas-dados').innerHTML = S.AREAS.map(a => `
-    <div class="list-item">
-      <div class="list-info"><span class="list-main">🌿 ${a.nome}</span></div>
-    </div>
-  `).join('');
+  document.getElementById('lista-areas-dados').innerHTML = S.AREAS.map(a => `<div class="list-item"><div class="list-info"><span class="list-main">🌿 ${a.nome}</span></div></div>`).join('');
 }
 function salvarArea(){
   let n = document.getElementById('area-nome').value;
-  if(n){ S.AREAS.push({nome:n}); salvarBanco(); renderAreasLista(); renderMapaInterativo(); document.getElementById('area-nome').value=''; }
+  if(n){ S.AREAS.push({nome:n}); salvarBanco(); renderAreasLista(); }
 }
 
-// BUG DO MAPA RESOLVIDO: MAPA 100% INTERATIVO COM COORDENADAS REAIS
-// Mapeamento dos 4 módulos da foto aérea para clique imediato no celular
-const coordenadasPastos FIXAS = [
+const coordenadasPastos = [
   {id: "Módulo 1", top: "42%", left: "20%", width: "18%", height: "15%", label: "MOD 1"},
   {id: "Módulo 2", top: "66%", left: "28%", width: "18%", height: "15%", label: "MOD 2"},
   {id: "Módulo 3", top: "45%", left: "42%", width: "20%", height: "18%", label: "MOD 3"},
@@ -537,49 +450,22 @@ const coordenadasPastos FIXAS = [
 function renderMapaInterativo(){
   let container = document.getElementById('map-interactive-layer');
   if(!container) return;
-  
   container.innerHTML = coordenadasPastos.map(p => {
-    let loteAlocado = S.MANEJOS[p.id] || "Nenhum gado alocado";
-    let corDinamica = S.MANEJOS[p.id] ? "background:rgba(26,92,16,0.55); border-color:#fff;" : "";
-    
-    return `
-      <div class="map-paddock-zone" 
-           style="top:${p.top}; left:${p.left}; width:${p.width}; height:${p.height}; ${corDinamica}" 
-           onclick="abrirManejoModal('${p.id}')"
-           ontouchstart="abrirManejoModal('${p.id}')">
-        <div>${p.label}</div>
-        <div class="sub-tag">${loteAlocado}</div>
-      </div>
-    `;
+    let lote = S.MANEJOS[p.id] || "Vazio";
+    return `<div class="map-paddock-zone" style="top:${p.top}; left:${p.left}; width:${p.width}; height:${p.height}" onclick="abrirManejoModal('${p.id}')"><div>${p.label}</div><div class="sub-tag">${lote}</div></div>`;
   }).join('');
 }
 
 let pastoManejoAtual = null;
-function abrirManejoModal(pastoId){
-  pastoManejoAtual = pastoId;
-  document.getElementById('manejo-info-pasto').innerHTML = `<b>Pasto Selecionado:</b> ${pastoId}`;
-  
-  let select = document.getElementById('mm-lote-select');
-  select.innerHTML = `<option value="">[ Retirar Gado / Deixar Vazio ]</option>` + 
-    S.LOTES.map(l => `<option value="${l.nome}" ${S.MANEJOS[pastoId] === l.nome ? 'selected':''}>${l.nome} (${l.qtd} cab)</option>`).join('');
-  
+function abrirManejoModal(id){
+  pastoManejoAtual = id;
+  document.getElementById('manejo-info-pasto').innerText = "Pasto: " + id;
+  document.getElementById('mm-lote-select').innerHTML = `<option value="">[ Vazio ]</option>` + S.LOTES.map(l => `<option value="${l.nome}">${l.nome}</option>`).join('');
   document.getElementById('manejo-modal').style.display = 'flex';
 }
-function fecharManejoModal(){
-  document.getElementById('manejo-modal').style.display = 'none';
-}
+function fecharManejoModal(){ document.getElementById('manejo-modal').style.display = 'none'; }
 function confirmarManejo(){
-  if(pastoManejoAtual){
-    let loteSel = document.getElementById('mm-lote-select').value;
-    if(loteSel) {
-      S.MANEJOS[pastoManejoAtual] = loteSel;
-    } else {
-      delete S.MANEJOS[pastoManejoAtual];
-    }
-    salvarBanco();
-    fecharManejoModal();
-    renderMapaInterativo();
-  }
+  if(pastoManejoAtual){ S.MANEJOS[pastoManejoAtual] = document.getElementById('mm-lote-select').value; salvarBanco(); fecharManejoModal(); renderMapaInterativo(); }
 }
 </script>
 </body>
