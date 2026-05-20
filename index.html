@@ -880,7 +880,7 @@ enviarDado(r);showOk('ok-d');document.getElementById('d-val').value='';document.
 function envI(){const ins=[...document.querySelectorAll('#ins-l .ir')].map(r=>({p:r.querySelector('.ip').value,q:parseFloat(r.querySelector('.iq').value)||0,u:r.querySelector('.iu').value})).filter(x=>x.p&&x.q>0);if(!ins.length){alert('Adicione pelo menos um produto.');return;}const dt=(document.getElementById('i-data')||{}).value||TD;const dest=(document.getElementById('i-dest')||{}).value;baixar(ins,dt,dest);const r={tipo:'insumo',faz:(document.getElementById('i-faz')||{}).value,n:CU.n,dt,ins,dest};S.rD.push(r);enviarDado(r);showOk('ok-i');document.getElementById('i-dest').value='';document.getElementById('ins-l').innerHTML=`<div class="ir"><div style="flex:2"><div class="lbl">Produto</div><select class="ip" onchange="updInsInfo(this)"></select></div><div style="flex:1"><div class="lbl">Qtd</div><input type="number" class="iq" placeholder="0" min="0" step="0.5"></div><div style="flex:1"><div class="lbl">Unid.</div><select class="iu"><option>saco</option><option>kg</option><option>litro</option></select></div></div><div class="ins-info" style="display:none"></div>`;updInsProd();setTimeout(()=>{sp('home',false);rUlt();},1600);}
 function envT(){const co=(document.getElementById('t-cocho')||{}).value;const pr=(document.getElementById('t-prod')||{}).value;const q=parseFloat((document.getElementById('t-qtd')||{}).value)||0;if(!co||!pr||!q){alert('Selecione lote, produto e quantidade.');return;}const dt=(document.getElementById('t-data')||{}).value||TD;const faz=(document.getElementById('t-faz')||{}).value;const cab=parseInt((document.getElementById('t-cab')||{}).value)||0;if(pr&&S.EST&&S.EST[pr])baixar([{p:pr,q,u:'saco'}],dt,co);const pps=(S.EST&&pr&&S.EST[pr]&&S.EST[pr].peso_saco)?S.EST[pr].peso_saco:30;const r={tipo:'trato',faz,n:CU.n,dt,co,pr,q,unid:'saco',kg_fornecido:q*pps,cab,sit:coSel,escore:esTSel,obs:(document.getElementById('t-obs')||{}).value};S.rT.push(r);enviarDado(r);showOk('ok-t');document.getElementById('t-qtd').value='';document.getElementById('t-cab').value='';document.getElementById('t-obs').value='';document.querySelectorAll('#pg-trato .bopt').forEach(b=>b.classList.remove('sel'));coSel='';esTSel='';setTimeout(()=>{sp('home',false);rUlt();},1600);}
 function envEs(){if(!esSel){alert('Selecione o escore.');return;}const lote=(document.getElementById('es-cocho')||{}).value;let nanim=parseInt((document.getElementById('es-nanim')||{}).value)||0;if(!nanim){const lt=S.LOTES.find(l=>l.nome===lote);if(lt)nanim=lt.qtd;}const r={tipo:'escore',faz:(document.getElementById('es-faz')||{}).value,co:lote,dt:(document.getElementById('es-data')||{}).value||TD,es:esSel,cab:nanim,obs:(document.getElementById('es-obs')||{}).value,n:CU.n};S.rE.push(r);enviarDado(r);showOk('ok-es');esSel=0;document.querySelectorAll('.ec').forEach(c=>c.classList.remove('sel'));document.getElementById('es-box').style.display='none';document.getElementById('es-nanim').value='';document.getElementById('es-obs').value='';setTimeout(()=>{sp('home',false);rUlt();},1600);}
-function envCt(){const faz=(document.getElementById('ct-faz')||{}).value;const resp=(document.getElementById('ct-resp')||{}).value;if(!faz||!resp){alert('Preencha fazenda e responsável.');return;}let total=0,det='';if(cobT==='ref'){total=QT.cafe*S.PR.cafe+QT.almoco*S.PR.almoco+QT.janta*S.PR.janta;det=`Café:${QT.cafe} Alm:${QT.almoco} Jan:${QT.janta}`;}else{const n=parseInt((document.getElementById('ct-np')||{}).value)||0;const v=parseFloat((document.getElementById('ct-vd')||{}).value)||0;total=n*v;det=`${n}p×R$${v.toFixed(2)}`;}const r={tipo:'cantina',faz,resp,dt:(document.getElementById('ct-data')||{}).value||TD,det,total};S.rC.push(r);salvar();
+function envCt(){const faz=(document.getElementById('ct-faz')||{}).value;const resp=(document.getElementById('ct-resp')||{}).value;if(!faz||!resp){alert('Preencha fazenda e responsável.');return;}let total=0,det='';if(cobT==='ref'){total=QT.cafe*S.PR.cafe+QT.almoco*S.PR.almoco+QT.janta*S.PR.janta;det=`Café:${QT.cafe} Alm:${QT.almoco} Jan:${QT.janta}`;}else{const n=parseInt((document.getElementById('ct-np')||{}).value)||0;const v=parseFloat((document.getElementById('ct-vd')||{}).value)||0;total=n*v;det=`${n}p×R$${v.toFixed(2)}`;}const r={tipo:'cantina',faz,resp,dt:(document.getElementById('ct-data')||{}).value||TD,det,total};S.rC.push(r);salvar();if(S.cfgGS&&navigator.onLine){setTimeout(function(){salvarNuvem(null);},500);}
   // Envio direto para planilha com campos na ordem correta da aba Cantina
   if(S.cfgGS&&navigator.onLine){
     var gasUrl=getFazGasUrl(faz);
@@ -1159,19 +1159,20 @@ function _renderPinsNoContainer(contId, resumoId){
     if(ocupado){
       var num=('0'+(lote.nome.replace(/\D/g,'')||'0')).slice(-2);
       // Pin com SVG profissional — fundo branco, ícone vetorial de boi
-      box.style.cssText='background:#fff;border:2px solid '+cor.bd+';border-radius:8px;padding:5px 8px;display:inline-flex;align-items:center;box-shadow:0 3px 8px rgba(0,0,0,.25);gap:5px;min-width:52px';
+      // Pin com fundo branco forçado — cores absolutas para dark mode
+      box.setAttribute('style','background:#ffffff;border:2.5px solid '+cor.bd+';border-radius:9px;padding:5px 8px;display:inline-flex;align-items:center;box-shadow:0 3px 10px rgba(0,0,0,.45);gap:5px;min-width:52px');
       box.innerHTML=
-        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="'+cor.bg+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
-        +'<path d="M2 8c0-1.1.9-2 2-2h1l1-2h10l1 2h1a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8z"/>'
-        +'<path d="M8 14v3"/><path d="M16 14v3"/>'
-        +'<circle cx="9" cy="9" r="1"/><circle cx="15" cy="9" r="1"/>'
+        '<svg width="20" height="18" viewBox="0 0 20 18" xmlns="http://www.w3.org/2000/svg">'
+        +'<polygon points="0,18 2,6 6,0 14,0 18,6 20,18" fill="'+cor.bg+'" stroke="none"/>'
+        +'<ellipse cx="7" cy="10" rx="1.5" ry="2" fill="#ffffff"/>'
+        +'<ellipse cx="13" cy="10" rx="1.5" ry="2" fill="#ffffff"/>'
+        +'<rect x="6" y="14" width="3" height="4" rx="1.5" fill="'+cor.bg+'"/>'
+        +'<rect x="11" y="14" width="3" height="4" rx="1.5" fill="'+cor.bg+'"/>'
         +'</svg>'
-        +'<div style="display:flex;flex-direction:column;line-height:1.15">'
-        +'<span style="font-size:15px;font-weight:900;color:#1a1a1a">'+qtd+'</span>'
+        +'<div style="display:flex;flex-direction:column;line-height:1.2">'
+        +'<span style="font-size:15px;font-weight:900;color:#000000">'+qtd+'</span>'
         +'<span style="font-size:9px;font-weight:700;color:'+cor.bg+'">L'+num+'</span>'
         +'</div>';
-    } else {
-      box.style.cssText='background:rgba(0,0,0,.3);border:1px dashed rgba(255,255,255,.4);border-radius:6px;padding:2px 5px;text-align:center;min-width:34px';
       box.innerHTML='<div style="font-size:8px;color:rgba(255,255,255,.5)">'+a.label+'</div><div style="font-size:9px;color:rgba(255,255,255,.3)">+</div>';
     }
 
@@ -2220,7 +2221,7 @@ function enviarFCWpp(){
   var faz=window._fcFaz||'';
   var dono=S.US.find(function(u){return u.r==='Dono'&&(!faz||u.fs.length===0||u.fs.includes(faz));});
   var tel=dono&&dono.tel?dono.tel.replace(/[^\d]/g,''):'';
-  var url=tel?'https://wa.me/'+tel+'?text='+encodeURIComponent(msg):'https://wa.me/?text='+encodeURIComponent(msg);
+  var url=tel?'https://api.whatsapp.com/send?phone='+tel+'&text='+encodeURIComponent(msg):'https://api.whatsapp.com/send?text='+encodeURIComponent(msg);
   window.open(url,'_blank');
 }
 
