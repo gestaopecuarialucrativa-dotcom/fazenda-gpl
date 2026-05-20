@@ -824,7 +824,14 @@ function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.di
 function goBack(){if(prevPage)sp(prevPage,false);else sp('home',false);}
 function isV(u){return u.p.diaria||u.p.insumo||u.p.trato||u.p.escore;}
 function isA(u){return u.p.cantina||u.p.estoque||u.p.painel||u.p.config;}
-function buildActs(){document.getElementById('vacts').innerHTML=ACTS.filter(a=>CU.p[a.p]).map(a=>`<div class="abtn ${a.c}" onclick="sp('${a.id}',true,'home')"><span style="font-size:24px;display:block;margin-bottom:6px">${a.ic}</span><div class="abtn-l">${a.l}</div><div class="abtn-s">${a.s}</div></div>`).join('');}
+function buildActs(){
+  var isVaq=CU&&CU.r==='Vaqueiro';
+  var acts=isVaq
+    // Vaqueiro: só Diária + card especial do Mapa
+    ? [{id:'diaria',l:'Lançar Diária',s:'Serviço do dia',ic:'👤',c:'gr',p:'diaria'},{id:'mapa',l:'Ir ao Mapa',s:'Trato / Pasto / Cocho',ic:'🗺️',c:'gr',p:'mapa'}]
+    : ACTS.filter(a=>CU.p[a.p]);
+  document.getElementById('vacts').innerHTML=acts.map(a=>`<div class="abtn ${a.c}" onclick="sp('${a.id}',true,'home')" style="${isVaq&&a.id==='mapa'?'background:linear-gradient(135deg,#1B5E20,#2E7D32);color:#fff;':''}" ><span style="font-size:24px;display:block;margin-bottom:6px">${a.ic}</span><div class="abtn-l">${a.l}</div><div class="abtn-s">${a.s}</div></div>`).join('');
+}
 function buildTabs(){
   var icons={'painel':'📊','cantina':'🏪','estoque':'📦','mapa':'🗺️','config':'⚙️','consultor':'🌿'};
   document.getElementById('tabs').innerHTML=TABS.filter(t=>CU.p[t.p]).map(t=>{
@@ -1151,10 +1158,18 @@ function _renderPinsNoContainer(contId, resumoId){
     var box=document.createElement('div');
     if(ocupado){
       var num=('0'+(lote.nome.replace(/\D/g,'')||'0')).slice(-2);
-      box.style.cssText='background:'+cor.bg+';border:2.5px solid '+cor.bd+';border-radius:10px;padding:5px 8px;text-align:center;min-width:50px;box-shadow:0 4px 14px rgba(0,0,0,.65)';
-      box.innerHTML='<div style="font-size:8px;font-weight:800;color:rgba(255,255,255,.75);line-height:1.2">'+a.label+'</div>'
-        +'<div style="font-size:18px;font-weight:900;color:#fff;line-height:1.1">'+qtd+'</div>'
-        +'<div style="font-size:8px;font-weight:700;color:'+cor.bd+'">L'+num+'</div>';
+      // Pin com SVG profissional — fundo branco, ícone vetorial de boi
+      box.style.cssText='background:#fff;border:2px solid '+cor.bd+';border-radius:8px;padding:5px 8px;display:inline-flex;align-items:center;box-shadow:0 3px 8px rgba(0,0,0,.25);gap:5px;min-width:52px';
+      box.innerHTML=
+        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="'+cor.bg+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+        +'<path d="M2 8c0-1.1.9-2 2-2h1l1-2h10l1 2h1a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8z"/>'
+        +'<path d="M8 14v3"/><path d="M16 14v3"/>'
+        +'<circle cx="9" cy="9" r="1"/><circle cx="15" cy="9" r="1"/>'
+        +'</svg>'
+        +'<div style="display:flex;flex-direction:column;line-height:1.15">'
+        +'<span style="font-size:15px;font-weight:900;color:#1a1a1a">'+qtd+'</span>'
+        +'<span style="font-size:9px;font-weight:700;color:'+cor.bg+'">L'+num+'</span>'
+        +'</div>';
     } else {
       box.style.cssText='background:rgba(0,0,0,.3);border:1px dashed rgba(255,255,255,.4);border-radius:6px;padding:2px 5px;text-align:center;min-width:34px';
       box.innerHTML='<div style="font-size:8px;color:rgba(255,255,255,.5)">'+a.label+'</div><div style="font-size:9px;color:rgba(255,255,255,.3)">+</div>';
@@ -2866,14 +2881,51 @@ function irParaTrato(){
 
 function irParaMudancaPasto(){
   fecharModalOpcoes();
-  // Abrir modal de alocação para a área
-  var area = MAPA_AREAS.find(function(a){
-    return a.label===pastoSelecionadoNoMapa || a.id===pastoSelecionadoNoMapa;
-  });
-  if(area){
-    var contId = document.getElementById('mapa-pins') ? 'mapa-pins' : 'mapa-pins-main';
-    abrirMapaModal(area, contId);
+  var m=document.getElementById('modal-mudanca-pasto');
+  if(!m) return;
+  var dtEl=document.getElementById('mud-dt');if(dtEl)dtEl.value=TD;
+  var loteNome=loteSelecionadoNoMapa||'';
+  var lote=(S.LOTES||[]).find(function(l){return l.nome===loteNome;});
+  var area=MAPA_AREAS.find(function(a){return a.label===pastoSelecionadoNoMapa||a.id===pastoSelecionadoNoMapa;});
+  var lEl=document.getElementById('mud-lote');
+  if(lEl)lEl.value=loteNome+(lote?' ('+lote.qtd+' animais)':'');
+  var sEl=document.getElementById('mud-saida');
+  if(sEl)sEl.value=(area?area.label:pastoSelecionadoNoMapa||'')+(area&&area.ha?' — '+area.ha+' ha':'');
+  var sel=document.getElementById('mud-destino');
+  if(sel){
+    var alocs=S.MAPA_ALOC||{};
+    sel.innerHTML='<option value="">Selecione a área de destino...</option>';
+    MAPA_AREAS.forEach(function(a){
+      var temGado=alocs[a.id]&&(S.LOTES||[]).find(function(l){return l.nome===alocs[a.id]&&(l.qtd||0)>0;});
+      if(!temGado&&a.label!==pastoSelecionadoNoMapa){
+        sel.innerHTML+='<option value="'+a.id+'">'+a.label+(a.ha?' ('+a.ha+' ha)':'')+'</option>';
+      }
+    });
   }
+  m.classList.add('open');
+}
+
+function confirmarMudancaPasto(){
+  var dest=(document.getElementById('mud-destino')||{}).value;
+  if(!dest){alert('Selecione a área de destino.');return;}
+  var loteNome=loteSelecionadoNoMapa||'';
+  var areaOrigem=MAPA_AREAS.find(function(a){return a.label===pastoSelecionadoNoMapa||a.id===pastoSelecionadoNoMapa;});
+  if(!S.MAPA_ALOC)S.MAPA_ALOC={};
+  if(areaOrigem)delete S.MAPA_ALOC[areaOrigem.id];
+  S.MAPA_ALOC[dest]=loteNome;
+  var dt=(document.getElementById('mud-dt')||{}).value||TD;
+  var r={tipo:'mudanca_pasto',faz:CU&&CU.fs&&CU.fs.length?CU.fs[0]:Object.keys(S.FAZ||{})[0]||'',n:CU?CU.n:'',lote:loteNome,origem:pastoSelecionadoNoMapa||'',destino:dest,dt:dt,ts:new Date().toISOString()};
+  if(!S.rT)S.rT=[];S.rT.push(r);
+  try{enviarDado(r);}catch(ex){}
+  salvar();_sincMapa();
+  document.getElementById('modal-mudanca-pasto').classList.remove('open');
+  var destLabel=(MAPA_AREAS.find(function(a){return a.id===dest;})||{}).label||dest;
+  var t=document.createElement('div');
+  t.textContent='✅ '+loteNome+' → '+destLabel;
+  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1B5E20;color:#fff;padding:11px 24px;border-radius:20px;font-size:13px;font-weight:700;z-index:99999;white-space:nowrap';
+  document.body.appendChild(t);
+  setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .4s';},1800);
+  setTimeout(function(){if(t.parentNode)document.body.removeChild(t);},2300);
 }
 
 </script>
@@ -2914,6 +2966,7 @@ function irParaMudancaPasto(){
 </div>
 
 
+<script>
 // ══ ZOOM + PAN NO MAPA ══
 (function(){
   var wrap = null, zw = null;
@@ -3026,6 +3079,46 @@ function irParaMudancaPasto(){
   // Re-inicializar quando mapa é aberto
   window._initMapaZoom = init;
 })();
+</script>
+
+<!-- ══ MODAL MUDANÇA DE PASTO ══ -->
+<div class="edit-modal" id="modal-mudanca-pasto">
+  <div class="edit-box" style="max-width:340px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <span style="font-size:17px;font-weight:800;color:#1565C0">🔄 Mudança de Pasto</span>
+      <span onclick="document.getElementById('modal-mudanca-pasto').classList.remove('open')" style="cursor:pointer;font-size:26px;color:#aaa;line-height:1">&times;</span>
+    </div>
+
+    <div style="margin-bottom:12px">
+      <label style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px">Lote de Animais</label>
+      <input id="mud-lote" readonly style="width:100%;padding:10px 12px;background:#f5f5f5;border:1px solid #ddd;border-radius:9px;font-size:14px;font-weight:700;color:#333;margin-top:4px;box-sizing:border-box" value="">
+    </div>
+
+    <div style="display:flex;gap:10px;margin-bottom:12px">
+      <div style="flex:1">
+        <label style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px">Área de Saída</label>
+        <input id="mud-saida" readonly style="width:100%;padding:10px 12px;background:#fff3e0;border:1.5px solid #FF6F00;border-radius:9px;font-size:13px;font-weight:700;color:#E65100;margin-top:4px;box-sizing:border-box" value="">
+      </div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px">Área de Entrada</label>
+      <select id="mud-destino" style="width:100%;padding:12px;margin-top:4px;border-radius:9px;border:1.5px solid #1565C0;font-size:14px;background:#fff;color:#333;box-sizing:border-box">
+        <option value="">Selecione a área de destino...</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px">Data da Mudança</label>
+      <input type="date" id="mud-dt" style="width:100%;padding:10px 12px;margin-top:4px;border-radius:9px;border:1px solid #ddd;font-size:14px;box-sizing:border-box">
+    </div>
+
+    <div style="display:flex;gap:10px">
+      <button onclick="document.getElementById('modal-mudanca-pasto').classList.remove('open')" style="flex:1;padding:13px;background:#eee;border:none;border-radius:10px;font-weight:700;color:#666;font-size:14px;cursor:pointer">Cancelar</button>
+      <button onclick="confirmarMudancaPasto()" style="flex:1;padding:13px;background:#1565C0;color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer">✅ Confirmar</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
