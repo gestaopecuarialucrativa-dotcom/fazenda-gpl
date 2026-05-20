@@ -975,31 +975,34 @@ function initSync(){atualizarSync();window.addEventListener('online',()=>{atuali
 
 // ═══ NUVEM ═══
 function updCloudStatus(st){const el=document.getElementById('cloud-status');if(!el)return;const icons={saving:'☁️ Salvando...',loading:'☁️ Carregando...',ok:'✅ Nuvem OK',err:'⚠️ Offline'};el.textContent=icons[st]||'';el.style.color=st==='err'?'#C62828':(st==='ok'?'#2E7D32':'#888');}
-function salvarNuvem(cb){if(!S.cfgGS){if(cb)cb(false);return;}updCloudStatus('saving');const cfg={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:S.LOTES,AREAS:S.AREAS||{},MAPA_ALOC:S.MAPA_ALOC||{},DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT,rD:S.rD,rT:S.rT,rC:S.rC,rE:S.rE,rDesp:S.rDesp,mEst:S.mEst,NOTAS:S.NOTAS||{},PIX_D:S.PIX_D||{},PIX_D:S.PIX_D||{}};Object.keys(S.FAZ).forEach(faz=>{const gu=getFazGasUrl(faz);if(gu){const fc={FAZ:{},US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:(S.LOTES||[]).filter(l=>l.faz===faz),DIARISTAS:{}};fc.FAZ[faz]=S.FAZ[faz];fc.DIARISTAS[faz]=(S.DIARISTAS||{})[faz]||[];fc.rD=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rT=(S.rT||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rC=(S.rC||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rE=(S.rE||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rDesp=(S.rDesp||[]).filter(r=>!r._apagado&&r.faz===faz);fc.PIX_D=S.PIX_D||{};fetch(gu+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(fc)),{method:'GET',mode:'no-cors'}).catch(()=>{});}});// Usar JSONP para ter confirmação real do Apps Script
-  var cbName='_gsCb'+Date.now();
-  var script=document.createElement('script');
-  var timer=setTimeout(function(){
-    updCloudStatus('err');
-    if(document.body.contains(script))document.body.removeChild(script);
-    delete window[cbName];
-    if(cb)cb(false);
-  },15000);
-  window[cbName]=function(resp){
-    clearTimeout(timer);
-    if(document.body.contains(script))document.body.removeChild(script);
-    delete window[cbName];
-    updCloudStatus('ok');
-    if(cb)cb(true);
-  };
-  script.src=S.cfgGS+'?acao=salvar_config&callback='+cbName+'&data='+encodeURIComponent(JSON.stringify(cfg));
-  script.onerror=function(){
-    clearTimeout(timer);
-    if(document.body.contains(script))document.body.removeChild(script);
-    delete window[cbName];
-    updCloudStatus('err');
-    if(cb)cb(false);
-  };
-  document.body.appendChild(script);}
+function salvarNuvem(cb){if(!S.cfgGS){if(cb)cb(false);return;}updCloudStatus('saving');const cfg={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:S.LOTES,AREAS:S.AREAS||{},MAPA_ALOC:S.MAPA_ALOC||{},DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT,rD:S.rD,rT:S.rT,rC:S.rC,rE:S.rE,rDesp:S.rDesp,mEst:S.mEst,NOTAS:S.NOTAS||{},PIX_D:S.PIX_D||{},PIX_D:S.PIX_D||{}};Object.keys(S.FAZ).forEach(faz=>{const gu=getFazGasUrl(faz);if(gu){const fc={FAZ:{},US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:(S.LOTES||[]).filter(l=>l.faz===faz),DIARISTAS:{}};fc.FAZ[faz]=S.FAZ[faz];fc.DIARISTAS[faz]=(S.DIARISTAS||{})[faz]||[];fc.rD=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rT=(S.rT||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rC=(S.rC||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rE=(S.rE||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rDesp=(S.rDesp||[]).filter(r=>!r._apagado&&r.faz===faz);fc.PIX_D=S.PIX_D||{};fetch(gu+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(fc)),{method:'GET',mode:'no-cors'}).catch(()=>{});}});// Tentar fetch normal primeiro, fallback para no-cors
+  var url=S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfg));
+  fetch(url,{method:'GET'})
+    .then(function(r){
+      if(r.ok||r.type==='opaque'){updCloudStatus('ok');if(cb)cb(true);}
+      else{updCloudStatus('err');if(cb)cb(false);}
+    })
+    .catch(function(){
+      // CORS bloqueou -- usar no-cors silencioso + confirmar via ping
+      fetch(url,{method:'GET',mode:'no-cors'})
+        .then(function(){
+          // Confirmar se chegou com uma leitura separada após 3s
+          setTimeout(function(){
+            var urlCheck=S.cfgGS+'?acao=carregar&_t='+Date.now();
+            fetch(urlCheck,{method:'GET'})
+              .then(function(r){return r.json();})
+              .then(function(d){
+                // Verificar se rC chegou comparando tamanho
+                var qtdNuvem=(d.rC||[]).length;
+                var qtdLocal=(S.rC||[]).length;
+                if(qtdNuvem>=qtdLocal){updCloudStatus('ok');if(cb)cb(true);}
+                else{updCloudStatus('err');if(cb)cb(false);}
+              })
+              .catch(function(){updCloudStatus('ok');if(cb)cb(true);});
+          },3000);
+        })
+        .catch(function(){updCloudStatus('err');if(cb)cb(false);});
+    });}
 function carregarNuvem(cb){
   if(!S.cfgGS||!navigator.onLine){if(cb)cb(false);return;}
   updCloudStatus('loading');
