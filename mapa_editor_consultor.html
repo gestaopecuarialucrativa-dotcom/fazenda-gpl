@@ -248,23 +248,44 @@ var dragMoved = false;
 var areaAtual = null;
 var loteSelModal = null;
 
-// Carrega posições salvas do localStorage
+// Carrega posicoes: primeiro tenta nuvem, fallback localStorage
 function iniciar(){
+  // Inicia com defaults
+  MAPA_AREAS.forEach(function(a){ posicoes[a.id]={x:a.x,y:a.y}; });
+
+  // Tenta carregar do localStorage (resposta imediata)
   var saved = localStorage.getItem('gpl_mapa_pos_editor');
   if(saved){
     try{
       var p = JSON.parse(saved);
       MAPA_AREAS.forEach(function(a){
-        posicoes[a.id] = p[a.id] || {x:a.x, y:a.y};
+        if(p[a.id]) posicoes[a.id] = p[a.id];
       });
-    }catch(e){
-      MAPA_AREAS.forEach(function(a){ posicoes[a.id]={x:a.x,y:a.y}; });
-    }
-  } else {
-    MAPA_AREAS.forEach(function(a){ posicoes[a.id]={x:a.x,y:a.y}; });
+    }catch(e){}
   }
   render();
   renderCodigo();
+
+  // Tenta carregar da nuvem (sobrescreve se tiver dado mais recente)
+  var gasUrl = _getGasUrl();
+  if(gasUrl){
+    var url = gasUrl + '?acao=carregar_mapa_pos&_t=' + Date.now();
+    fetch(url)
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        var pos = data.MAPA_POS || data.mapa_pos || data;
+        if(pos && typeof pos === 'object' && Object.keys(pos).length > 0){
+          MAPA_AREAS.forEach(function(a){
+            if(pos[a.id]) posicoes[a.id] = pos[a.id];
+          });
+          localStorage.setItem('gpl_mapa_pos_editor', JSON.stringify(posicoes));
+          render();
+          renderCodigo();
+          console.log('Posicoes carregadas da nuvem');
+        }
+      })
+      .catch(function(){ /* silencioso — usa localStorage */ });
+  }
 }
 
 // ══════════════════════════════════════════
@@ -299,16 +320,56 @@ function toggleEditMode(){
 
 function salvarPosicoes(){
   localStorage.setItem('gpl_mapa_pos_editor', JSON.stringify(posicoes));
-  // Atualiza o array MAPA_AREAS com as posições atuais
   MAPA_AREAS.forEach(function(a){
     a.x = posicoes[a.id].x;
     a.y = posicoes[a.id].y;
   });
   renderCodigo();
+
   var btn = document.getElementById('btn-save-pos');
-  btn.textContent = '✅ Salvo!';
-  btn.style.background = '#2d7a1f';
-  setTimeout(function(){ btn.textContent='💾 Salvar Posições'; btn.style.background=''; },1500);
+  var gasUrl = _getGasUrl();
+
+  if(!gasUrl){
+    btn.textContent = 'Salvo local (sem nuvem)';
+    btn.style.background = '#FF6F00';
+    setTimeout(function(){ btn.textContent='Salvar Posicoes'; btn.style.background=''; },2500);
+    alert('URL do Apps Script nao encontrada. Va em Config no sistema GPL, coloque a URL e salve. Depois tente novamente.');
+    return;
+  }
+
+  btn.textContent = 'Salvando na nuvem...';
+  btn.disabled = true;
+
+  var url = gasUrl + '?acao=salvar_mapa_pos&data=' + encodeURIComponent(JSON.stringify(posicoes));
+  fetch(url, {method:'GET', mode:'no-cors'})
+    .then(function(){
+      btn.textContent = 'Salvo na nuvem!';
+      btn.style.background = '#2d7a1f';
+      btn.disabled = false;
+      setTimeout(function(){ btn.textContent='Salvar Posicoes'; btn.style.background=''; },2000);
+    })
+    .catch(function(){
+      btn.textContent = 'Erro na nuvem - salvo local';
+      btn.style.background = '#B71C1C';
+      btn.disabled = false;
+      setTimeout(function(){ btn.textContent='Salvar Posicoes'; btn.style.background=''; },2500);
+    });
+}
+
+function _getGasUrl(){
+  try {
+    var raw = localStorage.getItem('gpl_v17_data');
+    if(raw){
+      var data = JSON.parse(raw);
+      if(data.cfgGS) return data.cfgGS;
+      var fazendas = Object.keys(data.FAZ||{});
+      for(var i=0;i<fazendas.length;i++){
+        var faz = data.FAZ[fazendas[i]];
+        if(faz && faz.gasUrl) return faz.gasUrl;
+      }
+    }
+  } catch(e){}
+  return localStorage.getItem('gpl_editor_gas_url') || '';
 }
 
 function resetarPosicoes(){
