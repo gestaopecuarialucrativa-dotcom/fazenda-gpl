@@ -696,21 +696,26 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
 <!-- MAPA INTERATIVO — aba principal -->
 <div id="pg-mapa" class="pg" style="display:none">
-<div id="mapa-wrap-main" style="position:relative;width:100%;border-radius:12px;overflow:hidden;background:#2d5a1b;user-select:none">
-  <!-- Imagem com pointer-events desabilitado -->
-  <img id="mapa-img-sat" 
-    src="https://gestaopecuarialucrativa-dotcom.github.io/fazenda-gpl/mapa.jpeg" 
-    style="width:100%;height:auto;display:block;opacity:0.9;pointer-events:none;-webkit-user-drag:none"
-    draggable="false"
-    onerror="this.style.minHeight='340px';this.style.background='#3a6b25';this.removeAttribute('src')">
-  <!-- Container de pins ACIMA da imagem -->
-  <div id="mapa-pins-main" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:20;pointer-events:none"></div>
-  <!-- Barra inferior -->
+<div id="mapa-outer" style="position:relative;width:100%;border-radius:12px;overflow:hidden;background:#2d5a1b;user-select:none;touch-action:none">
+  <!-- Container zoomável -->
+  <div id="mapa-zoom-wrap" style="position:relative;width:100%;transform-origin:0 0;will-change:transform">
+    <img id="mapa-img-sat"
+      src="https://gestaopecuarialucrativa-dotcom.github.io/fazenda-gpl/mapa.jpeg"
+      style="width:100%;height:auto;display:block;opacity:0.9;pointer-events:none;-webkit-user-drag:none"
+      draggable="false"
+      onerror="this.style.minHeight='340px';this.style.background='#3a6b25';this.removeAttribute('src')">
+    <div id="mapa-pins-main" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:20;pointer-events:none"></div>
+  </div>
+  <!-- Barra inferior — fora do zoom -->
   <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.55);padding:6px 10px;display:flex;align-items:center;gap:8px;z-index:30">
     <span style="font-size:11px;color:#A5D6A7;font-weight:600" id="mapa-main-resumo">Toque em qualquer piquete</span>
-    <button id="btn-mapa-editor" onclick="_abrirEditor()" style="display:none;background:#FF6F00;color:#fff;border:none;border-radius:14px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">&#9998; Editor</button> <button onclick="abrirSelPiquete('mapa-pins-main')" style="margin-left:auto;background:#1B5E20;color:#fff;border:1.5px solid #4CAF50;border-radius:14px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation">+ Alocar</button>
+    <button id="btn-mapa-editor" onclick="_abrirEditor()" style="display:none;background:#FF6F00;color:#fff;border:none;border-radius:14px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">&#9998; Editor</button>
+    <button onclick="abrirSelPiquete('mapa-pins-main')" style="margin-left:auto;background:#1B5E20;color:#fff;border:1.5px solid #4CAF50;border-radius:14px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation">+ Alocar</button>
   </div>
+  <!-- Dica de zoom -->
+  <div id="mapa-zoom-hint" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.5);color:#fff;font-size:10px;padding:4px 8px;border-radius:10px;pointer-events:none;z-index:31;opacity:.8">Pinça para zoom</div>
 </div>
+<div id="mapa-wrap-main" style="display:none"></div>
 <div style="margin-top:8px;padding:8px 10px;background:#f0f9e8;border-radius:10px;border:1px solid #c8e6c9;font-size:12px;color:#2E7D32;font-weight:600">
   🐄 Toque em qualquer área do mapa para alocar ou mover gado
 </div>
@@ -815,7 +820,7 @@ function entrar(i){CU=S.US[i];document.getElementById('login-screen').style.disp
 function doLogout(){CU=null;loginFaz=null;loginUser=null;pinBuf='';document.getElementById('app').style.display='none';document.getElementById('tabs').style.display='none';document.getElementById('login-screen').style.display='flex';document.getElementById('step-faz').style.display='block';document.getElementById('step-user').style.display='none';document.getElementById('step-pin').style.display='none';if(window.history&&window.history.replaceState)window.history.replaceState({},document.title,window.location.pathname);mostrarFazendas();}
 
 // ═══ NAVEGAÇÃO ═══
-function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa')setTimeout(function(){try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}try{var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'':'none';}catch(ex){}},100);if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();if(S.cfgGS){carregarNuvem(function(ok){if(ok)rCtHist();});}else{rCtHist();}},50);window.scrollTo(0,0);}
+function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa')setTimeout(function(){try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}try{var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'':'none';}catch(ex){}try{if(window._initMapaZoom)window._initMapaZoom();}catch(ez){}},150);if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();if(S.cfgGS){carregarNuvem(function(ok){if(ok)rCtHist();});}else{rCtHist();}},50);window.scrollTo(0,0);}
 function goBack(){if(prevPage)sp(prevPage,false);else sp('home',false);}
 function isV(u){return u.p.diaria||u.p.insumo||u.p.trato||u.p.escore;}
 function isA(u){return u.p.cantina||u.p.estoque||u.p.painel||u.p.config;}
@@ -1170,12 +1175,12 @@ function _renderPinsNoContainer(contId, resumoId){
       btn.addEventListener('touchend',function(e){
         if(mv)return;
         e.preventDefault();e.stopPropagation();
-        if(!isAdm&&oc){aoClicarNoLoteDoMapa(ar.label,al||'');}
+        if(oc){aoClicarNoLoteDoMapa(ar.label,al||'');}
         else{abrirMapaModal(ar,ci);}
       },{passive:false});
       btn.addEventListener('click',function(e){
         e.preventDefault();e.stopPropagation();
-        if(!isAdm&&oc){aoClicarNoLoteDoMapa(ar.label,al||'');}
+        if(oc){aoClicarNoLoteDoMapa(ar.label,al||'');}
         else{abrirMapaModal(ar,ci);}
       });
     })(a,contId,ocupado,aloc);
@@ -2801,9 +2806,21 @@ function aoClicarNoLoteDoMapa(pasto, loteNome){
   var t=document.getElementById('mapa-opcoes-title');
   if(t) t.textContent=pasto+(loteNome?' — '+loteNome:'');
   var sub=document.getElementById('mapa-opcoes-sub');
-  if(sub) sub.textContent=lote?lote.qtd+' animais '+lote.peso+' kg':'';
+  if(sub) sub.textContent=lote?lote.qtd+' animais · '+(lote.peso||0)+' kg/cab':'';
+  // Mostrar botão Editar só para admin
+  var admDiv=document.getElementById('mapa-opcoes-adm');
+  var isAdm=CU&&(CU.r==='Consultor'||CU.r==='Dono');
+  if(admDiv) admDiv.style.display=isAdm?'block':'none';
   var m=document.getElementById('mapa-opcoes-modal');
   if(m){m.style.display='flex';m.onclick=function(e){if(e.target===m)fecharModalOpcoes();};}
+}
+
+function _editarAlocacaoModal(){
+  fecharModalOpcoes();
+  // Abre o modal de alocação completo (admin)
+  var area=MAPA_AREAS.find(function(a){return a.label===pastoSelecionadoNoMapa||a.id===pastoSelecionadoNoMapa;});
+  if(area) abrirMapaModal(area,'mapa-pins-main');
+  else if(document.getElementById('mapa-pins')) abrirMapaModal(MAPA_AREAS[0],'mapa-pins');
 }
 
 function fecharModalOpcoes(){
@@ -2887,10 +2904,128 @@ function irParaMudancaPasto(){
         <button onclick="registrarStatusCocho('vazio')" style="flex:1;padding:13px 8px;background:#FFF3E0;border:2px solid #FF6F00;border-radius:14px;cursor:pointer;font-size:13px;font-weight:700;color:#E65100">Cocho Vazio</button>
         <button onclick="registrarStatusCocho('cheio')" style="flex:1;padding:13px 8px;background:#E8F5E9;border:2px solid #2E7D32;border-radius:14px;cursor:pointer;font-size:13px;font-weight:700;color:#1B5E20">Cocho Cheio</button>
       </div>
+      <!-- Editar alocação — só para Admin/Consultor/Dono -->
+      <div id="mapa-opcoes-adm" style="display:none">
+        <button onclick="_editarAlocacaoModal()" style="width:100%;padding:11px;background:#f5f5f5;border:1px solid #ddd;border-radius:10px;font-size:13px;color:#555;cursor:pointer;font-weight:600">&#9998; Editar alocacao desta area</button>
+      </div>
       <button onclick="fecharModalOpcoes()" style="padding:10px;background:none;border:1px solid #eee;border-radius:10px;font-size:13px;color:#aaa;cursor:pointer">Cancelar</button>
     </div>
   </div>
 </div>
+
+
+// ══ ZOOM + PAN NO MAPA ══
+(function(){
+  var wrap = null, zw = null;
+  var scale = 1, minScale = 1, maxScale = 4;
+  var tx = 0, ty = 0;
+  var lastDist = 0, lastTx = 0, lastTy = 0;
+  var isPinching = false, isDragging = false;
+  var dragStart = {x:0, y:0};
+
+  function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+
+  function applyTransform(){
+    if(!zw) return;
+    // Limitar pan
+    var ww = wrap.offsetWidth;
+    var wh = wrap.offsetHeight;
+    var maxTx = ww * (scale - 1);
+    var maxTy = wh * (scale - 1);
+    tx = clamp(tx, -maxTx, 0);
+    ty = clamp(ty, -maxTy, 0);
+    zw.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
+    zw.style.transformOrigin = '0 0';
+  }
+
+  function dist(t){ return Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY); }
+  function mid(t){ return {x:(t[0].clientX+t[1].clientX)/2, y:(t[0].clientY+t[1].clientY)/2}; }
+
+  function init(){
+    wrap = document.getElementById('mapa-outer');
+    zw   = document.getElementById('mapa-zoom-wrap');
+    if(!wrap || !zw) return;
+
+    // Esconder dica após 3s
+    var hint = document.getElementById('mapa-zoom-hint');
+    if(hint) setTimeout(function(){ hint.style.opacity='0'; hint.style.transition='opacity .5s'; },3000);
+
+    wrap.addEventListener('touchstart', function(e){
+      if(e.touches.length === 2){
+        isPinching = true; isDragging = false;
+        lastDist = dist(e.touches);
+        lastTx = tx; lastTy = ty;
+        e.preventDefault();
+      } else if(e.touches.length === 1 && scale > 1){
+        isDragging = true; isPinching = false;
+        dragStart = {x: e.touches[0].clientX - tx, y: e.touches[0].clientY - ty};
+        e.preventDefault();
+      }
+    }, {passive:false});
+
+    wrap.addEventListener('touchmove', function(e){
+      if(isPinching && e.touches.length === 2){
+        var d = dist(e.touches);
+        var m = mid(e.touches);
+        var rect = wrap.getBoundingClientRect();
+        var px = m.x - rect.left;
+        var py = m.y - rect.top;
+        var newScale = clamp(scale * (d / lastDist), minScale, maxScale);
+        // Zoom centrado no ponto médio
+        tx = px - (px - tx) * (newScale / scale);
+        ty = py - (py - ty) * (newScale / scale);
+        scale = newScale;
+        lastDist = d;
+        applyTransform();
+        e.preventDefault();
+      } else if(isDragging && e.touches.length === 1){
+        tx = e.touches[0].clientX - dragStart.x;
+        ty = e.touches[0].clientY - dragStart.y;
+        applyTransform();
+        e.preventDefault();
+      }
+    }, {passive:false});
+
+    wrap.addEventListener('touchend', function(e){
+      if(e.touches.length < 2) isPinching = false;
+      if(e.touches.length === 0) isDragging = false;
+    }, {passive:true});
+
+    // Duplo toque: zoom in/reset
+    var lastTap = 0;
+    wrap.addEventListener('touchend', function(e){
+      if(isPinching || isDragging) return;
+      var now = Date.now();
+      if(now - lastTap < 300){
+        if(scale > 1){ scale=1; tx=0; ty=0; }
+        else { scale=2.5; tx=-(wrap.offsetWidth*0.75); ty=-(wrap.offsetHeight*0.75); }
+        applyTransform();
+      }
+      lastTap = now;
+    }, {passive:true});
+
+    // Mouse wheel no desktop
+    wrap.addEventListener('wheel', function(e){
+      e.preventDefault();
+      var rect = wrap.getBoundingClientRect();
+      var px = e.clientX - rect.left;
+      var py = e.clientY - rect.top;
+      var delta = e.deltaY > 0 ? 0.85 : 1.18;
+      var newScale = clamp(scale * delta, minScale, maxScale);
+      tx = px - (px - tx) * (newScale / scale);
+      ty = py - (py - ty) * (newScale / scale);
+      scale = newScale;
+      applyTransform();
+    }, {passive:false});
+  }
+
+  // Inicializar após render do mapa
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(init, 500);
+  });
+  // Re-inicializar quando mapa é aberto
+  window._initMapaZoom = init;
+})();
 
 </body>
 </html>
