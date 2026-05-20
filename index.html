@@ -281,14 +281,97 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="login-card" id="step-pin" style="display:none">
 <div class="login-title" id="pin-nome">Digite seu PIN</div>
 <div style="font-size:11px;color:#888">4 dígitos</div>
-<div class="pin-dots"><div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div></div>
-<div class="pin-err" id="pin-err"></div>
-<div class="onclick">
-<div class="pk" onclick="pk('1')">1</div><div class="pk" onclick="pk('2')">2</div><div class="pk" onclick="pk('3')">3</div>
-<div class="pk" onclick="pk('4')">4</div><div class="pk" onclick="pk('5')">5</div><div class="pk" onclick="pk('6')">6</div>
-<div class="pk" onclick="pk('7')">7</div><div class="pk" onclick="pk('8')">8</div><div class="pk" onclick="pk('9')">9</div>
-<div class="pk emp"></div><div class="pk" onclick="pk('0')">0</div><div class="pk del" onclick="pdel()">⌫</div>
+<div class="pin-dots">
+  <div class="pin-dot" id="pd0"></div>
+  <div class="pin-dot" id="pd1"></div>
+  <div class="pin-dot" id="pd2"></div>
+  <div class="pin-dot" id="pd3"></div>
 </div>
+
+<div class="pin-err" id="pin-err"></div>
+
+<div class="pin-kb-container">
+  <div class="pin-kb">
+    <div class="pk" onclick="pk('1')">1</div>
+    <div class="pk" onclick="pk('2')">2</div>
+    <div class="pk" onclick="pk('3')">3</div>
+    
+    <div class="pk" onclick="pk('4')">4</div>
+    <div class="pk" onclick="pk('5')">5</div>
+    <div class="pk" onclick="pk('6')">6</div>
+    
+    <div class="pk" onclick="pk('7')">7</div>
+    <div class="pk" onclick="pk('8')">8</div>
+    <div class="pk" onclick="pk('9')">9</div>
+    
+    <div class="pk emp"></div> <div class="pk" onclick="pk('0')">0</div>
+    <div class="pk del" onclick="pdel()">⌫</div>
+  </div>
+</div>
+
+<style>
+/* Alinhamento global do teclado na tela de login */
+.pin-kb-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 20px 0;
+  background: transparent;
+}
+
+/* Transforma o container em uma grade de 3 colunas */
+.pin-kb {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  width: 100%;
+  max-width: 270px; /* Mantém o teclado centralizado e elegante */
+}
+
+/* Transforma cada número em um círculo perfeito estilo iOS/Android */
+.pin-kb .pk {
+  background: rgba(255, 255, 255, 0.12); /* Efeito de vidro sutil */
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 600;
+  height: 64px;
+  width: 64px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto;
+  cursor: pointer;
+  transition: background 0.1s ease, transform 0.1s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Feedback visual ao clicar ou tocar no número */
+.pin-kb .pk:active {
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(0.92);
+}
+
+/* Remove o círculo e o fundo do botão invisível e do botão de apagar */
+.pin-kb .emp, 
+.pin-kb .del {
+  background: transparent;
+  border-color: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Efeito de clique exclusivo para o botão de apagar */
+.pin-kb .del:active {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+}
+</style></div>
 </div>
 </div>
 </div>
