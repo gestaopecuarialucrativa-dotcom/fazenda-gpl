@@ -2083,7 +2083,20 @@ function renderFCLista(lista, totalGeral, deFmt, ateFmt, faz){
     if(p.diarias.length)html+='Diárias: '+p.diarias.length+'x → R$ '+p.totalD.toFixed(2).replace('.',',')+'<br>';
     if(p.cantina.length)html+='Cantina: '+p.cantina.length+' dias → R$ '+p.totalC.toFixed(2).replace('.',',');
     html+='</div>';
-    if(pix){var pid='cp_'+i;window['_pv_'+pid]=pix;html+='<div style="display:flex;align-items:center;gap:6px;margin-top:5px"><span class="fc-pix" style="flex:1">Pix: <b>'+pix+'</b></span><button id="'+pid+'" onclick="_cpPix(this.id)" style="padding:4px 14px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">Copiar</button></div>';}
+    // PIX com botão Copiar
+    if(pix){
+      var pid='cp_'+i;
+      window['_pv_'+pid]=pix;
+      html+='<div style="display:flex;align-items:center;gap:6px;margin-top:5px" onclick="event.stopPropagation()">'
+        +'<span class="fc-pix" style="flex:1">Pix: <b>'+pix+'</b></span>'
+        +'<button id="'+pid+'" onclick="_cpPix(this.id)" style="padding:4px 10px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">Copiar</button>'
+        +'</div>';
+    }
+    // Botão WhatsApp individual para este colaborador
+    html+='<div style="margin-top:7px;display:flex;gap:6px" onclick="event.stopPropagation()">';
+    html+='<button onclick="_envWppColaborador(\''+p.n.replace(/'/g,"\\'")+'\')" style="flex:1;padding:7px 8px;background:#25D366;color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer">📲 WhatsApp</button>';
+    html+='<button onclick="_copiarMsgColaborador(\''+p.n.replace(/'/g,"\\'")+'\')" style="flex:1;padding:7px 8px;background:#f0f0f0;color:#333;border:1px solid #ddd;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer">📋 Copiar msg</button>';
+    html+='</div>';
     html+='</div>';
   });
 
@@ -2167,6 +2180,62 @@ function enviarFCWpp(){
   var tel=dono&&dono.tel?dono.tel.replace(/[^\d]/g,''):'';
   var url=tel?'https://wa.me/'+tel+'?text='+encodeURIComponent(msg):'https://wa.me/?text='+encodeURIComponent(msg);
   window.open(url,'_blank');
+}
+
+function _gerarMsgColaborador(nome){
+  var lista=window._fcLista||[];
+  var faz=window._fcFaz||'';
+  var deFmt=window._fcDe||'';
+  var ateFmt=window._fcAte||'';
+  var p=lista.find(function(x){return x.n===nome;});
+  if(!p) return '';
+  var total=p.totalD+p.totalC;
+  var pixObj=(S.PIX_D||{})[nome]||{};
+  var pix=typeof pixObj==='string'?pixObj:(pixObj.chave||'');
+  var linhas=[];
+  linhas.push('Ola '+nome+'!');
+  linhas.push('');
+  linhas.push('*FECHAMENTO - '+faz+'*');
+  linhas.push('Periodo: '+deFmt+' a '+ateFmt);
+  linhas.push('');
+  if(p.diarias.length) linhas.push('Diarias ('+p.diarias.length+'x): R$ '+p.totalD.toFixed(2).replace('.',','));
+  if(p.cantina.length) linhas.push('Cantina ('+p.cantina.length+' dias): R$ '+p.totalC.toFixed(2).replace('.',','));
+  linhas.push('');
+  var totalFmt=total.toFixed(2).replace('.',',');
+  linhas.push('*TOTAL A PAGAR: R$ '+totalFmt+' *');
+  if(pix){
+    linhas.push('');
+    linhas.push('Chave Pix: '+pix);
+  }
+  linhas.push('');
+  linhas.push('GPL - Gestao Pecuaria Lucrativa - Rogerio Avelino');
+  return linhas.join('\n');
+}
+
+function _envWppColaborador(nome){
+  var msg=_gerarMsgColaborador(nome);
+  if(!msg) return;
+  // Tentar pegar o telefone do colaborador se cadastrado
+  var usr=S.US.find(function(u){return u.n===nome;});
+  var tel=usr&&usr.tel?usr.tel.replace(/[^\d]/g,''):'';
+  var url=tel?'https://wa.me/'+tel+'?text='+encodeURIComponent(msg):'https://wa.me/?text='+encodeURIComponent(msg);
+  window.open(url,'_blank');
+}
+
+function _copiarMsgColaborador(nome){
+  var msg=_gerarMsgColaborador(nome);
+  if(!msg) return;
+  var el=document.createElement('textarea');
+  el.value=msg;el.style.cssText='position:fixed;top:-999px';
+  document.body.appendChild(el);el.focus();el.select();el.setSelectionRange(0,99999);
+  try{document.execCommand('copy');}catch(ex){}
+  document.body.removeChild(el);
+  var t=document.createElement('div');
+  t.textContent='Mensagem de '+nome+' copiada!';
+  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#25D366;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;z-index:99999;pointer-events:none;white-space:nowrap';
+  document.body.appendChild(t);
+  setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .4s';},1300);
+  setTimeout(function(){if(t.parentNode)document.body.removeChild(t);},1800);
 }
 
 function _cpPix(id){
