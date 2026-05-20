@@ -283,7 +283,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div style="font-size:11px;color:#888">4 dígitos</div>
 <div class="pin-dots"><div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div><div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div></div>
 <div class="pin-err" id="pin-err"></div>
-<div class="pin-kb">
+<div class="onclick">
 <div class="pk" onclick="pk('1')">1</div><div class="pk" onclick="pk('2')">2</div><div class="pk" onclick="pk('3')">3</div>
 <div class="pk" onclick="pk('4')">4</div><div class="pk" onclick="pk('5')">5</div><div class="pk" onclick="pk('6')">6</div>
 <div class="pk" onclick="pk('7')">7</div><div class="pk" onclick="pk('8')">8</div><div class="pk" onclick="pk('9')">9</div>
@@ -3031,5 +3031,326 @@ function irParaMudancaPasto(){
 })();
 
 </script>
+</body>
+<script>
+// ==========================================
+// 1. ESTADO GLOBAL DA APLICAÇÃO (MOCK DATA)
+// ==========================================
+const APP_STATE = {
+  usuarioLogado: false,
+  pinCorreto: "1234",
+  abaAtual: "home",
+  fazendaAtiva: 1,
+  fazendas: [
+    { id: 1, nome: "Fazenda Progresso" },
+    { id: 2, nome: "Estância Recanto" }
+  ],
+  lancamentos: [
+    { id: 101, tipo: "despesa", categoria: "Nutrição", descricao: "Sal Mineral Fosbovi", valor: 1450.00, data: "2026-05-15", status: "pago", pessoa: "Nutripura Ltda", pix: "financeiro@nutripura.com.br" },
+    { id: 102, tipo: "despesa", categoria: "Sanidade", descricao: "Vacinas Contra Aftosa", valor: 680.00, data: "2026-05-18", status: "pendente", pessoa: "Veterinária Silva", pix: "00123456000199" },
+    { id: 103, tipo: "receita", categoria: "Venda", descricao: "Venda 15 Garrotes", valor: 45000.00, data: "2026-05-10", status: "pago", pessoa: "Frigorífico JBS", pix: "pix@jbs.com.br" }
+  ],
+  Piquetes: [
+    { id: 1, nome: "Piquete 01", qtd: 45, lote: "Nelore Erg", x: 35, y: 40, status: "ocupado", cor: "e3c" }, // e3c = verde
+    { id: 2, nome: "Piquete 02", qtd: 0, lote: "", x: 65, y: 55, status: "vazio", cor: "" },
+    { id: 3, nome: "Piquete 03", qtd: 32, lote: "Cruzado", x: 45, y: 75, status: "ocupado", cor: "e4c" }  // e4c = laranja
+  ]
+};
+
+// ==========================================
+// 2. SISTEMA DE LOGIN (TECLADO PIN)
+// ==========================================
+let pinInserido = "";
+const pinDots = document.querySelectorAll('.pin-dot');
+const pinError = document.getElementById('pin-err');
+
+function pressKey(num) {
+  pinError.textContent = "";
+  if (pinInserido.length < 4) {
+    pinInserido += num;
+    atualizarDotsPIN();
+  }
+  if (pinInserido.length === 4) {
+    validarPIN();
+  }
+}
+
+function deleteKey() {
+  pinInserido = pinInserido.slice(0, -1);
+  atualizarDotsPIN();
+  pinError.textContent = "";
+}
+
+function atualizarDotsPIN() {
+  pinDots.forEach((dot, idx) => {
+    if (idx < pinInserido.length) dot.classList.add('f');
+    else dot.classList.remove('f', 'e');
+  });
+}
+
+function validarPIN() {
+  if (pinInserido === APP_STATE.pinCorreto) {
+    APP_STATE.usuarioLogado = true;
+    document.getElementById('login-screen').style.display = 'none';
+    
+    // Configurações iniciais do App pós-login
+    inicializarApp();
+  } else {
+    pinDots.forEach(dot => dot.classList.add('e'));
+    pinError.textContent = "PIN incorreto. Tente novamente.";
+    setTimeout(() => {
+      pinInserido = "";
+      atualizarDotsPIN();
+    }, 600);
+  }
+}
+
+// Alterando dinamicamente o comportamento dos botões do teclado nativo para chamar as funções
+document.querySelectorAll('.pin-kb .pk').forEach(botao => {
+  if (botao.classList.contains('del')) {
+    botao.onclick = () => deleteKey();
+  } else if (!botao.classList.contains('emp')) {
+    const num = botao.textContent.trim();
+    botao.onclick = () => pressKey(num);
+  }
+});
+
+
+// ==========================================
+// 3. NAVEGAÇÃO E REQUISITOS DE INTERFACE
+// ==========================================
+function inicializarApp() {
+  // Preencher seletores de fazenda nos locais corretos do HTML
+  const seletorFCFaz = document.getElementById('fc-faz');
+  if (seletorFCFaz) {
+    seletorFCFaz.innerHTML = APP_STATE.fazendas.map(f => `<option value="${f.id}">${f.nome}</option>`).join('');
+  }
+  
+  // Mostrar botão de voltar no cabeçalho caso esteja em sub-rotas (opcional)
+  document.querySelector('.hback').style.display = 'flex';
+  document.querySelector('.hback').onclick = () => {
+    alert("Voltando para a tela inicial...");
+  };
+
+  // Renderizar dados na tela
+  renderizarLancamentos();
+  renderizarMapaPiquetes();
+}
+
+// Ouvintes para Fechar/Abrir modais usando os IDs existentes no seu HTML
+document.getElementById('det-close').onclick = () => fecharModal('det-modal');
+document.getElementById('edit-close').onclick = () => fecharModal('edit-modal');
+document.getElementById('fc-close').onclick = () => fecharModal('fc-modal');
+
+function abrirModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+
+function fecharModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+
+// ==========================================
+// 4. MAPEAMENTO OPERACIONAL (PINS NO MAPA)
+// ==========================================
+function renderizarMapaPiquetes() {
+  // ATENÇÃO: Verifique se no seu HTML existe o container '#mapa-wrap-main' ou '#mapa-wrap-lote'
+  const mapaWrap = document.getElementById('mapa-wrap-main') || document.getElementById('mapa-wrap-lote');
+  if (!mapaWrap) return;
+
+  // Garante uma altura mínima para visualização caso o background seja dinâmico
+  mapaWrap.style.height = "320px"; 
+
+  // Limpa os pins antigos mantendo overlays se existirem
+  const pinsAntigos = mapaWrap.querySelectorAll('.mpin');
+  pinsAntigos.forEach(p => p.remove());
+
+  APP_STATE.Piquetes.forEach(p => {
+    const pinBtn = document.createElement('button');
+    pinBtn.className = 'mpin';
+    pinBtn.style.left = `${p.x}%`;
+    pinBtn.style.top = `${p.y}%`;
+
+    let innerHTML = '';
+    if (p.status === 'ocupado') {
+      innerHTML = `
+        <div class="mpin-inner">
+          <div class="mpin-box-ocupado ${p.cor}" style="background-color: inherit;">
+            <div class="mparea">${p.nome}</div>
+            <div class="mpqtd">${p.qtd}</div>
+            <div class="mplote">${p.lote}</div>
+          </div>
+          <div class="mpin-haste" style="background-color: #fff; height: 10px;"></div>
+          <div class="mpin-dot" style="background-color: #fff; width: 6px; height: 6px;"></div>
+        </div>
+      `;
+    } else {
+      innerHTML = `
+        <div class="mpin-inner">
+          <div class="mpin-box-empty">
+            <div class="mplbl">${p.nome}</div>
+            <div class="mpplus">+</div>
+          </div>
+          <div class="mpin-haste" style="background-color: rgba(255,255,255,0.4); height: 8px;"></div>
+          <div class="mpin-dot" style="background-color: rgba(255,255,255,0.4); width: 4px; height: 4px;"></div>
+        </div>
+      `;
+    }
+
+    pinBtn.innerHTML = innerHTML;
+    pinBtn.onclick = () => tratarCliquePiquete(p);
+    mapaWrap.appendChild(pinBtn);
+  });
+}
+
+function tratarCliquePiquete(piquete) {
+  if (piquete.status === 'vazio') {
+    alert(`Abrindo formulário de alojamento para o ${piquete.nome}`);
+    // Exemplo: abrirModal('edit-modal');
+  } else {
+    alert(`${piquete.nome} selecionado.\nLote: ${piquete.lote}\nQuantidade: ${piquete.qtd} cabeças.`);
+  }
+}
+
+
+// ==========================================
+// 5. GESTÃO FINANCEIRA & LANÇAMENTOS
+// ==========================================
+function renderizarLancamentos() {
+  // Exemplo de injeção de lista dinâmica caso possua um container de despesas
+  const container = document.getElementById('lista-despesas-exemplo');
+  if (!container) return;
+
+  container.innerHTML = APP_STATE.lancamentos.map(l => `
+    <div class="desp-item ${l.status === 'pago' ? 'pago' : 'pagar'}" onclick="abrirDetalheLancamento(${l.id})">
+      <div class="desp-hd">
+        <span class="desp-nm">${l.categoria} - ${l.descricao}</span>
+        <span class="desp-vl">R$ ${l.valor.toFixed(2)}</span>
+      </div>
+      <div class="desp-sb">Data: ${l.data} | Status: ${l.status.toUpperCase()}</div>
+    </div>
+  `).join('');
+}
+
+function abrirDetalheLancamento(id) {
+  const lan = APP_STATE.lancamentos.find(l => l.id === id);
+  if (!lan) return;
+
+  document.getElementById('det-title').textContent = `Detalhes: ${lan.categoria}`;
+  
+  const body = document.getElementById('det-body');
+  body.innerHTML = `
+    <div style="margin-bottom: 8px;"><strong>Descrição:</strong> ${lan.descricao}</div>
+    <div style="margin-bottom: 8px;"><strong>Valor:</strong> R$ ${lan.valor.toFixed(2)}</div>
+    <div style="margin-bottom: 8px;"><strong>Fornecedor/Cliente:</strong> ${lan.pessoa}</div>
+    <div style="margin-bottom: 8px;"><strong>Status atual:</strong> 
+      <span class="${lan.status === 'pago' ? 'badge-ok' : 'badge-pend'}">${lan.status.toUpperCase()}</span>
+    </div>
+  `;
+
+  // Configura os botões de ação do modal de Detalhes
+  document.getElementById('det-val').onclick = () => {
+    lan.status = "pago";
+    alert("Lançamento validado e marcado como PAGO!");
+    fecharModal('det-modal');
+    renderizarLancamentos();
+  };
+
+  document.getElementById('det-edit').onclick = () => {
+    fecharModal('det-modal');
+    abrirModal('edit-modal');
+    document.getElementById('edit-body').innerHTML = `
+      <div class="fg">
+        <div class="lbl">Descrição</div>
+        <input type="text" id="edit-inp-desc" value="${lan.descricao}">
+      </div>
+      <div class="fg">
+        <div class="lbl">Valor (R$)</div>
+        <input type="number" id="edit-inp-valor" value="${lan.valor}">
+      </div>
+    `;
+    document.getElementById('edit-save').onclick = () => {
+      lan.descricao = document.getElementById('edit-inp-desc').value;
+      lan.valor = parseFloat(document.getElementById('edit-inp-valor').value) || 0;
+      alert("Alterações salvas com sucesso!");
+      fecharModal('edit-modal');
+      renderizarLancamentos();
+    };
+  };
+
+  abrirModal('det-modal');
+}
+
+
+// ==========================================
+// 6. FECHAMENTO DE CONTAS E CRONOGRAMA
+// ==========================================
+function setFCPer(periodo) {
+  const hoje = new Date();
+  const dataAte = hoje.toISOString().split('T')[0];
+  let dataDe = new Date();
+
+  if (periodo === 'semana') dataDe.setDate(hoje.getDate() - 7);
+  else if (periodo === 'quinzena') dataDe.setDate(hoje.getDate() - 15);
+  else if (periodo === 'mes30') dataDe.setDate(hoje.getDate() - 30);
+  else if (periodo === 'mes') dataDe = new Date(hoje.getFullYear(), mapHoje.getMonth(), 1);
+
+  document.getElementById('fc-de').value = dataDe.toISOString().split('T')[0];
+  document.getElementById('fc-ate').value = dataAte;
+}
+
+function calcularFechamento() {
+  const dataDe = document.getElementById('fc-de').value;
+  const dataAte = document.getElementById('fc-ate').value;
+  
+  if(!dataDe || !dataAte) {
+    alert("Por favor, selecione o período inicial e final.");
+    return;
+  }
+
+  // Filtragem fictícia simulando a regra de negócio do fechamento de contas
+  const receitas = APP_STATE.lancamentos.filter(l => l.tipo === 'receita' && l.status === 'pago').reduce((a, b) => a + b.valor, 0);
+  const despesas = APP_STATE.lancamentos.filter(l => l.tipo === 'despesa').reduce((a, b) => a + b.valor, 0);
+  const saldo = receitas - despesas;
+
+  const resultadoDiv = document.getElementById('fc-resultado');
+  resultadoDiv.innerHTML = `
+    <div class="fc-pessoa">
+      <div class="fc-nome">Relatório Consolidado</div>
+      <div class="fc-det">
+        Período: ${dataDe.split('-').reverse().join('/')} até ${dataAte.split('-').reverse().join('/')}<br>
+        (+) Receitas Líquidas: R$ ${receitas.toFixed(2)}<br>
+        (-) Despesas Acumuladas: R$ ${despesas.toFixed(2)}
+      </div>
+      <div class="lbl">Balanço do Período</div>
+      <div class="fc-total-val" style="color: ${saldo >= 0 ? '#1B5E20' : '#CC2200'}">R$ ${saldo.toFixed(2)}</div>
+      <div class="fc-pix">Gerado em: ${new Date().toLocaleDateString('pt-BR')}</div>
+    </div>
+  `;
+}
+</script><script>
+      // 1. Cole aqui a URL exata gerada no passo de implantação do Google Sheets (Nova Implantação -> App da Web)
+      const URL_APPS_SCRIPT = "SUA_URL_DO_APP_DA_WEB_AQUI"; 
+      let CONFIG_GLOBAL = {};
+
+      // 2. Função que faz a ponte real e busca as abas do Sheets ao abrir o App
+      function carregarDadosDaPlanilha() {
+        // Envia uma requisição com a ação que o seu arquivo 'Código.txt' espera receber
+        fetch(`${URL_APPS_SCRIPT}?acao=carregar`)
+          .then(response => response.json())
+          .then(dados => {
+            CONFIG_GLOBAL = dados;
+            console.log("Dados oficiais do GPL carregados com sucesso!", CONFIG_GLOBAL);
+            
+            // Aqui dentro você chamará as funções para desenhar a interface na tela
+            // usando os dados que vieram da planilha (ex: CONFIG_GLOBAL.LOTES, CONFIG_GLOBAL.MAPA_ALOC)
+          })
+          .catch(error => console.error("Erro ao conectar com o Google Sheets:", error));
+      }
+
+      // 3. Executa a busca assim que a página terminar de carregar no navegador ou celular
+      window.onload = carregarDadosDaPlanilha;
+    </script>
 </body>
 </html>
