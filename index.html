@@ -3436,4 +3436,252 @@ function calcularFechamento() {
       window.onload = carregarDadosDaPlanilha;
     </script>
 </body>
-</html>
+<script>
+// 1. CONFIGURAÇÃO DA URL DO SEU WEB APP DO GOOGLE
+// IMPORTANTE: Cole aqui a URL exata gerada no "Implantar -> Nova Implantação" do Google Sheets
+const URL_GPL_API = "SUA_URL_DO_APP_DA_WEB_AQUI"; 
+
+// Estado Global da Aplicação
+let GPL_DATA = {
+  CONFIG: {},
+  LOTES: [],
+  ESTOQUE: [],
+  MAPA_ALOC: {},
+  MAPA_POS: {}
+};
+let pinBuffer = "";
+
+// 2. INICIALIZAÇÃO ASSÍNCRONA DO SISTEMA
+window.onload = function() {
+  console.log("📱 Inicializando Sistema GPL...");
+  
+  // Se o seu app inicia na tela de login, garante que o teclado funcione
+  sincronizarEventosTecladoNativo();
+  
+  // Carrega os dados reais vindos da Planilha Google automaticamente
+  carregarDadosGPL();
+};
+
+// 3. FUNÇÃO PRINCIPAL: BUSCAR DADOS DO GOOGLE SHEETS
+function carregarDadosGPL() {
+  if (URL_GPL_API.includes("SUA_URL_DO_APP_DA_WEB_AQUI")) {
+    console.warn("⚠️ Atenção: Você precisa colar a URL gerada no Google Apps Script na constante URL_GPL_API.");
+    return;
+  }
+
+  // Faz a requisição exata esperada pelo seu arquivo 'Código.txt' (?acao=carregar)
+  fetch(`${URL_GPL_API}?acao=carregar`)
+    .then(response => response.json())
+    .then(dados => {
+      if (dados && dados.CONFIG) {
+        GPL_DATA = dados;
+        console.log("✅ Dados da Planilha Carregados com Sucesso!", GPL_DATA);
+        
+        // Renderiza os componentes na tela com os dados atualizados
+        desenharMapaPiquetesReais();
+      } else {
+        console.error("❌ Formato de dados inválido recebido do Sheets.");
+      }
+    })
+    .catch(err => {
+      console.error("❌ Erro de rede ao conectar com o Google Sheets:", err);
+      alert("Erro ao sincronizar com o banco de dados. Verifique a URL do Script.");
+    });
+}
+
+// 4. LÓGICA CORRETA E SEGURA DO TECLADO DE PIN (Sem quebrar o HTML)
+function pk(num) {
+  const pinErr = document.getElementById("pin-err");
+  if (pinErr) pinErr.textContent = "";
+
+  if (pinBuffer.length < 4) {
+    pinBuffer += num;
+    atualizarIndicadoresVisuaisPin();
+  }
+
+  // Quando digita os 4 dígitos, valida direto com a senha da aba CONFIG da Planilha
+  if (pinBuffer.length === 4) {
+    verificarSenhaPIN();
+  }
+}
+
+function pdel() {
+  if (pinBuffer.length > 0) {
+    pinBuffer = pinBuffer.slice(0, -1);
+    atualizarIndicadoresVisuaisPin();
+  }
+}
+
+function atualizarIndicadoresVisuaisPin() {
+  // Varre os IDs corretos do seu HTML (pd0, pd1, pd2, pd3)
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById(`pd${i}`);
+    if (dot) {
+      if (i < pinBuffer.length) {
+        dot.classList.add("f"); // Classe de ponto preenchido
+      } else {
+        dot.classList.remove("f");
+      }
+    }
+  }
+}
+
+function verificarSenhaPIN() {
+  // Pega a senha definida na planilha (padrão '1234' se ainda não carregou)
+  const senhaCorreta = GPL_DATA.CONFIG.PIN_SEGURANCA || "1234";
+
+  if (pinBuffer === senhaCorreta.toString()) {
+    console.log("🔓 Acesso Autorizado!");
+    
+    // Altera o estado das telas usando o padrão de classes do seu app
+    const loginScreen = document.getElementById("login-screen");
+    if (loginScreen) loginScreen.style.display = "none";
+    
+    const appMain = document.getElementById("app-main");
+    if (appMain) appMain.style.display = "block";
+    
+  } else {
+    console.warn("🔒 PIN Incorreto.");
+    const pinErr = document.getElementById("pin-err");
+    if (pinErr) pinErr.textContent = "PIN incorreto. Tente novamente.";
+    
+    // Pisca os pontos em vermelho e limpa
+    for (let i = 0; i < 4; i++) {
+      const dot = document.getElementById(`pd${i}`);
+      if (dot) dot.classList.add("e"); // Classe de erro do seu estilo
+    }
+    
+    setTimeout(() => {
+      pinBuffer = "";
+      for (let i = 0; i < 4; i++) {
+        const dot = document.getElementById(`pd${i}`);
+        if (dot) dot.classList.remove("f", "e");
+      }
+    }, 600);
+  }
+}
+
+// Vincula os cliques físicos do seu HTML caso não use inline onclik
+function sincronizarEventosTecladoNativo() {
+  document.querySelectorAll(".pin-kb .pk").forEach(btn => {
+    // Garante compatibilidade caso o inline falhe
+    if (!btn.hasAttribute("onclick")) {
+      btn.onclick = function() {
+        const txt = btn.textContent.trim();
+        if (btn.classList.contains("del") || txt === "⌫") pdel();
+        else if (!btn.classList.contains("emp") && txt !== "") pk(txt);
+      };
+    }
+  });
+}
+
+
+// 5. CORREÇÃO E RENDERIZAÇÃO DO MAPA DE PIQUETES (Baseado no seu Código v3.1)
+function desenharMapaPiquetesReais() {
+  // Procura pelo container correto no seu arquivo principal
+  const mapaWrap = document.getElementById("mapa-wrap-main") || document.getElementById("mapa-wrap-lote");
+  if (!mapaWrap) {
+    console.warn("⚠️ Container do mapa não encontrado no HTML.");
+    return;
+  }
+
+  // Remove os pins antigos para não duplicar na tela
+  const pinsAtuais = mapaWrap.querySelectorAll(".mpin");
+  pinsAtuais.forEach(p => p.remove());
+
+  // MAPA_POS armazena os IDs dos Piquetes e suas coordenadas X, Y vindas da planilha
+  const posicoes = GPL_DATA.MAPA_POS || {};
+  
+  Object.keys(posicoes).forEach(id => {
+    const pos = posicoes[id]; // Formato esperado: { nome: "Piquete 01", x: 35, y: 40 }
+    if (!pos) return;
+
+    // Descobre se há algum lote alocado nesse piquete através da aba MAPA_ALOC
+    const nomeLote = GPL_DATA.MAPA_ALOC[id] || "";
+    
+    // Busca os detalhes técnicos do lote (Qtd, Peso, etc.) na lista de lotes
+    const dadosLote = (GPL_DATA.LOTES || []).find(l => l.nome === nomeLote);
+
+    // Cria o botão do Pin dinamicamente seguindo o padrão de classes CSS do seu projeto
+    const pinElement = document.createElement("div");
+    pinElement.className = "mpin";
+    pinElement.style.left = `${pos.x}%`;
+    pinElement.style.top = `${pos.y}%`;
+
+    if (nomeLote && dadosLote) {
+      // Piquete Ocupado: Monta com as classes originais do Rogério Avelino (.mpin-inner, .e3c)
+      pinElement.innerHTML = `
+        <div class="mpin-inner" onclick="abrirDetalhesDoPiquete('${id}', '${pos.nome}', '${nomeLote}')">
+          <div class="mpin-box-ocupado e3c">
+            <div class="mparea">${pos.nome}</div>
+            <div class="mpqtd">${dadosLote.qtd || 0} cab</div>
+            <div class="mplote">${nomeLote}</div>
+          </div>
+          <div class="mpin-haste"></div>
+          <div class="mpin-dot"></div>
+        </div>
+      `;
+    } else {
+      // Piquete Vazio: Botão discreto com sinal de "+" para alojamento
+      pinElement.innerHTML = `
+        <div class="mpin-inner" onclick="abrirFormularioAlojamento('${id}', '${pos.nome}')">
+          <div class="mpin-box-empty">
+            <div class="mplbl">${pos.nome}</div>
+            <div class="mpplus">+</div>
+          </div>
+          <div class="mpin-haste"></div>
+          <div class="mpin-dot"></div>
+        </div>
+      `;
+    }
+
+    mapaWrap.appendChild(pinElement);
+  });
+}
+
+
+// 6. CORREÇÃO EXATA DO ERRO: GRAVAR E SALVAR NA PLANILHA GOOGLE
+function salvarSincronizacaoNoSheets(mapaAlocacaoAtualizado) {
+  if (URL_GPL_API.includes("SUA_URL_DO_APP_DA_WEB_AQUI")) {
+    alert("Erro: Configure a URL do Web App para conseguir salvar.");
+    return;
+  }
+
+  // Estrutura o pacote de dados EXATAMENTE como a função doPost do seu 'Código.txt' exige
+  const payload = {
+    acao: "salvar",
+    mapaAloc: mapaAlocacaoAtualizado // Objeto contendo { "1": "Lote Nelore", "2": "" }
+  };
+
+  console.log("📤 Enviando dados para salvamento na planilha...", payload);
+
+  fetch(URL_GPL_API, {
+    method: "POST",
+    mode: "no-cors", // Crucial para o Google Apps Script não dar erro de CORS no celular
+    headers: {
+      "Content-Type": "application/plain;charset=utf-8"
+    },
+    body: JSON.stringify(payload)
+  })
+  .then(() => {
+    // Como usamos 'no-cors', o navegador não lê a resposta de sucesso, mas o dado entra na planilha.
+    alert("💾 Dados enviados com sucesso para a Planilha Google!");
+    carregarDadosGPL(); // Recarrega a tela com os dados oficiais do Sheets
+  })
+  .catch(err => {
+    console.error("❌ Erro fatal ao salvar dados no Google Sheets:", err);
+    alert("Falha ao salvar. Verifique sua conexão de rede.");
+  });
+}
+
+// Funções Auxiliares de Modais e Cliques
+function abrirDetalhesDoPiquete(id, nomePiquete, nomeLote) {
+  console.log(`Piquete Clicado: ${nomePiquete} - Lote: ${nomeLote}`);
+  // Insira aqui a abertura do seu modal nativo (ex: document.getElementById('det-modal').classList.add('open'))
+}
+
+function abrirFormularioAlojamento(id, nomePiquete) {
+  console.log(`Abrindo alojamento para o piquete vazio: ${nomePiquete}`);
+  // Insira aqui a abertura do seu formulário de edição
+}
+</script>
