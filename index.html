@@ -2751,8 +2751,45 @@ function gerarPDFPesquisa(){
 }
 
 // ═══ PIX DOS COLABORADORES ═══
-function rPixDiaristas(){var c=document.getElementById('pix-diaristas-l');if(!c)return;if(!S.PIX_D)S.PIX_D={};var todos=[];Object.values(S.DIARISTAS||{}).forEach(function(arr){arr.forEach(function(n){if(!todos.includes(n))todos.push(n);});});(S.US||[]).forEach(function(u){if(u.n&&u.r!=='Consultor'&&!todos.includes(u.n))todos.push(u.n);});if(!todos.length){c.innerHTML='<div style="font-size:12px;color:#aaa;padding:6px">Nenhum colaborador cadastrado.</div>';return;}c.innerHTML=todos.map(function(n){var k=n.replace(/[^a-zA-Z0-9]/g,'_');var d=S.PIX_D[n]||{};var chave=typeof d==='string'?d:(d.chave||'');var titular=typeof d==='string'?'':(d.titular||'');var temPix=chave.trim().length>0;var nEsc=n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");return '<div style="background:#f9f9f9;border:1px solid '+(temPix?'#4CAF50':'#eee')+';border-radius:10px;padding:10px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;font-weight:700;color:#1B5E20">👤 '+n+(temPix?' ✅':'')+'</span>'+(temPix?'<button onclick="excluirPixDiarista(\''+nEsc+'\')" style="background:none;border:1px solid #ffcdd2;border-radius:6px;padding:3px 8px;font-size:11px;color:#c62828;cursor:pointer">🗑 Excluir</button>':'')+'</div><div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;gap:6px;align-items:center"><span style="font-size:12px;color:#555;min-width:80px">💰 Chave Pix</span><input type="text" id="pix-d-'+k+'" placeholder="CPF, email, tel, aleatória..." value="'+chave+'" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div><div style="display:flex;gap:6px;align-items:center"><span style="font-size:12px;color:#555;min-width:80px">🪪 Favorecido</span><input type="text" id="tit-d-'+k+'" placeholder="Nome do titular da chave" value="'+titular+'" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div><button class="savb" style="width:100%;margin-top:2px" onclick="salvarPixDiarista(\''+nEsc+'\',\''+k+'\')" >💾 Salvar Pix</button></div></div>';}).join('');}
-function salvarPixDiarista(nome,k){if(!S.PIX_D)S.PIX_D={};var chave=(document.getElementById('pix-d-'+k)||{}).value||'';var titular=(document.getElementById('tit-d-'+k)||{}).value||'';S.PIX_D[nome]={chave:chave.trim(),titular:titular.trim()};salvar();if(S.cfgGS&&navigator.onLine)setTimeout(function(){salvarNuvem(null);},500);rPixDiaristas();}
+function rPixDiaristas(){var c=document.getElementById('pix-diaristas-l');if(!c)return;if(!S.PIX_D)S.PIX_D={};var todos=[];
+  // Adicionar diaristas
+  Object.values(S.DIARISTAS||{}).forEach(function(arr){
+    arr.forEach(function(n){
+      var existe=todos.some(function(x){return x.toLowerCase()===n.toLowerCase();});
+      if(!existe)todos.push(n);
+    });
+  });
+  // Adicionar usuários não-consultor que não estão na lista
+  (S.US||[]).forEach(function(u){
+    if(u.n&&u.r!=='Consultor'){
+      var existe=todos.some(function(x){return x.toLowerCase()===u.n.toLowerCase();});
+      if(!existe)todos.push(u.n);
+    }
+  });
+  // Mesclar PIX_D: se há Negao e negão, unificar no nome que está em todos[]
+  var pixNorm={};
+  Object.keys(S.PIX_D||{}).forEach(function(k){
+    var match=todos.find(function(t){return t.toLowerCase()===k.toLowerCase();});
+    var canonical=match||k;
+    if(!pixNorm[canonical]||(S.PIX_D[k].chave&&!pixNorm[canonical].chave)){
+      pixNorm[canonical]=S.PIX_D[k];
+    }
+  });
+  S.PIX_D=pixNorm;if(!todos.length){c.innerHTML='<div style="font-size:12px;color:#aaa;padding:6px">Nenhum colaborador cadastrado.</div>';return;}c.innerHTML=todos.map(function(n){var k=n.replace(/[^a-zA-Z0-9]/g,'_');var d=S.PIX_D[n]||{};var chave=typeof d==='string'?d:(d.chave||'');var titular=typeof d==='string'?'':(d.titular||'');var temPix=chave.trim().length>0;var nEsc=n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");return '<div style="background:#f9f9f9;border:1px solid '+(temPix?'#4CAF50':'#eee')+';border-radius:10px;padding:10px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;font-weight:700;color:#1B5E20">👤 '+n+(temPix?' ✅':'')+'</span>'+(temPix?'<button onclick="excluirPixDiarista(\''+nEsc+'\')" style="background:none;border:1px solid #ffcdd2;border-radius:6px;padding:3px 8px;font-size:11px;color:#c62828;cursor:pointer">🗑 Excluir</button>':'')+'</div><div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;gap:6px;align-items:center"><span style="font-size:12px;color:#555;min-width:80px">💰 Chave Pix</span><input type="text" id="pix-d-'+k+'" placeholder="CPF, email, tel, aleatória..." value="'+chave+'" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div><div style="display:flex;gap:6px;align-items:center"><span style="font-size:12px;color:#555;min-width:80px">🪪 Favorecido</span><input type="text" id="tit-d-'+k+'" placeholder="Nome do titular da chave" value="'+titular+'" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div><button class="savb" style="width:100%;margin-top:2px" onclick="salvarPixDiarista(\''+nEsc+'\',\''+k+'\')" >💾 Salvar Pix</button></div></div>';}).join('');}
+function salvarPixDiarista(nome,k){
+  if(!S.PIX_D)S.PIX_D={};
+  var chave=(document.getElementById('pix-d-'+k)||{}).value||'';
+  var titular=(document.getElementById('tit-d-'+k)||{}).value||'';
+  S.PIX_D[nome]={chave:chave.trim(),titular:titular.trim()};
+  salvar();
+  if(S.cfgGS&&navigator.onLine)setTimeout(function(){salvarNuvem(null);},500);
+  // Feedback visual no botão sem re-renderizar tudo
+  var btn=event&&event.target;
+  if(btn&&btn.tagName==='BUTTON'){var orig=btn.textContent;btn.textContent='✅ Salvo!';setTimeout(function(){btn.textContent=orig;},1500);}
+  // Atualizar só a borda do card para mostrar que foi salvo
+  var card=document.getElementById('pix-d-'+k);
+  if(card){var parent=card.closest('div[style*="border"]');if(parent)parent.style.borderColor='#4CAF50';}
+}
 function excluirPixDiarista(nome){if(!confirm('Excluir PIX de '+nome+'?'))return;if(S.PIX_D&&S.PIX_D[nome])delete S.PIX_D[nome];salvar();if(S.cfgGS&&navigator.onLine)setTimeout(function(){salvarNuvem(null);},500);rPixDiaristas();}
 
 // Inicializar PIX_D se não existir
