@@ -2149,7 +2149,12 @@ function gerarFCMsg(){
     var total=p.totalD+p.totalC;
     var pixObj=(function(n){var d=S.PIX_D||{};var k=Object.keys(d).find(function(x){return x.toLowerCase()===n.toLowerCase();});return k?d[k]:{}})(p.n);var pix=typeof pixObj==='string'?pixObj:(pixObj.chave||'');
     linhas.push('Colaborador: '+p.n);
-    if(p.diarias.length)linhas.push('  Diarias ('+p.diarias.length+'x): R$ '+p.totalD.toFixed(2).replace('.',','));
+    if(p.diarias.length){
+      linhas.push('  Diarias ('+p.diarias.length+'x): R$ '+p.totalD.toFixed(2).replace('.',','));
+      var servicos=p.diarias.map(function(r){return r.srv||'';}).filter(function(s){return s;});
+      var servsUniq=servicos.filter(function(s,i){return servicos.indexOf(s)===i;});
+      if(servsUniq.length)linhas.push('  Servicos: '+servsUniq.join(', '));
+    }
     if(p.cantina.length)linhas.push('  Cantina ('+p.cantina.length+' dias): R$ '+p.totalC.toFixed(2).replace('.',','));
     linhas.push('  TOTAL A PAGAR: R$ '+total.toFixed(2).replace('.',','));
     if(pix){
