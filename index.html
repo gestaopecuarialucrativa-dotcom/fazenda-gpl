@@ -239,6 +239,10 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     <button onclick="setFCPer('mes')" style="flex:1;padding:7px;background:#f0f0f0;border:1px solid #ddd;border-radius:8px;font-size:12px;cursor:pointer">Mês atual</button>
     <button onclick="setFCPer('mes30')" style="flex:1;padding:7px;background:#f0f0f0;border:1px solid #ddd;border-radius:8px;font-size:12px;cursor:pointer">30 dias</button>
   </div>
+  <div style="margin-top:8px;margin-bottom:4px">
+    <label style="font-size:12px;font-weight:700;color:#555;display:block;margin-bottom:4px">📝 Observação</label>
+    <textarea id="fc-obs" placeholder="Ex: Pagamento via PIX até sexta..." style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;resize:none;height:52px;box-sizing:border-box;font-family:inherit"></textarea>
+  </div>
   <button onclick="calcularFechamento()" style="width:100%;padding:12px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:14px">📊 Calcular período</button>
   <div id="fc-resultado"></div>
 </div>
@@ -2030,8 +2034,8 @@ function calcularFechamento(){
   var diarias=(S.rD||[]).filter(function(r){return r.tipo==='diaria'&&!r._apagado&&noperiodo(r);});
   var cantinas=(S.rC||[]).filter(function(r){
     if(!noperiodo(r)) return false;
-    var respName=r.resp||r.n||'';
-    var u=S.US.find(function(x){return x.n===respName;});
+    var rn=r.resp||r.n||'';
+    var u=S.US.find(function(x){return x.n===rn;});
     if(!u) return true;
     return u.r!=='Consultor'&&u.r!=='Dono';
   });
@@ -2050,10 +2054,9 @@ function calcularFechamento(){
     pessoas[n].totalC+=r.total||0;
   });
 
-  // Excluir Consultores e Donos do fechamento
   var lista=Object.values(pessoas).filter(function(p){
     var u=S.US.find(function(x){return x.n===p.n;});
-    if(!u) return true; // diarista sem usuário cadastrado
+    if(!u) return true;
     return u.r!=='Consultor'&&u.r!=='Dono';
   });
   if(!lista.length){
@@ -2149,7 +2152,11 @@ function gerarFCMsg(){
     if(p.diarias.length)linhas.push('  Diarias ('+p.diarias.length+'x): R$ '+p.totalD.toFixed(2).replace('.',','));
     if(p.cantina.length)linhas.push('  Cantina ('+p.cantina.length+' dias): R$ '+p.totalC.toFixed(2).replace('.',','));
     linhas.push('  TOTAL A PAGAR: R$ '+total.toFixed(2).replace('.',','));
-    if(pix)linhas.push('  Pix: '+pix);
+    if(pix){
+      var pixTit=(function(n){var d=S.PIX_D||{};var k=Object.keys(d).find(function(x){return x.toLowerCase()===n.toLowerCase();});return k&&typeof d[k]==='object'?d[k].titular||'':'';})(p.n);
+      linhas.push('  Pix: '+pix);
+      if(pixTit)linhas.push('  Favorecido: '+pixTit);
+    }
     linhas.push('');
   });
 
@@ -2157,6 +2164,8 @@ function gerarFCMsg(){
   linhas.push('------------------------');
   linhas.push('TOTAL: R$ '+totalSel.toFixed(2).replace('.',','));
   linhas.push('');
+  var obs=(document.getElementById('fc-obs')||{}).value||'';
+  if(obs.trim())linhas.push('Obs: '+obs.trim());
   linhas.push('GPL - Gestao Pecuaria Lucrativa - Rogerio Avelino');
 
   // Lançar como despesas "a pagar"
