@@ -2028,7 +2028,13 @@ function calcularFechamento(){
     return dt>=de&&dt<=ate&&(!faz||r.faz===faz);
   }
   var diarias=(S.rD||[]).filter(function(r){return r.tipo==='diaria'&&!r._apagado&&noperiodo(r);});
-  var cantinas=(S.rC||[]).filter(noperiodo);
+  var cantinas=(S.rC||[]).filter(function(r){
+    if(!noperiodo(r)) return false;
+    var respName=r.resp||r.n||'';
+    var u=S.US.find(function(x){return x.n===respName;});
+    if(!u) return true;
+    return u.r!=='Consultor'&&u.r!=='Dono';
+  });
 
   var pessoas={};
   diarias.forEach(function(r){
@@ -2044,7 +2050,12 @@ function calcularFechamento(){
     pessoas[n].totalC+=r.total||0;
   });
 
-  var lista=Object.values(pessoas);
+  // Excluir Consultores e Donos do fechamento
+  var lista=Object.values(pessoas).filter(function(p){
+    var u=S.US.find(function(x){return x.n===p.n;});
+    if(!u) return true; // diarista sem usuário cadastrado
+    return u.r!=='Consultor'&&u.r!=='Dono';
+  });
   if(!lista.length){
     document.getElementById('fc-resultado').innerHTML='<div style="text-align:center;color:#888;padding:16px;font-size:13px">Nenhum registro no período.</div>';
     return;
@@ -2074,8 +2085,7 @@ function renderFCLista(lista, totalGeral, deFmt, ateFmt, faz){
 
   lista.forEach(function(p){
     var total=p.totalD+p.totalC;
-    var usr=S.US.find(function(u){return u.n===p.n;});
-    var pix=usr?usr.pix||'':'';
+    var pixObj=(function(n){var d=S.PIX_D||{};var k=Object.keys(d).find(function(x){return x.toLowerCase()===n.toLowerCase();});return k?d[k]:{}})(p.n);var pix=typeof pixObj==='string'?pixObj:(pixObj.chave||'');
     var sel=window._fcSel[p.n]!==false;
     var border=sel?'border-left:3px solid #1B5E20;':'border-left:3px solid #ccc;opacity:.55;';
     var check=sel?'✅':'⬜';
@@ -2134,8 +2144,7 @@ function gerarFCMsg(){
 
   sel.forEach(function(p){
     var total=p.totalD+p.totalC;
-    var usr=S.US.find(function(u){return u.n===p.n;});
-    var pix=usr?usr.pix||'':'';
+    var pixObj=(function(n){var d=S.PIX_D||{};var k=Object.keys(d).find(function(x){return x.toLowerCase()===n.toLowerCase();});return k?d[k]:{}})(p.n);var pix=typeof pixObj==='string'?pixObj:(pixObj.chave||'');
     linhas.push('Colaborador: '+p.n);
     if(p.diarias.length)linhas.push('  Diarias ('+p.diarias.length+'x): R$ '+p.totalD.toFixed(2).replace('.',','));
     if(p.cantina.length)linhas.push('  Cantina ('+p.cantina.length+' dias): R$ '+p.totalC.toFixed(2).replace('.',','));
