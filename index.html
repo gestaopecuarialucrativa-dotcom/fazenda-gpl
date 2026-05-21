@@ -178,25 +178,6 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 .fc-det{font-size:11px;color:#666;margin:4px 0;line-height:1.7}
 .fc-total-val{font-size:18px;font-weight:800;color:#1B5E20}
 .fc-pix{font-size:11px;background:#E8F5E9;border-radius:6px;padding:4px 8px;color:#1B5E20;font-family:monospace;margin-top:4px;display:inline-block}
-/* ══ MAPA PINS — copiado do editor que funciona ══ */
-#mapa-wrap-main,#mapa-wrap-lote{position:relative;width:100%;border-radius:12px;overflow:hidden;background:#2d5a1b;user-select:none}
-#mapa-overlay-main,#mapa-overlay-lote{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10}
-.mpin{position:absolute;transform:translate(-50%,-50%);pointer-events:auto;cursor:pointer;z-index:20;background:none;border:none;padding:0;outline:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:opacity .2s}
-.mpin-inner{display:flex;flex-direction:column;align-items:center;pointer-events:none}
-.mpin-box-empty{background:rgba(255,255,255,.06);border:1.5px dashed rgba(255,255,255,.25);border-radius:7px;padding:3px 6px;text-align:center;min-width:38px;opacity:0;transition:all .2s}
-.mpin-box-empty .mplbl{font-size:8px;font-weight:700;color:rgba(255,255,255,.6);white-space:nowrap}
-.mpin-box-empty .mpplus{font-size:10px;color:rgba(255,255,255,.35)}
-.mpin-box-ocupado{border-radius:9px;padding:5px 8px;text-align:center;min-width:52px;box-shadow:0 4px 14px rgba(0,0,0,.65);border-width:2.5px;border-style:solid;animation:mpin-in .25s ease}
-@keyframes mpin-in{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
-.mpin-box-ocupado .mparea{font-size:8px;font-weight:700;color:rgba(255,255,255,.8);line-height:1.3;white-space:nowrap}
-.mpin-box-ocupado .mpqtd{font-size:18px;font-weight:900;color:#fff;line-height:1.2;letter-spacing:-1px}
-.mpin-box-ocupado .mplote{font-size:8px;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;max-width:60px;text-overflow:ellipsis}
-.mpin-haste{width:2px;margin:0 auto}
-.mpin-dot{border-radius:50%;margin:0 auto}
-.mapa-edit-mode .mpin-box-empty{opacity:1;border-color:rgba(255,180,0,.7);background:rgba(255,180,0,.12)}
-.mapa-edit-mode .mpin-box-empty .mplbl{color:rgba(255,200,0,.95)}
-.mapa-edit-mode .mpin{cursor:grab}
-.mapa-edit-mode .mpin.dragging{cursor:grabbing;opacity:.85;z-index:50}
 </style>
 </head>
 <body>
@@ -309,7 +290,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 20/05/2026 v4.0 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 21/05/2026 v4.1 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -665,19 +646,22 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
 <!-- SUB-PAINEL MAPA -->
 <div id="lote-sub-mapa" style="display:none">
-<div id="mapa-wrap-lote" style="position:relative;width:100%;border-radius:12px;overflow:hidden;background:#2d5a1b;user-select:none">
-  <img src="https://gestaopecuarialucrativa-dotcom.github.io/fazenda-gpl/mapa.jpeg"
-    style="width:100%;height:auto;display:block;opacity:0.92;pointer-events:none;-webkit-user-drag:none"
-    draggable="false"
-    onerror="this.style.minHeight='320px';this.style.background='#3a6b25';this.removeAttribute('src')">
-  <div id="mapa-pins" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:10;pointer-events:none"></div>
-  <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.55);padding:6px 10px;display:flex;align-items:center;gap:8px;z-index:30">
-    <span style="font-size:11px;color:#A5D6A7;font-weight:600" id="mapa-resumo">Toque em qualquer piquete</span>
-    <button onclick="abrirSelPiquete('mapa-pins')" style="margin-left:auto;background:#1B5E20;color:#fff;border:1.5px solid #4CAF50;border-radius:14px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation">+ Alocar</button>
+<div style="background:#2d5a1b;border-radius:12px;overflow:hidden;position:relative;min-height:380px" id="mapa-wrap-lote">
+  <img src="https://gestaopecuarialucrativa-dotcom.github.io/fazenda-gpl/mapa.jpeg" 
+    style="width:100%;display:block;opacity:0.92;position:absolute;top:0;left:0;height:100%;object-fit:cover;pointer-events:none;" 
+    alt="Mapa da fazenda"
+    onerror="this.style.display='none'">
+  <div id="mapa-pins" style="position:absolute;inset:0;width:100%;height:100%;z-index:5"></div>
+  <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.5);padding:6px 10px;display:flex;gap:10px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#fff"><div style="width:12px;height:12px;border-radius:3px;background:#1B5E20;border:1px solid #4CAF50"></div>Com gado</div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#fff"><div style="width:12px;height:12px;border-radius:3px;background:#E8F5E9;border:1px solid #2E7D32"></div>Módulo vazio</div>
+    <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#fff"><div style="width:12px;height:12px;border-radius:3px;background:rgba(255,255,255,0.4);border:1px dashed #aaa"></div>Pasto vazio</div>
+    <div style="margin-left:auto;font-size:10px;color:#A5D6A7;font-weight:600" id="mapa-resumo">0 com gado</div>
   </div>
 </div>
 <div style="margin-top:8px;padding:8px;background:#f9f9f9;border-radius:10px;border:1px solid #eee">
   <div style="font-size:11px;color:#888;margin-bottom:4px">Toque em um piquete para alocar ou mover o gado</div>
+  <div style="font-size:12px;color:#1B5E20;font-weight:600" id="mapa-status">Selecione um piquete no mapa</div>
 </div>
 </div>
 
@@ -696,26 +680,21 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
 <!-- MAPA INTERATIVO — aba principal -->
 <div id="pg-mapa" class="pg" style="display:none">
-<div id="mapa-outer" style="position:relative;width:100%;border-radius:12px;overflow:hidden;background:#2d5a1b;user-select:none;touch-action:none">
-  <!-- Container zoomável -->
-  <div id="mapa-zoom-wrap" style="position:relative;width:100%;transform-origin:0 0;will-change:transform">
-    <img id="mapa-img-sat"
-      src="https://gestaopecuarialucrativa-dotcom.github.io/fazenda-gpl/mapa.jpeg"
-      style="width:100%;height:auto;display:block;opacity:0.9;pointer-events:none;-webkit-user-drag:none"
-      draggable="false"
-      onerror="this.style.minHeight='340px';this.style.background='#3a6b25';this.removeAttribute('src')">
-    <div id="mapa-pins-main" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:20;pointer-events:none"></div>
-  </div>
-  <!-- Barra inferior — fora do zoom -->
+<div id="mapa-wrap-main" style="position:relative;width:100%;border-radius:12px;overflow:hidden;background:#2d5a1b;user-select:none">
+  <!-- Imagem com pointer-events desabilitado -->
+  <img id="mapa-img-sat" 
+    src="https://gestaopecuarialucrativa-dotcom.github.io/fazenda-gpl/mapa.jpeg" 
+    style="width:100%;height:auto;display:block;opacity:0.9;pointer-events:none;-webkit-user-drag:none"
+    draggable="false"
+    onerror="this.style.minHeight='340px';this.style.background='#3a6b25';this.removeAttribute('src')">
+  <!-- Container de pins ACIMA da imagem -->
+  <div id="mapa-pins-main" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:20;pointer-events:none"></div>
+  <!-- Barra inferior -->
   <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.55);padding:6px 10px;display:flex;align-items:center;gap:8px;z-index:30">
     <span style="font-size:11px;color:#A5D6A7;font-weight:600" id="mapa-main-resumo">Toque em qualquer piquete</span>
-    <button id="btn-mapa-editor" onclick="_abrirEditor()" style="display:none;background:#FF6F00;color:#fff;border:none;border-radius:14px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">&#9998; Editor</button>
-    <button onclick="abrirSelPiquete('mapa-pins-main')" style="margin-left:auto;background:#1B5E20;color:#fff;border:1.5px solid #4CAF50;border-radius:14px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation">+ Alocar</button>
+    <button onclick="abrirSelPiquete('main')" style="margin-left:auto;background:#1B5E20;color:#fff;border:1.5px solid #4CAF50;border-radius:14px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation">+ Alocar</button>
   </div>
-  <!-- Dica de zoom -->
-  <div id="mapa-zoom-hint" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.5);color:#fff;font-size:10px;padding:4px 8px;border-radius:10px;pointer-events:none;z-index:31;opacity:.8">Pinça para zoom</div>
 </div>
-<div id="mapa-wrap-main" style="display:none"></div>
 <div style="margin-top:8px;padding:8px 10px;background:#f0f9e8;border-radius:10px;border:1px solid #c8e6c9;font-size:12px;color:#2E7D32;font-weight:600">
   🐄 Toque em qualquer área do mapa para alocar ou mover gado
 </div>
@@ -792,7 +771,7 @@ const EI=[null,{em:'💩',ti:'Escore 1 — Firmes e secas',re:'💡 Reduzir fibr
 const PL={diaria:'Diária',insumo:'Insumos',trato:'Trato cocho',escore:'Escore fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',mapa:'Mapa',config:'Config.'};
 const TABS=[{id:'painel',l:'📊 Painel',p:'painel'},{id:'cantina',l:'🏪 Cantina',p:'cantina'},{id:'estoque',l:'📦 Estoque',p:'estoque'},{id:'mapa',l:'🗺️ Mapa',p:'mapa'},{id:'config',l:'⚙️ Config.',p:'config'},{id:'consultor',l:'🌿 Visão Geral',p:'config'}];
 const ACTS=[{id:'diaria',l:'Lançar diária',s:'Serviço do dia',ic:'👤',c:'gr',p:'diaria'},{id:'insumo',l:'Insumos',s:'Depósito → campo',ic:'📦',c:'bl',p:'insumo'},{id:'trato',l:'Trato de cocho',s:'Proteinado, sal...',ic:'🛠',c:'tl',p:'trato'},{id:'lote',l:'Lotes',s:'Cadastro de lotes',ic:'🐄',c:'gr',p:'config'},{id:'escore',l:'Escore de fezes',s:'Avaliação do gado',ic:'🔬',c:'pu',p:'escore'}];
-const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},'Fazenda Santa Cruz':{cochos:['Lote 01','Lote 02','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+'],gasUrl:'',sheetId:''}},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:1,config:0}},{n:'Elisangela',i:'E',c:'av-p',r:'Cantina',pin:'2222',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,mapa:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:38,peso:402,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 02',qtd:85,peso:360,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 03',qtd:79,peso:316,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 04',qtd:61,peso:269,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 05',qtd:69,peso:228,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 06',qtd:121,peso:204,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio'],'Fazenda Santa Cruz':[]},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{}};
+const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},'Fazenda Santa Cruz':{cochos:['Lote 01','Lote 02','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+'],gasUrl:'',sheetId:''}},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:1,config:0},{n:'Elisangela',i:'E',c:'av-p',r:'Cantina',pin:'2222',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,mapa:0,config:0}}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:38,peso:402,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 02',qtd:85,peso:360,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 03',qtd:79,peso:316,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 04',qtd:61,peso:269,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 05',qtd:69,peso:228,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 06',qtd:121,peso:204,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio'],'Fazenda Santa Cruz':[]},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{}};
 
 let S=null;
 function carregar(){try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=JSON.parse(r);S={...DEFAULT,...s};S.cfgGS=DEFAULT.cfgGS;if(!S.US||!S.US.length)S.US=DEFAULT.US;if(!S.FAZ||!Object.keys(S.FAZ).length)S.FAZ=DEFAULT.FAZ;if(!S.EST||!Object.keys(S.EST).length)S.EST=DEFAULT.EST;if(s.FAZ&&Object.keys(s.FAZ).length)S.FAZ=s.FAZ;if(s.US&&s.US.length)S.US=s.US;['rD','rT','rC','rE','mEst','queue','rDesp','LOTES'].forEach(k=>{if(!Array.isArray(S[k]))S[k]=[]});if(!S.DIARISTAS)S.DIARISTAS={};if(!S.NOTAS)S.NOTAS={};if(!S.AREAS)S.AREAS={};if(!S.MAPA_ALOC)S.MAPA_ALOC={};if(!Array.isArray(S.SERVS))S.SERVS=DEFAULT.SERVS;if(!S.PR)S.PR=DEFAULT.PR;}else{S=JSON.parse(JSON.stringify(DEFAULT));}}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}}
@@ -820,7 +799,8 @@ function entrar(i){CU=S.US[i];document.getElementById('login-screen').style.disp
 function doLogout(){CU=null;loginFaz=null;loginUser=null;pinBuf='';document.getElementById('app').style.display='none';document.getElementById('tabs').style.display='none';document.getElementById('login-screen').style.display='flex';document.getElementById('step-faz').style.display='block';document.getElementById('step-user').style.display='none';document.getElementById('step-pin').style.display='none';if(window.history&&window.history.replaceState)window.history.replaceState({},document.title,window.location.pathname);mostrarFazendas();}
 
 // ═══ NAVEGAÇÃO ═══
-function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa')setTimeout(function(){try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}try{var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'':'none';}catch(ex){}try{if(window._initMapaZoom)window._initMapaZoom();}catch(ez){}},150);if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();if(S.cfgGS){carregarNuvem(function(ok){if(ok)rCtHist();});}else{rCtHist();}},50);window.scrollTo(0,0);}
+function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);
+if(id==='mapa')setTimeout(function(){try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}},100);if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();if(S.cfgGS){carregarNuvem(function(ok){if(ok)rCtHist();});}else{rCtHist();}},50);window.scrollTo(0,0);}
 function goBack(){if(prevPage)sp(prevPage,false);else sp('home',false);}
 function isV(u){return u.p.diaria||u.p.insumo||u.p.trato||u.p.escore;}
 function isA(u){return u.p.cantina||u.p.estoque||u.p.painel||u.p.config;}
@@ -873,14 +853,7 @@ enviarDado(r);showOk('ok-d');document.getElementById('d-val').value='';document.
 function envI(){const ins=[...document.querySelectorAll('#ins-l .ir')].map(r=>({p:r.querySelector('.ip').value,q:parseFloat(r.querySelector('.iq').value)||0,u:r.querySelector('.iu').value})).filter(x=>x.p&&x.q>0);if(!ins.length){alert('Adicione pelo menos um produto.');return;}const dt=(document.getElementById('i-data')||{}).value||TD;const dest=(document.getElementById('i-dest')||{}).value;baixar(ins,dt,dest);const r={tipo:'insumo',faz:(document.getElementById('i-faz')||{}).value,n:CU.n,dt,ins,dest};S.rD.push(r);enviarDado(r);showOk('ok-i');document.getElementById('i-dest').value='';document.getElementById('ins-l').innerHTML=`<div class="ir"><div style="flex:2"><div class="lbl">Produto</div><select class="ip" onchange="updInsInfo(this)"></select></div><div style="flex:1"><div class="lbl">Qtd</div><input type="number" class="iq" placeholder="0" min="0" step="0.5"></div><div style="flex:1"><div class="lbl">Unid.</div><select class="iu"><option>saco</option><option>kg</option><option>litro</option></select></div></div><div class="ins-info" style="display:none"></div>`;updInsProd();setTimeout(()=>{sp('home',false);rUlt();},1600);}
 function envT(){const co=(document.getElementById('t-cocho')||{}).value;const pr=(document.getElementById('t-prod')||{}).value;const q=parseFloat((document.getElementById('t-qtd')||{}).value)||0;if(!co||!pr||!q){alert('Selecione lote, produto e quantidade.');return;}const dt=(document.getElementById('t-data')||{}).value||TD;const faz=(document.getElementById('t-faz')||{}).value;const cab=parseInt((document.getElementById('t-cab')||{}).value)||0;if(pr&&S.EST&&S.EST[pr])baixar([{p:pr,q,u:'saco'}],dt,co);const pps=(S.EST&&pr&&S.EST[pr]&&S.EST[pr].peso_saco)?S.EST[pr].peso_saco:30;const r={tipo:'trato',faz,n:CU.n,dt,co,pr,q,unid:'saco',kg_fornecido:q*pps,cab,sit:coSel,escore:esTSel,obs:(document.getElementById('t-obs')||{}).value};S.rT.push(r);enviarDado(r);showOk('ok-t');document.getElementById('t-qtd').value='';document.getElementById('t-cab').value='';document.getElementById('t-obs').value='';document.querySelectorAll('#pg-trato .bopt').forEach(b=>b.classList.remove('sel'));coSel='';esTSel='';setTimeout(()=>{sp('home',false);rUlt();},1600);}
 function envEs(){if(!esSel){alert('Selecione o escore.');return;}const lote=(document.getElementById('es-cocho')||{}).value;let nanim=parseInt((document.getElementById('es-nanim')||{}).value)||0;if(!nanim){const lt=S.LOTES.find(l=>l.nome===lote);if(lt)nanim=lt.qtd;}const r={tipo:'escore',faz:(document.getElementById('es-faz')||{}).value,co:lote,dt:(document.getElementById('es-data')||{}).value||TD,es:esSel,cab:nanim,obs:(document.getElementById('es-obs')||{}).value,n:CU.n};S.rE.push(r);enviarDado(r);showOk('ok-es');esSel=0;document.querySelectorAll('.ec').forEach(c=>c.classList.remove('sel'));document.getElementById('es-box').style.display='none';document.getElementById('es-nanim').value='';document.getElementById('es-obs').value='';setTimeout(()=>{sp('home',false);rUlt();},1600);}
-function envCt(){const faz=(document.getElementById('ct-faz')||{}).value;const resp=(document.getElementById('ct-resp')||{}).value;if(!faz||!resp){alert('Preencha fazenda e responsável.');return;}let total=0,det='';if(cobT==='ref'){total=QT.cafe*S.PR.cafe+QT.almoco*S.PR.almoco+QT.janta*S.PR.janta;det=`Café:${QT.cafe} Alm:${QT.almoco} Jan:${QT.janta}`;}else{const n=parseInt((document.getElementById('ct-np')||{}).value)||0;const v=parseFloat((document.getElementById('ct-vd')||{}).value)||0;total=n*v;det=`${n}p×R$${v.toFixed(2)}`;}const r={tipo:'cantina',faz,resp,dt:(document.getElementById('ct-data')||{}).value||TD,det,total};S.rC.push(r);salvar();
-  // Envio direto para planilha com campos na ordem correta da aba Cantina
-  if(S.cfgGS&&navigator.onLine){
-    var gasUrl=getFazGasUrl(faz);
-    var row={acao:'append_cantina',dt:r.dt,faz:r.faz,resp:r.resp,det:r.det,total:r.total};
-    fetch(gasUrl+'?'+new URLSearchParams({data:JSON.stringify(row)}),{method:'GET',mode:'no-cors'}).catch(function(){});
-  }
-  enviarDado(r);showOk('ok-ct');['cafe','almoco','janta'].forEach(x=>QT[x]=0);['c','a','j'].forEach(x=>{const e=document.getElementById('q'+x);if(e)e.textContent='0';});calcCt();}
+function envCt(){const faz=(document.getElementById('ct-faz')||{}).value;const resp=(document.getElementById('ct-resp')||{}).value;if(!faz||!resp){alert('Preencha fazenda e responsável.');return;}let total=0,det='';if(cobT==='ref'){total=QT.cafe*S.PR.cafe+QT.almoco*S.PR.almoco+QT.janta*S.PR.janta;det=`Café:${QT.cafe} Alm:${QT.almoco} Jan:${QT.janta}`;}else{const n=parseInt((document.getElementById('ct-np')||{}).value)||0;const v=parseFloat((document.getElementById('ct-vd')||{}).value)||0;total=n*v;det=`${n}p×R$${v.toFixed(2)}`;}const r={tipo:'cantina',faz,resp,dt:(document.getElementById('ct-data')||{}).value||TD,det,total};S.rC.push(r);enviarDado(r);showOk('ok-ct');['cafe','almoco','janta'].forEach(x=>QT[x]=0);['c','a','j'].forEach(x=>{const e=document.getElementById('q'+x);if(e)e.textContent='0';});calcCt();}
 function entEst(){const p=(document.getElementById('ep')||{}).value;const q=parseFloat((document.getElementById('eq')||{}).value)||0;if(!p||!q){alert('Selecione produto e quantidade.');return;}S.EST[p].q=parseFloat((S.EST[p].q+q).toFixed(2));S.mEst.push({p,q,u:S.EST[p].u,t:'entrada',dt:(document.getElementById('ed')||{}).value||TD,loc:(document.getElementById('eo')||{}).value});salvar();rEst();showOk('ok-e');document.getElementById('eq').value='';document.getElementById('eo').value='';}
 
 // ═══ RENDER ═══
@@ -944,10 +917,10 @@ function tUp(i){const d=document.getElementById('up-'+i);d.style.display=d.style
 function tPerm(i,p){S.US[i].p[p]=S.US[i].p[p]?0:1;salvar();rUcfg();}
 function salvarPin(i){const v=(document.getElementById('pin-u-'+i)||{}).value;if(v.length!==4||!/^\d{4}$/.test(v)){alert('PIN deve ter 4 números.');return;}S.US[i].pin=v;salvar();alert('✅ PIN salvo!');}
 function trocarFaz(i,faz){S.US[i].fs=faz?[faz]:[];salvar();rUcfg();rLinksUsuarios();alert('✅ Fazenda atualizada!');}
-function trocarRole(i,role){S.US[i].r=role;const ps={'Colaborador':{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:0,config:0},'Vaqueiro':{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:1,config:0},'Cantina':{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,mapa:0,config:0},'Dono':{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,config:0},'Consultor':{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,config:1}};if(ps[role])S.US[i].p=ps[role];salvar();rUcfg();}
+function trocarRole(i,role){S.US[i].r=role;const ps={'Colaborador':{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:0,config:0},'Cantina':{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,mapa:0,config:0},'Dono':{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,config:0},'Consultor':{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,config:1}};if(ps[role])S.US[i].p=ps[role];salvar();rUcfg();}
 function editUser(i){const n=prompt('Novo nome:',S.US[i].n);if(!n||!n.trim())return;S.US[i].n=n.trim();S.US[i].i=n.trim().split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();salvar();rUcfg();rLinksUsuarios();alert('✅ Atualizado!');}
 function delUser(i){if(!confirm('Excluir "'+S.US[i].n+'"?'))return;S.US.splice(i,1);salvar();rUcfg();rLinksUsuarios();alert('✅ Excluído!');}
-function addUser(){const n=prompt('Nome completo:');if(!n||!n.trim())return;const pin=prompt('PIN (4 números):');if(!pin||!/^\d{4}$/.test(pin)){alert('PIN inválido.');return;}const role=prompt('1-Colaborador 2-Vaqueiro 3-Cantina 4-Dono 5-Consultor','1');const roles=['Colaborador','Vaqueiro','Cantina','Dono','Consultor'];const r=roles[parseInt(role)-1]||'Colaborador';const ps={'Colaborador':{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:0,config:0},'Vaqueiro':{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:1,config:0},'Cantina':{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,mapa:0,config:0},'Dono':{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,config:0},'Consultor':{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,config:1}};const ini=n.trim().split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();const cores=['av-g','av-b','av-a','av-p','av-t'];S.US.push({n:n.trim(),i:ini,c:cores[S.US.length%5],r,pin,fs:[],p:ps[r]});salvar();rUcfg();rLinksUsuarios();alert('✅ '+n.trim()+' adicionado! PIN: '+pin);}
+function addUser(){const n=prompt('Nome completo:');if(!n||!n.trim())return;const pin=prompt('PIN (4 números):');if(!pin||!/^\d{4}$/.test(pin)){alert('PIN inválido.');return;}const role=prompt('1-Colaborador 2-Cantina 3-Dono 4-Consultor','1');const roles=['Colaborador','Cantina','Dono','Consultor'];const r=roles[parseInt(role)-1]||'Colaborador';const ps={'Colaborador':{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:0,config:0},'Cantina':{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,mapa:0,config:0},'Dono':{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,config:0},'Consultor':{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,config:1}};const ini=n.trim().split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();const cores=['av-g','av-b','av-a','av-p','av-t'];S.US.push({n:n.trim(),i:ini,c:cores[S.US.length%5],r,pin,fs:[],p:ps[r]});salvar();rUcfg();rLinksUsuarios();alert('✅ '+n.trim()+' adicionado! PIN: '+pin);}
 function rServL(){const c=document.getElementById('serv-l');if(!c)return;c.innerHTML=S.SERVS.map(s=>`<span class="chip">${s} <span class="cdel" onclick="delServ('${s}')">×</span></span>`).join('');}
 function addServ(){const s=(document.getElementById('ns')||{}).value?.trim();if(!s)return;S.SERVS.push(s);salvar();rServL();popServs();document.getElementById('ns').value='';}
 function delServ(s){S.SERVS=S.SERVS.filter(x=>x!==s);salvar();rServL();popServs();}
@@ -973,7 +946,7 @@ function initSync(){atualizarSync();window.addEventListener('online',()=>{atuali
 
 // ═══ NUVEM ═══
 function updCloudStatus(st){const el=document.getElementById('cloud-status');if(!el)return;const icons={saving:'☁️ Salvando...',loading:'☁️ Carregando...',ok:'✅ Nuvem OK',err:'⚠️ Offline'};el.textContent=icons[st]||'';el.style.color=st==='err'?'#C62828':(st==='ok'?'#2E7D32':'#888');}
-function salvarNuvem(cb){if(!S.cfgGS){if(cb)cb(false);return;}updCloudStatus('saving');const cfg={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:S.LOTES,AREAS:S.AREAS||{},MAPA_ALOC:S.MAPA_ALOC||{},DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT,rD:S.rD,rT:S.rT,rC:S.rC,rE:S.rE,rDesp:S.rDesp,mEst:S.mEst,NOTAS:S.NOTAS||{},PIX_D:S.PIX_D||{},PIX_D:S.PIX_D||{}};Object.keys(S.FAZ).forEach(faz=>{const gu=getFazGasUrl(faz);if(gu){const fc={FAZ:{},US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:(S.LOTES||[]).filter(l=>l.faz===faz),DIARISTAS:{}};fc.FAZ[faz]=S.FAZ[faz];fc.DIARISTAS[faz]=(S.DIARISTAS||{})[faz]||[];fc.rD=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rT=(S.rT||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rC=(S.rC||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rE=(S.rE||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rDesp=(S.rDesp||[]).filter(r=>!r._apagado&&r.faz===faz);fc.PIX_D=S.PIX_D||{};fetch(gu+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(fc)),{method:'GET',mode:'no-cors'}).catch(()=>{});}});fetch(S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfg)),{method:'GET',mode:'no-cors'}).then(()=>{updCloudStatus('ok');if(cb)cb(true);}).catch(e=>{updCloudStatus('err');if(cb)cb(false);});}
+function salvarNuvem(cb){if(!S.cfgGS){if(cb)cb(false);return;}updCloudStatus('saving');const cfg={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:S.LOTES,AREAS:S.AREAS||{},MAPA_ALOC:S.MAPA_ALOC||{},DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT,rD:S.rD,rT:S.rT,rC:S.rC,rE:S.rE,rDesp:S.rDesp,mEst:S.mEst,NOTAS:S.NOTAS||{},PIX_D:S.PIX_D||{}};Object.keys(S.FAZ).forEach(faz=>{const gu=getFazGasUrl(faz);if(gu){const fc={FAZ:{},US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:(S.LOTES||[]).filter(l=>l.faz===faz),DIARISTAS:{}};fc.FAZ[faz]=S.FAZ[faz];fc.DIARISTAS[faz]=(S.DIARISTAS||{})[faz]||[];fc.rD=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rT=(S.rT||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rC=(S.rC||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rE=(S.rE||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rDesp=(S.rDesp||[]).filter(r=>!r._apagado&&r.faz===faz);fc.PIX_D=S.PIX_D||{};fetch(gu+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(fc)),{method:'GET',mode:'no-cors'}).catch(()=>{});}});fetch(S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfg)),{method:'GET',mode:'no-cors'}).then(()=>{updCloudStatus('ok');if(cb)cb(true);}).catch(e=>{updCloudStatus('err');if(cb)cb(false);});}
 function carregarNuvem(cb){
   if(!S.cfgGS||!navigator.onLine){if(cb)cb(false);return;}
   updCloudStatus('loading');
@@ -1021,7 +994,7 @@ function carregarNuvem(cb){
           if(cfg.rDesp&&cfg.rDesp.length)S.rDesp=cfg.rDesp;
           if(cfg.mEst)S.mEst=cfg.mEst;
           if(cfg.NOTAS)S.NOTAS=cfg.NOTAS;
-          if(cfg.PIX_D&&Object.keys(cfg.PIX_D).length)S.PIX_D=cfg.PIX_D;
+          if(cfg.PIX_D)S.PIX_D=Object.assign(S.PIX_D||{},cfg.PIX_D);
         }catch(ex){}
       }
     }
@@ -1077,127 +1050,175 @@ function sLoteTab(t){
 
 // ═══ MAPA INTERATIVO ═══
 var MAPA_AREAS = [
-  {id:'PA01',label:'PA 01',tipo:'pasto',ha:0,x:17.1,y:5.2},
-  {id:'PA02',label:'PA 02',tipo:'pasto',ha:0,x:16.4,y:26.2},
-  {id:'PA03',label:'PA 03',tipo:'pasto',ha:0,x:32.6,y:10.4},
-  {id:'PA04',label:'PA 04',tipo:'pasto',ha:0,x:39.1,y:30.9},
-  {id:'PA05',label:'PA 05',tipo:'pasto',ha:0,x:47.6,y:31.2},
-  {id:'PA06',label:'PA 06',tipo:'pasto',ha:0,x:58.8,y:37.3},
-  {id:'PA07',label:'PA 07',tipo:'pasto',ha:0,x:56.3,y:18.6},
-  {id:'PA08',label:'PA 08',tipo:'pasto',ha:0,x:62.8,y:7.9},
-  {id:'PA09',label:'PA 09',tipo:'pasto',ha:0,x:76.8,y:7.8},
-  {id:'PA10',label:'PA 10',tipo:'pasto',ha:0,x:83,y:22},
-  {id:'M01P01',label:'M1/P1',tipo:'modulo',modulo:1,piquete:1,ha:0,x:30.3,y:43.1},
-  {id:'M01P02',label:'M1/P2',tipo:'modulo',modulo:1,piquete:2,ha:0,x:15.6,y:54.5},
-  {id:'M01P03',label:'M1/P3',tipo:'modulo',modulo:1,piquete:3,ha:0,x:18.3,y:64.7},
-  {id:'M01P04',label:'M1/P4',tipo:'modulo',modulo:1,piquete:4,ha:0,x:24.7,y:70.2},
-  {id:'M01P05',label:'M1/P5',tipo:'modulo',modulo:1,piquete:5,ha:0,x:36,y:66.6},
-  {id:'M01P06',label:'M1/P6',tipo:'modulo',modulo:1,piquete:6,ha:0,x:33.6,y:54.7},
-  {id:'M02P01',label:'M2/P1',tipo:'modulo',modulo:2,piquete:1,ha:0,x:42.4,y:76.6},
-  {id:'M02P02',label:'M2/P2',tipo:'modulo',modulo:2,piquete:2,ha:0,x:29.3,y:80.5},
-  {id:'M02P03',label:'M2/P3',tipo:'modulo',modulo:2,piquete:3,ha:0,x:31.7,y:91.6},
-  {id:'M02P04',label:'M2/P4',tipo:'modulo',modulo:2,piquete:4,ha:0,x:44.8,y:90.1},
-  {id:'M03P01',label:'M3/P1',tipo:'modulo',modulo:3,piquete:1,ha:0,x:59.7,y:51.8},
-  {id:'M03P02',label:'M3/P2',tipo:'modulo',modulo:3,piquete:2,ha:0,x:46.5,y:53.5},
-  {id:'M03P03',label:'M3/P3',tipo:'modulo',modulo:3,piquete:3,ha:0,x:52.5,y:72.7},
-  {id:'M03P04',label:'M3/P4',tipo:'modulo',modulo:3,piquete:4,ha:0,x:61.7,y:78.5},
-  {id:'M03P05',label:'M3/P5',tipo:'modulo',modulo:3,piquete:5,ha:0,x:68.1,y:70.7},
-  {id:'M04P01',label:'M4/P1',tipo:'modulo',modulo:4,piquete:1,ha:0,x:89.3,y:37},
-  {id:'M04P02',label:'M4/P2',tipo:'modulo',modulo:4,piquete:2,ha:0,x:78.2,y:37.7},
-  {id:'M04P03',label:'M4/P3',tipo:'modulo',modulo:4,piquete:3,ha:0,x:75.6,y:53.3},
-  {id:'M04P04',label:'M4/P4',tipo:'modulo',modulo:4,piquete:4,ha:0,x:88.5,y:59.1},
+  // PASTOS (area marrom) PA01-PA10
+  {id:'PA01',label:'PA 01',tipo:'pasto',ha:0,x:14.0,y:16.0},
+  {id:'PA02',label:'PA 02',tipo:'pasto',ha:0,x:32.0,y:8.0},
+  {id:'PA03',label:'PA 03',tipo:'pasto',ha:0,x:27.0,y:22.0},
+  {id:'PA04',label:'PA 04',tipo:'pasto',ha:0,x:41.0,y:30.0},
+  {id:'PA05',label:'PA 05',tipo:'pasto',ha:0,x:48.0,y:22.0},
+  {id:'PA06',label:'PA 06',tipo:'pasto',ha:0,x:48.0,y:35.0},
+  {id:'PA07',label:'PA 07',tipo:'pasto',ha:0,x:55.0,y:27.0},
+  {id:'PA08',label:'PA 08',tipo:'pasto',ha:0,x:61.0,y:18.0},
+  {id:'PA09',label:'PA 09',tipo:'pasto',ha:0,x:70.0,y:12.0},
+  {id:'PA10',label:'PA 10',tipo:'pasto',ha:0,x:82.0,y:20.0},
+  // MODULO 1 (verde) 6 piquetes
+  {id:'M01P01',label:'M1/P1',tipo:'modulo',modulo:1,piquete:1,ha:0,x:37.0,y:44.0},
+  {id:'M01P02',label:'M1/P2',tipo:'modulo',modulo:1,piquete:2,ha:0,x:30.0,y:38.0},
+  {id:'M01P03',label:'M1/P3',tipo:'modulo',modulo:1,piquete:3,ha:0,x:22.0,y:44.0},
+  {id:'M01P04',label:'M1/P4',tipo:'modulo',modulo:1,piquete:4,ha:0,x:24.0,y:54.0},
+  {id:'M01P05',label:'M1/P5',tipo:'modulo',modulo:1,piquete:5,ha:0,x:33.0,y:54.0},
+  {id:'M01P06',label:'M1/P6',tipo:'modulo',modulo:1,piquete:6,ha:0,x:40.0,y:50.0},
+  // MODULO 2 (vermelho) 4 piquetes
+  {id:'M02P01',label:'M2/P1',tipo:'modulo',modulo:2,piquete:1,ha:0,x:34.0,y:65.0},
+  {id:'M02P02',label:'M2/P2',tipo:'modulo',modulo:2,piquete:2,ha:0,x:24.0,y:62.0},
+  {id:'M02P03',label:'M2/P3',tipo:'modulo',modulo:2,piquete:3,ha:0,x:20.0,y:73.0},
+  {id:'M02P04',label:'M2/P4',tipo:'modulo',modulo:2,piquete:4,ha:0,x:31.0,y:76.0},
+  // MODULO 3 (roxo) 5 piquetes
+  {id:'M03P01',label:'M3/P1',tipo:'modulo',modulo:3,piquete:1,ha:0,x:53.0,y:44.0},
+  {id:'M03P02',label:'M3/P2',tipo:'modulo',modulo:3,piquete:2,ha:0,x:46.0,y:54.0},
+  {id:'M03P03',label:'M3/P3',tipo:'modulo',modulo:3,piquete:3,ha:0,x:53.0,y:63.0},
+  {id:'M03P04',label:'M3/P4',tipo:'modulo',modulo:3,piquete:4,ha:0,x:46.0,y:71.0},
+  {id:'M03P05',label:'M3/P5',tipo:'modulo',modulo:3,piquete:5,ha:0,x:60.0,y:55.0},
+  // MODULO 4 (verde-oliva) 4 piquetes
+  {id:'M04P01',label:'M4/P1',tipo:'modulo',modulo:4,piquete:1,ha:0,x:76.0,y:42.0},
+  {id:'M04P02',label:'M4/P2',tipo:'modulo',modulo:4,piquete:2,ha:0,x:69.0,y:50.0},
+  {id:'M04P03',label:'M4/P3',tipo:'modulo',modulo:4,piquete:3,ha:0,x:79.0,y:55.0},
+  {id:'M04P04',label:'M4/P4',tipo:'modulo',modulo:4,piquete:4,ha:0,x:73.0,y:62.0}
 ];
 
 var mapaAreaAtual = null;
 
-// ══ CORES POR MÓDULO — igual ao editor ══
-var MAPA_CORES = {
-  pasto:{bg:'#2E7D32',bd:'#66BB6A'},
-  1:{bg:'#1B5E20',bd:'#4CAF50'},
-  2:{bg:'#B71C1C',bd:'#EF5350'},
-  3:{bg:'#4A148C',bd:'#CE93D8'},
-  4:{bg:'#827717',bd:'#F9A825'}
-};
-function _corArea(a){ return a.tipo==='pasto'?MAPA_CORES.pasto:(MAPA_CORES[a.modulo]||MAPA_CORES[1]); }
-
-// ══ RENDER PINS — sistema idêntico ao editor ══
 function _renderPinsNoContainer(contId, resumoId){
-  var cont=document.getElementById(contId);
+  var cont = document.getElementById(contId);
   if(!cont) return;
   if(!S.MAPA_ALOC) S.MAPA_ALOC={};
-  var lotes=S.LOTES||[];
+  var lotes = S.LOTES||[];
   var ocupados=0;
   cont.innerHTML='';
-  var isAdm=CU&&(CU.r==='Consultor'||CU.r==='Dono');
 
+  // O container tem pointer-events:none, mas cada botão tem pointer-events:auto
   MAPA_AREAS.forEach(function(a){
-    var aloc=S.MAPA_ALOC[a.id];
-    var lote=aloc?lotes.find(function(l){return l.nome===aloc;}):null;
-    var qtd=lote?(lote.qtd||0):0;
-    var ocupado=!!lote&&qtd>0;
+    var aloc = S.MAPA_ALOC[a.id];
+    var lote = aloc ? lotes.find(function(l){return l.nome===aloc;}) : null;
+    var qtd = lote ? (lote.qtd||0) : 0;
+    var ocupado = !!lote && qtd>0;
     if(ocupado) ocupados++;
-    if(!ocupado && !isAdm) return;
 
-    var cores={1:{bg:'#1B5E20',bd:'#4CAF50'},2:{bg:'#B71C1C',bd:'#EF5350'},3:{bg:'#4A148C',bd:'#CE93D8'},4:{bg:'#827717',bd:'#F9A825'}};
-    var cor=a.tipo==='modulo'?(cores[a.modulo]||cores[1]):{bg:'#2E7D32',bd:'#66BB6A'};
+    var cores = {
+      1:{bg:'#1B5E20',bd:'#4CAF50',bgV:'rgba(27,94,32,0.25)'},
+      2:{bg:'#B71C1C',bd:'#EF5350',bgV:'rgba(183,28,28,0.25)'},
+      3:{bg:'#4A148C',bd:'#CE93D8',bgV:'rgba(74,20,140,0.25)'},
+      4:{bg:'#827717',bd:'#F9A825',bgV:'rgba(130,119,23,0.25)'}
+    };
+    var cor = a.tipo==='modulo'?(cores[a.modulo]||cores[1]):{bg:'#2E7D32',bd:'#66BB6A',bgV:'rgba(46,125,50,0.25)'};
+    var lbl = a.label.replace('MOD:0','M').replace('MOD:','M').replace('/P:0','/P').replace('/P:','/P');
 
-    var btn=document.createElement('button');
+    // BOTÃO — pointer-events:auto sobrescreve o none do container
+    var btn = document.createElement('button');
     btn.type='button';
-    btn.style.cssText='position:absolute;left:'+a.x+'%;top:'+a.y+'%;transform:translate(-50%,-50%);pointer-events:auto;cursor:pointer;z-index:25;background:none;border:none;padding:0;outline:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation';
+    btn.style.cssText=[
+      'position:absolute',
+      'left:'+a.x+'%',
+      'top:'+a.y+'%',
+      'transform:translate(-50%,-50%)',
+      'pointer-events:auto',
+      'cursor:pointer',
+      'z-index:25',
+      'background:none',
+      'border:none',
+      'padding:0',
+      'outline:none',
+      '-webkit-tap-highlight-color:transparent',
+      'touch-action:manipulation'
+    ].join(';');
 
-    var inner=document.createElement('div');
+    // Conteúdo do pin
+    var inner = document.createElement('div');
     inner.style.cssText='display:flex;flex-direction:column;align-items:center;pointer-events:none';
 
-    var box=document.createElement('div');
+    var box = document.createElement('div');
     if(ocupado){
-      var num=('0'+(lote.nome.replace(/\D/g,'')||'0')).slice(-2);
-      box.style.cssText='background:'+cor.bg+';border:2.5px solid '+cor.bd+';border-radius:10px;padding:5px 8px;text-align:center;min-width:50px;box-shadow:0 4px 14px rgba(0,0,0,.65)';
-      box.innerHTML='<div style="font-size:8px;font-weight:800;color:rgba(255,255,255,.75);line-height:1.2">'+a.label+'</div>'
-        +'<div style="font-size:18px;font-weight:900;color:#fff;line-height:1.1">'+qtd+'</div>'
-        +'<div style="font-size:8px;font-weight:700;color:'+cor.bd+'">L'+num+'</div>';
+      box.style.cssText='background:'+cor.bg+';border:2.5px solid '+cor.bd+';border-radius:9px;padding:4px 7px;text-align:center;min-width:50px;box-shadow:0 3px 12px rgba(0,0,0,0.6)';
+      
+      // CORREÇÃO: Estrutura limpa com crases e proteção caso lote.nome falhe
+      box.innerHTML = `
+        <div style="font-size:16px;line-height:1">🐄</div>
+        <div style="font-size:8px;font-weight:700;color:#fff;opacity:.9;line-height:1.2">${lbl}</div>
+        <div style="font-size:12px;font-weight:800;color:#fff;line-height:1.3">${qtd}</div>
+        <div style="font-size:8px;color:${cor.bd};font-weight:700">${lote && lote.nome ? lote.nome : ''}</div>
+      `;
     } else {
-      box.style.cssText='background:rgba(0,0,0,.3);border:1px dashed rgba(255,255,255,.4);border-radius:6px;padding:2px 5px;text-align:center;min-width:34px';
-      box.innerHTML='<div style="font-size:8px;color:rgba(255,255,255,.5)">'+a.label+'</div><div style="font-size:9px;color:rgba(255,255,255,.3)">+</div>';
+      box.style.cssText='background:'+cor.bgV+';border:1.5px dashed '+cor.bd+';border-radius:8px;padding:3px 5px;text-align:center;min-width:40px;box-shadow:0 1px 4px rgba(0,0,0,0.4)';
+      
+      // CORREÇÃO: Substituição por crases para manter o padrão sem erros
+      box.innerHTML = `
+        <div style="font-size:8px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,1);line-height:1.3">${lbl}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.8)">＋</div>
+      `;
     }
 
+    // Continuação do preenchimento dos elementos na tela
+    inner.appendChild(box);
+    btn.appendChild(inner);
+
+    // Evento de clique para selecionar a área do pasto
+    btn.onclick = function(){
+      if(typeof selecionarAreaNoMapa === 'function'){
+        selecionarAreaNoMapa(a.id);
+      }
+    };
+
+    cont.appendChild(btn);
+  });
+
+  // Atualiza o resumo de áreas ocupadas se o elemento existir
+  var resEl = document.getElementById(resumoId);
+  if(resEl){
+    resEl.innerText = ocupados + ' áreas ocupadas';
+  }
+}
     var haste=document.createElement('div');
-    haste.style.cssText='width:2px;height:'+(ocupado?'7':'4')+'px;background:'+cor.bd+';margin:0 auto;opacity:'+(ocupado?'1':'.35');
+    haste.style.cssText='width:2px;height:'+(ocupado?'7':'4')+'px;background:'+cor.bd+';margin:0 auto';
     var dot=document.createElement('div');
-    dot.style.cssText='width:'+(ocupado?'6':'4')+'px;height:'+(ocupado?'6':'4')+'px;border-radius:50%;background:'+cor.bd+';margin:0 auto;opacity:'+(ocupado?'1':'.35');
+    dot.style.cssText='width:'+(ocupado?'6':'4')+'px;height:'+(ocupado?'6':'4')+'px;border-radius:50%;background:'+cor.bd+';margin:0 auto';
 
     inner.appendChild(box);inner.appendChild(haste);inner.appendChild(dot);
     btn.appendChild(inner);
 
-    (function(ar,ci,oc,al){
-      var mv=false;
-      btn.addEventListener('touchstart',function(){mv=false;},{passive:true});
-      btn.addEventListener('touchmove',function(){mv=true;},{passive:true});
+    // Eventos — funciona em mobile e desktop
+    (function(area, cid){
+      var moved=false;
+      btn.addEventListener('touchstart',function(e){moved=false;},{passive:true});
+      btn.addEventListener('touchmove',function(){moved=true;},{passive:true});
       btn.addEventListener('touchend',function(e){
-        if(mv)return;
-        e.preventDefault();e.stopPropagation();
-        if(oc){aoClicarNoLoteDoMapa(ar.label,al||'');}
-        else{abrirMapaModal(ar,ci);}
+        if(!moved){e.preventDefault();e.stopPropagation();
+          var isAdm=CU&&(CU.r==='Consultor'||CU.r==='Dono');
+          if(!isAdm&&ocupado){aoClicarNoLoteDoMapa(area.label,aloc||'');}
+          else{abrirMapaModal(area,cid);}
+        }
       },{passive:false});
       btn.addEventListener('click',function(e){
         e.preventDefault();e.stopPropagation();
-        if(oc){aoClicarNoLoteDoMapa(ar.label,al||'');}
-        else{abrirMapaModal(ar,ci);}
+        var isAdm=CU&&(CU.r==='Consultor'||CU.r==='Dono');
+        if(!isAdm&&ocupado){aoClicarNoLoteDoMapa(area.label,aloc||'');}
+        else{abrirMapaModal(area,cid);}
       });
-    })(a,contId,ocupado,aloc);
+    })(a, contId);
 
     cont.appendChild(btn);
   });
 
   var res=document.getElementById(resumoId);
-  if(res) res.textContent=ocupados?ocupados+' piquete(s) com gado':'Toque para alocar gado';
+  if(res) res.textContent=ocupados?ocupados+' piquete(s) com gado':'Toque em qualquer área para alocar gado';
 }
+
 function _sincMapa(){
   _renderPinsNoContainer('mapa-pins','mapa-resumo');
   _renderPinsNoContainer('mapa-pins-main','mapa-main-resumo');
   try{ rUlt(); }catch(e){}
 }
 
-function rMapa()    { _renderPinsNoContainer('mapa-pins','mapa-resumo'); }
+function rMapa(){ _renderPinsNoContainer('mapa-pins','mapa-resumo'); }
 function rMapaMain(){ _renderPinsNoContainer('mapa-pins-main','mapa-main-resumo'); }
 
 function abrirMapaModal(a, contId){
@@ -2075,21 +2096,14 @@ function calcularFechamento(){
 function renderFCLista(lista, totalGeral, deFmt, ateFmt, faz){
   // Todos selecionados por padrão
   if(!window._fcSel) window._fcSel = {};
-  lista.forEach(function(p,i){ if(window._fcSel[p.n]===undefined) window._fcSel[p.n]=true; });
+  lista.forEach(function(p){ if(window._fcSel[p.n]===undefined) window._fcSel[p.n]=true; });
 
   var html='<div style="font-size:12px;color:#888;margin-bottom:8px">Toque para selecionar quem vai na mensagem:</div>';
 
   lista.forEach(function(p){
     var total=p.totalD+p.totalC;
     var usr=S.US.find(function(u){return u.n===p.n;});
-    var pixObj=(function(n){
-      var d=S.PIX_D||{};
-      if(d[n])return d[n];
-      // busca case-insensitive
-      var nl=n.toLowerCase();
-      var k=Object.keys(d).find(function(x){return x.toLowerCase()===nl;});
-      return k?d[k]:{};
-    })(p.n);var pix=typeof pixObj==='string'?pixObj:(pixObj.chave||'');
+    var pix=usr?usr.pix||'':'';
     var sel=window._fcSel[p.n]!==false;
     var border=sel?'border-left:3px solid #1B5E20;':'border-left:3px solid #ccc;opacity:.55;';
     var check=sel?'✅':'⬜';
@@ -2103,20 +2117,7 @@ function renderFCLista(lista, totalGeral, deFmt, ateFmt, faz){
     if(p.diarias.length)html+='Diárias: '+p.diarias.length+'x → R$ '+p.totalD.toFixed(2).replace('.',',')+'<br>';
     if(p.cantina.length)html+='Cantina: '+p.cantina.length+' dias → R$ '+p.totalC.toFixed(2).replace('.',',');
     html+='</div>';
-    // PIX com botão Copiar
-    if(pix){
-      var pid='cp_'+i;
-      window['_pv_'+pid]=pix;
-      html+='<div style="display:flex;align-items:center;gap:6px;margin-top:5px" onclick="event.stopPropagation()">'
-        +'<span class="fc-pix" style="flex:1">Pix: <b>'+pix+'</b></span>'
-        +'<button id="'+pid+'" onclick="_cpPix(this.id)" style="padding:4px 10px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">Copiar</button>'
-        +'</div>';
-    }
-    // Botão WhatsApp individual para este colaborador
-    html+='<div style="margin-top:7px;display:flex;gap:6px" onclick="event.stopPropagation()">';
-    html+='<button onclick="_envWppColaborador(\''+p.n.replace(/'/g,"\\'")+'\')" style="flex:1;padding:7px 8px;background:#25D366;color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer">📲 WhatsApp</button>';
-    html+='<button onclick="_copiarMsgColaborador(\''+p.n.replace(/'/g,"\\'")+'\')" style="flex:1;padding:7px 8px;background:#f0f0f0;color:#333;border:1px solid #ddd;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer">📋 Copiar msg</button>';
-    html+='</div>';
+    if(pix&&sel)html+='<div class="fc-pix">Pix: '+pix+'</div>';
     html+='</div>';
   });
 
@@ -2162,14 +2163,7 @@ function gerarFCMsg(){
   sel.forEach(function(p){
     var total=p.totalD+p.totalC;
     var usr=S.US.find(function(u){return u.n===p.n;});
-    var pixObj=(function(n){
-      var d=S.PIX_D||{};
-      if(d[n])return d[n];
-      // busca case-insensitive
-      var nl=n.toLowerCase();
-      var k=Object.keys(d).find(function(x){return x.toLowerCase()===nl;});
-      return k?d[k]:{};
-    })(p.n);var pix=typeof pixObj==='string'?pixObj:(pixObj.chave||'');
+    var pix=usr?usr.pix||'':'';
     linhas.push('Colaborador: '+p.n);
     if(p.diarias.length)linhas.push('  Diarias ('+p.diarias.length+'x): R$ '+p.totalD.toFixed(2).replace('.',','));
     if(p.cantina.length)linhas.push('  Cantina ('+p.cantina.length+' dias): R$ '+p.totalC.toFixed(2).replace('.',','));
@@ -2209,94 +2203,10 @@ function enviarFCWpp(){
   window.open(url,'_blank');
 }
 
-function _gerarMsgColaborador(nome){
-  var lista=window._fcLista||[];
-  var faz=window._fcFaz||'';
-  var deFmt=window._fcDe||'';
-  var ateFmt=window._fcAte||'';
-  var p=lista.find(function(x){return x.n===nome;});
-  if(!p) return '';
-  var total=p.totalD+p.totalC;
-  var pixObj=(function(n){
-    var d=S.PIX_D||{};
-    if(d[n])return d[n];
-    var nl=n.toLowerCase();
-    var k=Object.keys(d).find(function(x){return x.toLowerCase()===nl;});
-    return k?d[k]:{};
-  })(nome);
-  var pix=typeof pixObj==='string'?pixObj:(pixObj.chave||'');
-  var linhas=[];
-  linhas.push('Ola '+nome+'!');
-  linhas.push('');
-  linhas.push('*FECHAMENTO - '+faz+'*');
-  linhas.push('Periodo: '+deFmt+' a '+ateFmt);
-  linhas.push('');
-  if(p.diarias.length) linhas.push('Diarias ('+p.diarias.length+'x): R$ '+p.totalD.toFixed(2).replace('.',','));
-  if(p.cantina.length) linhas.push('Cantina ('+p.cantina.length+' dias): R$ '+p.totalC.toFixed(2).replace('.',','));
-  linhas.push('');
-  var totalFmt=total.toFixed(2).replace('.',',');
-  linhas.push('*TOTAL A PAGAR: R$ '+totalFmt+' *');
-  if(pix){
-    linhas.push('');
-    linhas.push('Chave Pix: '+pix);
-  }
-  linhas.push('');
-  linhas.push('GPL - Gestao Pecuaria Lucrativa - Rogerio Avelino');
-  return linhas.join('\n');
-}
-
-function _envWppColaborador(nome){
-  var msg=_gerarMsgColaborador(nome);
-  if(!msg) return;
-  // Tentar pegar o telefone do colaborador se cadastrado
-  var usr=S.US.find(function(u){return u.n===nome;});
-  var tel=usr&&usr.tel?usr.tel.replace(/[^\d]/g,''):'';
-  var url=tel?'https://wa.me/'+tel+'?text='+encodeURIComponent(msg):'https://wa.me/?text='+encodeURIComponent(msg);
-  window.open(url,'_blank');
-}
-
-function _copiarMsgColaborador(nome){
-  var msg=_gerarMsgColaborador(nome);
-  if(!msg) return;
-  var el=document.createElement('textarea');
-  el.value=msg;el.style.cssText='position:fixed;top:-999px';
-  document.body.appendChild(el);el.focus();el.select();el.setSelectionRange(0,99999);
-  try{document.execCommand('copy');}catch(ex){}
-  document.body.removeChild(el);
-  var t=document.createElement('div');
-  t.textContent='Mensagem de '+nome+' copiada!';
-  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#25D366;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;z-index:99999;pointer-events:none;white-space:nowrap';
-  document.body.appendChild(t);
-  setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .4s';},1300);
-  setTimeout(function(){if(t.parentNode)document.body.removeChild(t);},1800);
-}
-
-function _cpPix(id){
-  var v=(window['_pv_'+id]||'');
-  var el=document.createElement('textarea');
-  el.value=v;el.style.cssText='position:fixed;top:-999px';
-  document.body.appendChild(el);el.focus();el.select();el.setSelectionRange(0,99999);
-  try{document.execCommand('copy');}catch(ex){}
-  document.body.removeChild(el);
-  var btn=document.getElementById(id);
-  if(btn){btn.textContent='OK';setTimeout(function(){btn.textContent='Copiar';},1500);}
-}
-function _abrirEditor(){
-  window.open('https://gestaopecuarialucrativa-dotcom.github.io/fazenda-gpl/mapa_editor_consultor.html','_blank');
-}
 function copiarFCMsg(){
   var msg=gerarFCMsg();
-  var el=document.createElement('textarea');
-  el.value=msg;el.style.cssText='position:fixed;top:-999px';
-  document.body.appendChild(el);el.focus();el.select();el.setSelectionRange(0,99999);
-  try{document.execCommand('copy');}catch(ex){}
-  document.body.removeChild(el);
-  var t=document.createElement('div');
-  t.textContent='Mensagem copiada!';
-  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1B5E20;color:#fff;padding:10px 22px;border-radius:20px;font-size:14px;font-weight:700;z-index:99999;pointer-events:none';
-  document.body.appendChild(t);
-  setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .4s';},1300);
-  setTimeout(function(){if(t.parentNode)document.body.removeChild(t);},1800);
+  if(navigator.clipboard)navigator.clipboard.writeText(msg).then(function(){alert('Copiado!');});
+  else{var t=document.createElement('textarea');t.value=msg;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);alert('Copiado!');}
 }
 
 
@@ -2751,46 +2661,103 @@ function gerarPDFPesquisa(){
 }
 
 // ═══ PIX DOS COLABORADORES ═══
-function rPixDiaristas(){var c=document.getElementById('pix-diaristas-l');if(!c)return;if(!S.PIX_D)S.PIX_D={};var todos=[];
-  // Adicionar diaristas
+function rPixDiaristas(){
+  var c=document.getElementById('pix-diaristas-l');
+  if(!c)return;
+  if(!S.PIX_D)S.PIX_D={};
+  var todos=[];
   Object.values(S.DIARISTAS||{}).forEach(function(arr){
     arr.forEach(function(n){
-      var existe=todos.some(function(x){return x.toLowerCase()===n.toLowerCase();});
-      if(!existe)todos.push(n);
+      var ja=todos.some(function(x){return x.toLowerCase()===n.toLowerCase();});
+      if(!ja)todos.push(n);
     });
   });
-  // Adicionar usuários não-consultor que não estão na lista
   (S.US||[]).forEach(function(u){
-    if(u.n&&u.r!=='Consultor'){
-      var existe=todos.some(function(x){return x.toLowerCase()===u.n.toLowerCase();});
-      if(!existe)todos.push(u.n);
-    }
+    if(!u.n||u.r==='Consultor')return;
+    var ja=todos.some(function(x){return x.toLowerCase()===u.n.toLowerCase();});
+    if(!ja)todos.push(u.n);
   });
-  // Mesclar PIX_D: se há Negao e negão, unificar no nome que está em todos[]
-  var pixNorm={};
-  Object.keys(S.PIX_D||{}).forEach(function(k){
-    var match=todos.find(function(t){return t.toLowerCase()===k.toLowerCase();});
-    var canonical=match||k;
-    if(!pixNorm[canonical]||(S.PIX_D[k].chave&&!pixNorm[canonical].chave)){
-      pixNorm[canonical]=S.PIX_D[k];
+  if(!todos.length){
+    c.innerHTML='<p style="color:#aaa;font-size:12px;padding:6px">Nenhum colaborador cadastrado.</p>';
+    return;
+  }
+  c.innerHTML='';
+  todos.forEach(function(n){
+    var k=n.replace(/[^a-zA-Z0-9]/g,'_');
+    var pk=Object.keys(S.PIX_D).find(function(x){return x.toLowerCase()===n.toLowerCase();})||n;
+    var d=S.PIX_D[pk]||{};
+    var chave=typeof d==='string'?d:(d.chave||'');
+    var titular=typeof d==='string'?'':(d.titular||'');
+    var temPix=chave.trim().length>0;
+    var wrap=document.createElement('div');
+    wrap.style.cssText='background:#f9f9f9;border:1.5px solid '+(temPix?'#4CAF50':'#ddd')+';border-radius:10px;padding:10px;margin-bottom:8px';
+    var hdr=document.createElement('div');
+    hdr.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px';
+    var ttl=document.createElement('span');
+    ttl.style.cssText='font-size:13px;font-weight:700;color:#1B5E20';
+    ttl.textContent='👤 '+n+(temPix?' ✅':'');
+    hdr.appendChild(ttl);
+    if(temPix){
+      var xBtn=document.createElement('button');
+      xBtn.style.cssText='padding:3px 10px;background:#fff;border:1px solid #e57373;border-radius:6px;font-size:11px;color:#c62828;cursor:pointer';
+      xBtn.textContent='🗑 Excluir';
+      (function(nm){xBtn.onclick=function(){excluirPix(nm);};})(n);
+      hdr.appendChild(xBtn);
     }
+    wrap.appendChild(hdr);
+    function makeRow(label,id,ph,val){
+      var row=document.createElement('div');
+      row.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:4px';
+      var lbl=document.createElement('span');
+      lbl.style.cssText='font-size:12px;color:#555;min-width:80px';
+      lbl.textContent=label;
+      var inp=document.createElement('input');
+      inp.type='text';inp.id=id;inp.placeholder=ph;inp.value=val;
+      inp.style.cssText='flex:1;padding:6px;border:1px solid #ddd;border-radius:8px;font-size:13px';
+      row.appendChild(lbl);row.appendChild(inp);
+      return row;
+    }
+    wrap.appendChild(makeRow('💰 Chave Pix','pix-d-'+k,'CPF, email, tel, aleatória...',chave));
+    wrap.appendChild(makeRow('🪪 Favorecido','tit-d-'+k,'Nome do titular da chave',titular));
+    var sBtn=document.createElement('button');
+    sBtn.style.cssText='width:100%;margin-top:6px;padding:8px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer';
+    sBtn.textContent='💾 Salvar Pix';
+    (function(nm,key){sBtn.onclick=function(){salvarPix(nm,key);};})(n,k);
+    wrap.appendChild(sBtn);
+    c.appendChild(wrap);
   });
-  S.PIX_D=pixNorm;if(!todos.length){c.innerHTML='<div style="font-size:12px;color:#aaa;padding:6px">Nenhum colaborador cadastrado.</div>';return;}c.innerHTML=todos.map(function(n){var k=n.replace(/[^a-zA-Z0-9]/g,'_');var d=S.PIX_D[n]||{};var chave=typeof d==='string'?d:(d.chave||'');var titular=typeof d==='string'?'':(d.titular||'');var temPix=chave.trim().length>0;var nEsc=n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");return '<div style="background:#f9f9f9;border:1px solid '+(temPix?'#4CAF50':'#eee')+';border-radius:10px;padding:10px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;font-weight:700;color:#1B5E20">👤 '+n+(temPix?' ✅':'')+'</span>'+(temPix?'<button onclick="excluirPixDiarista(\''+nEsc+'\')" style="background:none;border:1px solid #ffcdd2;border-radius:6px;padding:3px 8px;font-size:11px;color:#c62828;cursor:pointer">🗑 Excluir</button>':'')+'</div><div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;gap:6px;align-items:center"><span style="font-size:12px;color:#555;min-width:80px">💰 Chave Pix</span><input type="text" id="pix-d-'+k+'" placeholder="CPF, email, tel, aleatória..." value="'+chave+'" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div><div style="display:flex;gap:6px;align-items:center"><span style="font-size:12px;color:#555;min-width:80px">🪪 Favorecido</span><input type="text" id="tit-d-'+k+'" placeholder="Nome do titular da chave" value="'+titular+'" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div><button class="savb" style="width:100%;margin-top:2px" onclick="salvarPixDiarista(\''+nEsc+'\',\''+k+'\')" >💾 Salvar Pix</button></div></div>';}).join('');}
-function salvarPixDiarista(nome,k){
+}
+function salvarPix(nome,k){
   if(!S.PIX_D)S.PIX_D={};
   var chave=(document.getElementById('pix-d-'+k)||{}).value||'';
   var titular=(document.getElementById('tit-d-'+k)||{}).value||'';
   S.PIX_D[nome]={chave:chave.trim(),titular:titular.trim()};
   salvar();
-  if(S.cfgGS&&navigator.onLine)setTimeout(function(){salvarNuvem(null);},500);
-  // Feedback visual no botão sem re-renderizar tudo
-  var btn=event&&event.target;
-  if(btn&&btn.tagName==='BUTTON'){var orig=btn.textContent;btn.textContent='✅ Salvo!';setTimeout(function(){btn.textContent=orig;},1500);}
-  // Atualizar só a borda do card para mostrar que foi salvo
-  var card=document.getElementById('pix-d-'+k);
-  if(card){var parent=card.closest('div[style*="border"]');if(parent)parent.style.borderColor='#4CAF50';}
+  if(S.cfgGS&&navigator.onLine)setTimeout(function(){salvarNuvem(null);},800);
+  var inp=document.getElementById('pix-d-'+k);
+  if(inp){
+    var w=inp.parentElement&&inp.parentElement.parentElement&&inp.parentElement.parentElement.parentElement;
+    if(w){
+      w.style.borderColor='#4CAF50';
+      var btns=w.querySelectorAll('button');
+      btns.forEach(function(b){
+        if(b.textContent.indexOf('Salvar')>=0){
+          var t=b.textContent;b.textContent='✅ Salvo!';
+          setTimeout(function(){b.textContent=t;},1500);
+        }
+      });
+    }
+  }
 }
-function excluirPixDiarista(nome){if(!confirm('Excluir PIX de '+nome+'?'))return;if(S.PIX_D&&S.PIX_D[nome])delete S.PIX_D[nome];salvar();if(S.cfgGS&&navigator.onLine)setTimeout(function(){salvarNuvem(null);},500);rPixDiaristas();}
+function excluirPix(nome){
+  if(!confirm('Excluir PIX de '+nome+'?'))return;
+  var key=Object.keys(S.PIX_D||{}).find(function(x){return x.toLowerCase()===nome.toLowerCase();});
+  if(key)delete S.PIX_D[key];
+  salvar();
+  if(S.cfgGS&&navigator.onLine)setTimeout(function(){salvarNuvem(null);},800);
+  rPixDiaristas();
+}
+
 
 // Inicializar PIX_D se não existir
 if(!S.PIX_D) S.PIX_D={};
@@ -2800,50 +2767,18 @@ if(!S.PIX_D) S.PIX_D={};
 var pastoSelecionadoNoMapa = '';
 var loteSelecionadoNoMapa  = '';
 
-function aoClicarNoLoteDoMapa(pasto, loteNome){
+function aoClicarNoLoteDoMapa(pasto, lote){
   pastoSelecionadoNoMapa = pasto;
-  loteSelecionadoNoMapa  = loteNome;
-  var lote=(S.LOTES||[]).find(function(l){return l.nome===loteNome;});
-  var t=document.getElementById('mapa-opcoes-title');
-  if(t) t.textContent=pasto+(loteNome?' — '+loteNome:'');
-  var sub=document.getElementById('mapa-opcoes-sub');
-  if(sub) sub.textContent=lote?lote.qtd+' animais · '+(lote.peso||0)+' kg/cab':'';
-  // Mostrar botão Editar só para admin
-  var admDiv=document.getElementById('mapa-opcoes-adm');
-  var isAdm=CU&&(CU.r==='Consultor'||CU.r==='Dono');
-  if(admDiv) admDiv.style.display=isAdm?'block':'none';
-  var m=document.getElementById('mapa-opcoes-modal');
-  if(m){m.style.display='flex';m.onclick=function(e){if(e.target===m)fecharModalOpcoes();};}
-}
-
-function _editarAlocacaoModal(){
-  fecharModalOpcoes();
-  // Abre o modal de alocação completo (admin)
-  var area=MAPA_AREAS.find(function(a){return a.label===pastoSelecionadoNoMapa||a.id===pastoSelecionadoNoMapa;});
-  if(area) abrirMapaModal(area,'mapa-pins-main');
-  else if(document.getElementById('mapa-pins')) abrirMapaModal(MAPA_AREAS[0],'mapa-pins');
+  loteSelecionadoNoMapa  = lote;
+  var t = document.getElementById('mapa-opcoes-title');
+  if(t) t.textContent = (lote ? '🐄 '+lote+' · ' : '') + pasto;
+  var m = document.getElementById('mapa-opcoes-modal');
+  if(m) m.classList.add('open');
 }
 
 function fecharModalOpcoes(){
-  var m=document.getElementById('mapa-opcoes-modal');
-  if(m) m.style.display='none';
-}
-
-function registrarStatusCocho(status){
-  fecharModalOpcoes();
-  var faz=CU&&CU.fs&&CU.fs.length?CU.fs[0]:Object.keys(S.FAZ||{})[0]||'';
-  var r={tipo:'cocho',faz:faz,n:CU?CU.n:'',area:pastoSelecionadoNoMapa||'',lote:loteSelecionadoNoMapa||'',status:status,dt:TD,ts:new Date().toISOString()};
-  if(!S.rT)S.rT=[];
-  S.rT.push(r);
-  try{enviarDado(r);}catch(ex){}
-  salvar();
-  var label=status==='vazio'?'Cocho vazio registrado':'Cocho cheio registrado';
-  var t=document.createElement('div');
-  t.textContent=label+' - '+(pastoSelecionadoNoMapa||'');
-  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:'+(status==='vazio'?'#E65100':'#1B5E20')+';color:#fff;padding:11px 24px;border-radius:20px;font-size:13px;font-weight:700;z-index:99999';
-  document.body.appendChild(t);
-  setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .4s';},1500);
-  setTimeout(function(){if(t.parentNode)document.body.removeChild(t);},2000);
+  var m = document.getElementById('mapa-opcoes-modal');
+  if(m) m.classList.remove('open');
 }
 
 function irParaTrato(){
@@ -2879,156 +2814,24 @@ function irParaMudancaPasto(){
 
 </script>
 <!-- ══ MODAL OPÇÕES DO MAPA (vaqueiro) ══ -->
-<div id="mapa-opcoes-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:flex-end;justify-content:center">
-  <div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:480px;overflow-y:auto;max-height:85vh;box-shadow:0 -4px 32px rgba(0,0,0,.2)">
-    <div style="display:flex;justify-content:center;padding:10px 0 4px"><div style="width:36px;height:4px;background:#e0e0e0;border-radius:2px"></div></div>
-    <div style="padding:10px 20px 12px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:flex-start">
-      <div>
-        <div style="font-size:10px;color:#aaa;font-weight:700;letter-spacing:.5px;text-transform:uppercase">Area selecionada</div>
-        <div style="font-size:17px;font-weight:800;color:#1B5E20;margin-top:2px" id="mapa-opcoes-title">-</div>
-        <div style="font-size:12px;color:#888;margin-top:1px" id="mapa-opcoes-sub"></div>
-      </div>
-      <button onclick="fecharModalOpcoes()" style="width:30px;height:30px;border-radius:50%;background:#f5f5f5;border:none;font-size:18px;color:#888;cursor:pointer">x</button>
+<div class="edit-modal" id="mapa-opcoes-modal">
+  <div class="edit-box" style="max-width:320px;text-align:center">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <span style="font-size:15px;font-weight:700;color:#1B5E20" id="mapa-opcoes-title">Área Selecionada</span>
+      <span onclick="fecharModalOpcoes()" style="cursor:pointer;font-size:26px;color:#aaa;line-height:1">&times;</span>
     </div>
-    <div style="padding:14px 20px 28px;display:flex;flex-direction:column;gap:10px">
-      <button onclick="irParaTrato()" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:linear-gradient(135deg,#1B5E20,#2E7D32);border:none;border-radius:14px;cursor:pointer;width:100%;text-align:left">
-        <div style="width:42px;height:42px;border-radius:11px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px">&#127807;</div>
-        <div style="flex:1"><div style="font-size:15px;font-weight:800;color:#fff">Trato de Cocho</div><div style="font-size:11px;color:rgba(255,255,255,.75)">Registrar suplemento fornecido</div></div>
-        <div style="color:rgba(255,255,255,.5);font-size:20px">&#8250;</div>
+    <p style="font-size:13px;color:#666;margin-bottom:18px">O que você deseja fazer nesta área?</p>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <button onclick="irParaTrato()" class="sbtn" style="margin-top:0;background:#2E7D32;font-size:15px;padding:14px 10px;border-radius:14px">
+        🌾 Trato de Cocho
       </button>
-      <button onclick="irParaMudancaPasto()" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:linear-gradient(135deg,#0D47A1,#1565C0);border:none;border-radius:14px;cursor:pointer;width:100%;text-align:left">
-        <div style="width:42px;height:42px;border-radius:11px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px">&#8635;</div>
-        <div style="flex:1"><div style="font-size:15px;font-weight:800;color:#fff">Mudanca de Pasto</div><div style="font-size:11px;color:rgba(255,255,255,.75)">Mover lote para outra area</div></div>
-        <div style="color:rgba(255,255,255,.5);font-size:20px">&#8250;</div>
+      <button onclick="irParaMudancaPasto()" class="sbtn" style="margin-top:0;background:#1565C0;font-size:15px;padding:14px 10px;border-radius:14px">
+        🔄 Mover / Alocar Gado
       </button>
-      <div style="display:flex;gap:8px">
-        <button onclick="registrarStatusCocho('vazio')" style="flex:1;padding:13px 8px;background:#FFF3E0;border:2px solid #FF6F00;border-radius:14px;cursor:pointer;font-size:13px;font-weight:700;color:#E65100">Cocho Vazio</button>
-        <button onclick="registrarStatusCocho('cheio')" style="flex:1;padding:13px 8px;background:#E8F5E9;border:2px solid #2E7D32;border-radius:14px;cursor:pointer;font-size:13px;font-weight:700;color:#1B5E20">Cocho Cheio</button>
-      </div>
-      <!-- Editar alocação — só para Admin/Consultor/Dono -->
-      <div id="mapa-opcoes-adm" style="display:none">
-        <button onclick="_editarAlocacaoModal()" style="width:100%;padding:11px;background:#f5f5f5;border:1px solid #ddd;border-radius:10px;font-size:13px;color:#555;cursor:pointer;font-weight:600">&#9998; Editar alocacao desta area</button>
-      </div>
-      <button onclick="fecharModalOpcoes()" style="padding:10px;background:none;border:1px solid #eee;border-radius:10px;font-size:13px;color:#aaa;cursor:pointer">Cancelar</button>
     </div>
+    <button onclick="fecharModalOpcoes()" style="margin-top:14px;width:100%;padding:10px;background:none;border:1px solid #ddd;border-radius:10px;font-size:13px;color:#999;cursor:pointer">Cancelar</button>
   </div>
 </div>
 
-
-<script>
-// ══ ZOOM + PAN NO MAPA ══
-(function(){
-  var wrap = null, zw = null;
-  var scale = 1, minScale = 1, maxScale = 4;
-  var tx = 0, ty = 0;
-  var lastDist = 0, lastTx = 0, lastTy = 0;
-  var isPinching = false, isDragging = false;
-  var dragStart = {x:0, y:0};
-
-  function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
-
-  function applyTransform(){
-    if(!zw) return;
-    // Limitar pan
-    var ww = wrap.offsetWidth;
-    var wh = wrap.offsetHeight;
-    var maxTx = ww * (scale - 1);
-    var maxTy = wh * (scale - 1);
-    tx = clamp(tx, -maxTx, 0);
-    ty = clamp(ty, -maxTy, 0);
-    zw.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
-    zw.style.transformOrigin = '0 0';
-  }
-
-  function dist(t){ return Math.hypot(t[0].clientX-t[1].clientX, t[0].clientY-t[1].clientY); }
-  function mid(t){ return {x:(t[0].clientX+t[1].clientX)/2, y:(t[0].clientY+t[1].clientY)/2}; }
-
-  function init(){
-    wrap = document.getElementById('mapa-outer');
-    zw   = document.getElementById('mapa-zoom-wrap');
-    if(!wrap || !zw) return;
-
-    // Esconder dica após 3s
-    var hint = document.getElementById('mapa-zoom-hint');
-    if(hint) setTimeout(function(){ hint.style.opacity='0'; hint.style.transition='opacity .5s'; },3000);
-
-    wrap.addEventListener('touchstart', function(e){
-      if(e.touches.length === 2){
-        isPinching = true; isDragging = false;
-        lastDist = dist(e.touches);
-        lastTx = tx; lastTy = ty;
-        e.preventDefault();
-      } else if(e.touches.length === 1 && scale > 1){
-        isDragging = true; isPinching = false;
-        dragStart = {x: e.touches[0].clientX - tx, y: e.touches[0].clientY - ty};
-        e.preventDefault();
-      }
-    }, {passive:false});
-
-    wrap.addEventListener('touchmove', function(e){
-      if(isPinching && e.touches.length === 2){
-        var d = dist(e.touches);
-        var m = mid(e.touches);
-        var rect = wrap.getBoundingClientRect();
-        var px = m.x - rect.left;
-        var py = m.y - rect.top;
-        var newScale = clamp(scale * (d / lastDist), minScale, maxScale);
-        // Zoom centrado no ponto médio
-        tx = px - (px - tx) * (newScale / scale);
-        ty = py - (py - ty) * (newScale / scale);
-        scale = newScale;
-        lastDist = d;
-        applyTransform();
-        e.preventDefault();
-      } else if(isDragging && e.touches.length === 1){
-        tx = e.touches[0].clientX - dragStart.x;
-        ty = e.touches[0].clientY - dragStart.y;
-        applyTransform();
-        e.preventDefault();
-      }
-    }, {passive:false});
-
-    wrap.addEventListener('touchend', function(e){
-      if(e.touches.length < 2) isPinching = false;
-      if(e.touches.length === 0) isDragging = false;
-    }, {passive:true});
-
-    // Duplo toque: zoom in/reset
-    var lastTap = 0;
-    wrap.addEventListener('touchend', function(e){
-      if(isPinching || isDragging) return;
-      var now = Date.now();
-      if(now - lastTap < 300){
-        if(scale > 1){ scale=1; tx=0; ty=0; }
-        else { scale=2.5; tx=-(wrap.offsetWidth*0.75); ty=-(wrap.offsetHeight*0.75); }
-        applyTransform();
-      }
-      lastTap = now;
-    }, {passive:true});
-
-    // Mouse wheel no desktop
-    wrap.addEventListener('wheel', function(e){
-      e.preventDefault();
-      var rect = wrap.getBoundingClientRect();
-      var px = e.clientX - rect.left;
-      var py = e.clientY - rect.top;
-      var delta = e.deltaY > 0 ? 0.85 : 1.18;
-      var newScale = clamp(scale * delta, minScale, maxScale);
-      tx = px - (px - tx) * (newScale / scale);
-      ty = py - (py - ty) * (newScale / scale);
-      scale = newScale;
-      applyTransform();
-    }, {passive:false});
-  }
-
-  // Inicializar após render do mapa
-  document.addEventListener('DOMContentLoaded', function(){
-    setTimeout(init, 500);
-  });
-  // Re-inicializar quando mapa é aberto
-  window._initMapaZoom = init;
-})();
-
-</script>
 </body>
 </html>
