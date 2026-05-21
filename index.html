@@ -792,10 +792,10 @@ const EI=[null,{em:'💩',ti:'Escore 1 — Firmes e secas',re:'💡 Reduzir fibr
 const PL={diaria:'Diária',insumo:'Insumos',trato:'Trato cocho',escore:'Escore fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',mapa:'Mapa',config:'Config.'};
 const TABS=[{id:'painel',l:'📊 Painel',p:'painel'},{id:'cantina',l:'🏪 Cantina',p:'cantina'},{id:'estoque',l:'📦 Estoque',p:'estoque'},{id:'mapa',l:'🗺️ Mapa',p:'mapa'},{id:'config',l:'⚙️ Config.',p:'config'},{id:'consultor',l:'🌿 Visão Geral',p:'config'}];
 const ACTS=[{id:'diaria',l:'Lançar diária',s:'Serviço do dia',ic:'👤',c:'gr',p:'diaria'},{id:'insumo',l:'Insumos',s:'Depósito → campo',ic:'📦',c:'bl',p:'insumo'},{id:'trato',l:'Trato de cocho',s:'Proteinado, sal...',ic:'🛠',c:'tl',p:'trato'},{id:'lote',l:'Lotes',s:'Cadastro de lotes',ic:'🐄',c:'gr',p:'config'},{id:'escore',l:'Escore de fezes',s:'Avaliação do gado',ic:'🔬',c:'pu',p:'escore'}];
-const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbz1YxiaWGyCHKVugjEsuDyj2YtlHrtr-81ZItMYmr-V4RL5rQk1dOujv78LhVWUwllS/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},'Fazenda Santa Cruz':{cochos:['Lote 01','Lote 02','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+'],gasUrl:'',sheetId:''}},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:1,config:0}},{n:'Elisangela',i:'E',c:'av-p',r:'Cantina',pin:'2222',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,mapa:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:38,peso:402,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 02',qtd:85,peso:360,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 03',qtd:79,peso:316,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 04',qtd:61,peso:269,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 05',qtd:69,peso:228,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 06',qtd:121,peso:204,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio'],'Fazenda Santa Cruz':[]},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbz1YxiaWGyCHKVugjEsuDyj2YtlHrtr-81ZItMYmr-V4RL5rQk1dOujv78LhVWUwllS/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{}};
+const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},'Fazenda Santa Cruz':{cochos:['Lote 01','Lote 02','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+'],gasUrl:'',sheetId:''}},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:1,config:0}},{n:'Elisangela',i:'E',c:'av-p',r:'Cantina',pin:'2222',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,mapa:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:38,peso:402,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 02',qtd:85,peso:360,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 03',qtd:79,peso:316,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 04',qtd:61,peso:269,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 05',qtd:69,peso:228,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 06',qtd:121,peso:204,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio'],'Fazenda Santa Cruz':[]},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbz_4lLjUZpbY-eUhQsfGi1CSbzUBsk-NokZJ5fRpgH_cyK5XahihYTM7I67HjZy1omnJg/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{}};
 
 let S=null;
-function carregar(){try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=JSON.parse(r);S={...DEFAULT,...s};if(!S.US||!S.US.length)S.US=DEFAULT.US;if(!S.FAZ||!Object.keys(S.FAZ).length)S.FAZ=DEFAULT.FAZ;if(!S.EST||!Object.keys(S.EST).length)S.EST=DEFAULT.EST;if(s.FAZ&&Object.keys(s.FAZ).length)S.FAZ=s.FAZ;if(s.US&&s.US.length)S.US=s.US;['rD','rT','rC','rE','mEst','queue','rDesp','LOTES'].forEach(k=>{if(!Array.isArray(S[k]))S[k]=[]});if(!S.DIARISTAS)S.DIARISTAS={};if(!S.NOTAS)S.NOTAS={};if(!S.AREAS)S.AREAS={};if(!S.MAPA_ALOC)S.MAPA_ALOC={};if(!Array.isArray(S.SERVS))S.SERVS=DEFAULT.SERVS;if(!S.PR)S.PR=DEFAULT.PR;}else{S=JSON.parse(JSON.stringify(DEFAULT));}}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}}
+function carregar(){try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=JSON.parse(r);S={...DEFAULT,...s};S.cfgGS=DEFAULT.cfgGS;if(!S.US||!S.US.length)S.US=DEFAULT.US;if(!S.FAZ||!Object.keys(S.FAZ).length)S.FAZ=DEFAULT.FAZ;if(!S.EST||!Object.keys(S.EST).length)S.EST=DEFAULT.EST;if(s.FAZ&&Object.keys(s.FAZ).length)S.FAZ=s.FAZ;if(s.US&&s.US.length)S.US=s.US;['rD','rT','rC','rE','mEst','queue','rDesp','LOTES'].forEach(k=>{if(!Array.isArray(S[k]))S[k]=[]});if(!S.DIARISTAS)S.DIARISTAS={};if(!S.NOTAS)S.NOTAS={};if(!S.AREAS)S.AREAS={};if(!S.MAPA_ALOC)S.MAPA_ALOC={};if(!Array.isArray(S.SERVS))S.SERVS=DEFAULT.SERVS;if(!S.PR)S.PR=DEFAULT.PR;}else{S=JSON.parse(JSON.stringify(DEFAULT));}}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}}
 function salvarLocal(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(S));return true;}catch(e){return false;}}
 function salvar(){salvarLocal();if(S.cfgGS&&navigator.onLine){clearTimeout(salvar._t);salvar._t=setTimeout(()=>salvarNuvem(null),2000);}return true;}
 salvar._t=null;
@@ -816,36 +816,7 @@ function atualizarPinDots(){for(let i=0;i<4;i++){const d=document.getElementById
 function validarPin(){const u=S.US[loginUser];if(pinBuf===u.pin){entrar(loginUser);}else{for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.add('e');document.getElementById('pin-err').textContent='PIN incorreto. Tente novamente.';setTimeout(()=>{pinBuf='';atualizarPinDots();},1000);}}
 function entrar(i){CU=S.US[i];document.getElementById('login-screen').style.display='none';document.getElementById('app').style.display='block';document.getElementById('un').textContent=CU.n.split(' ')[0];
   var banner=document.getElementById('ver-banner');
-  if(banner)banner.style.display=(CU.r==='Consultor')?'block':'none';const v=isV(CU),a=isA(CU);const tb=document.getElementById('tabs');if(a){tb.style.display='flex';buildTabs();}else tb.style.display='none';if(v){document.getElementById('h-nome').textContent='Olá, '+CU.n.split(' ')[0]+'! 👋';document.getElementById('h-data').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});popAll();buildActs();sp('home',false);rUlt();}else{popAll();const first=TABS.find(t=>CU.p[t.p]);if(first)goTab(first.id);}initSync();
-  // Aviso de dados pendentes ao entrar
-  setTimeout(function(){
-    if(!navigator.onLine) return; // offline, não avisar
-    if(!S.cfgGS) return; // sem URL configurada
-    var pendRC = (S.rC||[]).filter(function(r){return !r._apagado;}).length;
-    var pendRD = (S.rD||[]).filter(function(r){return !r._apagado&&!r.pago;}).length;
-    var pendQ  = (S.queue||[]).length;
-    if(pendQ > 0 || (pendRC > 0 && CU && CU.r === 'Cantina')){
-      var t = document.createElement('div');
-      var msg = pendQ > 0
-        ? pendQ + ' registro(s) aguardando envio para a planilha.'
-        : pendRC + ' lançamento(s) de cantina para sincronizar.';
-      t.innerHTML = '&#128228; <b>' + msg + '</b><br><small>Toque para enviar agora</small>';
-      t.style.cssText = 'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);'
-        + 'background:#1B5E20;color:#fff;padding:12px 20px;border-radius:14px;'
-        + 'font-size:13px;z-index:99999;cursor:pointer;text-align:center;'
-        + 'box-shadow:0 4px 16px rgba(0,0,0,.3);max-width:280px;line-height:1.5';
-      t.onclick = function(){
-        document.body.removeChild(t);
-        salvarNuvem(function(ok){
-          alert(ok ? '✅ Dados enviados para a planilha!' : '⚠️ Erro ao enviar. Verifique a conexão.');
-        });
-      };
-      document.body.appendChild(t);
-      // Fechar automaticamente em 8s se não tocar
-      setTimeout(function(){if(t.parentNode)document.body.removeChild(t);}, 8000);
-    }
-  }, 2000);
-  const cc=document.getElementById('ins-cad-card');if(cc)cc.style.display=(CU.p&&CU.p.config)?'block':'none';}
+  if(banner)banner.style.display=(CU.r==='Consultor')?'block':'none';const v=isV(CU),a=isA(CU);const tb=document.getElementById('tabs');if(a){tb.style.display='flex';buildTabs();}else tb.style.display='none';if(v){document.getElementById('h-nome').textContent='Olá, '+CU.n.split(' ')[0]+'! 👋';document.getElementById('h-data').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});popAll();buildActs();sp('home',false);rUlt();}else{popAll();const first=TABS.find(t=>CU.p[t.p]);if(first)goTab(first.id);}initSync();const cc=document.getElementById('ins-cad-card');if(cc)cc.style.display=(CU.p&&CU.p.config)?'block':'none';}
 function doLogout(){CU=null;loginFaz=null;loginUser=null;pinBuf='';document.getElementById('app').style.display='none';document.getElementById('tabs').style.display='none';document.getElementById('login-screen').style.display='flex';document.getElementById('step-faz').style.display='block';document.getElementById('step-user').style.display='none';document.getElementById('step-pin').style.display='none';if(window.history&&window.history.replaceState)window.history.replaceState({},document.title,window.location.pathname);mostrarFazendas();}
 
 // ═══ NAVEGAÇÃO ═══
@@ -902,16 +873,14 @@ enviarDado(r);showOk('ok-d');document.getElementById('d-val').value='';document.
 function envI(){const ins=[...document.querySelectorAll('#ins-l .ir')].map(r=>({p:r.querySelector('.ip').value,q:parseFloat(r.querySelector('.iq').value)||0,u:r.querySelector('.iu').value})).filter(x=>x.p&&x.q>0);if(!ins.length){alert('Adicione pelo menos um produto.');return;}const dt=(document.getElementById('i-data')||{}).value||TD;const dest=(document.getElementById('i-dest')||{}).value;baixar(ins,dt,dest);const r={tipo:'insumo',faz:(document.getElementById('i-faz')||{}).value,n:CU.n,dt,ins,dest};S.rD.push(r);enviarDado(r);showOk('ok-i');document.getElementById('i-dest').value='';document.getElementById('ins-l').innerHTML=`<div class="ir"><div style="flex:2"><div class="lbl">Produto</div><select class="ip" onchange="updInsInfo(this)"></select></div><div style="flex:1"><div class="lbl">Qtd</div><input type="number" class="iq" placeholder="0" min="0" step="0.5"></div><div style="flex:1"><div class="lbl">Unid.</div><select class="iu"><option>saco</option><option>kg</option><option>litro</option></select></div></div><div class="ins-info" style="display:none"></div>`;updInsProd();setTimeout(()=>{sp('home',false);rUlt();},1600);}
 function envT(){const co=(document.getElementById('t-cocho')||{}).value;const pr=(document.getElementById('t-prod')||{}).value;const q=parseFloat((document.getElementById('t-qtd')||{}).value)||0;if(!co||!pr||!q){alert('Selecione lote, produto e quantidade.');return;}const dt=(document.getElementById('t-data')||{}).value||TD;const faz=(document.getElementById('t-faz')||{}).value;const cab=parseInt((document.getElementById('t-cab')||{}).value)||0;if(pr&&S.EST&&S.EST[pr])baixar([{p:pr,q,u:'saco'}],dt,co);const pps=(S.EST&&pr&&S.EST[pr]&&S.EST[pr].peso_saco)?S.EST[pr].peso_saco:30;const r={tipo:'trato',faz,n:CU.n,dt,co,pr,q,unid:'saco',kg_fornecido:q*pps,cab,sit:coSel,escore:esTSel,obs:(document.getElementById('t-obs')||{}).value};S.rT.push(r);enviarDado(r);showOk('ok-t');document.getElementById('t-qtd').value='';document.getElementById('t-cab').value='';document.getElementById('t-obs').value='';document.querySelectorAll('#pg-trato .bopt').forEach(b=>b.classList.remove('sel'));coSel='';esTSel='';setTimeout(()=>{sp('home',false);rUlt();},1600);}
 function envEs(){if(!esSel){alert('Selecione o escore.');return;}const lote=(document.getElementById('es-cocho')||{}).value;let nanim=parseInt((document.getElementById('es-nanim')||{}).value)||0;if(!nanim){const lt=S.LOTES.find(l=>l.nome===lote);if(lt)nanim=lt.qtd;}const r={tipo:'escore',faz:(document.getElementById('es-faz')||{}).value,co:lote,dt:(document.getElementById('es-data')||{}).value||TD,es:esSel,cab:nanim,obs:(document.getElementById('es-obs')||{}).value,n:CU.n};S.rE.push(r);enviarDado(r);showOk('ok-es');esSel=0;document.querySelectorAll('.ec').forEach(c=>c.classList.remove('sel'));document.getElementById('es-box').style.display='none';document.getElementById('es-nanim').value='';document.getElementById('es-obs').value='';setTimeout(()=>{sp('home',false);rUlt();},1600);}
-function envCt(){const faz=(document.getElementById('ct-faz')||{}).value;const resp=(document.getElementById('ct-resp')||{}).value;if(!faz||!resp){alert('Preencha fazenda e responsável.');return;}let total=0,det='';if(cobT==='ref'){total=QT.cafe*S.PR.cafe+QT.almoco*S.PR.almoco+QT.janta*S.PR.janta;det=`Café:${QT.cafe} Alm:${QT.almoco} Jan:${QT.janta}`;}else{const n=parseInt((document.getElementById('ct-np')||{}).value)||0;const v=parseFloat((document.getElementById('ct-vd')||{}).value)||0;total=n*v;det=`${n}p×R$${v.toFixed(2)}`;}const r={tipo:'cantina',faz,resp,dt:(document.getElementById('ct-data')||{}).value||TD,det,total,ts:new Date().toISOString()};S.rC.push(r);salvar();
+function envCt(){const faz=(document.getElementById('ct-faz')||{}).value;const resp=(document.getElementById('ct-resp')||{}).value;if(!faz||!resp){alert('Preencha fazenda e responsável.');return;}let total=0,det='';if(cobT==='ref'){total=QT.cafe*S.PR.cafe+QT.almoco*S.PR.almoco+QT.janta*S.PR.janta;det=`Café:${QT.cafe} Alm:${QT.almoco} Jan:${QT.janta}`;}else{const n=parseInt((document.getElementById('ct-np')||{}).value)||0;const v=parseFloat((document.getElementById('ct-vd')||{}).value)||0;total=n*v;det=`${n}p×R$${v.toFixed(2)}`;}const r={tipo:'cantina',faz,resp,dt:(document.getElementById('ct-data')||{}).value||TD,det,total};S.rC.push(r);salvar();
   // Envio direto para planilha com campos na ordem correta da aba Cantina
   if(S.cfgGS&&navigator.onLine){
     var gasUrl=getFazGasUrl(faz);
     var row={acao:'append_cantina',dt:r.dt,faz:r.faz,resp:r.resp,det:r.det,total:r.total};
     fetch(gasUrl+'?'+new URLSearchParams({data:JSON.stringify(row)}),{method:'GET',mode:'no-cors'}).catch(function(){});
   }
-  enviarDado(r);
-  setTimeout(function(){if(S.cfgGS&&navigator.onLine)salvarNuvem(null);},2000);
-  showOk('ok-ct');['cafe','almoco','janta'].forEach(x=>QT[x]=0);['c','a','j'].forEach(x=>{const e=document.getElementById('q'+x);if(e)e.textContent='0';});calcCt();}
+  enviarDado(r);showOk('ok-ct');['cafe','almoco','janta'].forEach(x=>QT[x]=0);['c','a','j'].forEach(x=>{const e=document.getElementById('q'+x);if(e)e.textContent='0';});calcCt();}
 function entEst(){const p=(document.getElementById('ep')||{}).value;const q=parseFloat((document.getElementById('eq')||{}).value)||0;if(!p||!q){alert('Selecione produto e quantidade.');return;}S.EST[p].q=parseFloat((S.EST[p].q+q).toFixed(2));S.mEst.push({p,q,u:S.EST[p].u,t:'entrada',dt:(document.getElementById('ed')||{}).value||TD,loc:(document.getElementById('eo')||{}).value});salvar();rEst();showOk('ok-e');document.getElementById('eq').value='';document.getElementById('eo').value='';}
 
 // ═══ RENDER ═══
@@ -1004,23 +973,7 @@ function initSync(){atualizarSync();window.addEventListener('online',()=>{atuali
 
 // ═══ NUVEM ═══
 function updCloudStatus(st){const el=document.getElementById('cloud-status');if(!el)return;const icons={saving:'☁️ Salvando...',loading:'☁️ Carregando...',ok:'✅ Nuvem OK',err:'⚠️ Offline'};el.textContent=icons[st]||'';el.style.color=st==='err'?'#C62828':(st==='ok'?'#2E7D32':'#888');}
-function salvarNuvem(cb){if(!S.cfgGS){if(cb)cb(false);return;}updCloudStatus('saving');const cfg={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:S.LOTES,AREAS:S.AREAS||{},MAPA_ALOC:S.MAPA_ALOC||{},DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT,rD:S.rD,rT:S.rT,rC:S.rC,rE:S.rE,rDesp:S.rDesp,mEst:S.mEst,NOTAS:S.NOTAS||{},PIX_D:S.PIX_D||{},PIX_D:S.PIX_D||{}};Object.keys(S.FAZ).forEach(faz=>{const gu=getFazGasUrl(faz);if(gu){const fc={FAZ:{},US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:(S.LOTES||[]).filter(l=>l.faz===faz),DIARISTAS:{}};fc.FAZ[faz]=S.FAZ[faz];fc.DIARISTAS[faz]=(S.DIARISTAS||{})[faz]||[];fc.rD=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rT=(S.rT||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rC=(S.rC||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rE=(S.rE||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rDesp=(S.rDesp||[]).filter(r=>!r._apagado&&r.faz===faz);fc.PIX_D=S.PIX_D||{};fetch(gu+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(fc)),{method:'GET',mode:'no-cors'}).catch(()=>{});}});// Tentar fetch normal primeiro, fallback para no-cors
-  var url=S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfg));
-  fetch(url,{method:'GET'})
-    .then(function(r){
-      if(r.ok||r.type==='opaque'){updCloudStatus('ok');if(cb)cb(true);}
-      else{updCloudStatus('err');if(cb)cb(false);}
-    })
-    .catch(function(){
-      // CORS bloqueou -- usar no-cors silencioso + confirmar via ping
-      fetch(url,{method:'GET',mode:'no-cors'})
-        .then(function(){
-          // no-cors funciona mas não tem resposta — considerar OK
-          updCloudStatus('ok');
-          if(cb)cb(true);
-        })
-        .catch(function(){updCloudStatus('err');if(cb)cb(false);});
-    });}
+function salvarNuvem(cb){if(!S.cfgGS){if(cb)cb(false);return;}updCloudStatus('saving');const cfg={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:S.LOTES,AREAS:S.AREAS||{},MAPA_ALOC:S.MAPA_ALOC||{},DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT,rD:S.rD,rT:S.rT,rC:S.rC,rE:S.rE,rDesp:S.rDesp,mEst:S.mEst,NOTAS:S.NOTAS||{},PIX_D:S.PIX_D||{},PIX_D:S.PIX_D||{}};Object.keys(S.FAZ).forEach(faz=>{const gu=getFazGasUrl(faz);if(gu){const fc={FAZ:{},US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:(S.LOTES||[]).filter(l=>l.faz===faz),DIARISTAS:{}};fc.FAZ[faz]=S.FAZ[faz];fc.DIARISTAS[faz]=(S.DIARISTAS||{})[faz]||[];fc.rD=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rT=(S.rT||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rC=(S.rC||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rE=(S.rE||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rDesp=(S.rDesp||[]).filter(r=>!r._apagado&&r.faz===faz);fc.PIX_D=S.PIX_D||{};fetch(gu+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(fc)),{method:'GET',mode:'no-cors'}).catch(()=>{});}});fetch(S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfg)),{method:'GET',mode:'no-cors'}).then(()=>{updCloudStatus('ok');if(cb)cb(true);}).catch(e=>{updCloudStatus('err');if(cb)cb(false);});}
 function carregarNuvem(cb){
   if(!S.cfgGS||!navigator.onLine){if(cb)cb(false);return;}
   updCloudStatus('loading');
@@ -1061,23 +1014,11 @@ function carregarNuvem(cb){
           if(cfg.AREAS)S.AREAS=cfg.AREAS;
           if(cfg.MAPA_ALOC)S.MAPA_ALOC=cfg.MAPA_ALOC;
           if(cfg.DIARISTAS)S.DIARISTAS=cfg.DIARISTAS;
-          // Mesclar registros: combinar nuvem + local sem duplicar
-          function _mesclar(nuvem, local){
-            var result = nuvem ? nuvem.slice() : [];
-            (local||[]).forEach(function(r){
-              var existe = result.some(function(x){
-                return x.ts && r.ts ? x.ts===r.ts : 
-                  (x.dt===r.dt && (x.resp||x.n||'')===(r.resp||r.n||'') && String(x.total||x.v||'')===String(r.total||r.v||''));
-              });
-              if(!existe) result.push(r);
-            });
-            return result;
-          }
-          S.rD=_mesclar(cfg.rD, S.rD);
-          S.rT=_mesclar(cfg.rT, S.rT);
-          S.rC=_mesclar(cfg.rC, S.rC);
-          S.rE=_mesclar(cfg.rE, S.rE);
-          if(cfg.rDesp&&cfg.rDesp.length)S.rDesp=_mesclar(cfg.rDesp, S.rDesp);
+          if(cfg.rD&&cfg.rD.length)S.rD=cfg.rD;
+          if(cfg.rT&&cfg.rT.length)S.rT=cfg.rT;
+          if(cfg.rC&&cfg.rC.length)S.rC=cfg.rC;
+          if(cfg.rE&&cfg.rE.length)S.rE=cfg.rE;
+          if(cfg.rDesp&&cfg.rDesp.length)S.rDesp=cfg.rDesp;
           if(cfg.mEst)S.mEst=cfg.mEst;
           if(cfg.NOTAS)S.NOTAS=cfg.NOTAS;
           if(cfg.PIX_D&&Object.keys(cfg.PIX_D).length)S.PIX_D=cfg.PIX_D;
@@ -2810,45 +2751,9 @@ function gerarPDFPesquisa(){
 }
 
 // ═══ PIX DOS COLABORADORES ═══
-function rPixDiaristas(){
-  var c=document.getElementById('pix-diaristas-l');
-  if(!c) return;
-  if(!S.PIX_D) S.PIX_D={};
-  var todos=[];
-  Object.values(S.DIARISTAS||{}).forEach(function(arr){
-    arr.forEach(function(n){if(!todos.includes(n))todos.push(n);});
-  });
-  if(!todos.length){
-    c.innerHTML='<div style="font-size:12px;color:#aaa;padding:6px">Nenhum colaborador cadastrado ainda.</div>';
-    return;
-  }
-  c.innerHTML=todos.map(function(n){
-    var k=n.replace(/[^a-zA-Z0-9]/g,'_');
-    var d=S.PIX_D[n]||{};
-    var chave=typeof d==='string'?d:(d.chave||'');
-    var titular=typeof d==='string'?'':(d.titular||'');
-    return '<div style="background:#f9f9f9;border:1px solid #eee;border-radius:10px;padding:10px;margin-bottom:8px">'
-      +'<div style="font-size:13px;font-weight:700;color:#1B5E20;margin-bottom:8px">👤 '+n+'</div>'
-      +'<div style="display:flex;flex-direction:column;gap:6px">'
-      +'<div style="display:flex;gap:6px;align-items:center">'
-      +'<span style="font-size:12px;color:#555;min-width:80px">💰 Chave Pix</span>'
-      +'<input type="text" id="pix-d-'+k+'" placeholder="CPF, email, tel, aleatória..." value="'+chave+'" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div>'
-      +'<div style="display:flex;gap:6px;align-items:center">'
-      +'<span style="font-size:12px;color:#555;min-width:80px">🪪 Favorecido</span>'
-      +'<input type="text" id="tit-d-'+k+'" placeholder="Nome do titular da chave" value="'+titular+'" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div>'
-      +'<button class="savb" style="width:100%;margin-top:2px" onclick="salvarPixDiarista(\''+n.replace(/'/g,"&#39;")+"','"+k+'\')">💾 Salvar Pix</button>'
-      +'</div></div>';
-  }).join('');
-}
-
-function salvarPixDiarista(nome,k){
-  if(!S.PIX_D) S.PIX_D={};
-  var chave=(document.getElementById('pix-d-'+k)||{}).value||'';
-  var titular=(document.getElementById('tit-d-'+k)||{}).value||'';
-  S.PIX_D[nome]={chave:chave.trim(),titular:titular.trim()};
-  salvar();
-  alert('✅ Pix de '+nome+' salvo!');
-}
+function rPixDiaristas(){var c=document.getElementById('pix-diaristas-l');if(!c)return;if(!S.PIX_D)S.PIX_D={};var todos=[];Object.values(S.DIARISTAS||{}).forEach(function(arr){arr.forEach(function(n){if(!todos.includes(n))todos.push(n);});});(S.US||[]).forEach(function(u){if(u.n&&u.r!=='Consultor'&&!todos.includes(u.n))todos.push(u.n);});if(!todos.length){c.innerHTML='<div style="font-size:12px;color:#aaa;padding:6px">Nenhum colaborador cadastrado.</div>';return;}c.innerHTML=todos.map(function(n){var k=n.replace(/[^a-zA-Z0-9]/g,'_');var d=S.PIX_D[n]||{};var chave=typeof d==='string'?d:(d.chave||'');var titular=typeof d==='string'?'':(d.titular||'');var temPix=chave.trim().length>0;var nEsc=n.replace(/\\/g,'\\\\').replace(/'/g,"\\'");return '<div style="background:#f9f9f9;border:1px solid '+(temPix?'#4CAF50':'#eee')+';border-radius:10px;padding:10px;margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;font-weight:700;color:#1B5E20">👤 '+n+(temPix?' ✅':'')+'</span>'+(temPix?'<button onclick="excluirPixDiarista(\''+nEsc+'\')" style="background:none;border:1px solid #ffcdd2;border-radius:6px;padding:3px 8px;font-size:11px;color:#c62828;cursor:pointer">🗑 Excluir</button>':'')+'</div><div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;gap:6px;align-items:center"><span style="font-size:12px;color:#555;min-width:80px">💰 Chave Pix</span><input type="text" id="pix-d-'+k+'" placeholder="CPF, email, tel, aleatória..." value="'+chave+'" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div><div style="display:flex;gap:6px;align-items:center"><span style="font-size:12px;color:#555;min-width:80px">🪪 Favorecido</span><input type="text" id="tit-d-'+k+'" placeholder="Nome do titular da chave" value="'+titular+'" style="flex:1;padding:6px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div><button class="savb" style="width:100%;margin-top:2px" onclick="salvarPixDiarista(\''+nEsc+'\',\''+k+'\')" >💾 Salvar Pix</button></div></div>';}).join('');}
+function salvarPixDiarista(nome,k){if(!S.PIX_D)S.PIX_D={};var chave=(document.getElementById('pix-d-'+k)||{}).value||'';var titular=(document.getElementById('tit-d-'+k)||{}).value||'';S.PIX_D[nome]={chave:chave.trim(),titular:titular.trim()};salvar();if(S.cfgGS&&navigator.onLine)setTimeout(function(){salvarNuvem(null);},500);rPixDiaristas();}
+function excluirPixDiarista(nome){if(!confirm('Excluir PIX de '+nome+'?'))return;if(S.PIX_D&&S.PIX_D[nome])delete S.PIX_D[nome];salvar();if(S.cfgGS&&navigator.onLine)setTimeout(function(){salvarNuvem(null);},500);rPixDiaristas();}
 
 // Inicializar PIX_D se não existir
 if(!S.PIX_D) S.PIX_D={};
