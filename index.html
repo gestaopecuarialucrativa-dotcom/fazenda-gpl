@@ -990,10 +990,11 @@ function rHomeMapa(){
   if(wrap.offsetWidth === 0){ setTimeout(rHomeMapa, 150); return; }
   // Se imagem ainda não carregou, agendar retry (celular com internet lenta)
   var img = wrap.querySelector('img');
+  // Aguardar máx 2s pela imagem - depois renderiza pins de qualquer forma
   if(img && !img.complete){
     img._retryCount = (img._retryCount||0) + 1;
-    if(img._retryCount < 25){ setTimeout(rHomeMapa, 200); return; }
-    // após 5s, renderiza mesmo sem imagem
+    if(img._retryCount < 10){ setTimeout(rHomeMapa, 200); return; }
+    // após 2s: renderiza pins mesmo sem imagem (fundo verde)
   }
 
   // Calcular altura real da imagem para proporção correta dos pins
@@ -1545,9 +1546,15 @@ function _renderPinsNoContainer(contId, resumoId){
         +'<div style="font-size:8px;color:'+cor.bd+';font-weight:700;line-height:1.2">'+lote.nome+'</div>';
 
     } else {
-      box.style.cssText='background:'+cor.bgV+';border:1.5px dashed '+cor.bd+';border-radius:8px;padding:3px 5px;text-align:center;min-width:40px;box-shadow:0 1px 4px rgba(0,0,0,0.4)';
-      box.innerHTML='<div style="font-size:8px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,1);line-height:1.3">'+lbl+'</div>'
-        +'<div style="font-size:11px;color:rgba(255,255,255,0.8)">＋</div>';
+      var isAdmView = CU&&(CU.r==='Consultor'||CU.r==='Dono');
+      if(isAdmView){
+        box.style.cssText='background:'+cor.bgV+';border:1.5px dashed '+cor.bd+';border-radius:8px;padding:3px 5px;text-align:center;min-width:40px;box-shadow:0 1px 4px rgba(0,0,0,0.4)';
+        box.innerHTML='<div style="font-size:8px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,1);line-height:1.3">'+lbl+'</div>'
+          +'<div style="font-size:11px;color:rgba(255,255,255,0.8)">＋</div>';
+      } else {
+        box.style.cssText='background:transparent;border:none;width:22px;height:22px';
+        box.innerHTML='';
+      }
     }
 
     var haste=document.createElement('div');
@@ -2633,27 +2640,8 @@ var ctHistPer = 'hoje';
 function sCtHist(el, per){ rCtHist(); }
 // rCtHist: ver função calendário abaixo
 
-// Atualizar histórico ao navegar para cantina — recarrega nuvem primeiro
-var _spOrig = sp;
-sp = function(id, back, prev){
-  _spOrig(id, back, prev);
-  if(id==='cantina'){
-    setTimeout(function(){
-      if(S.cfgGS && navigator.onLine){
-        carregarNuvem(function(ok){ if(ok) setTimeout(rCtHist,100); });
-      } else {
-        rCtHist();
-      }
-    }, 50);
-  }
-};
+// sp cantina e envCt já chamam rCtHist diretamente
 
-// Atualizar após enviar cantina
-var _envCtOrig = envCt;
-envCt = function(){
-  _envCtOrig();
-  setTimeout(rCtHist, 200);
-};
 
 
 // ═══ SYNC VIA ARQUIVO (para Safari) ═══
