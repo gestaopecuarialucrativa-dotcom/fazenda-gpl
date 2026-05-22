@@ -946,14 +946,16 @@ function entrar(i){CU=S.US[i];document.getElementById('login-screen').style.disp
   var banner=document.getElementById('ver-banner');
   if(banner)banner.style.display=(CU.r==='Consultor')?'block':'none';const v=isV(CU),a=isA(CU);const tb=document.getElementById('tabs');if(a){tb.style.display='flex';buildTabs();}else tb.style.display='none';if(v){document.getElementById('h-nome').textContent='Olá, '+CU.n.split(' ')[0]+'! 👋';document.getElementById('h-data').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});popAll();buildActs();sp('home',false);rUlt();}else{popAll();const first=TABS.find(t=>CU.p[t.p]);if(first)goTab(first.id);}initSync();if(S.cfgGS&&navigator.onLine){carregarNuvem(function(ok){
   if(ok){
-    // Re-renderizar tudo com dados da nuvem
     try{popAll();}catch(e){}
     try{buildActs();}catch(e){}
     try{rUlt();}catch(e){}
-    try{rHomeMapa();}catch(e){}
     try{_sincMapa();}catch(e){}
-    // Se estiver em tela que precisa de refresh
     if(CU&&(CU.r==='Consultor'||CU.r==='Dono')){try{rConsultor();}catch(e){}}
+    // Resetar retry da imagem e forçar rHomeMapa após delay
+    var _img = document.getElementById('home-mapa-img');
+    if(_img){ _img._retryCount = 0; }
+    setTimeout(function(){try{rHomeMapa();}catch(e){}}, 300);
+    setTimeout(function(){try{rHomeMapa();}catch(e){}}, 800);
   }
 });}const cc=document.getElementById('ins-cad-card');if(cc)cc.style.display=(CU.p&&CU.p.config)?'block':'none';
 // Mostrar legenda do mapa só para Consultor/Dono
@@ -977,10 +979,10 @@ function rHomeMapa(){
   if(wrap.offsetWidth === 0){ setTimeout(rHomeMapa, 150); return; }
   // Se imagem ainda não carregou, agendar retry (celular com internet lenta)
   var img = wrap.querySelector('img');
-  if(img && !img.complete && !img._retryDone){
+  if(img && !img.complete){
     img._retryCount = (img._retryCount||0) + 1;
-    if(img._retryCount < 20){ setTimeout(rHomeMapa, 200); return; }
-    img._retryDone = true; // depois de 4s, renderizar sem imagem
+    if(img._retryCount < 25){ setTimeout(rHomeMapa, 200); return; }
+    // após 5s, renderiza mesmo sem imagem
   }
 
   // Calcular altura real da imagem para proporção correta dos pins
@@ -1040,7 +1042,7 @@ function rHomeMapa(){
   }
 }
 
-function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home')setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa')setTimeout(function(){try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'inline-block':'none';},250);if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();if(S.cfgGS){carregarNuvem(function(ok){if(ok)rCtHist();});}else{rCtHist();}},50);if(id==='home')setTimeout(function(){try{rHomeMapa();buildActs();}catch(e){}},80);window.scrollTo(0,0);}
+function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home')setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');if(wrap&&wrap.offsetWidth===0){setTimeout(_rmapa,150);return;}try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'inline-block':'none';};setTimeout(_rmapa,200);}if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();if(S.cfgGS){carregarNuvem(function(ok){if(ok)rCtHist();});}else{rCtHist();}},50);if(id==='home')setTimeout(function(){try{rHomeMapa();buildActs();}catch(e){}},80);window.scrollTo(0,0);}
 function goBack(){if(prevPage)sp(prevPage,false);else sp('home',false);}
 function isV(u){return u.p.diaria||u.p.insumo||u.p.trato||u.p.escore;}
 function isA(u){return u.p.cantina||u.p.estoque||u.p.painel||u.p.config;}
@@ -2622,10 +2624,13 @@ function rCtHist(){
   var resp = CU ? CU.n : '';
   var lista = (S.rC||[]).filter(function(r){
     if(r._apagado) return false;
-    var rNome = (r.resp||r.n||'').trim().toLowerCase();
-    var uNome = resp.trim().toLowerCase();
-    if(rNome !== uNome) return false;
-    return !r.validado && !r.pago;
+    // Mostrar todos os lançamentos da cantineira (validados ou não)
+    if(resp){
+      var rNome = (r.resp||r.n||'').trim().toLowerCase();
+      var uNome = resp.trim().toLowerCase();
+      if(rNome && uNome && rNome !== uNome) return false;
+    }
+    return true;
   });
   var el = document.getElementById('ct-hist-lista');
   var tot = document.getElementById('ct-hist-total');
