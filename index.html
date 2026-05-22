@@ -327,10 +327,18 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     <div style="color:#A5D6A7;font-size:11px;font-weight:600" id="home-mapa-resumo">–</div>
   </div>
   <div style="position:relative;background:#2d5a1b" id="home-mapa-wrap">
-    <img src="https://gestaopecuarialucrativa-dotcom.github.io/fazenda-gpl/mapa.jpeg"
+    <img id="home-mapa-img" src="https://gestaopecuarialucrativa-dotcom.github.io/fazenda-gpl/mapa.jpeg"
       style="width:100%;display:block;opacity:0.92;pointer-events:none"
       onload="try{rHomeMapa();}catch(e){}"
       onerror="this.style.minHeight='220px';this.style.background='#3a6b25';this.removeAttribute('src')">
+    <script>
+    (function(){
+      var img = document.getElementById('home-mapa-img');
+      if(img && img.complete && img.naturalWidth > 0){
+        setTimeout(function(){ try{rHomeMapa();}catch(e){}}, 80);
+      }
+    })();
+    </script>
     <div id="home-mapa-pins" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:5;pointer-events:none"></div>
   </div>
   <!-- Métricas rápidas -->
@@ -1017,33 +1025,54 @@ function rHomeMapa(){
 }
 
 function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home')setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);
-if(id==='mapa')setTimeout(function(){try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'inline-block':'none';},100);if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();if(S.cfgGS){carregarNuvem(function(ok){if(ok)rCtHist();});}else{rCtHist();}},50);if(id==='home')setTimeout(function(){try{rHomeMapa();buildActs();}catch(e){}},80);window.scrollTo(0,0);}
+if(id==='mapa'){
+  var _initMapa = function(){
+    try{
+      var img = document.getElementById('mapa-img-sat');
+      // Forçar re-render se imagem cacheada (naturalWidth já disponível mas layout pode ser 0)
+      if(img && img.complete && img.naturalWidth > 0){
+        img.style.display='none';
+        img.offsetHeight; // force reflow
+        img.style.display='block';
+      }
+      rMapaMain(); rMapa();
+    }catch(e){console.error('rMapa:',e);}
+    var be=document.getElementById('btn-mapa-editor');
+    if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'inline-block':'none';
+  };
+  setTimeout(_initMapa, 80);
+  setTimeout(_initMapa, 300);
+}if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();if(S.cfgGS){carregarNuvem(function(ok){if(ok)rCtHist();});}else{rCtHist();}},50);if(id==='home')setTimeout(function(){try{rHomeMapa();buildActs();}catch(e){}},80);window.scrollTo(0,0);}
 function goBack(){if(prevPage)sp(prevPage,false);else sp('home',false);}
 function isV(u){return u.p.diaria||u.p.insumo||u.p.trato||u.p.escore;}
 function isA(u){return u.p.cantina||u.p.estoque||u.p.painel||u.p.config;}
 function buildActs(){
   var isDono = CU && (CU.r==='Dono' || CU.r==='Consultor');
-  var isColab = CU && (CU.r==='Colaborador' || CU.r==='Vaqueiro');
+  var temDiaria = CU && CU.p && CU.p.diaria;
+  var temInsumo = isDono && CU.p && CU.p.insumo;
+  var temEscore = CU && CU.p && CU.p.escore;
+  // Contar quantos botões da segunda linha
+  var segundaLinha = (temInsumo ? 1 : 0) + (temEscore ? 1 : 0);
   var btns = '';
-  // Lançar Diária - largura total
-  if(CU && CU.p && CU.p.diaria){
+  // Lançar Diária - sempre ocupa linha inteira
+  if(temDiaria){
     btns += '<div class="abtn gr" style="grid-column:1/-1;cursor:pointer" onclick="sp(\'diaria\',true,\'home\')">'
       +'<span style="font-size:26px;display:block;margin-bottom:6px">👤</span>'
       +'<div class="abtn-l">Lançar diária</div>'
       +'<div class="abtn-s">Serviço do dia</div>'
       +'</div>';
   }
-  // Insumos - só Consultor/Dono
-  if(isDono && CU.p && CU.p.insumo){
-    btns += '<div class="abtn bl" style="cursor:pointer" onclick="sp(\'insumo\',true,\'home\')">'
+  // Se só um botão de segunda linha → ocupa linha inteira também
+  var colStyle = segundaLinha === 1 ? 'grid-column:1/-1;' : '';
+  if(temInsumo){
+    btns += '<div class="abtn bl" style="'+colStyle+'cursor:pointer" onclick="sp(\'insumo\',true,\'home\')">'
       +'<span style="font-size:26px;display:block;margin-bottom:6px">📦</span>'
       +'<div class="abtn-l">Insumos</div>'
       +'<div class="abtn-s">Depósito → campo</div>'
       +'</div>';
   }
-  // Escore de Fezes
-  if(CU && CU.p && CU.p.escore){
-    btns += '<div class="abtn pu" style="cursor:pointer" onclick="sp(\'escore\',true,\'home\')">'
+  if(temEscore){
+    btns += '<div class="abtn pu" style="'+colStyle+'cursor:pointer" onclick="sp(\'escore\',true,\'home\')">'
       +'<span style="font-size:26px;display:block;margin-bottom:6px">🔬</span>'
       +'<div class="abtn-l">Escore de fezes</div>'
       +'<div class="abtn-s">Avaliação do gado</div>'
@@ -3140,6 +3169,8 @@ function aoClicarNoLoteDoMapa(pasto, lote){
 function fecharModalOpcoes(){
   var m = document.getElementById('mapa-opcoes-modal');
   if(m) m.classList.remove('open');
+  // Re-renderizar pins após fechar (evita pins sumindo)
+  setTimeout(function(){ try{ rMapaMain(); rMapa(); }catch(e){} }, 50);
 }
 
 
