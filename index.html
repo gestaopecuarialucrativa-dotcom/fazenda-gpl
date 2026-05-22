@@ -944,7 +944,7 @@ function atualizarPinDots(){for(let i=0;i<4;i++){const d=document.getElementById
 function validarPin(){const u=S.US[loginUser];if(pinBuf===u.pin){entrar(loginUser);}else{for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.add('e');document.getElementById('pin-err').textContent='PIN incorreto. Tente novamente.';setTimeout(()=>{pinBuf='';atualizarPinDots();},1000);}}
 function entrar(i){CU=S.US[i];document.getElementById('login-screen').style.display='none';document.getElementById('app').style.display='block';document.getElementById('un').textContent=CU.n.split(' ')[0];
   var banner=document.getElementById('ver-banner');
-  if(banner)banner.style.display=(CU.r==='Consultor')?'block':'none';const v=isV(CU),a=isA(CU);const tb=document.getElementById('tabs');if(a){tb.style.display='flex';buildTabs();}else tb.style.display='none';if(v){document.getElementById('h-nome').textContent='Olá, '+CU.n.split(' ')[0]+'! 👋';document.getElementById('h-data').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});popAll();buildActs();sp('home',false);rUlt();}else{popAll();const first=TABS.find(t=>CU.p[t.p]);if(first)goTab(first.id);}initSync();const cc=document.getElementById('ins-cad-card');if(cc)cc.style.display=(CU.p&&CU.p.config)?'block':'none';
+  if(banner)banner.style.display=(CU.r==='Consultor')?'block':'none';const v=isV(CU),a=isA(CU);const tb=document.getElementById('tabs');if(a){tb.style.display='flex';buildTabs();}else tb.style.display='none';if(v){document.getElementById('h-nome').textContent='Olá, '+CU.n.split(' ')[0]+'! 👋';document.getElementById('h-data').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});popAll();buildActs();sp('home',false);rUlt();}else{popAll();const first=TABS.find(t=>CU.p[t.p]);if(first)goTab(first.id);}initSync();if(S.cfgGS&&navigator.onLine){carregarNuvem(function(ok){if(ok){rUlt();try{rHomeMapa();}catch(e){}}});}const cc=document.getElementById('ins-cad-card');if(cc)cc.style.display=(CU.p&&CU.p.config)?'block':'none';
 // Mostrar legenda do mapa só para Consultor/Dono
 var _isConsOrDono=CU&&(CU.r==='Consultor'||CU.r==='Dono');
 ['mapa-lote-legenda'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display=_isConsOrDono?'flex':'none';});}
@@ -963,7 +963,14 @@ function rHomeMapa(){
   var resumo = document.getElementById('home-mapa-resumo');
   if(!cont||!wrap) return;
   // Se ainda não visível (display:none), reagendar
-  if(wrap.offsetWidth === 0){ setTimeout(rHomeMapa, 120); return; }
+  if(wrap.offsetWidth === 0){ setTimeout(rHomeMapa, 150); return; }
+  // Se imagem ainda não carregou, agendar retry (celular com internet lenta)
+  var img = wrap.querySelector('img');
+  if(img && !img.complete && !img._retryDone){
+    img._retryCount = (img._retryCount||0) + 1;
+    if(img._retryCount < 20){ setTimeout(rHomeMapa, 200); return; }
+    img._retryDone = true; // depois de 4s, renderizar sem imagem
+  }
 
   // Calcular altura real da imagem para proporção correta dos pins
   var img = wrap.querySelector('img');
@@ -1022,7 +1029,7 @@ function rHomeMapa(){
   }
 }
 
-function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home')setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa')setTimeout(function(){try{var img=document.getElementById('mapa-img-sat');if(img&&img.complete&&img.naturalWidth>0){img.style.display='none';img.offsetHeight;img.style.display='block';}rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'inline-block':'none';},150);if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();if(S.cfgGS){carregarNuvem(function(ok){if(ok)rCtHist();});}else{rCtHist();}},50);if(id==='home')setTimeout(function(){try{rHomeMapa();buildActs();}catch(e){}},80);window.scrollTo(0,0);}
+function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home')setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa')setTimeout(function(){try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'inline-block':'none';},250);if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();if(S.cfgGS){carregarNuvem(function(ok){if(ok)rCtHist();});}else{rCtHist();}},50);if(id==='home')setTimeout(function(){try{rHomeMapa();buildActs();}catch(e){}},80);window.scrollTo(0,0);}
 function goBack(){if(prevPage)sp(prevPage,false);else sp('home',false);}
 function isV(u){return u.p.diaria||u.p.insumo||u.p.trato||u.p.escore;}
 function isA(u){return u.p.cantina||u.p.estoque||u.p.painel||u.p.config;}
@@ -1454,6 +1461,11 @@ var mapaAreaAtual = null;
 function _renderPinsNoContainer(contId, resumoId){
   var cont = document.getElementById(contId);
   if(!cont) return;
+  // Se o container ainda não tem largura (layout pendente), reagendar
+  if(cont.offsetWidth === 0){
+    setTimeout(function(){ _renderPinsNoContainer(contId, resumoId); }, 150);
+    return;
+  }
   if(!S.MAPA_ALOC) S.MAPA_ALOC={};
   var lotes = S.LOTES||[];
   var ocupados=0;
