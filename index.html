@@ -331,14 +331,6 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
       style="width:100%;display:block;opacity:0.92;pointer-events:none"
       onload="try{rHomeMapa();}catch(e){}"
       onerror="this.style.minHeight='220px';this.style.background='#3a6b25';this.removeAttribute('src')">
-    <script>
-    (function(){
-      var img = document.getElementById('home-mapa-img');
-      if(img && img.complete && img.naturalWidth > 0){
-        setTimeout(function(){ try{rHomeMapa();}catch(e){}}, 80);
-      }
-    })();
-    </script>
     <div id="home-mapa-pins" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:5;pointer-events:none"></div>
   </div>
   <!-- Métricas rápidas -->
@@ -970,9 +962,15 @@ function rHomeMapa(){
   var wrap = document.getElementById('home-mapa-wrap');
   var resumo = document.getElementById('home-mapa-resumo');
   if(!cont||!wrap) return;
+  // Se ainda não visível (display:none), reagendar
+  if(wrap.offsetWidth === 0){ setTimeout(rHomeMapa, 120); return; }
 
   // Calcular altura real da imagem para proporção correta dos pins
   var img = wrap.querySelector('img');
+  // Se imagem cacheada e sem onload, forçar uma vez
+  if(img && img.complete && img.naturalWidth > 0 && cont.children.length === 0){
+    // Imagem já carregada mas pins não renderizados ainda - continuar
+  }
   // Altura proporcional à imagem real (sem limite)
   var wW = wrap.offsetWidth||300;
   wrap.style.height = 'auto';
