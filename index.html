@@ -699,6 +699,9 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.55);padding:6px 10px;display:flex;align-items:center;gap:8px;z-index:30">
     <span style="font-size:11px;color:#A5D6A7;font-weight:600" id="mapa-main-resumo">Toque em qualquer piquete</span>
     <button id="btn-mapa-editor" onclick="_abrirEditor()" style="display:none;background:#FF6F00;color:#fff;border:none;border-radius:14px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">✏️ Editor</button>
+    <button onclick="mapaZoomOut()" style="background:rgba(255,255,255,.18);color:#fff;border:none;border-radius:10px;padding:5px 10px;font-size:14px;font-weight:700;cursor:pointer;line-height:1" title="Zoom −">−</button>
+    <button onclick="mapaZoomReset()" style="background:rgba(255,255,255,.13);color:#A5D6A7;border:none;border-radius:10px;padding:5px 9px;font-size:10px;font-weight:700;cursor:pointer;line-height:1" title="Reset zoom">⟳</button>
+    <button onclick="mapaZoomIn()" style="background:rgba(255,255,255,.18);color:#fff;border:none;border-radius:10px;padding:5px 10px;font-size:14px;font-weight:700;cursor:pointer;line-height:1" title="Zoom +">+</button>
     <button onclick="abrirSelPiquete('main')" style="margin-left:auto;background:#1B5E20;color:#fff;border:1.5px solid #4CAF50;border-radius:14px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation">+ Alocar</button>
   </div>
 </div>
@@ -1125,8 +1128,8 @@ function _renderPinsNoContainer(contId, resumoId){
     btn.type='button';
     btn.style.cssText=[
       'position:absolute',
-      'left:'+a.x+'%',
-      'top:'+a.y+'%',
+      'left:'+(((S.MAPA_COORDS||{})[a.id]||{}).x||a.x)+'%',
+      'top:'+(((S.MAPA_COORDS||{})[a.id]||{}).y||a.y)+'%',
       'transform:translate(-50%,-50%)',
       'pointer-events:auto',
       'cursor:pointer',
@@ -2892,6 +2895,279 @@ function confirmarMudancaPasto(){
   setTimeout(function(){t.style.opacity='0';t.style.transition='opacity .4s';},1800);
   setTimeout(function(){if(t.parentNode)document.body.removeChild(t);},2300);
 }
+
+/* ═══════════════════════════════════════════════════════
+   ZOOM POR PINCH NO MAPA
+   ═══════════════════════════════════════════════════════ */
+(function(){
+  var wrap = null, scale = 1, lastDist = 0, startScale = 1;
+  var MIN_SCALE = 1, MAX_SCALE = 4;
+
+  function getWrap(){
+    return wrap || (wrap = document.getElementById('mapa-wrap-main'));
+  }
+
+  function aplicarZoom(s){
+    scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, s));
+    var w = getWrap();
+    if(!w) return;
+    // overflow visible para ver os pins além da borda
+    w.style.transformOrigin = '50% 50%';
+    w.style.transform = 'scale('+scale+')';
+    if(scale > 1){
+      w.style.overflow = 'visible';
+      w.parentElement.style.overflow = 'hidden';
+    } else {
+      w.style.overflow = 'hidden';
+      if(w.parentElement) w.parentElement.style.overflow = '';
+    }
+  }
+
+  function dist(t){
+    var dx = t[0].clientX - t[1].clientX;
+    var dy = t[0].clientY - t[1].clientY;
+    return Math.sqrt(dx*dx+dy*dy);
+  }
+
+  document.addEventListener('touchstart', function(e){
+    if(e.touches.length === 2){
+      var w = getWrap();
+      if(!w) return;
+      var rect = w.getBoundingClientRect();
+      var inMap = e.touches[0].clientX >= rect.left && e.touches[0].clientX <= rect.right &&
+                  e.touches[0].clientY >= rect.top  && e.touches[0].clientY <= rect.bottom;
+      if(inMap){
+        lastDist = dist(e.touches);
+        startScale = scale;
+      }
+    }
+  },{passive:true});
+
+  document.addEventListener('touchmove', function(e){
+    if(e.touches.length === 2 && lastDist > 0){
+      var d = dist(e.touches);
+      aplicarZoom(startScale * (d / lastDist));
+    }
+  },{passive:true});
+
+  document.addEventListener('touchend', function(e){
+    if(e.touches.length < 2) lastDist = 0;
+  },{passive:true});
+
+  // Botões de zoom na barra do mapa (serão inseridos via _abrirEditor)
+  window.mapaZoomIn  = function(){ aplicarZoom(scale * 1.3); };
+  window.mapaZoomOut = function(){ aplicarZoom(scale / 1.3); };
+  window.mapaZoomReset = function(){ aplicarZoom(1); };
+})();
+
+/* ═══════════════════════════════════════════════════════
+   COORDENADAS CUSTOMIZADAS
+   Salvas em S.MAPA_COORDS = {id: {x, y}}
+   ═══════════════════════════════════════════════════════ */
+function _coordsEfetivas(a){
+  var custom = (S.MAPA_COORDS||{})[a.id];
+  if(custom) return {x: custom.x, y: custom.y};
+  return {x: a.x, y: a.y};
+}
+
+/* ═══════════════════════════════════════════════════════
+   EDITOR DE COORDENADAS DOS PINS
+   ═══════════════════════════════════════════════════════ */
+var _editorAtivo = false;
+
+function _abrirEditor(){
+  if(_editorAtivo){ _fecharEditor(); return; }
+  _editorAtivo = true;
+  var btn = document.getElementById('btn-mapa-editor');
+  if(btn){ btn.textContent = '✔ Salvar Editor'; btn.style.background = '#C62828'; }
+
+  var wrap = document.getElementById('mapa-wrap-main');
+  var cont = document.getElementById('mapa-pins-main');
+  if(!cont || !wrap) return;
+
+  // Mostrar aviso
+  var aviso = document.createElement('div');
+  aviso.id = 'editor-aviso';
+  aviso.style.cssText = 'position:absolute;top:6px;left:50%;transform:translateX(-50%);background:rgba(255,111,0,.92);color:#fff;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;z-index:100;white-space:nowrap;pointer-events:none';
+  aviso.textContent = '✏️ Arraste os pins para reposicionar';
+  wrap.appendChild(aviso);
+
+  // Re-renderizar em modo editor: todos os pins ficam arrastáveis
+  _renderPinsEditor(cont, wrap);
+}
+
+function _fecharEditor(){
+  _editorAtivo = false;
+  var btn = document.getElementById('btn-mapa-editor');
+  if(btn){ btn.textContent = '✏️ Editor'; btn.style.background = '#FF6F00'; }
+  var aviso = document.getElementById('editor-aviso');
+  if(aviso && aviso.parentNode) aviso.parentNode.removeChild(aviso);
+  // Salvar e re-renderizar normalmente
+  salvar();
+  _sincMapa();
+  // Toast de confirmação
+  var t = document.createElement('div');
+  t.textContent = '✅ Coordenadas salvas!';
+  t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#FF6F00;color:#fff;padding:12px 24px;border-radius:20px;font-size:14px;font-weight:700;z-index:99999;white-space:nowrap';
+  document.body.appendChild(t);
+  setTimeout(function(){ t.style.opacity='0'; t.style.transition='opacity .4s'; }, 1800);
+  setTimeout(function(){ if(t.parentNode) document.body.removeChild(t); }, 2300);
+}
+
+function _renderPinsEditor(cont, wrap){
+  cont.innerHTML = '';
+  if(!S.MAPA_COORDS) S.MAPA_COORDS = {};
+
+  MAPA_AREAS.forEach(function(a){
+    var coords = _coordsEfetivas(a);
+    var aloc = (S.MAPA_ALOC||{})[a.id];
+    var cores = {
+      1:{bg:'#1B5E20',bd:'#4CAF50'},2:{bg:'#B71C1C',bd:'#EF5350'},
+      3:{bg:'#4A148C',bd:'#CE93D8'},4:{bg:'#827717',bd:'#F9A825'}
+    };
+    var cor = a.tipo==='modulo'?(cores[a.modulo]||cores[1]):{bg:'#2E7D32',bd:'#66BB6A'};
+    var lbl = a.label.replace('MOD:0','M').replace('MOD:','M').replace('/P:0','/P').replace('/P:','/P');
+
+    var pin = document.createElement('div');
+    pin.style.cssText = [
+      'position:absolute',
+      'left:'+coords.x+'%',
+      'top:'+coords.y+'%',
+      'transform:translate(-50%,-50%)',
+      'pointer-events:auto',
+      'cursor:grab',
+      'z-index:50',
+      'touch-action:none',
+      'user-select:none'
+    ].join(';');
+
+    pin.innerHTML = '<div style="background:'+cor.bg+';border:2px solid #FF6F00;border-radius:8px;padding:3px 7px;text-align:center;min-width:44px;box-shadow:0 2px 8px rgba(0,0,0,.7)">'
+      + '<div style="font-size:8px;font-weight:700;color:#FF6F00">✎</div>'
+      + '<div style="font-size:9px;font-weight:700;color:#fff">'+lbl+'</div>'
+      + (aloc ? '<div style="font-size:8px;color:'+cor.bd+'">'+aloc+'</div>' : '')
+      + '</div>';
+
+    // Drag funcional (touch + mouse)
+    (function(pinEl, areaObj){
+      var dragging = false, startX, startY, startLeft, startTop;
+
+      function startDrag(cx, cy){
+        dragging = true;
+        startX = cx; startY = cy;
+        var rect = wrap.getBoundingClientRect();
+        startLeft = parseFloat(pinEl.style.left);
+        startTop  = parseFloat(pinEl.style.top);
+        pinEl.style.cursor = 'grabbing';
+        pinEl.style.zIndex = '99';
+      }
+
+      function moveDrag(cx, cy){
+        if(!dragging) return;
+        var rect = wrap.getBoundingClientRect();
+        var dx = (cx - startX) / rect.width  * 100;
+        var dy = (cy - startY) / rect.height * 100;
+        var nx = Math.max(2, Math.min(98, startLeft + dx));
+        var ny = Math.max(2, Math.min(98, startTop  + dy));
+        pinEl.style.left = nx + '%';
+        pinEl.style.top  = ny + '%';
+      }
+
+      function endDrag(){
+        if(!dragging) return;
+        dragging = false;
+        pinEl.style.cursor = 'grab';
+        pinEl.style.zIndex = '50';
+        // Salvar coordenada
+        if(!S.MAPA_COORDS) S.MAPA_COORDS = {};
+        S.MAPA_COORDS[areaObj.id] = {
+          x: parseFloat(pinEl.style.left),
+          y: parseFloat(pinEl.style.top)
+        };
+      }
+
+      // Touch
+      pinEl.addEventListener('touchstart', function(e){
+        e.stopPropagation();
+        if(e.touches.length===1) startDrag(e.touches[0].clientX, e.touches[0].clientY);
+      },{passive:true});
+      pinEl.addEventListener('touchmove', function(e){
+        e.stopPropagation();
+        if(e.touches.length===1) moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+      },{passive:true});
+      pinEl.addEventListener('touchend', function(e){
+        e.stopPropagation(); endDrag();
+      },{passive:true});
+      // Mouse
+      pinEl.addEventListener('mousedown', function(e){
+        e.stopPropagation(); startDrag(e.clientX, e.clientY);
+        document.addEventListener('mousemove', _onEditorMouseMove);
+        document.addEventListener('mouseup', _onEditorMouseUp);
+        window._editorPinAtual = pinEl;
+        window._editorStartDragFn = moveDrag;
+        window._editorEndDragFn = endDrag;
+      });
+    })(pin, a);
+
+    cont.appendChild(pin);
+  });
+}
+
+window._onEditorMouseMove = function(e){
+  if(window._editorStartDragFn) window._editorStartDragFn(e.clientX, e.clientY);
+};
+window._onEditorMouseUp = function(){
+  if(window._editorEndDragFn) window._editorEndDragFn();
+  document.removeEventListener('mousemove', window._onEditorMouseMove);
+  document.removeEventListener('mouseup', window._onEditorMouseUp);
+  window._editorPinAtual = null;
+  window._editorStartDragFn = null;
+  window._editorEndDragFn = null;
+};
+
+/* ═══════════════════════════════════════════════════════
+   HISTÓRICO DE ÁREA (taxa de lotação, suporte de carga, taxa instantânea)
+   Gravado em S.HIST_AREAS = [{areaId, data, lote, qtd, peso, ha, ...}]
+   ═══════════════════════════════════════════════════════ */
+function salvarHistoricoArea(areaId, loteNome, qtd, peso, operacao){
+  if(!S.HIST_AREAS) S.HIST_AREAS = [];
+  var area = MAPA_AREAS.find(function(a){ return a.id === areaId; });
+  var ha = (S.MAPA_COORDS && S.MAPA_COORDS[areaId] && S.MAPA_COORDS[areaId].ha)
+           || (area ? area.ha : 0) || 0;
+  var taxaLotacao    = ha > 0 ? (qtd / ha).toFixed(2) : null; // cab/ha
+  var taxaInstantanea = ha > 0 && peso > 0 ? ((qtd * peso) / (ha * 1000)).toFixed(3) : null; // UA/ha
+  S.HIST_AREAS.push({
+    areaId:  areaId,
+    label:   area ? area.label : areaId,
+    lote:    loteNome,
+    qtd:     qtd,
+    peso:    peso,
+    ha:      ha,
+    taxaLotacao:     taxaLotacao,
+    taxaInstantanea: taxaInstantanea,
+    operacao: operacao || 'entrada',
+    dt:  TD,
+    ts:  new Date().toISOString()
+  });
+  salvar();
+}
+
+// Sobrecarregar confirmarMudancaPasto para gravar histórico
+var _confirmarMudancaOrig = window.confirmarMudancaPasto;
+window.confirmarMudancaPasto = function(){
+  var dest = (document.getElementById('mud-destino')||{}).value;
+  var loteNome = loteSelecionadoNoMapa||'';
+  var loteObj  = (S.LOTES||[]).find(function(l){ return l.nome===loteNome; });
+  var qtd  = loteObj ? (loteObj.qtd||0)  : 0;
+  var peso = loteObj ? (loteObj.peso||0) : 0;
+  var areaOrigem = MAPA_AREAS.find(function(a){
+    return a.label===pastoSelecionadoNoMapa||a.id===pastoSelecionadoNoMapa;
+  });
+  if(areaOrigem) salvarHistoricoArea(areaOrigem.id, loteNome, qtd, peso, 'saida');
+  if(dest)       salvarHistoricoArea(dest, loteNome, qtd, peso, 'entrada');
+  if(_confirmarMudancaOrig) _confirmarMudancaOrig();
+};
+
+/* (coordenadas customizadas já integradas no _renderPinsNoContainer acima) */
 
 </script>
 <!-- ══ BOTTOM SHEET MAPA ══ -->
