@@ -329,8 +329,8 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <div id="home-mapa-wrap" style="position:relative;min-height:220px;background:#2d5a1b">
     <img id="home-mapa-img" src="https://gestaopecuarialucrativa-dotcom.github.io/fazenda-gpl/mapa.jpeg"
       style="width:100%;display:block;opacity:0.92;pointer-events:none"
-      onload="try{rHomeMapa();}catch(e){}"
-      onerror="this._err=(this._err||0)+1;if(this._err<3){var _s=this.src.split('?')[0];this.src=_s+'?t='+Date.now();}else{this.style.minHeight='220px';this.style.background='#2d5a1b';}">
+      onload="this._loaded=true;try{rHomeMapa();}catch(e){}"
+      onerror="this._loaded=true;try{rHomeMapa();}catch(e){}">
     <div id="home-mapa-pins" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:5;pointer-events:none"></div>
   </div>
   <!-- Métricas rápidas -->
@@ -986,27 +986,8 @@ function rHomeMapa(){
   var wrap = document.getElementById('home-mapa-wrap');
   var resumo = document.getElementById('home-mapa-resumo');
   if(!cont||!wrap) return;
-  // Se ainda não visível (display:none), reagendar
-  if(wrap.offsetWidth === 0){ setTimeout(rHomeMapa, 150); return; }
-  // Se imagem ainda não carregou, agendar retry (celular com internet lenta)
-  var img = wrap.querySelector('img');
-  // Aguardar máx 2s pela imagem - depois renderiza pins de qualquer forma
-  if(img && !img.complete){
-    img._retryCount = (img._retryCount||0) + 1;
-    if(img._retryCount < 10){ setTimeout(rHomeMapa, 200); return; }
-    // após 2s: renderiza pins mesmo sem imagem (fundo verde)
-  }
-
-  // Calcular altura real da imagem para proporção correta dos pins
-  var img = wrap.querySelector('img');
-  // Se imagem cacheada e sem onload, forçar uma vez
-  if(img && img.complete && img.naturalWidth > 0 && cont.children.length === 0){
-    // Imagem já carregada mas pins não renderizados ainda - continuar
-  }
-  // Altura proporcional à imagem real (sem limite)
-  var wW = wrap.offsetWidth||300;
-  wrap.style.height = 'auto';
-  if(img) img.style.height = 'auto';
+  // Se container não visível ainda, reagendar uma vez
+  if(wrap.offsetWidth === 0){ setTimeout(rHomeMapa, 200); return; }
 
   cont.innerHTML='';
   if(!S.MAPA_ALOC) S.MAPA_ALOC={};
@@ -1054,7 +1035,7 @@ function rHomeMapa(){
   }
 }
 
-function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home')setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');if(wrap&&wrap.offsetWidth===0){setTimeout(_rmapa,150);return;}try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'inline-block':'none';};setTimeout(_rmapa,200);}if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();if(S.cfgGS){carregarNuvem(function(ok){if(ok)rCtHist();});}else{rCtHist();}},50);if(id==='home')setTimeout(function(){try{rHomeMapa();buildActs();}catch(e){}},80);window.scrollTo(0,0);}
+function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home'){setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);setTimeout(function(){try{rHomeMapa();}catch(e){}},600);setTimeout(function(){try{rHomeMapa();}catch(e){}},1500);}if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');if(wrap&&wrap.offsetWidth===0){setTimeout(_rmapa,150);return;}try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'inline-block':'none';};setTimeout(_rmapa,200);}if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();if(S.cfgGS){carregarNuvem(function(ok){if(ok)rCtHist();});}else{rCtHist();}},50);if(id==='home')setTimeout(function(){try{rHomeMapa();buildActs();}catch(e){}},100);window.scrollTo(0,0);}
 function goBack(){if(prevPage)sp(prevPage,false);else sp('home',false);}
 function isV(u){return u.p.diaria||u.p.insumo||u.p.trato||u.p.escore;}
 function isA(u){return u.p.cantina||u.p.estoque||u.p.painel||u.p.config;}
