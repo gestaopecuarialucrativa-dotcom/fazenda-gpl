@@ -960,13 +960,11 @@ function entrar(i){CU=S.US[i];document.getElementById('login-screen').style.disp
     try{popAll();}catch(e){}
     try{buildActs();}catch(e){}
     try{rUlt();}catch(e){}
+    try{rPan();}catch(e){}
     try{_sincMapa();}catch(e){}
     if(CU&&(CU.r==='Consultor'||CU.r==='Dono')){try{rConsultor();}catch(e){}}
-    // Resetar retry da imagem e forçar rHomeMapa após delay
-    var _img = document.getElementById('home-mapa-img');
-    if(_img){ _img._retryCount = 0; }
     setTimeout(function(){try{rHomeMapa();}catch(e){}}, 300);
-    setTimeout(function(){try{rHomeMapa();}catch(e){}}, 800);
+    setTimeout(function(){try{rHomeMapa();}catch(e){}}, 1000);
   }
 });}const cc=document.getElementById('ins-cad-card');if(cc)cc.style.display=(CU.p&&CU.p.config)?'block':'none';
 // Mostrar legenda do mapa só para Consultor/Dono
