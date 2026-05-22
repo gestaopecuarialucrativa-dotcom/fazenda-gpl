@@ -944,7 +944,18 @@ function atualizarPinDots(){for(let i=0;i<4;i++){const d=document.getElementById
 function validarPin(){const u=S.US[loginUser];if(pinBuf===u.pin){entrar(loginUser);}else{for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.add('e');document.getElementById('pin-err').textContent='PIN incorreto. Tente novamente.';setTimeout(()=>{pinBuf='';atualizarPinDots();},1000);}}
 function entrar(i){CU=S.US[i];document.getElementById('login-screen').style.display='none';document.getElementById('app').style.display='block';document.getElementById('un').textContent=CU.n.split(' ')[0];
   var banner=document.getElementById('ver-banner');
-  if(banner)banner.style.display=(CU.r==='Consultor')?'block':'none';const v=isV(CU),a=isA(CU);const tb=document.getElementById('tabs');if(a){tb.style.display='flex';buildTabs();}else tb.style.display='none';if(v){document.getElementById('h-nome').textContent='Olá, '+CU.n.split(' ')[0]+'! 👋';document.getElementById('h-data').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});popAll();buildActs();sp('home',false);rUlt();}else{popAll();const first=TABS.find(t=>CU.p[t.p]);if(first)goTab(first.id);}initSync();if(S.cfgGS&&navigator.onLine){carregarNuvem(function(ok){if(ok){rUlt();try{rHomeMapa();}catch(e){}}});}const cc=document.getElementById('ins-cad-card');if(cc)cc.style.display=(CU.p&&CU.p.config)?'block':'none';
+  if(banner)banner.style.display=(CU.r==='Consultor')?'block':'none';const v=isV(CU),a=isA(CU);const tb=document.getElementById('tabs');if(a){tb.style.display='flex';buildTabs();}else tb.style.display='none';if(v){document.getElementById('h-nome').textContent='Olá, '+CU.n.split(' ')[0]+'! 👋';document.getElementById('h-data').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});popAll();buildActs();sp('home',false);rUlt();}else{popAll();const first=TABS.find(t=>CU.p[t.p]);if(first)goTab(first.id);}initSync();if(S.cfgGS&&navigator.onLine){carregarNuvem(function(ok){
+  if(ok){
+    // Re-renderizar tudo com dados da nuvem
+    try{popAll();}catch(e){}
+    try{buildActs();}catch(e){}
+    try{rUlt();}catch(e){}
+    try{rHomeMapa();}catch(e){}
+    try{_sincMapa();}catch(e){}
+    // Se estiver em tela que precisa de refresh
+    if(CU&&(CU.r==='Consultor'||CU.r==='Dono')){try{rConsultor();}catch(e){}}
+  }
+});}const cc=document.getElementById('ins-cad-card');if(cc)cc.style.display=(CU.p&&CU.p.config)?'block':'none';
 // Mostrar legenda do mapa só para Consultor/Dono
 var _isConsOrDono=CU&&(CU.r==='Consultor'||CU.r==='Dono');
 ['mapa-lote-legenda'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display=_isConsOrDono?'flex':'none';});}
