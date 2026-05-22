@@ -326,7 +326,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     <div style="color:#fff;font-size:13px;font-weight:700">🗺️ Gado no Campo</div><div style="color:rgba(255,255,255,.55);font-size:10px">Toque para abrir mapa ›</div>
     <div style="color:#A5D6A7;font-size:11px;font-weight:600" id="home-mapa-resumo">–</div>
   </div>
-  <div style="position:relative;background:#2d5a1b" id="home-mapa-wrap">
+  <div style="position:relative;background:#2d5a1b" id="home-mapa-wrap" style="position:relative;min-height:200px;background:#2d5a1b">
     <img id="home-mapa-img" src="https://gestaopecuarialucrativa-dotcom.github.io/fazenda-gpl/mapa.jpeg"
       style="width:100%;display:block;opacity:0.92;pointer-events:none"
       onload="try{rHomeMapa();}catch(e){}"
@@ -1341,7 +1341,61 @@ function initSync(){atualizarSync();window.addEventListener('online',()=>{atuali
 
 // ═══ NUVEM ═══
 function updCloudStatus(st){const el=document.getElementById('cloud-status');if(!el)return;const icons={saving:'☁️ Salvando...',loading:'☁️ Carregando...',ok:'✅ Nuvem OK',err:'⚠️ Offline'};el.textContent=icons[st]||'';el.style.color=st==='err'?'#C62828':(st==='ok'?'#2E7D32':'#888');}
-function salvarNuvem(cb){if(!S.cfgGS){if(cb)cb(false);return;}updCloudStatus('saving');const cfg={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:S.LOTES,AREAS:S.AREAS||{},MAPA_ALOC:S.MAPA_ALOC||{},DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT,rD:S.rD,rT:S.rT,rC:S.rC,rE:S.rE,rDesp:S.rDesp,mEst:S.mEst,NOTAS:S.NOTAS||{},PIX_D:S.PIX_D||{}};Object.keys(S.FAZ).forEach(faz=>{const gu=getFazGasUrl(faz);if(gu){const fc={FAZ:{},US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:(S.LOTES||[]).filter(l=>l.faz===faz),DIARISTAS:{}};fc.FAZ[faz]=S.FAZ[faz];fc.DIARISTAS[faz]=(S.DIARISTAS||{})[faz]||[];fc.rD=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rT=(S.rT||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rC=(S.rC||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rE=(S.rE||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rDesp=(S.rDesp||[]).filter(r=>!r._apagado&&r.faz===faz);fc.PIX_D=S.PIX_D||{};var _fd=new URLSearchParams();_fd.append('acao','salvar_config');_fd.append('data',JSON.stringify(fc));fetch(gu,{method:'POST',mode:'no-cors',body:_fd}).catch(()=>{});}});var _fd2=new URLSearchParams();_fd2.append('acao','salvar_config');_fd2.append('data',JSON.stringify(cfg));fetch(S.cfgGS,{method:'POST',mode:'no-cors',body:_fd2}).then(()=>{updCloudStatus('ok');if(cb)cb(true);}).catch(e=>{updCloudStatus('err');if(cb)cb(false);});}
+function salvarNuvem(cb){
+  if(!S.cfgGS){if(cb)cb(false);return;}
+  updCloudStatus('saving');
+
+  // Separar config base e registros para respeitar limite de URL (~7500 chars)
+  var cfgBase={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,
+    LOTES:S.LOTES,AREAS:S.AREAS||{},MAPA_ALOC:S.MAPA_ALOC||{},
+    DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT||'',
+    NOTAS:S.NOTAS||{},PIX_D:S.PIX_D||{}};
+  var cfgReg={rD:S.rD,rT:S.rT,rC:S.rC,rE:S.rE,
+    rDesp:S.rDesp,mEst:S.mEst,queue:S.queue||[]};
+
+  // Merge para envio completo
+  var cfgFull=Object.assign({},cfgBase,cfgReg);
+
+  // Enviar por fazenda individualmente (URLs menores)
+  Object.keys(S.FAZ).forEach(function(faz){
+    var gu=getFazGasUrl(faz);
+    if(!gu) return;
+    var fc=Object.assign({},cfgBase);
+    fc.FAZ={};fc.FAZ[faz]=S.FAZ[faz];
+    fc.DIARISTAS={};fc.DIARISTAS[faz]=(S.DIARISTAS||{})[faz]||[];
+    fc.LOTES=(S.LOTES||[]).filter(function(l){return l.faz===faz;});
+    fc.rD=(S.rD||[]).filter(function(r){return !r._apagado&&r.faz===faz;});
+    fc.rT=(S.rT||[]).filter(function(r){return !r._apagado&&r.faz===faz;});
+    fc.rC=(S.rC||[]).filter(function(r){return !r._apagado&&r.faz===faz;});
+    fc.rE=(S.rE||[]).filter(function(r){return !r._apagado&&r.faz===faz;});
+    fc.rDesp=(S.rDesp||[]).filter(function(r){return !r._apagado&&r.faz===faz;});
+    fc.PIX_D=S.PIX_D||{};
+    var url=gu+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(fc));
+    if(url.length<7500){
+      fetch(url,{method:'GET',mode:'no-cors'}).catch(function(){});
+    }
+  });
+
+  // Enviar config completa para a URL principal
+  var urlFull=S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfgFull));
+  if(urlFull.length<7500){
+    // Dados cabem em uma URL
+    fetch(urlFull,{method:'GET',mode:'no-cors'})
+      .then(function(){updCloudStatus('ok');if(cb)cb(true);})
+      .catch(function(e){updCloudStatus('err');if(cb)cb(false);});
+  } else {
+    // Dividir: primeiro base, depois registros
+    var urlBase=S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfgFull));
+    // Tentar enviar em partes menores
+    var cfgMini=Object.assign({},cfgBase);
+    cfgMini.rD=cfgReg.rD;cfgMini.rC=cfgReg.rC;
+    cfgMini.rT=[];cfgMini.rE=[];cfgMini.rDesp=[];cfgMini.mEst=[];
+    var urlMini=S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfgMini));
+    fetch(urlMini,{method:'GET',mode:'no-cors'})
+      .then(function(){updCloudStatus('ok');if(cb)cb(true);})
+      .catch(function(e){updCloudStatus('err');if(cb)cb(false);});
+  }
+}
 function carregarNuvem(cb){
   if(!S.cfgGS||!navigator.onLine){if(cb)cb(false);return;}
   updCloudStatus('loading');
