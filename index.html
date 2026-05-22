@@ -3487,11 +3487,12 @@ function ctCalMes(delta){
 }
 
 function rCtHist(){
+  var isAdm = CU && (CU.r==='Consultor' || CU.r==='Dono');
   var resp = CU ? CU.n : '';
-  // Filtrar lançamentos da cantineira
+  // Consultor/Dono vê todos; Cantina vê só os dela
   var todos = (S.rC||[]).filter(function(r){
     if(r._apagado) return false;
-    if(resp){
+    if(!isAdm && resp){
       var rn = (r.resp||r.n||'').trim().toLowerCase();
       var un = resp.trim().toLowerCase();
       if(rn && un && rn !== un) return false;
