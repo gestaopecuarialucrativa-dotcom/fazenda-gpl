@@ -557,13 +557,24 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <button class="sbtn" onclick="envCt()">📤 Enviar cantina</button>
 <div class="ok" id="ok-ct">✅ Cantina registrada!</div>
 </div>
-<div class="card" id="ct-historico" style="margin-top:8px">
-<div class="stit">🕐 Meus lançamentos</div>
-<div id="ct-hist-lista"><div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum lançamento.</div></div>
-<div style="margin-top:8px;padding-top:8px;border-top:1px solid #f0f0f0;display:flex;justify-content:space-between">
-<span style="font-size:12px;color:#888">Total a pagar:</span>
-<span style="font-size:14px;font-weight:700;color:#1B5E20" id="ct-hist-total">R$ 0,00</span>
-</div>
+<div class="card" style="margin-top:8px;padding:14px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div class="stit" style="margin:0">📅 Meus lançamentos</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button onclick="ctCalMes(-1)" style="background:none;border:1px solid #ddd;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px">‹</button>
+      <span id="ct-cal-titulo" style="font-size:12px;font-weight:700;color:#333;min-width:90px;text-align:center"></span>
+      <button onclick="ctCalMes(1)" style="background:none;border:1px solid #ddd;border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:14px">›</button>
+    </div>
+  </div>
+  <div id="ct-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:10px"></div>
+  <div id="ct-cal-detalhe" style="display:none;border-top:1px solid #f0f0f0;padding-top:10px">
+    <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:6px" id="ct-cal-dtit"></div>
+    <div id="ct-cal-dlista"></div>
+  </div>
+  <div style="margin-top:8px;padding-top:8px;border-top:1px solid #f0f0f0;display:flex;justify-content:space-between">
+    <span style="font-size:12px;color:#888">Total do mês:</span>
+    <span style="font-size:14px;font-weight:700;color:#1B5E20" id="ct-hist-total">R$ 0,00</span>
+  </div>
 </div>
 </div><!-- FIM pg-cantina ✅ -->
 
@@ -1329,7 +1340,7 @@ function initSync(){atualizarSync();window.addEventListener('online',()=>{atuali
 
 // ═══ NUVEM ═══
 function updCloudStatus(st){const el=document.getElementById('cloud-status');if(!el)return;const icons={saving:'☁️ Salvando...',loading:'☁️ Carregando...',ok:'✅ Nuvem OK',err:'⚠️ Offline'};el.textContent=icons[st]||'';el.style.color=st==='err'?'#C62828':(st==='ok'?'#2E7D32':'#888');}
-function salvarNuvem(cb){if(!S.cfgGS){if(cb)cb(false);return;}updCloudStatus('saving');const cfg={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:S.LOTES,AREAS:S.AREAS||{},MAPA_ALOC:S.MAPA_ALOC||{},DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT,rD:S.rD,rT:S.rT,rC:S.rC,rE:S.rE,rDesp:S.rDesp,mEst:S.mEst,NOTAS:S.NOTAS||{},PIX_D:S.PIX_D||{}};Object.keys(S.FAZ).forEach(faz=>{const gu=getFazGasUrl(faz);if(gu){const fc={FAZ:{},US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:(S.LOTES||[]).filter(l=>l.faz===faz),DIARISTAS:{}};fc.FAZ[faz]=S.FAZ[faz];fc.DIARISTAS[faz]=(S.DIARISTAS||{})[faz]||[];fc.rD=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rT=(S.rT||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rC=(S.rC||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rE=(S.rE||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rDesp=(S.rDesp||[]).filter(r=>!r._apagado&&r.faz===faz);fc.PIX_D=S.PIX_D||{};fetch(gu+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(fc)),{method:'GET',mode:'no-cors'}).catch(()=>{});}});fetch(S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfg)),{method:'GET',mode:'no-cors'}).then(()=>{updCloudStatus('ok');if(cb)cb(true);}).catch(e=>{updCloudStatus('err');if(cb)cb(false);});}
+function salvarNuvem(cb){if(!S.cfgGS){if(cb)cb(false);return;}updCloudStatus('saving');const cfg={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:S.LOTES,AREAS:S.AREAS||{},MAPA_ALOC:S.MAPA_ALOC||{},DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT,rD:S.rD,rT:S.rT,rC:S.rC,rE:S.rE,rDesp:S.rDesp,mEst:S.mEst,NOTAS:S.NOTAS||{},PIX_D:S.PIX_D||{}};Object.keys(S.FAZ).forEach(faz=>{const gu=getFazGasUrl(faz);if(gu){const fc={FAZ:{},US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,LOTES:(S.LOTES||[]).filter(l=>l.faz===faz),DIARISTAS:{}};fc.FAZ[faz]=S.FAZ[faz];fc.DIARISTAS[faz]=(S.DIARISTAS||{})[faz]||[];fc.rD=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rT=(S.rT||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rC=(S.rC||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rE=(S.rE||[]).filter(r=>!r._apagado&&r.faz===faz);fc.rDesp=(S.rDesp||[]).filter(r=>!r._apagado&&r.faz===faz);fc.PIX_D=S.PIX_D||{};var _fd=new URLSearchParams();_fd.append('acao','salvar_config');_fd.append('data',JSON.stringify(fc));fetch(gu,{method:'POST',mode:'no-cors',body:_fd}).catch(()=>{});}});var _fd2=new URLSearchParams();_fd2.append('acao','salvar_config');_fd2.append('data',JSON.stringify(cfg));fetch(S.cfgGS,{method:'POST',mode:'no-cors',body:_fd2}).then(()=>{updCloudStatus('ok');if(cb)cb(true);}).catch(e=>{updCloudStatus('err');if(cb)cb(false);});}
 function carregarNuvem(cb){
   if(!S.cfgGS||!navigator.onLine){if(cb)cb(false);return;}
   updCloudStatus('loading');
@@ -3445,6 +3456,120 @@ function _salvarCoords(){
   });
 })();
 
+
+/* ═══ CALENDÁRIO CANTINA ═══ */
+var _ctCalAno = new Date().getFullYear();
+var _ctCalMes = new Date().getMonth();
+var _ctCalDiaSel = null;
+
+function ctCalMes(delta){
+  _ctCalMes += delta;
+  if(_ctCalMes > 11){ _ctCalMes = 0; _ctCalAno++; }
+  if(_ctCalMes < 0){ _ctCalMes = 11; _ctCalAno--; }
+  rCtHist();
+}
+
+function rCtHist(){
+  var resp = CU ? CU.n : '';
+  // Filtrar lançamentos da cantineira
+  var todos = (S.rC||[]).filter(function(r){
+    if(r._apagado) return false;
+    if(resp){
+      var rn = (r.resp||r.n||'').trim().toLowerCase();
+      var un = resp.trim().toLowerCase();
+      if(rn && un && rn !== un) return false;
+    }
+    return true;
+  });
+
+  // Calcular total do mês
+  var totalMes = 0;
+  todos.forEach(function(r){
+    var dt = r.dt||'';
+    var parts = dt.split('-');
+    if(parts.length>=3 && parseInt(parts[0])===_ctCalAno && parseInt(parts[1])-1===_ctCalMes){
+      totalMes += (r.total||0);
+    }
+  });
+  var tot = document.getElementById('ct-hist-total');
+  if(tot) tot.textContent = 'R$ '+totalMes.toFixed(2).replace('.',',');
+
+  // Calendário
+  var grid = document.getElementById('ct-cal-grid');
+  var titulo = document.getElementById('ct-cal-titulo');
+  if(!grid) return;
+
+  var meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  if(titulo) titulo.textContent = meses[_ctCalMes]+' '+_ctCalAno;
+
+  // Mapear dias com lançamentos
+  var diasLanc = {};
+  todos.forEach(function(r){
+    var dt = r.dt||'';
+    var parts = dt.split('-');
+    if(parts.length<3) return;
+    var ano=parseInt(parts[0]), mes=parseInt(parts[1])-1, dia=parseInt(parts[2]);
+    if(ano===_ctCalAno && mes===_ctCalMes){
+      if(!diasLanc[dia]) diasLanc[dia]=[];
+      diasLanc[dia].push(r);
+    }
+  });
+
+  var hoje = new Date();
+  var primeiroDia = new Date(_ctCalAno,_ctCalMes,1).getDay();
+  var ultimoDia = new Date(_ctCalAno,_ctCalMes+1,0).getDate();
+  var dias = ['D','S','T','Q','Q','S','S'];
+  var html = dias.map(function(d){ return '<div style="text-align:center;font-size:10px;font-weight:700;color:#888;padding:2px 0">'+d+'</div>'; }).join('');
+
+  for(var i=0; i<primeiroDia; i++) html += '<div></div>';
+
+  for(var d=1; d<=ultimoDia; d++){
+    var tem = diasLanc[d] && diasLanc[d].length > 0;
+    var isH = (hoje.getDate()===d && hoje.getMonth()===_ctCalMes && hoje.getFullYear()===_ctCalAno);
+    var isSel = (_ctCalDiaSel === d);
+    var dia2 = d;
+    var bg = isSel?'#E65100':isH?'#FFF3E0':tem?'#FFF8E1':'transparent';
+    var cor = isSel?'#fff':isH?'#E65100':'#333';
+    var brd = isH?'1.5px solid #E65100':isSel?'1.5px solid #E65100':'1.5px solid transparent';
+    html += '<div onclick="ctCalDia('+dia2+')" style="cursor:'+(tem?'pointer':'default')+';text-align:center;border-radius:6px;padding:4px 2px;background:'+bg+';border:'+brd+'">'
+      +'<span style="font-size:11px;font-weight:'+(isH||isSel?'800':'400')+';color:'+cor+'">'+d+'</span>'
+      +(tem ? '<div style="width:4px;height:4px;border-radius:50%;background:'+(isSel?'#fff':'#E65100')+';margin:1px auto 0"></div>' : '<div style="height:5px"></div>')
+      +'</div>';
+  }
+  grid.innerHTML = html;
+
+  if(_ctCalDiaSel && diasLanc[_ctCalDiaSel]){
+    _ctCalMostrarDia(_ctCalDiaSel, diasLanc[_ctCalDiaSel]);
+  } else {
+    var det = document.getElementById('ct-cal-detalhe');
+    if(det) det.style.display = 'none';
+  }
+}
+
+function ctCalDia(d){
+  _ctCalDiaSel = (_ctCalDiaSel===d) ? null : d;
+  rCtHist();
+}
+
+function _ctCalMostrarDia(d, lancs){
+  var det = document.getElementById('ct-cal-detalhe');
+  var dtit = document.getElementById('ct-cal-dtit');
+  var dlista = document.getElementById('ct-cal-dlista');
+  if(!det||!dtit||!dlista) return;
+  var meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  dtit.textContent = d+' de '+meses[_ctCalMes]+' — '+lancs.length+' lançamento(s)';
+  dlista.innerHTML = lancs.sort(function(a,b){ return (a.dt||'')>(b.dt||'')?-1:1; }).map(function(r){
+    var val = 'R$ '+(r.total||0).toFixed(2).replace('.',',');
+    var status = r.validado ? '<span style="background:#2E7D32;color:#fff;font-size:9px;padding:1px 5px;border-radius:4px;margin-left:4px">✓ Pago</span>' : '';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 8px;border-radius:8px;background:#FFF3E0;margin-bottom:4px">'
+      +'<div><span style="font-size:12px;font-weight:700;color:#E65100">Cantina</span>'+status
+      +(r.det ? '<div style="font-size:10px;color:#888;margin-top:1px">'+r.det+'</div>' : '')
+      +'</div>'
+      +'<span style="font-size:12px;font-weight:700;color:#E65100">'+val+'</span>'
+      +'</div>';
+  }).join('');
+  det.style.display = 'block';
+}
 
 </script>
 <!-- ══ BOTTOM SHEET MAPA ══ -->
