@@ -1403,11 +1403,23 @@ function carregarNuvem(cb){
     if(el&&el.parentNode)el.parentNode.removeChild(el);
     // Processar dados inline
     if(!data){updCloudStatus('err');if(cb)cb(false);return;}
+    // Suporta dois formatos: {CONFIG:[[chave,json,data]]} ou cfg direto {FAZ,rD,rC...}
+    var cfg = null;
     if(data.CONFIG&&data.CONFIG.length>0){
-      var row=data.CONFIG[0];
-      if(row&&row[1]){
-        try{
-          var cfg=JSON.parse(row[1]);
+      // Buscar linha com chave='config'
+      for(var _i=0;_i<data.CONFIG.length;_i++){
+        if(data.CONFIG[_i][0]==='config'&&data.CONFIG[_i][1]){
+          try{cfg=JSON.parse(data.CONFIG[_i][1]);}catch(ex){}
+          break;
+        }
+      }
+    } else if(data.FAZ||data.rD||data.rC){
+      // Apps Script retornou cfg direto
+      cfg = data;
+    }
+    if(cfg){
+      try{
+        var _dummy=true; // placeholder
           if(cfg.FAZ&&Object.keys(cfg.FAZ).length)S.FAZ=cfg.FAZ;
           if(cfg.US&&cfg.US.length){
             var lu=S.US||[];
@@ -1444,9 +1456,7 @@ function carregarNuvem(cb){
           if(cfg.NOTAS)S.NOTAS=cfg.NOTAS;
           if(cfg.PIX_D)S.PIX_D=Object.assign(S.PIX_D||{},cfg.PIX_D);
         }catch(ex){}
-      }
-    }
-    // Dados definitivos vêm apenas do CONFIG (evita re-adição de excluídos)
+      }    // Dados definitivos vêm apenas do CONFIG (evita re-adição de excluídos)
     salvarLocal();
     // Não salvar automaticamente - evitar apagar dados da nuvem com dados locais vazios
     updCloudStatus('ok');
