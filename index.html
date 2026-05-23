@@ -1447,10 +1447,7 @@ function carregarNuvem(cb){
     }
     // Dados definitivos vêm apenas do CONFIG (evita re-adição de excluídos)
     salvarLocal();
-    // Se nuvem não tinha LOTES, salva os do DEFAULT agora
-    if(!data.CONFIG||!data.CONFIG.length||!(JSON.parse((data.CONFIG[0]||[null,'{}'])[1]||'{}').LOTES||[]).length){
-      setTimeout(function(){salvarNuvem(null);},2000);
-    }
+    // Não salvar automaticamente - evitar apagar dados da nuvem com dados locais vazios
     updCloudStatus('ok');
     if(cb)cb(true);
   };
