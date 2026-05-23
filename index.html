@@ -1362,7 +1362,7 @@ function salvarNuvem(cb){
     fc.PIX_D=S.PIX_D||{};
     var url=gu+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(fc));
     if(url.length<7500){
-      fetch(url,{method:'GET',mode:'no-cors'}).catch(function(){});
+      var _fd=new FormData();_fd.append('acao','salvar_config');_fd.append('data',JSON.stringify(fc));fetch(url.split('?')[0],{method:'POST',mode:'no-cors',body:_fd}).catch(function(){});
     }
   });
 
@@ -1370,9 +1370,7 @@ function salvarNuvem(cb){
   var urlFull=S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfgFull));
   if(urlFull.length<7500){
     // Dados cabem em uma URL
-    fetch(urlFull,{method:'GET',mode:'no-cors'})
-      .then(function(){updCloudStatus('ok');if(cb)cb(true);})
-      .catch(function(e){updCloudStatus('err');if(cb)cb(false);});
+    var _fd2=new FormData();_fd2.append('acao','salvar_config');_fd2.append('data',JSON.stringify(cfgFull));fetch(S.cfgGS,{method:'POST',mode:'no-cors',body:_fd2}).then(function(){updCloudStatus('ok');if(cb)cb(true);}).catch(function(e){updCloudStatus('err');if(cb)cb(false);});
   } else {
     // Dividir: primeiro base, depois registros
     var urlBase=S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfgFull));
@@ -1381,9 +1379,7 @@ function salvarNuvem(cb){
     cfgMini.rD=cfgReg.rD;cfgMini.rC=cfgReg.rC;
     cfgMini.rT=[];cfgMini.rE=[];cfgMini.rDesp=[];cfgMini.mEst=[];
     var urlMini=S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfgMini));
-    fetch(urlMini,{method:'GET',mode:'no-cors'})
-      .then(function(){updCloudStatus('ok');if(cb)cb(true);})
-      .catch(function(e){updCloudStatus('err');if(cb)cb(false);});
+    var _fd3=new FormData();_fd3.append('acao','salvar_config');_fd3.append('data',JSON.stringify(cfgMini));fetch(S.cfgGS,{method:'POST',mode:'no-cors',body:_fd3}).then(function(){updCloudStatus('ok');if(cb)cb(true);}).catch(function(e){updCloudStatus('err');if(cb)cb(false);});
   }
 }
 function carregarNuvem(cb){
