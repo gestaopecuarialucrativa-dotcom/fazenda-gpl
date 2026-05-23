@@ -934,7 +934,13 @@ const ACTS=[{id:'diaria',l:'Lançar diária',s:'Serviço do dia',ic:'👤',c:'gr
 const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbz1YxiaWGyCHKVugjEsuDyj2YtlHrtr-81ZItMYmr-V4RL5rQk1dOujv78LhVWUwllS/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},'Fazenda Santa Cruz':{cochos:['Lote 01','Lote 02','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+'],gasUrl:'',sheetId:''}},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:1,config:0}},{n:'Elisangela',i:'E',c:'av-p',r:'Cantina',pin:'2222',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,mapa:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:38,peso:402,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 02',qtd:85,peso:360,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 03',qtd:79,peso:316,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 04',qtd:61,peso:269,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 05',qtd:69,peso:228,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 06',qtd:121,peso:204,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio'],'Fazenda Santa Cruz':[]},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbz1YxiaWGyCHKVugjEsuDyj2YtlHrtr-81ZItMYmr-V4RL5rQk1dOujv78LhVWUwllS/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{},MAPA_ALOC:{'M03P01':'Lote 03','M01P01':'Lote 05','PA02':'Lote 06','PA08':'Lote 04','PA05':'Lote 01','M04P01':'Lote 02'}};
 
 let S=null;
-function carregar(){try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=JSON.parse(r);S={...DEFAULT,...s};S.cfgGS=DEFAULT.cfgGS;if(!S.US||!S.US.length)S.US=DEFAULT.US;if(!S.FAZ||!Object.keys(S.FAZ).length)S.FAZ=DEFAULT.FAZ;if(!S.EST||!Object.keys(S.EST).length)S.EST=DEFAULT.EST;if(s.FAZ&&Object.keys(s.FAZ).length)S.FAZ=s.FAZ;if(s.US&&s.US.length)S.US=s.US;['rD','rT','rC','rE','mEst','queue','rDesp','LOTES'].forEach(k=>{if(!Array.isArray(S[k]))S[k]=[]});if(!S.DIARISTAS)S.DIARISTAS={};if(!S.NOTAS)S.NOTAS={};if(!S.AREAS)S.AREAS={};if(!S.MAPA_ALOC||!Object.keys(S.MAPA_ALOC).length)S.MAPA_ALOC=DEFAULT.MAPA_ALOC||{};if(!Array.isArray(S.SERVS))S.SERVS=DEFAULT.SERVS;if(!S.PR)S.PR=DEFAULT.PR;}else{S=JSON.parse(JSON.stringify(DEFAULT));}}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}}
+function carregar(){try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=JSON.parse(r);S={...DEFAULT,...s};S.cfgGS=DEFAULT.cfgGS;if(!S.US||!S.US.length)S.US=DEFAULT.US;if(!S.FAZ||!Object.keys(S.FAZ).length)S.FAZ=DEFAULT.FAZ;if(!S.EST||!Object.keys(S.EST).length)S.EST=DEFAULT.EST;if(s.FAZ&&Object.keys(s.FAZ).length)S.FAZ=s.FAZ;if(s.US&&s.US.length)S.US=s.US;['rD','rT','rC','rE','mEst','queue','rDesp','LOTES'].forEach(k=>{if(!Array.isArray(S[k]))S[k]=[]});if(!S.DIARISTAS)S.DIARISTAS={};if(!S.NOTAS)S.NOTAS={};if(!S.AREAS)S.AREAS={};// Normalizar IDs do MAPA_ALOC (corrige versões antigas com IDs sem zero)
+  var _ma={};
+  Object.keys(S.MAPA_ALOC||{}).forEach(function(k){
+    var nk=k.replace(/^M(\d)P/,'M0$1P');
+    _ma[nk]=(S.MAPA_ALOC||{})[k];
+  });
+  S.MAPA_ALOC=Object.keys(_ma).length ? _ma : (DEFAULT.MAPA_ALOC||{});if(!Array.isArray(S.SERVS))S.SERVS=DEFAULT.SERVS;if(!S.PR)S.PR=DEFAULT.PR;}else{S=JSON.parse(JSON.stringify(DEFAULT));}}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}}
 function salvarLocal(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(S));return true;}catch(e){return false;}}
 function salvar(){salvarLocal();if(S.cfgGS&&navigator.onLine){clearTimeout(salvar._t);salvar._t=setTimeout(()=>salvarNuvem(null),2000);}return true;}
 salvar._t=null;
@@ -1413,12 +1419,20 @@ function carregarNuvem(cb){
           if(cfg.LOTES&&cfg.LOTES.length)S.LOTES=cfg.LOTES;
           else if(!S.LOTES||!S.LOTES.length)S.LOTES=DEFAULT.LOTES;
           if(cfg.AREAS)S.AREAS=cfg.AREAS;
-          if(cfg.MAPA_ALOC)S.MAPA_ALOC=cfg.MAPA_ALOC;
+          if(cfg.MAPA_ALOC){
+            // Normalizar IDs: M1P01→M01P01, M3P01→M03P01 etc
+            var aloc={};
+            Object.keys(cfg.MAPA_ALOC).forEach(function(k){
+              var nk=k.replace(/^M(\d)P/,'M0$1P');
+              aloc[nk]=cfg.MAPA_ALOC[k];
+            });
+            S.MAPA_ALOC=aloc;
+          }
           if(cfg.DIARISTAS)S.DIARISTAS=cfg.DIARISTAS;
-          if(cfg.rD&&cfg.rD.length)S.rD=cfg.rD;
-          if(cfg.rT&&cfg.rT.length)S.rT=cfg.rT;
-          if(cfg.rC&&cfg.rC.length)S.rC=cfg.rC;
-          if(cfg.rE&&cfg.rE.length)S.rE=cfg.rE;
+          S.rD=cfg.rD||[];
+          S.rT=cfg.rT||[];
+          S.rC=cfg.rC||[];
+          S.rE=cfg.rE||[];
           if(cfg.rDesp&&cfg.rDesp.length)S.rDesp=cfg.rDesp;
           if(cfg.mEst)S.mEst=cfg.mEst;
           if(cfg.NOTAS)S.NOTAS=cfg.NOTAS;
