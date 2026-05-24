@@ -1352,7 +1352,7 @@ function salvarNuvem(cb){
     LOTES:S.LOTES,AREAS:S.AREAS||{},MAPA_ALOC:S.MAPA_ALOC||{},
     DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT||'',
     NOTAS:S.NOTAS||{},PIX_D:S.PIX_D||{}};
-  var cfgReg={rD:S.rD,rT:S.rT,rC:S.rC,rE:S.rE,
+  var cfgReg={rD:(S.rD||[]).filter(function(r){return !r._apagado;}),rT:(S.rT||[]).filter(function(r){return !r._apagado;}),rC:(S.rC||[]).filter(function(r){return !r._apagado;}),rE:(S.rE||[]).filter(function(r){return !r._apagado;}),
     rDesp:S.rDesp,mEst:S.mEst,queue:S.queue||[]};
 
   // Merge para envio completo
