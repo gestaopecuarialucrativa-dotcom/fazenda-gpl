@@ -924,7 +924,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(r=>{r.forEach(s=>s.unregister())});if(window.caches)caches.keys().then(n=>n.forEach(n=>caches.delete(n)))}
 
 // ═══ CONSTANTES ═══
-const STORAGE_KEY='gpl_v18_data';
+const STORAGE_KEY='gpl_v17_data';
 const TD=new Date().toISOString().split('T')[0];
 const EC=['','#7B3F00','#A0522D','#2d7a1f','#CC8800','#CC2200'];
 const EI=[null,{em:'💩',ti:'Escore 1 — Firmes e secas',re:'💡 Reduzir fibra'},{em:'💩',ti:'Escore 2 — Firmes com espalhamento',re:'💡 Monitorar'},{em:'✅',ti:'Escore 3 — Ideal (panqueca)',re:'💡 Nutrição equilibrada!'},{em:'⚠️',ti:'Escore 4 — Soltas e espalhadas',re:'💡 Revisar proteína e água'},{em:'🚨',ti:'Escore 5 — Diarreia',re:'💡 Ação imediata!'}];
@@ -934,18 +934,8 @@ const ACTS=[{id:'diaria',l:'Lançar diária',s:'Serviço do dia',ic:'👤',c:'gr
 const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbz1YxiaWGyCHKVugjEsuDyj2YtlHrtr-81ZItMYmr-V4RL5rQk1dOujv78LhVWUwllS/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},'Fazenda Santa Cruz':{cochos:['Lote 01','Lote 02','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+'],gasUrl:'',sheetId:''}},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:1,config:0}},{n:'Elisangela',i:'E',c:'av-p',r:'Cantina',pin:'2222',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,mapa:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:38,peso:402,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 02',qtd:85,peso:360,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 03',qtd:79,peso:316,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 04',qtd:61,peso:269,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 05',qtd:69,peso:228,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 06',qtd:121,peso:204,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio'],'Fazenda Santa Cruz':[]},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbz1YxiaWGyCHKVugjEsuDyj2YtlHrtr-81ZItMYmr-V4RL5rQk1dOujv78LhVWUwllS/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{},MAPA_ALOC:{'M03P01':'Lote 03','M01P01':'Lote 05','PA02':'Lote 06','PA08':'Lote 04','PA05':'Lote 01','M04P01':'Lote 02'}};
 
 let S=null;
-function carregar(){try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=JSON.parse(r);
-    // Spread sem FAZ e US (tratados separadamente para evitar sobrescrita)
-    const {FAZ:_sFAZ, US:_sUS, ...sRest} = s;
-    S={...DEFAULT,...sRest};S.cfgGS=DEFAULT.cfgGS;if(!S.US||!S.US.length)S.US=DEFAULT.US;
-  // SEMPRE corrigir PINs pelo DEFAULT (garante que PIN 2222 da Elisangela funciona)
-  DEFAULT.US.forEach(function(du){
-    var u=S.US.find(function(x){return x.n===du.n;});
-    if(u) u.pin=du.pin;
-  });if(!S.FAZ||!Object.keys(S.FAZ).length)S.FAZ=DEFAULT.FAZ;if(!S.EST||!Object.keys(S.EST).length)S.EST=DEFAULT.EST;if(s.FAZ&&Object.keys(s.FAZ).length){
-    // Mesclar: DEFAULT tem prioridade para fazendas base, localStorage adiciona configurações
-    S.FAZ=Object.assign({},DEFAULT.FAZ,s.FAZ);
-  }if(s.US&&s.US.length)S.US=s.US;['rD','rT','rC','rE','mEst','queue','rDesp','LOTES'].forEach(k=>{if(!Array.isArray(S[k]))S[k]=[]});if(!S.DIARISTAS)S.DIARISTAS={};if(!S.NOTAS)S.NOTAS={};if(!S.AREAS)S.AREAS={};// Normalizar IDs do MAPA_ALOC (corrige versões antigas com IDs sem zero)
+function carregar(){try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=JSON.parse(r);S={...DEFAULT,...s};S.cfgGS=DEFAULT.cfgGS;if(!S.US||!S.US.length)S.US=DEFAULT.US;
+  DEFAULT.US.forEach(function(du){var u=S.US.find(function(x){return x.n===du.n;});if(u)u.pin=du.pin;});if(!S.FAZ||!Object.keys(S.FAZ).length)S.FAZ=DEFAULT.FAZ;if(!S.EST||!Object.keys(S.EST).length)S.EST=DEFAULT.EST;if(s.FAZ&&Object.keys(s.FAZ).length)S.FAZ=s.FAZ;if(s.US&&s.US.length)S.US=s.US;['rD','rT','rC','rE','mEst','queue','rDesp','LOTES'].forEach(k=>{if(!Array.isArray(S[k]))S[k]=[]});if(!S.DIARISTAS)S.DIARISTAS={};if(!S.NOTAS)S.NOTAS={};if(!S.AREAS)S.AREAS={};// Normalizar IDs do MAPA_ALOC (corrige versões antigas com IDs sem zero)
   var _ma={};
   Object.keys(S.MAPA_ALOC||{}).forEach(function(k){
     var nk=k.replace(/^M(\d)P/,'M0$1P');
@@ -959,10 +949,7 @@ salvar._t=null;
 // ═══ LOGIN ═══
 let loginFaz=null,loginUser=null,pinBuf='',CU=null,prevPage=null;
 function initLogin(){const p=new URLSearchParams(window.location.search);const u=p.get('user');const f=p.get('faz');if(u){const sl=u.toLowerCase();const us=S.US.find(x=>{const ns=x.n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');return ns===sl;});if(us){loginUser=S.US.indexOf(us);mostrarPin(us);return;}}if(f){const fn=f.toLowerCase().replace(/-/g,' ');const faz=Object.keys(S.FAZ).find(x=>x.toLowerCase().includes(fn));if(faz){loginFaz=faz;mostrarUsers(faz);return;}}mostrarFazendas();}
-function mostrarFazendas(){document.getElementById('step-faz').style.display='block';document.getElementById('step-user').style.display='none';document.getElementById('step-pin').style.display='none';const l=document.getElementById('faz-list');if(!l)return;
-  // Sempre mesclar DEFAULT.FAZ com S.FAZ para garantir todas as fazendas
-  var fazendas = Object.assign({}, DEFAULT.FAZ, S.FAZ||{});
-  l.innerHTML=Object.keys(fazendas).map(f=>`<div style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #e8e8e8;border-radius:12px;background:#fff;cursor:pointer;margin-bottom:8px" onclick="selecionarFaz('${f}')"><span style="font-size:24px">🏠</span><div style="flex:1;font-size:14px;font-weight:700">${f}</div><span style="color:#888;font-size:18px">›</span></div>`).join('');}
+function mostrarFazendas(){document.getElementById('step-faz').style.display='block';document.getElementById('step-user').style.display='none';document.getElementById('step-pin').style.display='none';const l=document.getElementById('faz-list');if(!l)return;var fazendas=Object.assign({},DEFAULT.FAZ,S.FAZ||{});l.innerHTML=Object.keys(fazendas).map(f=>`<div style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #e8e8e8;border-radius:12px;background:#fff;cursor:pointer;margin-bottom:8px" onclick="selecionarFaz('${f}')"><span style="font-size:24px">🏠</span><div style="flex:1;font-size:14px;font-weight:700">${f}</div><span style="color:#888;font-size:18px">›</span></div>`).join('');}
 function acessoConsultor(){loginFaz=null;mostrarUsersLista(S.US.filter(u=>u.r==='Consultor'||u.fs.length===0));document.getElementById('step-faz').style.display='none';document.getElementById('step-user').style.display='block';document.getElementById('step-user-title').textContent='Acesso de consultor';document.getElementById('step-user-faz').textContent='Todas as fazendas';}
 function selecionarFaz(f){loginFaz=f;mostrarUsers(f);}
 function mostrarUsers(faz){const users=S.US.filter(u=>u.fs.length===0||u.fs.includes(faz)||u.r==='Consultor');document.getElementById('step-faz').style.display='none';document.getElementById('step-user').style.display='block';document.getElementById('step-pin').style.display='none';document.getElementById('step-user-title').textContent='Quem é você?';document.getElementById('step-user-faz').textContent='🏠 '+faz;mostrarUsersLista(users);}
@@ -1011,13 +998,10 @@ function rHomeMapa(){
   if(!S.MAPA_ALOC) S.MAPA_ALOC={};
   var lotes = S.LOTES||[];
   var totalAnim=0, lotesAtivos=0;
-  var userFazs = (CU && CU.fs && CU.fs.length) ? CU.fs : null;
 
   MAPA_AREAS.forEach(function(a){
     var aloc = S.MAPA_ALOC[a.id];
     var lote = aloc ? lotes.find(function(l){return l.nome===aloc;}) : null;
-    // Pular lotes de fazendas que o usuário não tem acesso
-    if(lote && userFazs && !userFazs.includes(lote.faz)) return;
     var qtd  = lote ? (lote.qtd||0) : 0;
     if(!lote||qtd===0) return; // só pins COM gado
 
@@ -1374,7 +1358,7 @@ function salvarNuvem(cb){
     fc.PIX_D=S.PIX_D||{};
     var url=gu+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(fc));
     if(url.length<7500){
-      var _fd=new FormData();_fd.append('acao','salvar_config');_fd.append('data',JSON.stringify(fc));fetch(url.split('?')[0],{method:'POST',mode:'no-cors',body:_fd}).catch(function(){});
+      fetch(url,{method:'GET',mode:'no-cors'}).catch(function(){});
     }
   });
 
@@ -1382,7 +1366,9 @@ function salvarNuvem(cb){
   var urlFull=S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfgFull));
   if(urlFull.length<7500){
     // Dados cabem em uma URL
-    var _fd2=new FormData();_fd2.append('acao','salvar_config');_fd2.append('data',JSON.stringify(cfgFull));fetch(S.cfgGS,{method:'POST',mode:'no-cors',body:_fd2}).then(function(){updCloudStatus('ok');if(cb)cb(true);}).catch(function(e){updCloudStatus('err');if(cb)cb(false);});
+    fetch(urlFull,{method:'GET',mode:'no-cors'})
+      .then(function(){updCloudStatus('ok');if(cb)cb(true);})
+      .catch(function(e){updCloudStatus('err');if(cb)cb(false);});
   } else {
     // Dividir: primeiro base, depois registros
     var urlBase=S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfgFull));
@@ -1391,7 +1377,9 @@ function salvarNuvem(cb){
     cfgMini.rD=cfgReg.rD;cfgMini.rC=cfgReg.rC;
     cfgMini.rT=[];cfgMini.rE=[];cfgMini.rDesp=[];cfgMini.mEst=[];
     var urlMini=S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfgMini));
-    var _fd3=new FormData();_fd3.append('acao','salvar_config');_fd3.append('data',JSON.stringify(cfgMini));fetch(S.cfgGS,{method:'POST',mode:'no-cors',body:_fd3}).then(function(){updCloudStatus('ok');if(cb)cb(true);}).catch(function(e){updCloudStatus('err');if(cb)cb(false);});
+    fetch(urlMini,{method:'GET',mode:'no-cors'})
+      .then(function(){updCloudStatus('ok');if(cb)cb(true);})
+      .catch(function(e){updCloudStatus('err');if(cb)cb(false);});
   }
 }
 function carregarNuvem(cb){
@@ -1415,53 +1403,47 @@ function carregarNuvem(cb){
     if(el&&el.parentNode)el.parentNode.removeChild(el);
     // Processar dados inline
     if(!data){updCloudStatus('err');if(cb)cb(false);return;}
-    // Suporta dois formatos: {CONFIG:[[chave,json,data]]} ou cfg direto {FAZ,rD,rC...}
-    var cfg = null;
     if(data.CONFIG&&data.CONFIG.length>0){
-      // Buscar linha com chave='config'
-      for(var _i=0;_i<data.CONFIG.length;_i++){
-        if(data.CONFIG[_i][0]==='config'&&data.CONFIG[_i][1]){
-          try{cfg=JSON.parse(data.CONFIG[_i][1]);}catch(ex){}
-          break;
-        }
+      var row=data.CONFIG[0];
+      if(row&&row[1]){
+        try{
+          var cfg=JSON.parse(row[1]);
+          if(cfg.FAZ&&Object.keys(cfg.FAZ).length)S.FAZ=cfg.FAZ;
+          if(cfg.US&&cfg.US.length){
+            var lu=S.US||[];
+            cfg.US.forEach(function(u){if(!lu.some(function(l){return l.n===u.n;}))lu.push(u);});
+            S.US=lu;
+          }
+          if(cfg.EST)S.EST=cfg.EST;
+          if(cfg.SERVS&&cfg.SERVS.length)S.SERVS=cfg.SERVS;
+          if(cfg.PR)S.PR=cfg.PR;
+          if(cfg.LOTES&&cfg.LOTES.length)S.LOTES=cfg.LOTES;
+          else if(!S.LOTES||!S.LOTES.length)S.LOTES=DEFAULT.LOTES;
+          if(cfg.AREAS)S.AREAS=cfg.AREAS;
+          if(cfg.MAPA_ALOC){
+            // Normalizar IDs: M1P01→M01P01, M3P01→M03P01 etc
+            var aloc={};
+            Object.keys(cfg.MAPA_ALOC).forEach(function(k){
+              var nk=k.replace(/^M(\d)P/,'M0$1P');
+              aloc[nk]=cfg.MAPA_ALOC[k];
+            });
+            S.MAPA_ALOC=aloc;
+          }
+          if(cfg.DIARISTAS)S.DIARISTAS=cfg.DIARISTAS;
+          S.rD=cfg.rD||[];
+          S.rT=cfg.rT||[];
+          S.rC=cfg.rC||[];
+          S.rE=cfg.rE||[];
+          if(cfg.rDesp&&cfg.rDesp.length)S.rDesp=cfg.rDesp;
+          if(cfg.mEst)S.mEst=cfg.mEst;
+          if(cfg.NOTAS)S.NOTAS=cfg.NOTAS;
+          if(cfg.PIX_D)S.PIX_D=Object.assign(S.PIX_D||{},cfg.PIX_D);
+        }catch(ex){}
       }
-    } else if(data.FAZ||data.rD||data.rC){
-      // Apps Script retornou cfg direto
-      cfg = data;
     }
-    if(cfg){
-      try{
-        if(cfg.FAZ&&Object.keys(cfg.FAZ).length)S.FAZ=cfg.FAZ;
-        if(cfg.US&&cfg.US.length){
-          var lu=S.US||[];
-          cfg.US.forEach(function(u){if(!lu.some(function(l){return l.n===u.n;}))lu.push(u);});
-          lu.forEach(function(u){var def=DEFAULT.US.find(function(d){return d.n===u.n;});if(def)u.pin=def.pin;});
-          S.US=lu;
-        }
-        if(cfg.EST)S.EST=cfg.EST;
-        if(cfg.SERVS&&cfg.SERVS.length)S.SERVS=cfg.SERVS;
-        if(cfg.PR)S.PR=cfg.PR;
-        if(cfg.LOTES&&cfg.LOTES.length)S.LOTES=cfg.LOTES;
-        else if(!S.LOTES||!S.LOTES.length)S.LOTES=DEFAULT.LOTES;
-        if(cfg.AREAS)S.AREAS=cfg.AREAS;
-        if(cfg.MAPA_ALOC){
-          var aloc={};
-          Object.keys(cfg.MAPA_ALOC).forEach(function(k){var nk=k.replace(/^M(\d)P/,'M0$1P');aloc[nk]=cfg.MAPA_ALOC[k];});
-          S.MAPA_ALOC=aloc;
-        }
-        if(cfg.DIARISTAS)S.DIARISTAS=cfg.DIARISTAS;
-        S.rD=cfg.rD||[];
-        S.rT=cfg.rT||[];
-        S.rC=cfg.rC||[];
-        S.rE=cfg.rE||[];
-        if(cfg.rDesp&&cfg.rDesp.length)S.rDesp=cfg.rDesp;
-        if(cfg.mEst)S.mEst=cfg.mEst;
-        if(cfg.NOTAS)S.NOTAS=cfg.NOTAS;
-        if(cfg.PIX_D)S.PIX_D=Object.assign(S.PIX_D||{},cfg.PIX_D);
-      }catch(ex){console.error('carregarNuvem erro:',ex);}
-    }    // Dados definitivos vêm apenas do CONFIG (evita re-adição de excluídos)
+    // Dados definitivos vêm apenas do CONFIG (evita re-adição de excluídos)
     salvarLocal();
-    // Não salvar automaticamente - evitar apagar dados da nuvem com dados locais vazios
+    // Não salvar automaticamente — evita zerar nuvem com dados vazios
     updCloudStatus('ok');
     if(cb)cb(true);
   };
