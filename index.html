@@ -301,7 +301,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/05/2026 v4.3 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/05/2026 v4.4 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1359,27 +1359,36 @@ function salvarNuvem(cb){
     var url=gu+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(fc));
     if(url.length<7500){
       fetch(url,{method:'GET',mode:'no-cors'}).catch(function(){});
+    } else {
+      fetch(gu,{method:'POST',mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({acao:'salvar_config',data:JSON.stringify(fc)})}).catch(function(){});
     }
   });
 
   // Enviar config completa para a URL principal
   var urlFull=S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfgFull));
   if(urlFull.length<7500){
-    // Dados cabem em uma URL
+    // Dados cabem em GET
     fetch(urlFull,{method:'GET',mode:'no-cors'})
       .then(function(){updCloudStatus('ok');if(cb)cb(true);})
       .catch(function(e){updCloudStatus('err');if(cb)cb(false);});
   } else {
-    // Dividir: primeiro base, depois registros
-    var urlBase=S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfgFull));
-    // Tentar enviar em partes menores
-    var cfgMini=Object.assign({},cfgBase);
-    cfgMini.rD=cfgReg.rD;cfgMini.rC=cfgReg.rC;
-    cfgMini.rT=[];cfgMini.rE=[];cfgMini.rDesp=[];cfgMini.mEst=[];
-    var urlMini=S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfgMini));
-    fetch(urlMini,{method:'GET',mode:'no-cors'})
+    // Dados grandes: usar POST (sem limite de URL)
+    fetch(S.cfgGS,{method:'POST',mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({acao:'salvar_config',data:JSON.stringify(cfgFull)})})
       .then(function(){updCloudStatus('ok');if(cb)cb(true);})
-      .catch(function(e){updCloudStatus('err');if(cb)cb(false);});
+      .catch(function(){
+        // Fallback GET com dados reduzidos
+        var cfgMini=Object.assign({},cfgBase);
+        cfgMini.rD=cfgReg.rD;cfgMini.rC=cfgReg.rC;
+        cfgMini.rT=[];cfgMini.rE=[];cfgMini.rDesp=[];cfgMini.mEst=[];
+        var urlMini=S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfgMini));
+        fetch(urlMini,{method:'GET',mode:'no-cors'})
+          .then(function(){updCloudStatus('ok');if(cb)cb(true);})
+          .catch(function(){updCloudStatus('err');if(cb)cb(false);});
+      });
   }
 }
 function carregarNuvem(cb){
@@ -1430,10 +1439,16 @@ function carregarNuvem(cb){
             S.MAPA_ALOC=aloc;
           }
           if(cfg.DIARISTAS)S.DIARISTAS=cfg.DIARISTAS;
-          S.rD=cfg.rD||[];
-          S.rT=cfg.rT||[];
-          S.rC=cfg.rC||[];
-          S.rE=cfg.rE||[];
+          // Merge inteligente: não restaurar registros apagados localmente
+          function mergeRegistros(local,remoto){
+            var apagados={};
+            (local||[]).forEach(function(r){if(r._apagado&&r.dt&&r.n&&r.srv)apagados[r.dt+'|'+r.n+'|'+r.srv]=true;});
+            return (remoto||[]).filter(function(r){return !apagados[r.dt+'|'+r.n+'|'+r.srv];});
+          }
+          S.rD=mergeRegistros(S.rD,cfg.rD);
+          S.rT=mergeRegistros(S.rT,cfg.rT);
+          S.rC=mergeRegistros(S.rC,cfg.rC);
+          S.rE=mergeRegistros(S.rE,cfg.rE);
           if(cfg.rDesp&&cfg.rDesp.length)S.rDesp=cfg.rDesp;
           if(cfg.mEst)S.mEst=cfg.mEst;
           if(cfg.NOTAS)S.NOTAS=cfg.NOTAS;
