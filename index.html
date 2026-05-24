@@ -301,7 +301,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 22/05/2026 v4.2 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/05/2026 v4.3 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1005,10 +1005,13 @@ function rHomeMapa(){
   if(!S.MAPA_ALOC) S.MAPA_ALOC={};
   var lotes = S.LOTES||[];
   var totalAnim=0, lotesAtivos=0;
+  var userFazs = (CU && CU.fs && CU.fs.length) ? CU.fs : null;
 
   MAPA_AREAS.forEach(function(a){
     var aloc = S.MAPA_ALOC[a.id];
     var lote = aloc ? lotes.find(function(l){return l.nome===aloc;}) : null;
+    // Pular lotes de fazendas que o usuário não tem acesso
+    if(lote && userFazs && !userFazs.includes(lote.faz)) return;
     var qtd  = lote ? (lote.qtd||0) : 0;
     if(!lote||qtd===0) return; // só pins COM gado
 
