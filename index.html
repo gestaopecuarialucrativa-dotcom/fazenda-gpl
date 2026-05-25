@@ -301,7 +301,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/05/2026 v4.6 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/05/2026 v4.7 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1415,11 +1415,17 @@ function carregarNuvem(cb){
     if(el&&el.parentNode)el.parentNode.removeChild(el);
     // Processar dados inline
     if(!data){updCloudStatus('err');if(cb)cb(false);return;}
+    // Suportar dois formatos: {CONFIG:[[k,json]]} e direto {rD:[...], FAZ:{...}}
+    var cfg=null;
     if(data.CONFIG&&data.CONFIG.length>0){
       var row=data.CONFIG[0];
-      if(row&&row[1]){
+      if(row&&row[1]){try{cfg=JSON.parse(row[1]);}catch(ex){}}
+    } else if(data.rD!==undefined||data.FAZ!==undefined){
+      cfg=data; // formato direto
+    }
+    if(cfg){
+      (function(){
         try{
-          var cfg=JSON.parse(row[1]);
           if(cfg.FAZ&&Object.keys(cfg.FAZ).length)S.FAZ=cfg.FAZ;
           if(cfg.US&&cfg.US.length){
             var lu=S.US||[];
@@ -1452,7 +1458,7 @@ function carregarNuvem(cb){
           if(cfg.NOTAS)S.NOTAS=cfg.NOTAS;
           if(cfg.PIX_D)S.PIX_D=Object.assign(S.PIX_D||{},cfg.PIX_D);
         }catch(ex){}
-      }
+      });
     }
     // Dados definitivos vêm apenas do CONFIG (evita re-adição de excluídos)
     salvarLocal();
