@@ -301,7 +301,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 25/05/2026 v5.0 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 25/05/2026 v5.1 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -847,7 +847,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     src="https://gestaopecuarialucrativa-dotcom.github.io/fazenda-gpl/mapa.jpeg" 
     style="width:100%;height:auto;display:block;opacity:0.9;pointer-events:none;-webkit-user-drag:none"
     draggable="false"
-    onload="try{rMapaMain();rMapa();}catch(e){}"
+    onload="(function(){var tries=0;function tryR(){var c=document.getElementById('mapa-pins-main');if(c&&c.offsetWidth>0){try{rMapaMain();rMapa();}catch(e){}}else if(tries++<20){setTimeout(tryR,200);}};tryR();})();"
     onerror="this.style.minHeight='340px';this.style.background='#3a6b25';this.removeAttribute('src')">
   <!-- Container de pins ACIMA da imagem -->
   <div id="mapa-pins-main" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:20;pointer-events:none"></div>
@@ -878,62 +878,48 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <!-- HISTÓRICO ✅ -->
 <div id="pg-historico" class="pg" style="display:none;padding-bottom:20px">
 
-<!-- Calendário de Movimentações -->
-<div class="card" style="margin-bottom:10px">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-    <div class="stit" style="margin:0">📅 Calendário de Movimentações</div>
-    <div style="display:flex;gap:6px;align-items:center">
-      <button onclick="calNavMes(-1)" style="background:#1B5E20;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:16px;cursor:pointer">‹</button>
-      <span id="hist-cal-titulo" style="font-size:13px;font-weight:700;color:#1B5E20;min-width:110px;text-align:center"></span>
-      <button onclick="calNavMes(1)" style="background:#1B5E20;color:#fff;border:none;border-radius:6px;padding:4px 10px;font-size:16px;cursor:pointer">›</button>
-    </div>
-  </div>
-  <div id="hist-calendario"></div>
-  <div id="hist-dia-detalhe" style="margin-top:8px;display:none"></div>
+<!-- TABS -->
+<div style="display:flex;gap:0;margin-bottom:12px;background:#f0f0f0;border-radius:10px;padding:3px">
+  <div class="tgo on" id="htab-lotes" onclick="sHistTab('lotes')" style="flex:1;font-size:12px">🐄 Lotes</div>
+  <div class="tgo" id="htab-rotacao" onclick="sHistTab('rotacao')" style="flex:1;font-size:12px">🔄 Rotação</div>
+  <div class="tgo" id="htab-reg" onclick="sHistTab('reg')" style="flex:1;font-size:12px">📋 Registros</div>
 </div>
 
-<!-- Filtros -->
-<div class="card" style="margin-bottom:10px">
-  <div class="stit" style="margin-bottom:8px">🔍 Filtrar Registros</div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
-    <div style="flex:1;min-width:120px">
-      <div class="lbl">Tipo</div>
-      <select id="hist-tipo" onchange="rHistorico()" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+<!-- TAB: LOTES — situação atual com indicadores zootécnicos -->
+<div id="htab-lotes-content">
+  <div id="hist-lotes-cards"></div>
+</div>
+
+<!-- TAB: ROTAÇÃO -->
+<div id="htab-rotacao-content" style="display:none">
+  <div class="card" style="margin-bottom:10px">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <div class="stit" style="margin:0;flex:1">🔄 Histórico de Rotação</div>
+      <button onclick="expHistCSV()" style="background:#1B5E20;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">📥 CSV</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <select id="hist-lote-rot" onchange="rHistorico()" style="flex:1;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px">
+        <option value="">Todos os lotes</option>
+      </select>
+    </div>
+    <div id="hist-rotacao"></div>
+  </div>
+</div>
+
+<!-- TAB: REGISTROS -->
+<div id="htab-reg-content" style="display:none">
+  <div class="card">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <select id="hist-tipo" onchange="rHistorico()" style="flex:1;min-width:120px;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px">
         <option value="">Todos</option>
         <option value="mudanca_pasto">🔄 Movimentações</option>
         <option value="trato">🌾 Tratos</option>
       </select>
+      <input type="date" id="hist-de" onchange="rHistorico()" style="flex:1;min-width:100px;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px">
+      <input type="date" id="hist-ate" onchange="rHistorico()" style="flex:1;min-width:100px;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px">
     </div>
-    <div style="flex:1;min-width:120px">
-      <div class="lbl">Lote</div>
-      <select id="hist-lote" onchange="rHistorico()" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px">
-        <option value="">Todos</option>
-      </select>
-    </div>
-    <div style="flex:1;min-width:100px">
-      <div class="lbl">De</div>
-      <input type="date" id="hist-de" onchange="rHistorico()" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px">
-    </div>
-    <div style="flex:1;min-width:100px">
-      <div class="lbl">Até</div>
-      <input type="date" id="hist-ate" onchange="rHistorico()" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px">
-    </div>
+    <div id="hist-lista"></div>
   </div>
-</div>
-
-<!-- Rotação de pasto -->
-<div id="hist-rotacao-card" class="card" style="margin-bottom:10px;display:none">
-  <div class="stit" style="margin-bottom:8px">🔄 Tempo por Piquete</div>
-  <div id="hist-rotacao"></div>
-</div>
-
-<!-- Lista de registros -->
-<div class="card">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-    <div class="stit" style="margin:0">📋 Registros</div>
-    <button onclick="expHistCSV()" style="background:#1B5E20;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">📥 Exportar CSV</button>
-  </div>
-  <div id="hist-lista"></div>
 </div>
 
 </div>
@@ -998,7 +984,7 @@ const EI=[null,{em:'💩',ti:'Escore 1 — Firmes e secas',re:'💡 Reduzir fibr
 const PL={diaria:'Diária',insumo:'Insumos',trato:'Trato cocho',escore:'Escore fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',mapa:'Mapa',historico:'Histórico',config:'Config.'};
 const TABS=[{id:'painel',l:'📊 Painel',p:'painel'},{id:'cantina',l:'🏪 Cantina',p:'cantina'},{id:'estoque',l:'📦 Estoque',p:'estoque'},{id:'mapa',l:'🗺️ Mapa',p:'mapa'},{id:'historico',l:'📋 Histórico',p:'historico'},{id:'config',l:'⚙️ Config.',p:'config'},{id:'consultor',l:'🌿 Visão Geral',p:'config'}];
 const ACTS=[{id:'diaria',l:'Lançar diária',s:'Serviço do dia',ic:'👤',c:'gr',p:'diaria'},{id:'insumo',l:'Insumos',s:'Depósito → campo',ic:'📦',c:'bl',p:'insumo'},{id:'trato',l:'Trato de cocho',s:'Proteinado, sal...',ic:'🛠',c:'tl',p:'trato'},{id:'lote',l:'Lotes',s:'Cadastro de lotes',ic:'🐄',c:'gr',p:'config'},{id:'escore',l:'Escore de fezes',s:'Avaliação do gado',ic:'🔬',c:'pu',p:'escore'}];
-const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbz3z-E8xVGMIGcnOY-h-gStZK3bJABA29YEyoiJyhKl9C32R51H_wCuylv6DUMvlHxr/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},'Fazenda Santa Cruz':{cochos:['Lote 01','Lote 02','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+'],gasUrl:'',sheetId:''}},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,historico:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:1,config:0}},{n:'Elisangela',i:'E',c:'av-p',r:'Cantina',pin:'2222',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,mapa:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:38,peso:402,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 02',qtd:85,peso:360,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 03',qtd:79,peso:316,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 04',qtd:61,peso:269,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 05',qtd:69,peso:228,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 06',qtd:121,peso:204,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio'],'Fazenda Santa Cruz':[]},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbz3z-E8xVGMIGcnOY-h-gStZK3bJABA29YEyoiJyhKl9C32R51H_wCuylv6DUMvlHxr/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{},MAPA_ALOC:{'M03P01':'Lote 03','M01P01':'Lote 05','PA02':'Lote 06','PA08':'Lote 04','PA05':'Lote 01','M04P01':'Lote 02'}};
+const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbz1YxiaWGyCHKVugjEsuDyj2YtlHrtr-81ZItMYmr-V4RL5rQk1dOujv78LhVWUwllS/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},'Fazenda Santa Cruz':{cochos:['Lote 01','Lote 02','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+'],gasUrl:'',sheetId:''}},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,historico:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:1,config:0}},{n:'Elisangela',i:'E',c:'av-p',r:'Cantina',pin:'2222',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,mapa:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:38,peso:402,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 02',qtd:85,peso:360,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 03',qtd:79,peso:316,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 04',qtd:61,peso:269,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 05',qtd:69,peso:228,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 06',qtd:121,peso:204,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio'],'Fazenda Santa Cruz':[]},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbz1YxiaWGyCHKVugjEsuDyj2YtlHrtr-81ZItMYmr-V4RL5rQk1dOujv78LhVWUwllS/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{},MAPA_ALOC:{'M03P01':'Lote 03','M01P01':'Lote 05','PA02':'Lote 06','PA08':'Lote 04','PA05':'Lote 01','M04P01':'Lote 02'}};
 
 let S=null;
 function carregar(){try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=JSON.parse(r);S={...DEFAULT,...s};S.cfgGS=DEFAULT.cfgGS;if(!S.US||!S.US.length)S.US=DEFAULT.US;
@@ -1132,8 +1118,9 @@ function rHomeMapa(){
   }
 }
 
-function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home'){setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);setTimeout(function(){try{rHomeMapa();}catch(e){}},600);setTimeout(function(){try{rHomeMapa();}catch(e){}},1500);}if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}if(_nuvemCarregando){setTimeout(()=>{try{rPan();}catch(e){}},3500);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');if(wrap&&wrap.offsetWidth===0){setTimeout(_rmapa,150);return;}try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'inline-block':'none';};setTimeout(_rmapa,200);}if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);
-  if(id==='historico')setTimeout(function(){_calAno=null;_calMes=null;rHistorico();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();if(S.cfgGS){carregarNuvem(function(ok){if(ok)rCtHist();});}else{rCtHist();}},50);if(id==='home')setTimeout(function(){try{rHomeMapa();buildActs();}catch(e){}},100);window.scrollTo(0,0);}
+function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda',historico:'Histórico & Lotação'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home'){setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);setTimeout(function(){try{rHomeMapa();}catch(e){}},600);setTimeout(function(){try{rHomeMapa();}catch(e){}},1500);}if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}if(_nuvemCarregando){setTimeout(()=>{try{rPan();}catch(e){}},3500);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _tries=0;var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');var img=document.getElementById('mapa-img-sat');var ok=wrap&&wrap.offsetWidth>0&&img&&(img.complete||img._loaded);if(!ok&&_tries++<30){setTimeout(_rmapa,300);return;}try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'inline-block':'none';// segundo render para garantir
+setTimeout(function(){try{rMapaMain();rMapa();}catch(e){}},800);};setTimeout(_rmapa,100);}if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);
+  if(id==='historico')setTimeout(function(){rHistorico();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();if(S.cfgGS){carregarNuvem(function(ok){if(ok)rCtHist();});}else{rCtHist();}},50);if(id==='home')setTimeout(function(){try{rHomeMapa();buildActs();}catch(e){}},100);window.scrollTo(0,0);}
 function goBack(){if(prevPage)sp(prevPage,false);else sp('home',false);}
 function isV(u){return u.p.diaria||u.p.insumo||u.p.trato||u.p.escore;}
 function isA(u){return u.p.cantina||u.p.estoque||u.p.painel||u.p.config;}
@@ -2189,184 +2176,260 @@ function rConsNotas(){const el=document.getElementById('cons-notas');if(!el)retu
 function salvarNota(faz,k){if(!S.NOTAS)S.NOTAS={};const ta=document.getElementById('nota-'+k);if(ta){S.NOTAS[faz]=ta.value;salvar();ta.style.borderColor='#2E7D32';setTimeout(()=>ta.style.borderColor='#ddd',1000);}}
 
 // ═══ HISTÓRICO ═══
-// Calendário de movimentações
-var _calAno=null,_calMes=null;
-function calNavMes(d){
-  if(_calAno===null){var n=new Date();_calAno=n.getFullYear();_calMes=n.getMonth();}
-  _calMes+=d;
-  if(_calMes>11){_calMes=0;_calAno++;}
-  if(_calMes<0){_calMes=11;_calAno--;}
-  rCalendario();
-}
-function rCalendario(){
-  var n=new Date();
-  if(_calAno===null){_calAno=n.getFullYear();_calMes=n.getMonth();}
-  var ano=_calAno,mes=_calMes;
-  var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
-  // Mapear datas com movimentações
-  var diasComMov={};
-  movs.forEach(function(r){
-    var dt=r.dt||'';
-    if(!dt)return;
-    var p=dt.split('-');
-    if(parseInt(p[0])===ano&&parseInt(p[1])-1===mes){
-      var dia=parseInt(p[2]);
-      if(!diasComMov[dia])diasComMov[dia]=[];
-      diasComMov[dia].push(r);
-    }
+function sHistTab(tab){
+  ['lotes','rotacao','reg'].forEach(function(t){
+    var btn=document.getElementById('htab-'+t);
+    var cont=document.getElementById('htab-'+t+'-content');
+    if(btn){ btn.classList.toggle('on', t===tab); }
+    if(cont){ cont.style.display = t===tab ? '' : 'none'; }
   });
-  var meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  var tit=document.getElementById('hist-cal-titulo');
-  if(tit)tit.textContent=meses[mes]+' '+ano;
-  var primeiroDia=new Date(ano,mes,1).getDay();
-  var diasNoMes=new Date(ano,mes+1,0).getDate();
-  var hoje=(ano===n.getFullYear()&&mes===n.getMonth())?n.getDate():0;
-  var dias=['D','S','T','Q','Q','S','S'];
-  var html='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center">';
-  dias.forEach(function(d,i){
-    var cor=i===0||i===6?'#E53935':'#1B5E20';
-    html+='<div style="font-size:10px;font-weight:700;color:'+cor+';padding:4px 0">'+d+'</div>';
-  });
-  for(var i=0;i<primeiroDia;i++) html+='<div></div>';
-  for(var d=1;d<=diasNoMes;d++){
-    var temMov=diasComMov[d];
-    var ehHoje=(d===hoje);
-    var bg=temMov?'#1B5E20':ehHoje?'#E8F5E9':'transparent';
-    var cor2=temMov?'#fff':ehHoje?'#1B5E20':'#333';
-    var borda=ehHoje&&!temMov?'1px solid #1B5E20':'none';
-    var qtd=temMov?temMov.length:0;
-    var dStr=String(ano)+'-'+String(mes+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-    html+='<div onclick="verDiaHist(\''+dStr+'\')" style="cursor:'+(temMov?'pointer':'default')+';padding:4px 0;border-radius:6px;background:'+bg+';color:'+cor2+';border:'+borda+';font-size:12px;font-weight:'+(temMov||ehHoje?'700':'400')+'">'+d+(qtd>0?'<br><span style="font-size:8px">'+qtd+'🔄</span>':'')+'</div>';
-  }
-  html+='</div>';
-  // Legenda
-  html+='<div style="margin-top:8px;display:flex;gap:12px;font-size:11px;color:#666"><span>🟩 = dia com movimentação</span>'+(hoje?'<span style="color:#1B5E20;font-weight:700">● = hoje</span>':'')+'</div>';
-  var cel=document.getElementById('hist-calendario');
-  if(cel)cel.innerHTML=html;
-  var det=document.getElementById('hist-dia-detalhe');
-  if(det)det.style.display='none';
-}
-function verDiaHist(dt){
-  var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado&&r.dt===dt;});
-  var det=document.getElementById('hist-dia-detalhe');
-  if(!det)return;
-  if(!movs.length){det.style.display='none';return;}
-  var partes=dt.split('-');
-  var dtFmt=partes[2]+'/'+partes[1]+'/'+partes[0];
-  var html='<div style="background:#E8F5E9;border-radius:8px;padding:10px;border-left:4px solid #1B5E20">';
-  html+='<div style="font-weight:700;font-size:13px;color:#1B5E20;margin-bottom:8px">📅 '+dtFmt+' — '+movs.length+' movimentação(ões)</div>';
-  movs.forEach(function(r){
-    var orig=(MAPA_AREAS.find(function(a){return a.id===r.origem;})||{}).label||r.origem||'?';
-    var dest=(MAPA_AREAS.find(function(a){return a.id===r.destino;})||{}).label||r.destino||'?';
-    html+='<div style="background:#fff;border-radius:6px;padding:8px;margin-bottom:5px;font-size:12px">';
-    html+='<div style="font-weight:700;color:#1565C0">🐄 '+r.lote+'</div>';
-    html+='<div style="margin-top:3px">'+orig+' <span style="color:#1B5E20;font-weight:700">→</span> '+dest+'</div>';
-    html+='<div style="color:#888;margin-top:2px;font-size:11px">por '+r.n+'</div>';
-    html+='</div>';
-  });
-  html+='</div>';
-  det.innerHTML=html;
-  det.style.display='block';
-  // Setar filtro de data
-  var de=document.getElementById('hist-de');
-  var ate=document.getElementById('hist-ate');
-  if(de)de.value=dt;
-  if(ate)ate.value=dt;
-  rHistorico();
+  if(tab==='lotes') rHistLotes();
+  else if(tab==='rotacao') rHistRotacao();
+  else rHistReg();
 }
 
 function rHistorico(){
-  // Inicializar calendário na primeira vez
-  rCalendario();
-  // Preencher select de lotes
-  var sl=document.getElementById('hist-lote');
-  if(sl&&sl.options.length<=1){
-    (S.LOTES||[]).forEach(function(l){var o=document.createElement('option');o.value=l.nome;o.textContent=l.nome;sl.appendChild(o);});
+  // Chamado ao abrir tela — renderiza a aba ativa
+  var ativa = document.querySelector('.tgo.on[id^="htab-"]');
+  var tab = ativa ? ativa.id.replace('htab-','') : 'lotes';
+  sHistTab(tab);
+}
+
+// ── ABA LOTES: situação atual + indicadores ──────────────
+function rHistLotes(){
+  var cont = document.getElementById('hist-lotes-cards');
+  if(!cont) return;
+  var hoje = new Date();
+  var todayStr = TD;
+  var movs = (S.rT||[]).filter(function(r){ return r.tipo==='mudanca_pasto'&&!r._apagado; });
+  movs.sort(function(a,b){ return (a.dt||'').localeCompare(b.dt||''); });
+
+  var html = '';
+  var lotes = S.LOTES||[];
+  var aloc = S.MAPA_ALOC||{};
+
+  // Para cada lote, calcular indicadores
+  lotes.forEach(function(lote){
+    var nomeLote = lote.nome;
+    var qtd = lote.qtd||0;
+    var pesoMedio = lote.peso||0;
+
+    // Encontrar área atual
+    var areaAtualId = null;
+    Object.keys(aloc).forEach(function(aId){
+      if(aloc[aId]===nomeLote) areaAtualId=aId;
+    });
+    var areaObj = areaAtualId ? MAPA_AREAS.find(function(a){return a.id===areaAtualId;}) : null;
+    var areaNome = areaObj ? areaObj.label : 'Sem área';
+    // Buscar ha: primeiro em S.AREAS (estrutura {faz:[{label,ha_total}]}), depois em MAPA_AREAS
+    var haArea = 0;
+    if(areaAtualId){
+      // Procurar em todas as fazendas de S.AREAS
+      Object.values(S.AREAS||{}).forEach(function(lista){
+        if(!Array.isArray(lista)) return;
+        lista.forEach(function(a){
+          // Modulo: label == M01 e piquete seria M01P01
+          // Pasto: a.nome pode ser PA01
+          if(a.nome && areaObj){
+            // Pasto direto
+            if(a.tipo==='pasto' && areaObj.label && areaObj.label.replace(' ','').toLowerCase()===a.nome.replace(' ','').toLowerCase()){
+              haArea = a.ha_total||0;
+            }
+            // Módulo: ha por piquete
+            if(a.tipo==='modulo' && areaObj.tipo==='modulo' && a.label && areaObj.label && areaObj.label.startsWith(a.label)){
+              haArea = a.ha_piquete||0;
+            }
+          }
+        });
+      });
+      // Fallback: areaObj.ha
+      if(!haArea && areaObj) haArea = areaObj.ha||0;
+    }
+
+    // Data de entrada nesta área
+    var movsLote = movs.filter(function(m){ return m.lote===nomeLote; });
+    var dtEntrada = null;
+    if(movsLote.length>0){
+      var ultimo = movsLote[movsLote.length-1];
+      dtEntrada = ultimo.dt;
+    }
+    var diasNoAtual = 0;
+    if(dtEntrada){
+      var d0 = new Date(dtEntrada+'T12:00:00');
+      diasNoAtual = Math.max(0, Math.round((hoje - d0)/(1000*60*60*24)));
+    }
+
+    // Calcular UA (1 UA = 450kg)
+    var uaTotal = qtd * (pesoMedio/450);
+    // Taxa de lotação = UA/ha
+    var txLot = haArea>0 ? (uaTotal/haArea).toFixed(2) : '—';
+    // Suporte de carga (considerando 4% PV consumo/dia, forragem=40kg/ha/dia)
+    var supCarga = haArea>0 ? ((haArea * 40)/(pesoMedio*0.04||1)).toFixed(1) : '—';
+    // Taxa instantânea (pressão de pastejo)
+    var txInst = (haArea>0 && diasNoAtual>0) ? (uaTotal/(haArea*(1/diasNoAtual||1))).toFixed(1) : '—';
+
+    // Cor dos dias
+    var corDias = diasNoAtual<=3?'#1B5E20':diasNoAtual<=7?'#2E7D32':diasNoAtual<=14?'#F57F17':'#B71C1C';
+    var emDias = diasNoAtual<=3?'🟢':diasNoAtual<=7?'🟡':diasNoAtual<=14?'🟠':'🔴';
+
+    html += '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,0.06)">'
+      // Cabeçalho
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+      +   '<div style="font-size:15px;font-weight:800;color:#1B5E20">🐄 '+nomeLote+'</div>'
+      +   '<div style="font-size:12px;background:#E8F5E9;color:#1B5E20;padding:3px 10px;border-radius:20px;font-weight:700">'+qtd+' animais</div>'
+      + '</div>'
+      // Área atual + dias
+      + '<div style="background:#f5f5f5;border-radius:10px;padding:10px;margin-bottom:10px">'
+      +   '<div style="display:flex;justify-content:space-between;align-items:center">'
+      +     '<div>'
+      +       '<div style="font-size:11px;color:#888;font-weight:600">ÁREA ATUAL</div>'
+      +       '<div style="font-size:14px;font-weight:700;color:#333">'+areaNome+(haArea>0?' ('+haArea+' ha)':'')+'</div>'
+      +       (dtEntrada ? '<div style="font-size:11px;color:#888;margin-top:2px">Entrou em '+dtEntrada.split('-').reverse().join('/')+'</div>' : '')
+      +     '</div>'
+      +     '<div style="text-align:center">'
+      +       '<div style="font-size:28px;font-weight:900;color:'+corDias+'">'+diasNoAtual+'</div>'
+      +       '<div style="font-size:10px;color:#888;font-weight:600">DIAS</div>'
+      +       '<div style="font-size:13px">'+emDias+'</div>'
+      +     '</div>'
+      +   '</div>'
+      + '</div>'
+      // Indicadores zootécnicos
+      + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'
+      +   _hdCard('TX. LOTAÇÃO','txlot-'+nomeLote, txLot, 'UA/ha')
+      +   _hdCard('SUPORTE CARGA','sc-'+nomeLote, supCarga, 'animais')
+      +   _hdCard('PESO MÉDIO','pm-'+nomeLote, pesoMedio+'kg', '')
+      + '</div>'
+      // Timeline de rotação deste lote
+      + (movsLote.length>0 ? _hdTimeline(nomeLote, movsLote) : '')
+      + '</div>';
+  });
+
+  if(!html) html = '<div style="color:#888;font-size:13px;text-align:center;padding:30px">Nenhum lote cadastrado.</div>';
+  cont.innerHTML = html;
+}
+
+function _hdCard(titulo, id, valor, unid){
+  return '<div style="background:#f5f9f5;border:1px solid #c8e6c9;border-radius:10px;padding:8px;text-align:center">'
+    + '<div style="font-size:9px;color:#888;font-weight:700;margin-bottom:2px">'+titulo+'</div>'
+    + '<div id="'+id+'" style="font-size:16px;font-weight:900;color:#1B5E20">'+valor+'</div>'
+    + (unid ? '<div style="font-size:9px;color:#888">'+unid+'</div>' : '')
+    + '</div>';
+}
+
+function _hdTimeline(nomeLote, movsLote){
+  var html = '<div style="margin-top:10px">'
+    + '<div style="font-size:11px;font-weight:700;color:#555;margin-bottom:6px">📍 Últimas movimentações</div>'
+    + '<div style="overflow-x:auto;white-space:nowrap;padding-bottom:4px">'
+    + '<div style="display:inline-flex;gap:0;align-items:center">';
+  var ultimos = movsLote.slice(-5);
+  ultimos.forEach(function(m, i){
+    var origObj = MAPA_AREAS.find(function(a){return a.id===m.origem;})||{};
+    var orig = origObj.label||m.origem||'?';
+    var destObj = MAPA_AREAS.find(function(a){return a.id===m.destino;})||{};
+    var dest = destObj.label||m.destino||'?';
+    var dt = (m.dt||'').split('-').reverse().join('/');
+    if(i===0){
+      html += '<div style="display:inline-block;background:#E3F2FD;border:1px solid #90CAF9;border-radius:8px;padding:4px 8px;font-size:10px;text-align:center">'
+        + '<div style="font-weight:700;color:#1565C0">'+orig+'</div>'
+        + '<div style="color:#888">'+dt+'</div>'
+        + '</div>';
+    }
+    html += '<div style="color:#888;font-size:16px;margin:0 4px">→</div>'
+      + '<div style="display:inline-block;background:'+(i===ultimos.length-1?'#E8F5E9':'#F3E5F5')+';border:1px solid '+(i===ultimos.length-1?'#A5D6A7':'#CE93D8')+';border-radius:8px;padding:4px 8px;font-size:10px;text-align:center">'
+      + '<div style="font-weight:700;color:'+(i===ultimos.length-1?'#1B5E20':'#6A1B9A')+'">'+dest+'</div>'
+      + '<div style="color:#888">'+dt+'</div>'
+      + '</div>';
+  });
+  html += '</div></div></div>';
+  return html;
+}
+
+// ── ABA ROTAÇÃO ───────────────────────────────────────────
+function rHistRotacao(){
+  var sl = document.getElementById('hist-lote-rot');
+  if(sl && sl.options.length<=1){
+    (S.LOTES||[]).forEach(function(l){ var o=document.createElement('option');o.value=l.nome;o.textContent=l.nome;sl.appendChild(o); });
   }
+  var filtroLote = sl ? sl.value : '';
+  var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
+  movs.sort(function(a,b){return (a.dt||'').localeCompare(b.dt||'');});
+  if(filtroLote) movs=movs.filter(function(m){return m.lote===filtroLote;});
+  var div=document.getElementById('hist-rotacao');
+  if(!div) return;
+  if(!movs.length){div.innerHTML='<div style="color:#888;font-size:12px;text-align:center;padding:20px">Sem movimentações registradas.</div>';return;}
+  var rotMap={};
+  movs.forEach(function(r,i){
+    var loteMovs=movs.filter(function(m){return m.lote===r.lote&&m.dt<=r.dt;});
+    var dtEnt = loteMovs.length>1 ? loteMovs[loteMovs.length-2].dt : r.dt;
+    var dias=Math.max(0,Math.round((new Date(r.dt+'T12:00:00')-new Date(dtEnt+'T12:00:00'))/(1000*60*60*24)));
+    if(!rotMap[r.lote]) rotMap[r.lote]=[];
+    rotMap[r.lote].push({origem:r.origem,destino:r.destino,saida:r.dt,dias:dias,n:r.n});
+  });
+  var html='';
+  Object.keys(rotMap).forEach(function(lt){
+    html+='<div style="margin-bottom:14px">'
+      +'<div style="font-weight:800;font-size:13px;color:#1B5E20;margin-bottom:6px;padding:6px 10px;background:#E8F5E9;border-radius:8px">🐄 '+lt+'</div>';
+    rotMap[lt].forEach(function(p){
+      var origObj=MAPA_AREAS.find(function(a){return a.id===p.origem;})||{};
+      var destObj=MAPA_AREAS.find(function(a){return a.id===p.destino;})||{};
+      var cor=p.dias<=7?'#E8F5E9':p.dias<=21?'#FFF8E1':'#FFEBEE';
+      var bdCor=p.dias<=7?'#A5D6A7':p.dias<=21?'#FFE082':'#EF9A9A';
+      var emoji=p.dias<=7?'🟢':p.dias<=21?'🟡':'🔴';
+      html+='<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:'+cor+';border:1px solid '+bdCor+';border-radius:8px;margin-bottom:4px;font-size:12px">'
+        +'<span style="font-size:15px">'+emoji+'</span>'
+        +'<div style="flex:1">'
+        +  '<div style="font-weight:700">'+(origObj.label||p.origem||'?')+' → '+(destObj.label||p.destino||'?')+'</div>'
+        +  '<div style="color:#888;font-size:10px">saiu '+p.saida.split('-').reverse().join('/')+' · por '+p.n+'</div>'
+        +'</div>'
+        +'<div style="text-align:right">'
+        +  '<div style="font-size:18px;font-weight:900;color:'+(p.dias<=7?'#1B5E20':p.dias<=21?'#E65100':'#B71C1C')+'">'+p.dias+'</div>'
+        +  '<div style="font-size:9px;color:#888">dias</div>'
+        +'</div>'
+        +'</div>';
+    });
+    html+='</div>';
+  });
+  div.innerHTML=html;
+}
+
+// ── ABA REGISTROS ─────────────────────────────────────────
+function rHistReg(){
   var tipo=(document.getElementById('hist-tipo')||{}).value||'';
-  var lote=(document.getElementById('hist-lote')||{}).value||'';
   var de=(document.getElementById('hist-de')||{}).value||'';
   var ate=(document.getElementById('hist-ate')||{}).value||'';
-
-  // Filtrar registros: mudanca_pasto em rT, tratos em rT também
   var regs=[].concat(
     (S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;}),
     (S.rT||[]).filter(function(r){return r.tipo==='trato'&&!r._apagado;})
   );
   if(tipo) regs=regs.filter(function(r){return r.tipo===tipo;});
-  if(lote) regs=regs.filter(function(r){return r.lote===lote||r.co===lote;});
   if(de) regs=regs.filter(function(r){return (r.dt||'')>=de;});
   if(ate) regs=regs.filter(function(r){return (r.dt||'')<=ate;});
   regs.sort(function(a,b){return (b.dt||'').localeCompare(a.dt||'');});
-
-  // Rotação de pasto (só quando filtro é mudanca_pasto ou todos)
-  var rotCard=document.getElementById('hist-rotacao-card');
-  var rotDiv=document.getElementById('hist-rotacao');
-  var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
-  movs.sort(function(a,b){return (a.dt||'').localeCompare(b.dt||'');});
-  if((!tipo||tipo==='mudanca_pasto')&&movs.length>0){
-    // Calcular dias por piquete por lote
-    var rotMap={};
-    movs.forEach(function(r,i){
-      var key=r.lote+'|'+(r.origem||'?');
-      var entrada=movs.slice(0,i).filter(function(m){return m.lote===r.lote;});
-      var dtEnt=entrada.length?entrada[entrada.length-1].dt:r.dt;
-      var dias=Math.max(0,Math.round((new Date(r.dt)-new Date(dtEnt))/(1000*60*60*24)));
-      if(!rotMap[r.lote]) rotMap[r.lote]=[];
-      rotMap[r.lote].push({pasto:r.origem||'?',saida:r.dt,dias:dias});
-    });
-    var html='';
-    Object.keys(rotMap).forEach(function(lt){
-      html+='<div style="margin-bottom:10px"><div style="font-weight:700;font-size:13px;color:#1B5E20;margin-bottom:4px">🐄 '+lt+'</div>';
-      rotMap[lt].forEach(function(p){
-        var cor=p.dias<=7?'#E8F5E9':p.dias<=21?'#FFF8E1':'#FFEBEE';
-        var emoji=p.dias<=7?'🟢':p.dias<=21?'🟡':'🔴';
-        html+='<div style="display:flex;justify-content:space-between;padding:6px 10px;background:'+cor+';border-radius:6px;margin-bottom:3px;font-size:12px">'
-          +'<span>'+emoji+' '+p.pasto+'</span>'
-          +'<span style="font-weight:700">'+p.dias+' dias</span>'
-          +'<span style="color:#888">saiu '+p.saida.split('-').reverse().join('/')+'</span>'
-          +'</div>';
-      });
-      html+='</div>';
-    });
-    if(rotCard) rotCard.style.display='block';
-    if(rotDiv) rotDiv.innerHTML=html||'<div style="color:#888;font-size:12px">Sem movimentações no período.</div>';
-  } else {
-    if(rotCard) rotCard.style.display='none';
-  }
-
-  // Lista de registros
   var lista=document.getElementById('hist-lista');
   if(!lista) return;
-  if(!regs.length){lista.innerHTML='<div style="color:#888;font-size:13px;text-align:center;padding:20px">Nenhum registro encontrado.</div>';return;}
+  if(!regs.length){lista.innerHTML='<div style="color:#888;font-size:13px;text-align:center;padding:20px">Nenhum registro.</div>';return;}
   lista.innerHTML=regs.map(function(r){
     if(r.tipo==='mudanca_pasto'){
       var orig=(MAPA_AREAS.find(function(a){return a.id===r.origem;})||{}).label||r.origem||'?';
       var dest=(MAPA_AREAS.find(function(a){return a.id===r.destino;})||{}).label||r.destino||'?';
-      var dtFmt=(r.dt||'').split('-').reverse().join('/');
-      return '<div style="padding:12px;border-bottom:1px solid #f0f0f0;border-left:4px solid #1565C0">'
+      return '<div style="padding:10px;border-bottom:1px solid #f0f0f0">'
         +'<div style="display:flex;justify-content:space-between;align-items:center">'
         +'<span style="font-size:13px;font-weight:700;color:#1565C0">🔄 Mudança de Pasto</span>'
-        +'<span style="font-size:12px;font-weight:700;background:#1565C0;color:#fff;padding:3px 8px;border-radius:10px">📅 '+dtFmt+'</span>'
+        +'<span style="font-size:11px;color:#888">'+(r.dt||'').split('-').reverse().join('/')+'</span>'
         +'</div>'
-        +'<div style="font-size:14px;margin-top:6px;font-weight:700">🐄 '+r.lote+'</div>'
-        +'<div style="font-size:13px;color:#333;margin-top:4px;display:flex;align-items:center;gap:6px">'
-        +'<span style="background:#FFF3E0;padding:2px 8px;border-radius:6px;font-weight:600">'+orig+'</span>'
-        +'<span style="color:#1B5E20;font-size:16px;font-weight:700">→</span>'
-        +'<span style="background:#E8F5E9;padding:2px 8px;border-radius:6px;font-weight:600">'+dest+'</span>'
-        +'</div>'
-        +'<div style="font-size:11px;color:#888;margin-top:4px">por '+r.n+'</div>'
+        +'<div style="font-size:13px;margin-top:4px;font-weight:600">🐄 '+r.lote+'</div>'
+        +'<div style="font-size:12px;color:#555;margin-top:2px">'+orig+' → '+dest+'</div>'
+        +'<div style="font-size:11px;color:#888;margin-top:2px">por '+r.n+'</div>'
         +'</div>';
     } else {
-      var dtFmt2=(r.dt||'').split('-').reverse().join('/');
-      return '<div style="padding:12px;border-bottom:1px solid #f0f0f0;border-left:4px solid #2E7D32">'
+      return '<div style="padding:10px;border-bottom:1px solid #f0f0f0">'
         +'<div style="display:flex;justify-content:space-between;align-items:center">'
         +'<span style="font-size:13px;font-weight:700;color:#2E7D32">🌾 Trato de Cocho</span>'
-        +'<span style="font-size:12px;font-weight:700;background:#2E7D32;color:#fff;padding:3px 8px;border-radius:10px">📅 '+dtFmt2+'</span>'
+        +'<span style="font-size:11px;color:#888">'+(r.dt||'').split('-').reverse().join('/')+'</span>'
         +'</div>'
-        +'<div style="font-size:14px;margin-top:6px;font-weight:700">'+r.co+'</div>'
-        +'<div style="font-size:12px;color:#555;margin-top:2px">'+r.pr+' · '+r.q+' '+(r.unid||'saco')+'</div>'
-        +'<div style="font-size:11px;color:#888;margin-top:2px">por '+r.n+'</div>'
+        +'<div style="font-size:13px;margin-top:4px;font-weight:600">'+(r.co||'—')+'</div>'
+        +'<div style="font-size:12px;color:#555;margin-top:2px">'+(r.pr||'—')+' · '+(r.q||0)+' '+(r.unid||'saco')+'</div>'
+        +'<div style="font-size:11px;color:#888;margin-top:2px">por '+(r.n||'—')+'</div>'
         +'</div>';
     }
   }).join('');
@@ -2385,7 +2448,7 @@ function expHistCSV(){
       var dest=(MAPA_AREAS.find(function(a){return a.id===r.destino;})||{}).label||r.destino||'';
       csv+='Mudança de Pasto,'+r.dt+',"'+r.faz+'","'+r.lote+'","'+orig+'","'+dest+'","","'+r.n+'"\n';
     } else {
-      csv+='Trato de Cocho,'+r.dt+',"'+r.faz+'","'+r.co+'","'+r.co+'","'+r.pr+'",'+(r.q||0)+',"'+r.n+'"\n';
+      csv+='Trato de Cocho,'+r.dt+',"'+r.faz+'","'+(r.co||'')+'","'+(r.co||'')+'","'+(r.pr||'')+'",'+( r.q||0)+',"'+(r.n||'')+'"\n';
     }
   });
   var a=document.createElement('a');
