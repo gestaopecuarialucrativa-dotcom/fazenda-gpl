@@ -865,32 +865,6 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 </div>
 
 <!-- CONSULTOR — irmão ✅ -->
-<div id="pg-historico" class="pg" style="display:none">
-<div style="padding:12px">
-  <div style="font-size:16px;font-weight:700;color:#1B5E20;margin-bottom:12px">📋 Histórico</div>
-  <!-- Filtros -->
-  <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-    <select id="hist-tipo" onchange="rHistorico()" style="flex:1;min-width:120px;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px">
-      <option value="">Tudo</option>
-      <option value="mudanca_pasto">🔄 Movimentações</option>
-      <option value="trato">🌾 Tratos</option>
-    </select>
-    <select id="hist-lote" onchange="rHistorico()" style="flex:1;min-width:120px;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px">
-      <option value="">Todos os lotes</option>
-    </select>
-    <select id="hist-mes" onchange="rHistorico()" style="flex:1;min-width:120px;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px">
-      <option value="">Todos os meses</option>
-    </select>
-  </div>
-  <!-- Resumo rotação -->
-  <div id="hist-rotacao" style="margin-bottom:10px"></div>
-  <!-- Lista -->
-  <div id="hist-lista"></div>
-  <!-- Exportar -->
-  <button onclick="expHistCSV()" style="width:100%;margin-top:12px;padding:12px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">📥 Exportar CSV</button>
-</div>
-</div><!-- fim pg-historico -->
-
 <div id="pg-consultor" class="pg" style="display:none">
 <div id="cons-resumo"></div>
 <div id="cons-alertas" style="margin-top:10px"></div>
@@ -899,6 +873,54 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <button class="sbtn" style="flex:1;background:#25D366" onclick="enviarRelatorioWpp()">📲 Resumo WhatsApp</button>
 <button class="sbtn" style="flex:1;background:#C62828" onclick="gerarRelatorioPDF()">📄 Relatório PDF</button>
 </div>
+</div>
+
+<!-- HISTÓRICO ✅ -->
+<div id="pg-historico" class="pg" style="display:none;padding-bottom:20px">
+
+<!-- Filtros -->
+<div class="card" style="margin-bottom:10px">
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+    <div style="flex:1;min-width:120px">
+      <div class="lbl">Tipo</div>
+      <select id="hist-tipo" onchange="rHistorico()" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+        <option value="">Todos</option>
+        <option value="mudanca_pasto">🔄 Movimentações</option>
+        <option value="trato">🌾 Tratos</option>
+      </select>
+    </div>
+    <div style="flex:1;min-width:120px">
+      <div class="lbl">Lote</div>
+      <select id="hist-lote" onchange="rHistorico()" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+        <option value="">Todos</option>
+      </select>
+    </div>
+    <div style="flex:1;min-width:100px">
+      <div class="lbl">De</div>
+      <input type="date" id="hist-de" onchange="rHistorico()" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+    </div>
+    <div style="flex:1;min-width:100px">
+      <div class="lbl">Até</div>
+      <input type="date" id="hist-ate" onchange="rHistorico()" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+    </div>
+  </div>
+</div>
+
+<!-- Rotação de pasto -->
+<div id="hist-rotacao-card" class="card" style="margin-bottom:10px;display:none">
+  <div class="stit" style="margin-bottom:8px">🔄 Rotação de Pasto</div>
+  <div id="hist-rotacao"></div>
+</div>
+
+<!-- Lista de registros -->
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div class="stit" style="margin:0">📋 Registros</div>
+    <button onclick="expHistCSV()" style="background:#1B5E20;color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer">📥 Exportar CSV</button>
+  </div>
+  <div id="hist-lista"></div>
+</div>
+
 </div>
 
 <!-- CONFIG — irmão ✅ -->
@@ -958,10 +980,10 @@ const STORAGE_KEY='gpl_v17_data';
 const TD=new Date().toISOString().split('T')[0];
 const EC=['','#7B3F00','#A0522D','#2d7a1f','#CC8800','#CC2200'];
 const EI=[null,{em:'💩',ti:'Escore 1 — Firmes e secas',re:'💡 Reduzir fibra'},{em:'💩',ti:'Escore 2 — Firmes com espalhamento',re:'💡 Monitorar'},{em:'✅',ti:'Escore 3 — Ideal (panqueca)',re:'💡 Nutrição equilibrada!'},{em:'⚠️',ti:'Escore 4 — Soltas e espalhadas',re:'💡 Revisar proteína e água'},{em:'🚨',ti:'Escore 5 — Diarreia',re:'💡 Ação imediata!'}];
-const PL={diaria:'Diária',insumo:'Insumos',trato:'Trato cocho',escore:'Escore fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',mapa:'Mapa',config:'Config.'};
+const PL={diaria:'Diária',insumo:'Insumos',trato:'Trato cocho',escore:'Escore fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',mapa:'Mapa',historico:'Histórico',config:'Config.'};
 const TABS=[{id:'painel',l:'📊 Painel',p:'painel'},{id:'cantina',l:'🏪 Cantina',p:'cantina'},{id:'estoque',l:'📦 Estoque',p:'estoque'},{id:'mapa',l:'🗺️ Mapa',p:'mapa'},{id:'historico',l:'📋 Histórico',p:'historico'},{id:'config',l:'⚙️ Config.',p:'config'},{id:'consultor',l:'🌿 Visão Geral',p:'config'}];
 const ACTS=[{id:'diaria',l:'Lançar diária',s:'Serviço do dia',ic:'👤',c:'gr',p:'diaria'},{id:'insumo',l:'Insumos',s:'Depósito → campo',ic:'📦',c:'bl',p:'insumo'},{id:'trato',l:'Trato de cocho',s:'Proteinado, sal...',ic:'🛠',c:'tl',p:'trato'},{id:'lote',l:'Lotes',s:'Cadastro de lotes',ic:'🐄',c:'gr',p:'config'},{id:'escore',l:'Escore de fezes',s:'Avaliação do gado',ic:'🔬',c:'pu',p:'escore'}];
-const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbz1YxiaWGyCHKVugjEsuDyj2YtlHrtr-81ZItMYmr-V4RL5rQk1dOujv78LhVWUwllS/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},'Fazenda Santa Cruz':{cochos:['Lote 01','Lote 02','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+'],gasUrl:'',sheetId:''}},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,historico:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,historico:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:1,historico:0,config:0}},{n:'Elisangela',i:'E',c:'av-p',r:'Cantina',pin:'2222',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,mapa:0,historico:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:38,peso:402,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 02',qtd:85,peso:360,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 03',qtd:79,peso:316,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 04',qtd:61,peso:269,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 05',qtd:69,peso:228,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 06',qtd:121,peso:204,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio'],'Fazenda Santa Cruz':[]},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbz1YxiaWGyCHKVugjEsuDyj2YtlHrtr-81ZItMYmr-V4RL5rQk1dOujv78LhVWUwllS/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{},MAPA_ALOC:{'M03P01':'Lote 03','M01P01':'Lote 05','PA02':'Lote 06','PA08':'Lote 04','PA05':'Lote 01','M04P01':'Lote 02'}};
+const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbz1YxiaWGyCHKVugjEsuDyj2YtlHrtr-81ZItMYmr-V4RL5rQk1dOujv78LhVWUwllS/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},'Fazenda Santa Cruz':{cochos:['Lote 01','Lote 02','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+'],gasUrl:'',sheetId:''}},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,historico:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:1,config:0}},{n:'Elisangela',i:'E',c:'av-p',r:'Cantina',pin:'2222',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,mapa:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:38,peso:402,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 02',qtd:85,peso:360,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 03',qtd:79,peso:316,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 04',qtd:61,peso:269,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 05',qtd:69,peso:228,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 06',qtd:121,peso:204,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio'],'Fazenda Santa Cruz':[]},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbz1YxiaWGyCHKVugjEsuDyj2YtlHrtr-81ZItMYmr-V4RL5rQk1dOujv78LhVWUwllS/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{},MAPA_ALOC:{'M03P01':'Lote 03','M01P01':'Lote 05','PA02':'Lote 06','PA08':'Lote 04','PA05':'Lote 01','M04P01':'Lote 02'}};
 
 let S=null;
 function carregar(){try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=JSON.parse(r);S={...DEFAULT,...s};S.cfgGS=DEFAULT.cfgGS;if(!S.US||!S.US.length)S.US=DEFAULT.US;
@@ -1095,7 +1117,8 @@ function rHomeMapa(){
   }
 }
 
-function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda',historico:'Histórico'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home'){setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);setTimeout(function(){try{rHomeMapa();}catch(e){}},600);setTimeout(function(){try{rHomeMapa();}catch(e){}},1500);}if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}if(_nuvemCarregando){setTimeout(()=>{try{rPan();}catch(e){}},3500);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');if(wrap&&wrap.offsetWidth===0){setTimeout(_rmapa,150);return;}try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'inline-block':'none';};setTimeout(_rmapa,200);}if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='historico')setTimeout(()=>{try{rHistorico();}catch(e){console.error(e);}},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();if(S.cfgGS){carregarNuvem(function(ok){if(ok)rCtHist();});}else{rCtHist();}},50);if(id==='home')setTimeout(function(){try{rHomeMapa();buildActs();}catch(e){}},100);window.scrollTo(0,0);}
+function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home'){setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);setTimeout(function(){try{rHomeMapa();}catch(e){}},600);setTimeout(function(){try{rHomeMapa();}catch(e){}},1500);}if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}if(_nuvemCarregando){setTimeout(()=>{try{rPan();}catch(e){}},3500);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');if(wrap&&wrap.offsetWidth===0){setTimeout(_rmapa,150);return;}try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'inline-block':'none';};setTimeout(_rmapa,200);}if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);
+  if(id==='historico')setTimeout(function(){rHistorico();},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();if(S.cfgGS){carregarNuvem(function(ok){if(ok)rCtHist();});}else{rCtHist();}},50);if(id==='home')setTimeout(function(){try{rHomeMapa();buildActs();}catch(e){}},100);window.scrollTo(0,0);}
 function goBack(){if(prevPage)sp(prevPage,false);else sp('home',false);}
 function isV(u){return u.p.diaria||u.p.insumo||u.p.trato||u.p.escore;}
 function isA(u){return u.p.cantina||u.p.estoque||u.p.painel||u.p.config;}
@@ -1371,7 +1394,9 @@ function tPerm(i,p){S.US[i].p[p]=S.US[i].p[p]?0:1;salvar();rUcfg();}
 function salvarPin(i){const v=(document.getElementById('pin-u-'+i)||{}).value;if(v.length!==4||!/^\d{4}$/.test(v)){alert('PIN deve ter 4 números.');return;}S.US[i].pin=v;salvar();alert('✅ PIN salvo!');}
 function trocarFaz(i,faz){S.US[i].fs=faz?[faz]:[];salvar();rUcfg();rLinksUsuarios();alert('✅ Fazenda atualizada!');}
 function trocarRole(i,role){S.US[i].r=role;const ps={'Colaborador':{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:0,historico:0,config:0},'Cantina':{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,mapa:0,historico:0,config:0},'Dono':{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,historico:1,config:0},'Consultor':{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,historico:1,config:1}};if(ps[role])S.US[i].p=ps[role];salvar();rUcfg();}
-function addUser(){const n=prompt('Nome completo:');if(!n||!n.trim())return;const pin=prompt('PIN (4 números):');if(!pin||!/^\d{4}$/.test(pin)){alert('PIN inválido.');return;}const role=prompt('1-Colaborador 2-Cantina 3-Dono 4-Consultor','1');const roles=['Colaborador','Cantina','Dono','Consultor'];const r=roles[parseInt(role)-1]||'Colaborador';const ps={'Colaborador':{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:0,historico:0,config:0},'Cantina':{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,mapa:0,historico:0,config:0},'Dono':{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,historico:1,config:0},'Consultor':{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,historico:1,config:1}};const ini=n.trim().split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();const cores=['av-g','av-b','av-a','av-p','av-t'];S.US.push({n:n.trim(),i:ini,c:cores[S.US.length%5],r,pin,fs:[],p:ps[r]});salvar();rUcfg();rLinksUsuarios();alert('✅ '+n.trim()+' adicionado! PIN: '+pin);}
+function editUser(i){const n=prompt('Novo nome:',S.US[i].n);if(!n||!n.trim())return;S.US[i].n=n.trim();S.US[i].i=n.trim().split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();salvar();rUcfg();rLinksUsuarios();alert('✅ Atualizado!');}
+function delUser(i){if(!confirm('Excluir "'+S.US[i].n+'"?'))return;S.US.splice(i,1);salvar();rUcfg();rLinksUsuarios();alert('✅ Excluído!');}
+function addUser(){const n=prompt('Nome completo:');if(!n||!n.trim())return;const pin=prompt('PIN (4 números):');if(!pin||!/^\d{4}$/.test(pin)){alert('PIN inválido.');return;}const role=prompt('1-Colaborador 2-Cantina 3-Dono 4-Consultor','1');const roles=['Colaborador','Cantina','Dono','Consultor'];const r=roles[parseInt(role)-1]||'Colaborador';const ps={'Colaborador':{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:0,config:0},'Cantina':{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,mapa:0,config:0},'Dono':{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,config:0},'Consultor':{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,config:1}};const ini=n.trim().split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();const cores=['av-g','av-b','av-a','av-p','av-t'];S.US.push({n:n.trim(),i:ini,c:cores[S.US.length%5],r,pin,fs:[],p:ps[r]});salvar();rUcfg();rLinksUsuarios();alert('✅ '+n.trim()+' adicionado! PIN: '+pin);}
 function rServL(){const c=document.getElementById('serv-l');if(!c)return;c.innerHTML=S.SERVS.map(s=>`<span class="chip">${s} <span class="cdel" onclick="delServ('${s}')">×</span></span>`).join('');}
 function addServ(){const s=(document.getElementById('ns')||{}).value?.trim();if(!s)return;S.SERVS.push(s);salvar();rServL();popServs();document.getElementById('ns').value='';}
 function delServ(s){S.SERVS=S.SERVS.filter(x=>x!==s);salvar();rServL();popServs();}
@@ -2132,82 +2157,124 @@ function gerarReciboPDF(){const faz=(document.getElementById('pf')||{}).value||'
 </style></head><body><div style="text-align:center;margin-bottom:20px"><strong style="font-size:18px;color:#1B5E20">Gestão Pecuária Lucrativa</strong><br><span style="color:#666;font-size:12px">Rogério Avelino — ${faz||'Todas'}</span></div>${recibos}<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;font-size:13px">🖨️ Imprimir</button></body></html>`;const w=window.open('','_blank');w.document.write(html);w.document.close();}
 
 // ═══ CONSULTOR ═══
-function rHistorico(){
-  var lotes=(S.LOTES||[]).map(function(l){return l.nome;});
-  var selLote=document.getElementById('hist-lote');
-  var curLote=selLote?selLote.value:'';
-  if(selLote)selLote.innerHTML='<option value="">Todos os lotes</option>'+lotes.map(function(l){return'<option value="'+l+'" '+(l===curLote?'selected':'')+'>'+l+'</option>';}).join('');
-  var movs=(S.rD||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
-  var tratos=(S.rT||[]).filter(function(r){return !r._apagado;});
-  var meses={};
-  movs.concat(tratos.map(function(r){return{dt:r.dt};})).forEach(function(r){var m=(r.dt||'').substring(0,7);if(m)meses[m]=true;});
-  var selMes=document.getElementById('hist-mes');
-  var curMes=selMes?selMes.value:'';
-  if(selMes)selMes.innerHTML='<option value="">Todos os meses</option>'+Object.keys(meses).sort().reverse().map(function(m){var p=m.split('-');return'<option value="'+m+'" '+(m===curMes?'selected':'')+'>'+p[1]+'/'+p[0]+'</option>';}).join('');
-  var tipo=(document.getElementById('hist-tipo')||{}).value||'';
-  var lote=(document.getElementById('hist-lote')||{}).value||'';
-  var mes=(document.getElementById('hist-mes')||{}).value||'';
-  var movsF=movs.filter(function(r){if(lote&&r.lote!==lote)return false;if(mes&&(r.dt||'').substring(0,7)!==mes)return false;return true;});
-  var tratosF=tratos.filter(function(r){if(lote&&r.co!==lote)return false;if(mes&&(r.dt||'').substring(0,7)!==mes)return false;return true;});
-  // Rotação
-  var rotEl=document.getElementById('hist-rotacao');
-  if(rotEl&&lote&&(tipo===''||tipo==='mudanca_pasto')){
-    var regsL=movs.filter(function(r){return r.lote===lote;}).sort(function(a,b){return(a.dt||'')<(b.dt||'')?-1:1;});
-    if(regsL.length){
-      var rhtml='<div style="background:#E8F5E9;border-radius:10px;padding:10px;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:#1B5E20;margin-bottom:6px">🔄 Rotação — '+lote+'</div>';
-      regsL.forEach(function(r,i){
-        var diasStr='';
-        if(i+1<regsL.length){var d1=new Date(r.dt),d2=new Date(regsL[i+1].dt);var dias=Math.round((d2-d1)/(1000*60*60*24));diasStr=' <span style="color:#555;font-size:11px">('+dias+' dias)</span>';}
-        var aOrig=(MAPA_AREAS||[]).find(function(a){return a.id===r.origem||a.label===r.origem;});
-        var aDest=(MAPA_AREAS||[]).find(function(a){return a.id===r.destino||a.label===r.destino;});
-        rhtml+='<div style="font-size:12px;padding:3px 0;border-bottom:1px solid #C8E6C9">'+(r.dt||'').split('-').reverse().join('/')+' · '+(aOrig?aOrig.label:r.origem||'—')+' → '+(aDest?aDest.label:r.destino||'—')+diasStr+'</div>';
-      });
-      rotEl.innerHTML=rhtml+'</div>';
-    } else rotEl.innerHTML='';
-  } else if(rotEl) rotEl.innerHTML='';
-  // Lista combinada
-  var lista=[];
-  if(tipo===''||tipo==='mudanca_pasto')movsF.forEach(function(r){lista.push({tipo:'mov',r:r});});
-  if(tipo===''||tipo==='trato')tratosF.forEach(function(r){lista.push({tipo:'trat',r:r});});
-  lista.sort(function(a,b){return(a.r.dt||'')<(b.r.dt||'')?1:-1;});
-  var el=document.getElementById('hist-lista');
-  if(!el)return;
-  if(!lista.length){el.innerHTML='<div style="text-align:center;color:#888;padding:20px;font-size:13px">Nenhum registro.</div>';return;}
-  el.innerHTML=lista.map(function(item){
-    var r=item.r;var dt=(r.dt||'').split('-').reverse().join('/');
-    if(item.tipo==='mov'){
-      var aOrig=(MAPA_AREAS||[]).find(function(a){return a.id===r.origem||a.label===r.origem;});
-      var aDest=(MAPA_AREAS||[]).find(function(a){return a.id===r.destino||a.label===r.destino;});
-      return'<div style="background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:10px;margin-bottom:6px;border-left:4px solid #1565C0">'+
-        '<div style="display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:700;color:#1565C0">🔄 Movimentação</span><span style="font-size:11px;color:#888">'+dt+'</span></div>'+
-        '<div style="font-size:13px;margin-top:4px"><b>'+(r.lote||'—')+'</b></div>'+
-        '<div style="font-size:12px;color:#555;margin-top:2px">'+(aOrig?aOrig.label:r.origem||'—')+' → '+(aDest?aDest.label:r.destino||'—')+'</div>'+
-        '<div style="font-size:11px;color:#888;margin-top:2px">por '+(r.n||'—')+'</div></div>';
-    } else {
-      return'<div style="background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:10px;margin-bottom:6px;border-left:4px solid #2E7D32">'+
-        '<div style="display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:700;color:#2E7D32">🌾 Trato</span><span style="font-size:11px;color:#888">'+dt+'</span></div>'+
-        '<div style="font-size:13px;margin-top:4px"><b>'+(r.co||'—')+'</b> · '+(r.pr||'—')+'</div>'+
-        '<div style="font-size:12px;color:#555;margin-top:2px">'+r.q+' '+(r.unid||'saco')+(r.kg_fornecido?' · '+r.kg_fornecido.toFixed(1)+'kg':'')+' · '+(r.cab||0)+' cab</div>'+
-        '<div style="font-size:11px;color:#888;margin-top:2px">por '+(r.n||'—')+'</div></div>';
-    }
-  }).join('');
-}
-function expHistCSV(){
-  var movs=(S.rD||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
-  var tratos=(S.rT||[]).filter(function(r){return !r._apagado;});
-  var csv='Tipo,Data,Fazenda,Lote,De,Para,Produto,Qtd(saco),Kg,Cabeças,Por\n';
-  movs.forEach(function(r){csv+='Movimentação,'+(r.dt||'')+','+(r.faz||'')+','+(r.lote||'')+','+(r.origem||'')+','+(r.destino||'')+',,,,,'+(r.n||'')+'\n';});
-  tratos.forEach(function(r){csv+='Trato,'+(r.dt||'')+','+(r.faz||'')+','+(r.co||'')+',,,'+(r.pr||'')+','+(r.q||0)+','+(r.kg_fornecido||0)+','+(r.cab||0)+','+(r.n||'')+'\n';});
-  var a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
-  a.download='GPL-Historico-'+new Date().toISOString().substring(0,10)+'.csv';
-  a.click();
-}
 function rConsultor(){try{rConsResumo();}catch(e){}try{rConsAlertas();}catch(e){}try{rConsNotas();}catch(e){}}
 function rConsResumo(){const el=document.getElementById('cons-resumo');if(!el)return;const fazendas=Object.keys(S.FAZ);let html=`<div style="font-size:16px;font-weight:700;color:#1B5E20;margin-bottom:12px">🌿 Visão Geral — ${fazendas.length} fazenda(s)</div>`;fazendas.forEach(faz=>{const diarias=(S.rD||[]).filter(r=>r.faz===faz&&r.tipo==='diaria'&&!r._apagado);const tratos=(S.rT||[]).filter(r=>!r._apagado&&r.faz===faz);const escores=(S.rE||[]).filter(r=>!r._apagado&&r.faz===faz);const despPagar=(S.rDesp||[]).filter(r=>r.faz===faz&&r.st==='pagar');const lotes=(S.LOTES||[]).filter(l=>l.faz===faz);const totalD=diarias.reduce((a,r)=>a+r.v,0);const totalP=despPagar.reduce((a,r)=>a+r.val,0);const escMed=escores.length?(escores.reduce((a,r)=>a+r.es,0)/escores.length).toFixed(1):'—';const totalAnimais=lotes.reduce((a,l)=>a+l.qtd,0);let cor='#2E7D32';if(totalP>0)cor='#E65100';if(escores.length&&parseFloat(escMed)>=4)cor='#C62828';html+=`<div style="background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:14px;margin-bottom:10px;border-left:4px solid ${cor}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-weight:700;font-size:15px">🏠 ${faz}</span><span style="font-size:11px;font-weight:600;color:${cor}">${totalP>0?'⚠️ Pendências':'✅ Normal'}</span></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px"><div style="background:#E8F5E9;border-radius:8px;padding:8px;text-align:center"><div style="font-size:10px;color:#555">💰 Diárias</div><div style="font-weight:700;color:#1B5E20;font-size:14px">R$ ${Math.round(totalD)}</div><div style="font-size:10px;color:#888">${diarias.length} reg.</div></div><div style="background:${totalP>0?'#FFEBEE':'#E8F5E9'};border-radius:8px;padding:8px;text-align:center"><div style="font-size:10px;color:#555">⏳ A pagar</div><div style="font-weight:700;color:${totalP>0?'#C62828':'#2E7D32'};font-size:14px">R$ ${Math.round(totalP)}</div></div><div style="background:#E8F5E9;border-radius:8px;padding:8px;text-align:center"><div style="font-size:10px;color:#555">🐄 Animais</div><div style="font-weight:700;color:#1B5E20;font-size:14px">${totalAnimais}</div></div></div><div style="display:flex;justify-content:space-between;font-size:11px;color:#666"><span>🔬 Escore: <b>${escMed}</b></span><span>🛠 Tratos: <b>${tratos.length}</b></span></div><button onclick="goTab('painel')" style="margin-top:8px;width:100%;padding:7px;background:#f0f0f0;border:none;border-radius:8px;font-size:12px;cursor:pointer;color:#333">Ver painel detalhado →</button></div>`;});el.innerHTML=html;}
 function rConsAlertas(){const el=document.getElementById('cons-alertas');if(!el)return;const alertas=[];Object.keys(S.EST||{}).forEach(prod=>{const e=S.EST[prod];if(e.q<=e.min)alertas.push({tipo:'danger',msg:'📦 Estoque baixo: <b>'+prod+'</b> ('+e.q+' '+e.u+' — mín '+e.min+')'});});const hoje=new Date().toISOString().split('T')[0];(S.rDesp||[]).filter(r=>r.st==='pagar'&&r.venc<hoje).forEach(r=>{alertas.push({tipo:'warning',msg:'⏰ Despesa vencida: <b>'+r.desc+'</b> — R$ '+r.val.toFixed(2)+' ('+r.faz+')'});});if(!alertas.length){el.innerHTML='<div style="background:#E8F5E9;border-radius:10px;padding:12px;font-size:13px;color:#2E7D32;font-weight:600">✅ Nenhum alerta no momento</div>';return;}let html='<div style="font-size:13px;font-weight:700;color:#C62828;margin-bottom:8px">🚨 Alertas ('+alertas.length+')</div>';alertas.forEach(a=>{const bg=a.tipo==='danger'?'#FFEBEE':'#FFF8E1';const border=a.tipo==='danger'?'#C62828':'#FF8F00';html+=`<div style="background:${bg};border-left:3px solid ${border};border-radius:8px;padding:10px;margin-bottom:6px;font-size:12px">${a.msg}</div>`;});el.innerHTML=html;}
 function rConsNotas(){const el=document.getElementById('cons-notas');if(!el)return;if(!S.NOTAS)S.NOTAS={};let html='<div style="font-size:13px;font-weight:700;color:#1B5E20;margin-bottom:8px">📝 Decisões e anotações</div>';Object.keys(S.FAZ).forEach(faz=>{const nota=S.NOTAS[faz]||'';const k=faz.replace(/[\s']/g,'_');html+=`<div style="background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:12px;margin-bottom:8px"><div style="font-weight:600;font-size:13px;margin-bottom:6px">🏠 ${faz}</div><textarea id="nota-${k}" rows="3" placeholder="Decisões, recomendações..." style="width:100%;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:12px;resize:vertical;font-family:inherit">${nota}</textarea><div style="display:flex;gap:6px;margin-top:6px"><button onclick="salvarNota('${faz}','${k}')" style="flex:1;padding:7px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer">💾 Salvar</button><button onclick="compartilharNota('${faz}','${k}')" style="flex:1;padding:7px;background:#25D366;color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer">📲 WhatsApp</button></div></div>`;});el.innerHTML=html;}
 function salvarNota(faz,k){if(!S.NOTAS)S.NOTAS={};const ta=document.getElementById('nota-'+k);if(ta){S.NOTAS[faz]=ta.value;salvar();ta.style.borderColor='#2E7D32';setTimeout(()=>ta.style.borderColor='#ddd',1000);}}
+
+// ═══ HISTÓRICO ═══
+function rHistorico(){
+  // Preencher select de lotes
+  var sl=document.getElementById('hist-lote');
+  if(sl&&sl.options.length<=1){
+    (S.LOTES||[]).forEach(function(l){var o=document.createElement('option');o.value=l.nome;o.textContent=l.nome;sl.appendChild(o);});
+  }
+  var tipo=(document.getElementById('hist-tipo')||{}).value||'';
+  var lote=(document.getElementById('hist-lote')||{}).value||'';
+  var de=(document.getElementById('hist-de')||{}).value||'';
+  var ate=(document.getElementById('hist-ate')||{}).value||'';
+
+  // Filtrar registros: mudanca_pasto em rT, tratos em rT também
+  var regs=[].concat(
+    (S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;}),
+    (S.rT||[]).filter(function(r){return r.tipo==='trato'&&!r._apagado;})
+  );
+  if(tipo) regs=regs.filter(function(r){return r.tipo===tipo;});
+  if(lote) regs=regs.filter(function(r){return r.lote===lote||r.co===lote;});
+  if(de) regs=regs.filter(function(r){return (r.dt||'')>=de;});
+  if(ate) regs=regs.filter(function(r){return (r.dt||'')<=ate;});
+  regs.sort(function(a,b){return (b.dt||'').localeCompare(a.dt||'');});
+
+  // Rotação de pasto (só quando filtro é mudanca_pasto ou todos)
+  var rotCard=document.getElementById('hist-rotacao-card');
+  var rotDiv=document.getElementById('hist-rotacao');
+  var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
+  movs.sort(function(a,b){return (a.dt||'').localeCompare(b.dt||'');});
+  if((!tipo||tipo==='mudanca_pasto')&&movs.length>0){
+    // Calcular dias por piquete por lote
+    var rotMap={};
+    movs.forEach(function(r,i){
+      var key=r.lote+'|'+(r.origem||'?');
+      var entrada=movs.slice(0,i).filter(function(m){return m.lote===r.lote;});
+      var dtEnt=entrada.length?entrada[entrada.length-1].dt:r.dt;
+      var dias=Math.max(0,Math.round((new Date(r.dt)-new Date(dtEnt))/(1000*60*60*24)));
+      if(!rotMap[r.lote]) rotMap[r.lote]=[];
+      rotMap[r.lote].push({pasto:r.origem||'?',saida:r.dt,dias:dias});
+    });
+    var html='';
+    Object.keys(rotMap).forEach(function(lt){
+      html+='<div style="margin-bottom:10px"><div style="font-weight:700;font-size:13px;color:#1B5E20;margin-bottom:4px">🐄 '+lt+'</div>';
+      rotMap[lt].forEach(function(p){
+        var cor=p.dias<=7?'#E8F5E9':p.dias<=21?'#FFF8E1':'#FFEBEE';
+        var emoji=p.dias<=7?'🟢':p.dias<=21?'🟡':'🔴';
+        html+='<div style="display:flex;justify-content:space-between;padding:6px 10px;background:'+cor+';border-radius:6px;margin-bottom:3px;font-size:12px">'
+          +'<span>'+emoji+' '+p.pasto+'</span>'
+          +'<span style="font-weight:700">'+p.dias+' dias</span>'
+          +'<span style="color:#888">saiu '+p.saida.split('-').reverse().join('/')+'</span>'
+          +'</div>';
+      });
+      html+='</div>';
+    });
+    if(rotCard) rotCard.style.display='block';
+    if(rotDiv) rotDiv.innerHTML=html||'<div style="color:#888;font-size:12px">Sem movimentações no período.</div>';
+  } else {
+    if(rotCard) rotCard.style.display='none';
+  }
+
+  // Lista de registros
+  var lista=document.getElementById('hist-lista');
+  if(!lista) return;
+  if(!regs.length){lista.innerHTML='<div style="color:#888;font-size:13px;text-align:center;padding:20px">Nenhum registro encontrado.</div>';return;}
+  lista.innerHTML=regs.map(function(r){
+    if(r.tipo==='mudanca_pasto'){
+      var orig=(MAPA_AREAS.find(function(a){return a.id===r.origem;})||{}).label||r.origem||'?';
+      var dest=(MAPA_AREAS.find(function(a){return a.id===r.destino;})||{}).label||r.destino||'?';
+      return '<div style="padding:10px;border-bottom:1px solid #f0f0f0">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center">'
+        +'<span style="font-size:13px;font-weight:700;color:#1565C0">🔄 Mudança de Pasto</span>'
+        +'<span style="font-size:11px;color:#888">'+(r.dt||'').split('-').reverse().join('/')+'</span>'
+        +'</div>'
+        +'<div style="font-size:13px;margin-top:4px;font-weight:600">🐄 '+r.lote+'</div>'
+        +'<div style="font-size:12px;color:#555;margin-top:2px">'+orig+' → '+dest+'</div>'
+        +'<div style="font-size:11px;color:#888;margin-top:2px">por '+r.n+'</div>'
+        +'</div>';
+    } else {
+      return '<div style="padding:10px;border-bottom:1px solid #f0f0f0">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center">'
+        +'<span style="font-size:13px;font-weight:700;color:#2E7D32">🌾 Trato de Cocho</span>'
+        +'<span style="font-size:11px;color:#888">'+(r.dt||'').split('-').reverse().join('/')+'</span>'
+        +'</div>'
+        +'<div style="font-size:13px;margin-top:4px;font-weight:600">'+r.co+'</div>'
+        +'<div style="font-size:12px;color:#555;margin-top:2px">'+r.pr+' · '+r.q+' '+( r.unid||'saco')+'</div>'
+        +'<div style="font-size:11px;color:#888;margin-top:2px">por '+r.n+'</div>'
+        +'</div>';
+    }
+  }).join('');
+}
+
+function expHistCSV(){
+  var regs=[].concat(
+    (S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;}),
+    (S.rT||[]).filter(function(r){return r.tipo==='trato'&&!r._apagado;})
+  );
+  regs.sort(function(a,b){return (b.dt||'').localeCompare(a.dt||'');});
+  var csv='Tipo,Data,Fazenda,Lote,De/Cocho,Para/Produto,Quantidade,Por\n';
+  regs.forEach(function(r){
+    if(r.tipo==='mudanca_pasto'){
+      var orig=(MAPA_AREAS.find(function(a){return a.id===r.origem;})||{}).label||r.origem||'';
+      var dest=(MAPA_AREAS.find(function(a){return a.id===r.destino;})||{}).label||r.destino||'';
+      csv+='Mudança de Pasto,'+r.dt+',"'+r.faz+'","'+r.lote+'","'+orig+'","'+dest+'","","'+r.n+'"\n';
+    } else {
+      csv+='Trato de Cocho,'+r.dt+',"'+r.faz+'","'+r.co+'","'+r.co+'","'+r.pr+'",'+(r.q||0)+',"'+r.n+'"\n';
+    }
+  });
+  var a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download='GPL-Historico-'+TD+'.csv';
+  a.click();
+}
+
 function compartilharNota(faz,k){salvarNota(faz,k);const nota=S.NOTAS[faz]||'';const diarias=(S.rD||[]).filter(r=>r.faz===faz&&r.tipo==='diaria');const desp=(S.rDesp||[]).filter(r=>r.faz===faz&&r.st==='pagar');const totalD=diarias.reduce((a,r)=>a+r.v,0);const totalP=desp.reduce((a,r)=>a+r.val,0);let msg=`🌿 *Gestão Pecuária Lucrativa*\n*Rogério Avelino — Consultor*\n\n🏠 *${faz}*\n📅 ${new Date().toLocaleDateString('pt-BR')}\n\n📊 *Resumo:*\n• Diárias: R$ ${totalD.toFixed(2).replace('.',',')} (${diarias.length} reg.)\n`;if(totalP>0)msg+=`• A pagar: R$ ${totalP.toFixed(2).replace('.',',')}\n`;if(nota)msg+=`\n📝 *Observações:*\n${nota}`;window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');}
 function enviarRelatorioWpp(){const fazendas=Object.keys(S.FAZ);let msg='🌿 *Gestão Pecuária Lucrativa — Rogério Avelino*\n📅 '+new Date().toLocaleDateString('pt-BR')+'\n\n*RESUMO GERAL*\n\n';fazendas.forEach(faz=>{const diarias=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz&&r.tipo==='diaria');const desp=(S.rDesp||[]).filter(r=>r.faz===faz&&r.st==='pagar');const lotes=(S.LOTES||[]).filter(l=>l.faz===faz);const totalD=diarias.reduce((a,r)=>a+r.v,0);const totalP=desp.reduce((a,r)=>a+r.val,0);const animais=lotes.reduce((a,l)=>a+l.qtd,0);msg+=`🏠 *${faz}*\n• ${animais} animais · ${diarias.length} diárias · R$ ${totalD.toFixed(2).replace('.',',')}\n`;if(totalP>0)msg+=`• ⚠️ A pagar: R$ ${totalP.toFixed(2).replace('.',',')}\n`;const nota=S.NOTAS&&S.NOTAS[faz];if(nota)msg+=`• 📝 ${nota}\n`;msg+='\n';});window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');}
 
