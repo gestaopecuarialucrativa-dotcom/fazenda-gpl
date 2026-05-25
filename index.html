@@ -321,8 +321,8 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="agrid" id="vacts"></div>
 
 <!-- Mini-mapa da fazenda -->
-<div id="home-mapa-card" onclick="sp('mapa',true,'home')" style="margin-bottom:12px;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1);cursor:pointer;-webkit-tap-highlight-color:transparent">
-  <div style="background:linear-gradient(135deg,#1a5c10,#2d7a1f);padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+<div id="home-mapa-card" style="margin-bottom:12px;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1)">
+  <div onclick="sp('mapa',true,'home')" style="background:linear-gradient(135deg,#1a5c10,#2d7a1f);padding:8px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent">
     <div style="color:#fff;font-size:13px;font-weight:700">🗺️ Gado no Campo</div><div style="color:rgba(255,255,255,.55);font-size:10px">Toque para abrir mapa ›</div>
     <div style="color:#A5D6A7;font-size:11px;font-weight:600" id="home-mapa-resumo">–</div>
   </div>
@@ -331,7 +331,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
       style="width:100%;display:block;opacity:0.92;pointer-events:none"
       onload="this._loaded=true;try{rHomeMapa();}catch(e){}"
       onerror="this._loaded=true;try{rHomeMapa();}catch(e){}">
-    <div id="home-mapa-pins" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:5;pointer-events:none"></div>
+    <div id="home-mapa-pins" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:5"></div>
   </div>
   <!-- Métricas rápidas -->
   <div id="home-metricas" style="background:#f0f9e8;padding:8px 12px;display:flex;gap:12px;flex-wrap:wrap">
@@ -1459,6 +1459,7 @@ function carregarNuvem(cb){
           if(cfg.mEst)S.mEst=cfg.mEst;
           if(cfg.NOTAS)S.NOTAS=cfg.NOTAS;
           if(cfg.PIX_D)S.PIX_D=Object.assign(S.PIX_D||{},cfg.PIX_D);
+          if(cfg.MAPA_COORDS&&Object.keys(cfg.MAPA_COORDS).length)S.MAPA_COORDS=cfg.MAPA_COORDS;
         }catch(ex){}
       }());
     }
@@ -3447,12 +3448,29 @@ function _resetarPin(){
 
 function _salvarCoords(){
   salvar();
+  // Subir coordenadas para a nuvem para funcionar em todos os dispositivos
+  var gasUrl = S.cfgGS || (S.FAZ && S.FAZ[Object.keys(S.FAZ)[0]] && S.FAZ[Object.keys(S.FAZ)[0]].gasUrl) || '';
+  if(gasUrl){
+    var t2 = document.createElement('div');
+    t2.textContent = '☁️ Sincronizando...';
+    t2.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#1565C0;color:#fff;padding:10px 20px;border-radius:10px;font-weight:700;z-index:99999;font-size:13px';
+    document.body.appendChild(t2);
+    salvarNuvem(gasUrl, S, function(ok){
+      if(t2.parentNode) t2.parentNode.removeChild(t2);
+      var t = document.createElement('div');
+      t.textContent = ok ? '✅ Coordenadas salvas na nuvem!' : '✅ Salvo localmente (sem nuvem)';
+      t.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#1B5E20;color:#fff;padding:10px 20px;border-radius:10px;font-weight:700;z-index:99999;font-size:13px';
+      document.body.appendChild(t);
+      setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 2500);
+    });
+  } else {
+    var t = document.createElement('div');
+    t.textContent = '✅ Coordenadas salvas!';
+    t.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#1B5E20;color:#fff;padding:10px 20px;border-radius:10px;font-weight:700;z-index:99999;font-size:13px';
+    document.body.appendChild(t);
+    setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 2000);
+  }
   try{ _renderPinsEditor(); }catch(e){}
-  var t = document.createElement('div');
-  t.textContent = '✅ Coordenadas salvas!';
-  t.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#1B5E20;color:#fff;padding:10px 20px;border-radius:10px;font-weight:700;z-index:99999;font-size:13px';
-  document.body.appendChild(t);
-  setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 2000);
 }
 
 /* ═══════════════════════════════════════════════════════════
