@@ -301,7 +301,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/05/2026 v4.8 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/05/2026 v4.9 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1459,7 +1459,7 @@ function carregarNuvem(cb){
           if(cfg.NOTAS)S.NOTAS=cfg.NOTAS;
           if(cfg.PIX_D)S.PIX_D=Object.assign(S.PIX_D||{},cfg.PIX_D);
         }catch(ex){}
-      });
+      }());
     }
     // Dados definitivos vêm apenas do CONFIG (evita re-adição de excluídos)
     salvarLocal();
