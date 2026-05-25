@@ -1346,11 +1346,11 @@ function salvarNuvem(cb){
   if(!S.cfgGS){if(cb)cb(false);return;}
   updCloudStatus('saving');
 
-  // Separar config base e registros para respeitar limite de URL (~7500 chars)
+  // cfgBase SEM MAPA_COORDS (evita URL grande demais)
   var cfgBase={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,
     LOTES:S.LOTES,AREAS:S.AREAS||{},MAPA_ALOC:S.MAPA_ALOC||{},
     DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT||'',
-    NOTAS:S.NOTAS||{},PIX_D:S.PIX_D||{},MAPA_COORDS:S.MAPA_COORDS||{}};
+    NOTAS:S.NOTAS||{},PIX_D:S.PIX_D||{}};
   var cfgReg={rD:(S.rD||[]).filter(function(r){return !r._apagado;}),rT:(S.rT||[]).filter(function(r){return !r._apagado;}),rC:(S.rC||[]).filter(function(r){return !r._apagado;}),rE:(S.rE||[]).filter(function(r){return !r._apagado;}),
     rDesp:S.rDesp,mEst:S.mEst,queue:S.queue||[]};
 
@@ -1384,18 +1384,15 @@ function salvarNuvem(cb){
   // Enviar config completa para a URL principal
   var urlFull=S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfgFull));
   if(urlFull.length<7500){
-    // Dados cabem em GET
     fetch(urlFull,{method:'GET',mode:'no-cors'})
       .then(function(){updCloudStatus('ok');if(cb)cb(true);})
       .catch(function(e){updCloudStatus('err');if(cb)cb(false);});
   } else {
-    // Dados grandes: usar POST (sem limite de URL)
     fetch(S.cfgGS,{method:'POST',mode:'no-cors',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({acao:'salvar_config',data:JSON.stringify(cfgFull)})})
       .then(function(){updCloudStatus('ok');if(cb)cb(true);})
       .catch(function(){
-        // Fallback GET com dados reduzidos
         var cfgMini=Object.assign({},cfgBase);
         cfgMini.rD=cfgReg.rD;cfgMini.rC=cfgReg.rC;
         cfgMini.rT=[];cfgMini.rE=[];cfgMini.rDesp=[];cfgMini.mEst=[];
@@ -1404,6 +1401,19 @@ function salvarNuvem(cb){
           .then(function(){updCloudStatus('ok');if(cb)cb(true);})
           .catch(function(){updCloudStatus('err');if(cb)cb(false);});
       });
+  }
+
+  // Salvar MAPA_COORDS separado via script tag (JSONP) — não infla URL principal
+  if(S.MAPA_COORDS&&Object.keys(S.MAPA_COORDS).length){
+    var coordData={MAPA_COORDS:S.MAPA_COORDS};
+    var coordUrl=S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(coordData));
+    if(coordUrl.length<7500){
+      var s=document.createElement('script');
+      s.src=coordUrl;
+      s.onload=function(){if(s.parentNode)s.parentNode.removeChild(s);};
+      s.onerror=function(){if(s.parentNode)s.parentNode.removeChild(s);};
+      document.body.appendChild(s);
+    }
   }
 }
 function carregarNuvem(cb){
