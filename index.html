@@ -1638,17 +1638,18 @@ function _renderPinsNoContainer(contId, resumoId){
     // Eventos — funciona em mobile e desktop
     (function(area, cid){
       var moved=false;
+      var origem = (cid==='mapa-pins'||cid==='mapa-pins-main') ? 'mapa' : 'home';
       btn.addEventListener('touchstart',function(e){moved=false;},{passive:true});
       btn.addEventListener('touchmove',function(){moved=true;},{passive:true});
       btn.addEventListener('touchend',function(e){
         if(!moved){e.preventDefault();e.stopPropagation();
-          if(ocupado){aoClicarNoLoteDoMapa(area.label,aloc||'');}
+          if(ocupado){aoClicarNoLoteDoMapa(area.label,aloc||'',origem);}
           else{var isAdm=CU&&(CU.r==='Consultor'||CU.r==='Dono');abrirMapaModal(area,cid);}
         }
       },{passive:false});
       btn.addEventListener('click',function(e){
         e.preventDefault();e.stopPropagation();
-        if(ocupado){aoClicarNoLoteDoMapa(area.label,aloc||'');}
+        if(ocupado){aoClicarNoLoteDoMapa(area.label,aloc||'',origem);}
         else{var isAdm=CU&&(CU.r==='Consultor'||CU.r==='Dono');abrirMapaModal(area,cid);}
       });
     })(a, contId);
@@ -3200,7 +3201,7 @@ if(!S.PIX_D) S.PIX_D={};
 var pastoSelecionadoNoMapa = '';
 var loteSelecionadoNoMapa  = '';
 
-function aoClicarNoLoteDoMapa(pasto, lote){
+function aoClicarNoLoteDoMapa(pasto, lote, origem){
   pastoSelecionadoNoMapa = pasto;
   loteSelecionadoNoMapa  = lote;
   // Preencher info do lote no bottom sheet
@@ -3210,10 +3211,11 @@ function aoClicarNoLoteDoMapa(pasto, lote){
   var sub = document.getElementById('mapa-opcoes-sub');
   if(sub && loteObj) sub.textContent = (loteObj.qtd||0)+' animais · '+(loteObj.peso||0)+' kg/cab';
   else if(sub) sub.textContent = '';
-  // Mostrar botão admin se for Consultor/Dono
+  // Mostrar botão "Editar alocação" só quando aberto da aba Mapa
   var admDiv = document.getElementById('mapa-opcoes-adm');
   var isAdm = CU&&(CU.r==='Consultor'||CU.r==='Dono');
-  if(admDiv) admDiv.style.display = isAdm ? 'block' : 'none';
+  var vemDoMapa = (origem === 'mapa');
+  if(admDiv) admDiv.style.display = (isAdm && vemDoMapa) ? 'block' : 'none';
   var m = document.getElementById('mapa-opcoes-modal');
   if(m) m.classList.add('open');
 }
