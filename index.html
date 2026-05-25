@@ -1015,15 +1015,26 @@ function rHomeMapa(){
     var cx = (((S.MAPA_COORDS||{})[a.id]||{}).x||a.x);
     var cy = (((S.MAPA_COORDS||{})[a.id]||{}).y||a.y);
 
-    var pin = document.createElement('div');
-    pin.style.cssText = 'position:absolute;left:'+cx+'%;top:'+cy+'%;transform:translate(-50%,-100%);z-index:10;pointer-events:none';
+    var pin = document.createElement('button');
+    pin.type='button';
+    pin.style.cssText = 'position:absolute;left:'+cx+'%;top:'+cy+'%;transform:translate(-50%,-100%);z-index:10;pointer-events:auto;background:none;border:none;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation';
     var nomeLote = lote ? lote.nome : '';
     pin.innerHTML = '<div style="background:#1B5E20;border:2px solid #4CAF50;border-radius:9px;padding:5px 9px;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,.5);min-width:44px">'
       +'<div style="font-size:15px;font-weight:900;color:#fff;line-height:1.2">'+qtd+'</div>'
       +(nomeLote ? '<div style="font-size:9px;color:#A5D6A7;font-weight:700;line-height:1.1;max-width:54px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+nomeLote+'</div>' : '')
       +'</div>'
-      +'<div style="width:2px;height:6px;background:#4CAF50;margin:0 auto"></div>'
-      +'<div style="width:6px;height:6px;border-radius:50%;background:#4CAF50;margin:0 auto"></div>';
+      +'<div style="width:2px;height:6px;background:#4CAF50;margin:0 auto;pointer-events:none"></div>'
+      +'<div style="width:6px;height:6px;border-radius:50%;background:#4CAF50;margin:0 auto;pointer-events:none"></div>';
+    (function(pasto, loteNome){
+      pin.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        aoClicarNoLoteDoMapa(pasto, loteNome, 'home');
+      });
+      pin.addEventListener('touchend', function(e){
+        e.preventDefault(); e.stopPropagation();
+        aoClicarNoLoteDoMapa(pasto, loteNome, 'home');
+      }, {passive:false});
+    })(a.label, aloc||'');
     cont.appendChild(pin);
   });
 
@@ -1339,7 +1350,7 @@ function salvarNuvem(cb){
   var cfgBase={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,
     LOTES:S.LOTES,AREAS:S.AREAS||{},MAPA_ALOC:S.MAPA_ALOC||{},
     DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT||'',
-    NOTAS:S.NOTAS||{},PIX_D:S.PIX_D||{}};
+    NOTAS:S.NOTAS||{},PIX_D:S.PIX_D||{},MAPA_COORDS:S.MAPA_COORDS||{}};
   var cfgReg={rD:(S.rD||[]).filter(function(r){return !r._apagado;}),rT:(S.rT||[]).filter(function(r){return !r._apagado;}),rC:(S.rC||[]).filter(function(r){return !r._apagado;}),rE:(S.rE||[]).filter(function(r){return !r._apagado;}),
     rDesp:S.rDesp,mEst:S.mEst,queue:S.queue||[]};
 
@@ -3449,13 +3460,12 @@ function _resetarPin(){
 function _salvarCoords(){
   salvar();
   // Subir coordenadas para a nuvem para funcionar em todos os dispositivos
-  var gasUrl = S.cfgGS || (S.FAZ && S.FAZ[Object.keys(S.FAZ)[0]] && S.FAZ[Object.keys(S.FAZ)[0]].gasUrl) || '';
-  if(gasUrl){
+  if(S.cfgGS){
     var t2 = document.createElement('div');
     t2.textContent = '☁️ Sincronizando...';
     t2.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#1565C0;color:#fff;padding:10px 20px;border-radius:10px;font-weight:700;z-index:99999;font-size:13px';
     document.body.appendChild(t2);
-    salvarNuvem(gasUrl, S, function(ok){
+    salvarNuvem(function(ok){
       if(t2.parentNode) t2.parentNode.removeChild(t2);
       var t = document.createElement('div');
       t.textContent = ok ? '✅ Coordenadas salvas na nuvem!' : '✅ Salvo localmente (sem nuvem)';
