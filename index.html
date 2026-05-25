@@ -853,6 +853,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.55);padding:6px 10px;display:flex;align-items:center;gap:8px;z-index:30">
     <span style="font-size:11px;color:#A5D6A7;font-weight:600" id="mapa-main-resumo">Toque em qualquer piquete</span>
     <button id="btn-mapa-editor" onclick="_abrirEditor()" style="display:none;background:#FF6F00;color:#fff;border:none;border-radius:14px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer">✏️ Editor</button>
+    <button onclick="(function(){var i=document.getElementById('mapa-img-sat');alert('W:'+i.offsetWidth+' H:'+i.offsetHeight+'\nNat:'+i.naturalWidth+'x'+i.naturalHeight+'\nRatio:'+(i.offsetWidth/i.offsetHeight).toFixed(3));})();" style="background:#555;color:#fff;border:none;border-radius:14px;padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer" id="btn-mapa-diag">📐</button>
     <button onclick="abrirSelPiquete('main')" style="margin-left:auto;background:#1B5E20;color:#fff;border:1.5px solid #4CAF50;border-radius:14px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation">+ Alocar</button>
   </div>
 </div>
