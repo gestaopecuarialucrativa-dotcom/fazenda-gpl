@@ -556,6 +556,8 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div style="margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:#888;font-weight:600">Total</span><span style="font-size:18px;font-weight:700;color:#2d7a1f" id="tot-ct">R$ 0,00</span></div>
 <button class="sbtn" onclick="envCt()">📤 Enviar cantina</button>
 <div class="ok" id="ok-ct">✅ Cantina registrada!</div>
+<button id="btn-sync-ct" onclick="sincronizarDadosCantina()" style="display:none;width:100%;margin-top:10px;padding:14px;background:#1565C0;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2)">☁️ Enviar meus dados para a nuvem</button>
+<div id="ok-sync-ct" style="display:none;text-align:center;color:#1B5E20;font-weight:700;font-size:13px;margin-top:8px">✅ Dados enviados!</div>
 </div>
 <div class="card" style="margin-top:8px;padding:14px">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
@@ -1112,7 +1114,24 @@ function popServs(){const so=document.getElementById('d-servs');if(!so)return;so
 function updInsProd(){const faz=document.getElementById('i-faz')?document.getElementById('i-faz').value:getFL()[0]||'';document.querySelectorAll('.ip').forEach(s=>{const v=s.value;s.innerHTML='<option value="">Sel...</option>'+getPF(faz).map(p=>`<option>${p}</option>`).join('');if(v)s.value=v;});}
 function updTrato(){const faz=(document.getElementById('t-faz')||{}).value||'';const tc=document.getElementById('t-cocho');if(!tc)return;const lotes=(S.LOTES||[]).filter(l=>!faz||l.faz===faz);tc.innerHTML='<option value="">Selecione o lote...</option>'+lotes.map(l=>`<option>${l.nome} (${l.qtd} animais)</option>`).join('');const tp=document.getElementById('t-prod');if(!tp)return;tp.innerHTML='<option value="">Selecione...</option>'+getPF(faz).map(p=>`<option>${p}</option>`).join('');}
 function updEsCo(){const faz=(document.getElementById('es-faz')||{}).value||'';const ec=document.getElementById('es-cocho');if(!ec)return;const lotes=(S.LOTES||[]).filter(l=>!faz||l.faz===faz);ec.innerHTML='<option value="">Selecione o lote...</option>'+(lotes.length?lotes.map(l=>`<option>${l.nome}</option>`).join(''):getCF(faz).map(c=>`<option>${c}</option>`).join(''));}
-function updPrecosCt(){calcCt();}
+function updPrecosCt(){calcCt();_updBtnSyncCt();}
+function sincronizarDadosCantina(){
+  var btn=document.getElementById('btn-sync-ct');
+  if(btn){btn.textContent='☁️ Enviando...';btn.disabled=true;}
+  var regs=(S.rC||[]).filter(function(r){return !r._apagado;});
+  regs.forEach(function(r){try{enviarDado(r);}catch(e){}});
+  salvarNuvem(function(ok){
+    if(btn){btn.textContent='☁️ Enviar meus dados para a nuvem';btn.disabled=false;}
+    var ok2=document.getElementById('ok-sync-ct');
+    if(ok2){ok2.style.display='block';setTimeout(function(){ok2.style.display='none';},3000);}
+  });
+}
+function _updBtnSyncCt(){
+  var btn=document.getElementById('btn-sync-ct');
+  if(!btn)return;
+  var tem=(S.rC||[]).filter(function(r){return !r._apagado;}).length>0;
+  btn.style.display=tem?'block':'none';
+}
 function updDiariaNome(){const faz=(document.getElementById('d-faz')||{}).value||'';const sel=document.getElementById('d-nome');if(!sel)return;const dl=getDiaristas(faz);sel.innerHTML='<option value="">Selecione...</option>'+dl.map(n=>`<option>${n}</option>`).join('');if(CU&&CU.r==='Vaqueiro'){if(!dl.includes(CU.n)){const o=document.createElement('option');o.value=CU.n;o.textContent=CU.n;sel.appendChild(o);}sel.value=CU.n;}}
 function getDiaristas(faz){if(!S.DIARISTAS)S.DIARISTAS={};return S.DIARISTAS[faz]||[];}
 function addDiarista(){const faz=(document.getElementById('d-faz')||{}).value||'';const n=prompt('Nome do diarista:');if(!n||!n.trim())return;if(!S.DIARISTAS)S.DIARISTAS={};if(!S.DIARISTAS[faz])S.DIARISTAS[faz]=[];if(!S.DIARISTAS[faz].includes(n.trim())){S.DIARISTAS[faz].push(n.trim());salvar();updDiariaNome();}}
