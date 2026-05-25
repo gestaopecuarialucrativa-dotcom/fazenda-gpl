@@ -1475,11 +1475,21 @@ function salvarNuvem(cb){
       .catch(function(){
         var cfgMini=Object.assign({},cfgBase);
         cfgMini.rD=cfgReg.rD;cfgMini.rC=cfgReg.rC;
-        cfgMini.rT=[];cfgMini.rE=[];cfgMini.rDesp=[];cfgMini.mEst=[];
+        cfgMini.rT=cfgReg.rT;cfgMini.rE=[];cfgMini.rDesp=[];cfgMini.mEst=[];
         var urlMini=S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfgMini));
-        fetch(urlMini,{method:'GET',mode:'no-cors'})
-          .then(function(){updCloudStatus('ok');if(cb)cb(true);})
-          .catch(function(){updCloudStatus('err');if(cb)cb(false);});
+        if(urlMini.length<7500){
+          fetch(urlMini,{method:'GET',mode:'no-cors'})
+            .then(function(){updCloudStatus('ok');if(cb)cb(true);})
+            .catch(function(){updCloudStatus('err');if(cb)cb(false);});
+        } else {
+          // rT muito grande — salvar só movimentações
+          cfgMini.rT=(cfgReg.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto';});
+          cfgMini.rD=[];cfgMini.rC=[];
+          var urlMovs=S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(cfgMini));
+          fetch(urlMovs,{method:'GET',mode:'no-cors'})
+            .then(function(){updCloudStatus('ok');if(cb)cb(true);})
+            .catch(function(){updCloudStatus('err');if(cb)cb(false);});
+        }
       });
   }
 
