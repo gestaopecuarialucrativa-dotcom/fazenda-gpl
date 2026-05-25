@@ -948,7 +948,8 @@ function carregar(){try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=
   S.MAPA_ALOC=Object.keys(_ma).length ? _ma : (DEFAULT.MAPA_ALOC||{});if(!Array.isArray(S.SERVS))S.SERVS=DEFAULT.SERVS;if(!S.PR)S.PR=DEFAULT.PR;}else{S=JSON.parse(JSON.stringify(DEFAULT));}}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}}
 function salvarLocal(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(S));return true;}catch(e){return false;}}
 var _nuvemCarregando=false;
-function salvar(){salvarLocal();if(S.cfgGS&&navigator.onLine){clearTimeout(salvar._t);salvar._t=setTimeout(()=>salvarNuvem(null),2000);}return true;}
+function _podeSync(){return !CU||(CU.r==='Consultor'||CU.r==='Dono');}
+function salvar(){salvarLocal();if(S.cfgGS&&navigator.onLine&&_podeSync()){clearTimeout(salvar._t);salvar._t=setTimeout(()=>salvarNuvem(null),2000);}return true;}
 salvar._t=null;
 
 // ═══ LOGIN ═══
@@ -967,7 +968,7 @@ function atualizarPinDots(){for(let i=0;i<4;i++){const d=document.getElementById
 function validarPin(){const u=S.US[loginUser];if(pinBuf===u.pin){entrar(loginUser);}else{for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.add('e');document.getElementById('pin-err').textContent='PIN incorreto. Tente novamente.';setTimeout(()=>{pinBuf='';atualizarPinDots();},1000);}}
 function entrar(i){CU=S.US[i];document.getElementById('login-screen').style.display='none';document.getElementById('app').style.display='block';document.getElementById('un').textContent=CU.n.split(' ')[0];
   var banner=document.getElementById('ver-banner');
-  if(banner)banner.style.display=(CU.r==='Consultor')?'block':'none';const v=isV(CU),a=isA(CU);const tb=document.getElementById('tabs');if(a){tb.style.display='flex';buildTabs();}else tb.style.display='none';if(v){document.getElementById('h-nome').textContent='Olá, '+CU.n.split(' ')[0]+'! 👋';document.getElementById('h-data').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});popAll();buildActs();sp('home',false);rUlt();}else{popAll();const first=TABS.find(t=>CU.p[t.p]);if(first)goTab(first.id);}initSync();if(S.cfgGS&&navigator.onLine){carregarNuvem(function(ok){
+  if(banner)banner.style.display=(CU.r==='Consultor')?'block':'none';const v=isV(CU),a=isA(CU);const tb=document.getElementById('tabs');if(a){tb.style.display='flex';buildTabs();}else tb.style.display='none';if(v){document.getElementById('h-nome').textContent='Olá, '+CU.n.split(' ')[0]+'! 👋';document.getElementById('h-data').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});popAll();buildActs();sp('home',false);rUlt();}else{popAll();const first=TABS.find(t=>CU.p[t.p]);if(first)goTab(first.id);}initSync();if(S.cfgGS&&navigator.onLine&&_podeSync()){carregarNuvem(function(ok){
   if(ok){
     try{popAll();}catch(e){}
     try{buildActs();}catch(e){}
@@ -979,7 +980,18 @@ function entrar(i){CU=S.US[i];document.getElementById('login-screen').style.disp
     setTimeout(function(){try{rHomeMapa();}catch(e){}}, 1000);
     setTimeout(function(){try{rPan();}catch(e){}try{rUlt();}catch(e){}}, 500);
   }
-});}const cc=document.getElementById('ins-cad-card');if(cc)cc.style.display=(CU.p&&CU.p.config)?'block':'none';
+});}else if(S.cfgGS&&navigator.onLine){
+  // Vaqueiro/Cantina: só baixa config (FAZ, AREAS, LOTES, MAPA_ALOC) sem sobrescrever registros
+  carregarNuvem(function(ok){
+    if(ok){
+      try{popAll();}catch(e){}
+      try{buildActs();}catch(e){}
+      try{rUlt();}catch(e){}
+      try{_sincMapa();}catch(e){}
+      setTimeout(function(){try{rHomeMapa();}catch(e){}},300);
+    }
+  });
+}const cc=document.getElementById('ins-cad-card');if(cc)cc.style.display=(CU.p&&CU.p.config)?'block':'none';
 // Mostrar legenda do mapa só para Consultor/Dono
 var _isConsOrDono=CU&&(CU.r==='Consultor'||CU.r==='Dono');
 ['mapa-lote-legenda'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display=_isConsOrDono?'flex':'none';});}
@@ -3209,7 +3221,7 @@ function salvarPix(nome,k){
   var titular=(document.getElementById('tit-d-'+k)||{}).value||'';
   S.PIX_D[nome]={chave:chave.trim(),titular:titular.trim()};
   salvar();
-  if(S.cfgGS&&navigator.onLine)setTimeout(function(){salvarNuvem(null);},800);
+  if(S.cfgGS&&navigator.onLine&&_podeSync())setTimeout(function(){salvarNuvem(null);},800);
   var inp=document.getElementById('pix-d-'+k);
   if(inp){
     var w=inp.parentElement&&inp.parentElement.parentElement&&inp.parentElement.parentElement.parentElement;
@@ -3230,7 +3242,7 @@ function excluirPix(nome){
   var key=Object.keys(S.PIX_D||{}).find(function(x){return x.toLowerCase()===nome.toLowerCase();});
   if(key)delete S.PIX_D[key];
   salvar();
-  if(S.cfgGS&&navigator.onLine)setTimeout(function(){salvarNuvem(null);},800);
+  if(S.cfgGS&&navigator.onLine&&_podeSync())setTimeout(function(){salvarNuvem(null);},800);
   rPixDiaristas();
 }
 
