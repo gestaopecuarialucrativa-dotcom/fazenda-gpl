@@ -971,6 +971,19 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
 <!-- CONFIG — irmão ✅ -->
 <div id="pg-config" class="pg" style="display:none">
+
+<div style="background:#E65100;border-radius:10px;padding:12px;margin-bottom:12px">
+  <div style="color:#fff;font-size:12px;font-weight:800;margin-bottom:8px">🔍 DIAGNÓSTICO — URL Apps Script</div>
+  <div id="diag-url-local" style="background:#fff3;border-radius:6px;padding:6px;font-size:10px;color:#fff;word-break:break-all;margin-bottom:6px">
+    <b>LOCAL (código):</b> <span id="diag-local-val">carregando...</span>
+  </div>
+  <div id="diag-url-nuvem" style="background:#fff3;border-radius:6px;padding:6px;font-size:10px;color:#fff;word-break:break-all;margin-bottom:8px">
+    <b>NUVEM (planilha):</b> <span id="diag-nuvem-val">clique em verificar...</span>
+  </div>
+  <div id="diag-match" style="font-size:11px;color:#fff;margin-bottom:8px"></div>
+  <button onclick="diagURL()" style="padding:8px 14px;background:#fff;color:#E65100;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer">🔍 Verificar agora</button>
+</div>
+
 <div class="card">
 <div class="stit">🗄️ Banco de dados</div>
 <div class="info-box">Google Planilhas — dados salvos na nuvem em tempo real.</div>
@@ -4659,6 +4672,56 @@ function executarPesquisaHist(){
   } else {
     rHistReg();
   }
+}
+
+function diagURL(){
+  // URL local (no código S.cfgGS)
+  var local = S.cfgGS || 'NÃO DEFINIDA';
+  var el = document.getElementById('diag-local-val');
+  if(el) el.textContent = local;
+
+  // Buscar da nuvem (planilha)
+  if(!local || local==='NÃO DEFINIDA'){
+    var nv = document.getElementById('diag-nuvem-val');
+    if(nv) nv.textContent = 'Sem URL local para consultar';
+    return;
+  }
+  var nv = document.getElementById('diag-nuvem-val');
+  if(nv) nv.textContent = 'buscando...';
+
+  var cbN = '_diag_'+Date.now();
+  var timeout = setTimeout(function(){
+    delete window[cbN];
+    if(nv) nv.textContent = 'TIMEOUT — URL não respondeu';
+  }, 10000);
+
+  window[cbN] = function(data){
+    clearTimeout(timeout);
+    delete window[cbN];
+    var urlNuvem = (data && data.cfgGS) ? data.cfgGS : 'não encontrada na planilha';
+    if(nv) nv.textContent = urlNuvem;
+    var match = document.getElementById('diag-match');
+    if(match){
+      if(urlNuvem === local){
+        match.innerHTML = '✅ URLs IGUAIS — tudo certo!';
+        match.style.color = '#a5d6a7';
+      } else {
+        match.innerHTML = '⚠️ URLs DIFERENTES — use a da planilha!';
+        match.style.color = '#ffcc80';
+      }
+    }
+  };
+
+  var s = document.createElement('script');
+  s.src = local + '?acao=ler_config&callback='+cbN+'&t='+Date.now();
+  s.onerror = function(){
+    clearTimeout(timeout);
+    delete window[cbN];
+    if(nv) nv.textContent = 'ERRO — URL inválida ou script não publicado';
+    var match = document.getElementById('diag-match');
+    if(match){ match.textContent = '❌ URL LOCAL não funciona — use a da planilha!'; match.style.color='#ff8a65'; }
+  };
+  document.body.appendChild(s);
 }
 </script>
 <!-- ══ BOTTOM SHEET MAPA ══ -->
