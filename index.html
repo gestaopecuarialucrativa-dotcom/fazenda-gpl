@@ -301,7 +301,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 25/05/2026 v5.3 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 25/05/2026 v5.4 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -889,7 +889,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 </div>
 
 <div id="htab-rotacao-content" style="display:none">
-  <div class="card" style="margin-bottom:10px">
+  <div class="card">
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
       <div class="stit" style="margin:0;flex:1">🔄 Histórico de Rotação</div>
       <button onclick="expHistCSV()" style="background:#1B5E20;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">📥 CSV</button>
@@ -1112,7 +1112,7 @@ function rHomeMapa(){
   }
 }
 
-function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home'){setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);setTimeout(function(){try{rHomeMapa();}catch(e){}},600);setTimeout(function(){try{rHomeMapa();}catch(e){}},1500);}if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}if(_nuvemCarregando){setTimeout(()=>{try{rPan();}catch(e){}},3500);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _mt=0;var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');var img=document.getElementById('mapa-img-sat');var pronto=wrap&&wrap.offsetWidth>0&&img&&(img.complete||img._loaded);if(!pronto&&_mt++<30){setTimeout(_rmapa,300);return;}try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'inline-block':'none';setTimeout(function(){try{rMapaMain();rMapa();}catch(e){}},1000);};setTimeout(_rmapa,100);}if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);
+function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',consultor:'Visão Geral',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home'){setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);setTimeout(function(){try{rHomeMapa();}catch(e){}},600);setTimeout(function(){try{rHomeMapa();}catch(e){}},1500);}if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}if(_nuvemCarregando){setTimeout(()=>{try{rPan();}catch(e){}},3500);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _mt=0;var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');var img=document.getElementById('mapa-img-sat');var ok=wrap&&wrap.offsetWidth>0&&img&&(img.complete||img._loaded);if(!ok&&_mt++<30){setTimeout(_rmapa,300);return;}try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'inline-block':'none';setTimeout(function(){try{rMapaMain();rMapa();}catch(e){}},1000);};setTimeout(_rmapa,100);}if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);
   if(id==='historico')setTimeout(function(){if(S.cfgGS&&navigator.onLine){carregarNuvem(function(){rHistorico();});}else{rHistorico();}},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();if(S.cfgGS){carregarNuvem(function(ok){if(ok)rCtHist();});}else{rCtHist();}},50);if(id==='home')setTimeout(function(){try{rHomeMapa();buildActs();}catch(e){}},100);window.scrollTo(0,0);}
 function goBack(){if(prevPage)sp(prevPage,false);else sp('home',false);}
 function isV(u){return u.p.diaria||u.p.insumo||u.p.trato||u.p.escore;}
@@ -1547,23 +1547,17 @@ function carregarNuvem(cb){
           else if(!S.LOTES||!S.LOTES.length)S.LOTES=DEFAULT.LOTES;
           if(cfg.AREAS)S.AREAS=cfg.AREAS;
           if(cfg.MAPA_ALOC){
-            // Normalizar IDs: M1P01→M01P01, M3P01→M03P01 etc
             var aloc={};
             Object.keys(cfg.MAPA_ALOC).forEach(function(k){
               var nk=k.replace(/^M(\d)P/,'M0$1P');
               aloc[nk]=cfg.MAPA_ALOC[k];
             });
-            // Só sobrescrever se nuvem trouxer dados (nunca apagar com vazio)
-            var localKeys=Object.keys(S.MAPA_ALOC||{}).length;
-            var nuvemKeys=Object.keys(aloc).length;
-            if(nuvemKeys>0){
-              // Merge: nuvem ganha, mas preserva local se nuvem vier menor
-              if(nuvemKeys>=localKeys){
-                S.MAPA_ALOC=aloc;
-              } else {
-                // Nuvem tem menos — pode ser dessincronização; fazer merge
-                Object.keys(aloc).forEach(function(k){S.MAPA_ALOC[k]=aloc[k];});
-              }
+            // Só sobrescreve se nuvem trouxer igual ou mais dados
+            var nK=Object.keys(aloc).length;
+            var lK=Object.keys(S.MAPA_ALOC||{}).length;
+            if(nK>0){
+              if(nK>=lK){ S.MAPA_ALOC=aloc; }
+              else{ Object.keys(aloc).forEach(function(k){S.MAPA_ALOC[k]=aloc[k];}); }
             }
           }
           if(cfg.DIARISTAS)S.DIARISTAS=cfg.DIARISTAS;
@@ -1585,11 +1579,9 @@ function carregarNuvem(cb){
     _nuvemCarregando=false;
     // Não salvar automaticamente — evita zerar nuvem com dados vazios
     updCloudStatus('ok');
-    // Re-renderizar painel e mapa se visíveis
     setTimeout(function(){
       var pp=document.getElementById('pg-painel');
       if(pp&&pp.style.display!=='none'){try{rPan();}catch(e){}}
-      // Sempre re-renderizar pins após carregar nuvem
       try{_sincMapa();}catch(e){}
       var pm=document.getElementById('pg-mapa');
       if(pm&&pm.style.display!=='none'){try{rMapaMain();rMapa();}catch(e){}}
@@ -2198,45 +2190,90 @@ function sHistTab(tab){
 
 function rHistorico(){
   var ativa=document.querySelector('[id^="htab-"].on');
-  var tab=ativa?ativa.id.replace('htab-',''):'lotes';
-  sHistTab(tab);
+  sHistTab(ativa?ativa.id.replace('htab-',''):'lotes');
 }
 
+// ── helper: buscar ha real de uma área ─────────────────────
+function _getHa(areaObj){
+  if(!areaObj) return 0;
+  var ha=0;
+  var fazs=Object.keys(S.AREAS||{});
+  for(var fi=0;fi<fazs.length;fi++){
+    var lista=S.AREAS[fazs[fi]]||[];
+    for(var ai=0;ai<lista.length;ai++){
+      var a=lista[ai];
+      if(areaObj.tipo==='pasto' && a.tipo==='pasto'){
+        // Normalizar: 'PA 05' === 'PA05'
+        var aN=(a.nome||'').replace(/\s/g,'').toUpperCase();
+        var oN=(areaObj.id||'').replace(/\s/g,'').toUpperCase();
+        if(aN===oN||(a.nome||'').trim()===(areaObj.label||'').trim()){
+          ha=a.ha_total||0; break;
+        }
+      }
+      if(areaObj.tipo==='modulo' && a.tipo==='modulo'){
+        // areaObj.modulo é o número (1,2,3...)
+        // a.label é 'M01','M02'...
+        var modNum=areaObj.modulo||0;
+        var aLabel='M'+String(modNum).padStart(2,'0');
+        if(a.label===aLabel){
+          ha=a.ha_piquete||0; break;
+        }
+      }
+    }
+    if(ha) break;
+  }
+  return ha;
+}
+
+// ── ABA LOTES ─────────────────────────────────────────────
 function rHistLotes(){
   var cont=document.getElementById('hist-lotes-cards');
-  if(!cont)return;
+  if(!cont) return;
   var hoje=new Date();
+  var todayISO=TD; // 'YYYY-MM-DD'
+  // rT pode vir da nuvem com campo 'dt' = '2026-05-25'
   var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
-  movs.sort(function(a,b){return (a.dt||'').localeCompare(b.dt||'');});
+  movs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
   var lotes=S.LOTES||[], aloc=S.MAPA_ALOC||{}, html='';
 
   lotes.forEach(function(lote){
-    var nm=lote.nome, qtd=lote.qtd||0, peso=lote.peso||0;
-    var areaId=null;
-    Object.keys(aloc).forEach(function(k){if(aloc[k]===nm)areaId=k;});
-    var areaObj=areaId?MAPA_AREAS.find(function(a){return a.id===areaId;}):null;
-    var areaNm=areaObj?areaObj.label:'Sem área';
+    var nm=lote.nome, qtd=parseInt(lote.qtd)||0, peso=parseFloat(lote.peso)||0;
 
-    var ha=0;
-    if(areaObj){
-      Object.values(S.AREAS||{}).forEach(function(lista){
-        if(!Array.isArray(lista))return;
-        lista.forEach(function(a){
-          if(a.tipo==='pasto'&&areaObj.tipo==='pasto'){
-            if((a.nome||'').replace(/\s/g,'').toLowerCase()===(areaObj.label||'').replace(/\s/g,'').toLowerCase())ha=a.ha_total||0;
-          }
-          if(a.tipo==='modulo'&&areaObj.tipo==='modulo'&&a.label&&areaObj.label&&areaObj.label.startsWith(a.label))ha=a.ha_piquete||0;
-        });
-      });
-      if(!ha)ha=areaObj.ha||0;
+    // Área atual pelo MAPA_ALOC
+    var areaId=null;
+    Object.keys(aloc).forEach(function(k){if(aloc[k]===nm) areaId=k;});
+    var areaObj=areaId ? MAPA_AREAS.find(function(a){return a.id===areaId;}) : null;
+    var areaNm=areaObj ? areaObj.label : 'Sem área';
+
+    // ha real
+    var ha=_getHa(areaObj);
+
+    // Data de entrada = data da última mudança cujo destino === areaId
+    var movsLote=movs.filter(function(m){return m.lote===nm;});
+    var dtEnt=null;
+    // Pegar a última movimentação que jogou o lote na área atual
+    for(var mi=movsLote.length-1;mi>=0;mi--){
+      if(movsLote[mi].destino===areaId){
+        dtEnt=movsLote[mi].dt||movsLote[mi].ts||null;
+        if(dtEnt&&dtEnt.length>10) dtEnt=dtEnt.substring(0,10);
+        break;
+      }
+    }
+    // Fallback: última movimentação qualquer deste lote
+    if(!dtEnt && movsLote.length){
+      dtEnt=(movsLote[movsLote.length-1].dt||movsLote[movsLote.length-1].ts||'');
+      if(dtEnt.length>10) dtEnt=dtEnt.substring(0,10);
     }
 
-    var movsLote=movs.filter(function(m){return m.lote===nm;});
-    var dtEnt=movsLote.length?movsLote[movsLote.length-1].dt:null;
-    var dias=dtEnt?Math.max(0,Math.round((hoje-new Date(dtEnt+'T12:00:00'))/864e5)):0;
+    var dias=0;
+    if(dtEnt && dtEnt.length===10){
+      dias=Math.max(0,Math.round((hoje-new Date(dtEnt+'T12:00:00'))/864e5));
+    }
+
+    // Indicadores
     var ua=qtd*(peso/450);
-    var txLot=ha>0?(ua/ha).toFixed(2):'—';
-    var supCg=ha>0?((ha*40)/(peso*0.04||1)).toFixed(0):'—';
+    var txLot=ha>0 ? (ua/ha).toFixed(2) : '—';
+    var supCg=ha>0 ? ((ha*40)/(peso*0.04||1)).toFixed(0) : '—';
     var cD=dias<=3?'#1B5E20':dias<=7?'#2E7D32':dias<=14?'#E65100':'#B71C1C';
     var eD=dias<=3?'🟢':dias<=7?'🟡':dias<=14?'🟠':'🔴';
 
@@ -2246,20 +2283,21 @@ function rHistLotes(){
       +  '<div style="font-size:12px;background:#E8F5E9;color:#1B5E20;padding:3px 10px;border-radius:20px;font-weight:700">'+qtd+' animais</div>'
       +'</div>'
       +'<div style="background:#f5f5f5;border-radius:10px;padding:10px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">'
-      +  '<div><div style="font-size:11px;color:#888;font-weight:600">ÁREA ATUAL</div>'
-      +  '<div style="font-size:14px;font-weight:700;color:#333">'+areaNm+(ha>0?' ('+ha+' ha)':'')+'</div>'
-      +  (dtEnt?'<div style="font-size:11px;color:#888;margin-top:2px">Entrada: '+dtEnt.split('-').reverse().join('/')+'</div>':'')
+      +  '<div>'
+      +    '<div style="font-size:11px;color:#888;font-weight:600">ÁREA ATUAL</div>'
+      +    '<div style="font-size:14px;font-weight:700;color:#333">'+areaNm+(ha>0?' · '+ha+' ha':'')+'</div>'
+      +    (dtEnt?'<div style="font-size:11px;color:#888;margin-top:2px">Entrada: '+dtEnt.split('-').reverse().join('/')+'</div>':'<div style="font-size:11px;color:#aaa;margin-top:2px">sem registro de entrada</div>')
       +  '</div>'
-      +  '<div style="text-align:center;min-width:48px">'
-      +    '<div style="font-size:30px;font-weight:900;color:'+cD+'">'+dias+'</div>'
-      +    '<div style="font-size:10px;color:#888;font-weight:600">DIAS</div>'
-      +    '<div>'+eD+'</div>'
+      +  '<div style="text-align:center;min-width:52px">'
+      +    '<div style="font-size:32px;font-weight:900;line-height:1;color:'+cD+'">'+dias+'</div>'
+      +    '<div style="font-size:10px;color:#888;font-weight:600;margin-top:2px">DIAS</div>'
+      +    '<div style="font-size:14px;margin-top:1px">'+eD+'</div>'
       +  '</div>'
       +'</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'
-      +  _hKpi('TX. LOTAÇÃO',txLot,'UA/ha')
-      +  _hKpi('SUPORTE CARGA',supCg,'animais')
-      +  _hKpi('PESO MÉDIO',peso+'kg','')
+      +  _hKpi('TX. LOTAÇÃO',txLot,'UA/ha',ha>0)
+      +  _hKpi('SUPORTE CARGA',supCg,'animais',ha>0)
+      +  _hKpi('PESO MÉDIO',peso>0?peso+'kg':'—','',true)
       +'</div>'
       +(movsLote.length?_hTimeline(movsLote):'')
       +'</div>';
@@ -2268,102 +2306,144 @@ function rHistLotes(){
   cont.innerHTML=html||'<div style="color:#888;font-size:13px;text-align:center;padding:30px">Nenhum lote cadastrado.</div>';
 }
 
-function _hKpi(t,v,u){
-  return '<div style="background:#f5f9f5;border:1px solid #c8e6c9;border-radius:10px;padding:8px;text-align:center">'
+function _hKpi(t,v,u,hasData){
+  var color=hasData?'#1B5E20':'#bbb';
+  return '<div style="background:'+(hasData?'#f5f9f5':'#fafafa')+';border:1px solid '+(hasData?'#c8e6c9':'#eee')+';border-radius:10px;padding:8px;text-align:center">'
     +'<div style="font-size:9px;color:#888;font-weight:700;margin-bottom:2px">'+t+'</div>'
-    +'<div style="font-size:16px;font-weight:900;color:#1B5E20">'+v+'</div>'
-    +(u?'<div style="font-size:9px;color:#888">'+u+'</div>':'')+'</div>';
+    +'<div style="font-size:16px;font-weight:900;color:'+color+'">'+v+'</div>'
+    +(u&&hasData?'<div style="font-size:9px;color:#888">'+u+'</div>':'')
+    +'</div>';
 }
 
 function _hTimeline(movsLote){
-  var ul=movsLote.slice(-4);
-  var s='<div style="margin-top:10px;overflow-x:auto;white-space:nowrap;padding-bottom:4px">'
-    +'<div style="font-size:11px;font-weight:700;color:#555;margin-bottom:5px">📍 Últimas movimentações</div>'
-    +'<div style="display:inline-flex;align-items:center">';
+  var ul=movsLote.slice(-5);
+  var s='<div style="margin-top:10px">'
+    +'<div style="font-size:11px;font-weight:700;color:#555;margin-bottom:5px">📍 Rotação (últimas movimentações)</div>'
+    +'<div style="overflow-x:auto;padding-bottom:4px"><div style="display:inline-flex;align-items:center;gap:0;min-width:max-content">';
   ul.forEach(function(m,i){
     var oA=(MAPA_AREAS.find(function(a){return a.id===m.origem;})||{}).label||m.origem||'?';
     var dA=(MAPA_AREAS.find(function(a){return a.id===m.destino;})||{}).label||m.destino||'?';
-    var dt=(m.dt||'').split('-').reverse().join('/');
-    if(i===0){s+='<div style="display:inline-block;background:#E3F2FD;border:1px solid #90CAF9;border-radius:8px;padding:4px 8px;font-size:10px;text-align:center;white-space:normal"><div style="font-weight:700;color:#1565C0">'+oA+'</div><div style="color:#888">'+dt+'</div></div>';}
-    s+='<div style="color:#aaa;margin:0 3px;font-size:14px">→</div>'
-      +'<div style="display:inline-block;background:'+(i===ul.length-1?'#E8F5E9':'#F3E5F5')+';border:1px solid '+(i===ul.length-1?'#A5D6A7':'#CE93D8')+';border-radius:8px;padding:4px 8px;font-size:10px;text-align:center;white-space:normal">'
+    var dt=((m.dt||m.ts||'').substring(0,10)).split('-').reverse().join('/');
+    if(i===0){
+      s+='<div style="display:inline-block;background:#E3F2FD;border:1px solid #90CAF9;border-radius:8px;padding:4px 8px;font-size:10px;text-align:center">'
+        +'<div style="font-weight:700;color:#1565C0">'+oA+'</div><div style="color:#888;font-size:9px">'+dt+'</div></div>';
+    }
+    s+='<div style="color:#aaa;margin:0 3px;font-size:13px">→</div>'
+      +'<div style="display:inline-block;background:'+(i===ul.length-1?'#E8F5E9':'#F3E5F5')+';border:1px solid '+(i===ul.length-1?'#A5D6A7':'#CE93D8')+';border-radius:8px;padding:4px 8px;font-size:10px;text-align:center">'
       +'<div style="font-weight:700;color:'+(i===ul.length-1?'#1B5E20':'#6A1B9A')+'">'+dA+'</div>'
-      +'<div style="color:#888">'+dt+'</div></div>';
+      +'<div style="color:#888;font-size:9px">'+dt+'</div></div>';
   });
-  return s+'</div></div>';
+  return s+'</div></div></div>';
 }
 
+// ── ABA ROTAÇÃO ───────────────────────────────────────────
 function rHistRotacao(){
   var sl=document.getElementById('hist-lote-rot');
-  if(sl&&sl.options.length<=1){(S.LOTES||[]).forEach(function(l){var o=document.createElement('option');o.value=l.nome;o.textContent=l.nome;sl.appendChild(o);});}
+  if(sl&&sl.options.length<=1){
+    (S.LOTES||[]).forEach(function(l){
+      var o=document.createElement('option');o.value=l.nome;o.textContent=l.nome;sl.appendChild(o);
+    });
+  }
   var filtro=sl?sl.value:'';
   var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
-  movs.sort(function(a,b){return (a.dt||'').localeCompare(b.dt||'');});
-  if(filtro)movs=movs.filter(function(m){return m.lote===filtro;});
+  movs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
+  if(filtro) movs=movs.filter(function(m){return m.lote===filtro;});
   var div=document.getElementById('hist-rotacao');
-  if(!div)return;
-  if(!movs.length){div.innerHTML='<div style="color:#888;font-size:12px;text-align:center;padding:20px">Sem movimentações registradas.</div>';return;}
+  if(!div) return;
+  if(!movs.length){
+    div.innerHTML='<div style="color:#888;font-size:12px;text-align:center;padding:20px">Sem movimentações registradas.</div>';
+    return;
+  }
+  // Calcular dias que ficou em cada pasto (dt_saida - dt_entrada)
   var mapa={};
   movs.forEach(function(r,i){
-    var prev=movs.slice(0,i).filter(function(m){return m.lote===r.lote;});
-    var dtE=prev.length?prev[prev.length-1].dt:r.dt;
-    var dias=Math.max(0,Math.round((new Date(r.dt+'T12:00:00')-new Date(dtE+'T12:00:00'))/864e5));
-    if(!mapa[r.lote])mapa[r.lote]=[];
-    mapa[r.lote].push({origem:r.origem,destino:r.destino,saida:r.dt,dias:dias,n:r.n});
+    var rDt=(r.dt||r.ts||'').substring(0,10);
+    // Encontrar movimentação anterior do mesmo lote
+    var prev=null;
+    for(var j=i-1;j>=0;j--){
+      if(movs[j].lote===r.lote){prev=movs[j];break;}
+    }
+    var dtEnt=prev?(prev.dt||prev.ts||'').substring(0,10):rDt;
+    var dias=0;
+    if(dtEnt&&rDt&&dtEnt!==rDt){
+      dias=Math.max(0,Math.round((new Date(rDt+'T12:00:00')-new Date(dtEnt+'T12:00:00'))/864e5));
+    }
+    if(!mapa[r.lote]) mapa[r.lote]=[];
+    mapa[r.lote].push({origem:r.origem,destino:r.destino,saida:rDt,dias:dias,n:r.n||r.usuario||'?'});
   });
+
   var out='';
   Object.keys(mapa).forEach(function(lt){
-    out+='<div style="margin-bottom:14px"><div style="font-weight:800;font-size:13px;color:#1B5E20;padding:6px 10px;background:#E8F5E9;border-radius:8px;margin-bottom:6px">🐄 '+lt+'</div>';
+    out+='<div style="margin-bottom:14px">'
+      +'<div style="font-weight:800;font-size:13px;color:#1B5E20;padding:6px 10px;background:#E8F5E9;border-radius:8px;margin-bottom:6px">🐄 '+lt+'</div>';
     mapa[lt].forEach(function(p){
-      var oA=(MAPA_AREAS.find(function(a){return a.id===p.origem;})||{}).label||p.origem||'?';
-      var dA=(MAPA_AREAS.find(function(a){return a.id===p.destino;})||{}).label||p.destino||'?';
+      var oA=(MAPA_AREAS.find(function(a){return a.id===p.origem;})||{}).label||p.origem||'—';
+      var dA=(MAPA_AREAS.find(function(a){return a.id===p.destino;})||{}).label||p.destino||'—';
       var cor=p.dias<=7?'#E8F5E9':p.dias<=21?'#FFF8E1':'#FFEBEE';
-      var bd=p.dias<=7?'#A5D6A7':p.dias<=21?'#FFE082':'#EF9A9A';
-      var em=p.dias<=7?'🟢':p.dias<=21?'🟡':'🔴';
+      var bd =p.dias<=7?'#A5D6A7':p.dias<=21?'#FFE082':'#EF9A9A';
+      var em =p.dias<=7?'🟢':p.dias<=21?'🟡':'🔴';
+      var dtFmt=p.saida?p.saida.split('-').reverse().join('/'):'—';
       out+='<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:'+cor+';border:1px solid '+bd+';border-radius:8px;margin-bottom:4px;font-size:12px">'
-        +'<span style="font-size:15px">'+em+'</span>'
-        +'<div style="flex:1"><div style="font-weight:700">'+oA+' → '+dA+'</div>'
-        +'<div style="color:#888;font-size:10px">saiu '+p.saida.split('-').reverse().join('/')+' · '+p.n+'</div></div>'
-        +'<div style="text-align:right"><div style="font-size:20px;font-weight:900;color:'+(p.dias<=7?'#1B5E20':p.dias<=21?'#E65100':'#B71C1C')+'">'+p.dias+'</div>'
-        +'<div style="font-size:9px;color:#888">dias</div></div></div>';
+        +'<span style="font-size:16px">'+em+'</span>'
+        +'<div style="flex:1">'
+        +  '<div style="font-weight:700">'+oA+' → '+dA+'</div>'
+        +  '<div style="color:#888;font-size:10px">saiu em '+dtFmt+' · '+p.n+'</div>'
+        +'</div>'
+        +'<div style="text-align:right">'
+        +  '<div style="font-size:22px;font-weight:900;color:'+(p.dias<=7?'#1B5E20':p.dias<=21?'#E65100':'#B71C1C')+'">'+p.dias+'</div>'
+        +  '<div style="font-size:9px;color:#888">dias</div>'
+        +'</div></div>';
     });
     out+='</div>';
   });
   div.innerHTML=out;
 }
 
+// ── ABA REGISTROS ─────────────────────────────────────────
 function rHistReg(){
   var tipo=(document.getElementById('hist-tipo')||{}).value||'';
-  var de=(document.getElementById('hist-de')||{}).value||'';
-  var ate=(document.getElementById('hist-ate')||{}).value||'';
+  var de  =(document.getElementById('hist-de') ||{}).value||'';
+  var ate =(document.getElementById('hist-ate')||{}).value||'';
   var regs=[].concat(
     (S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;}),
     (S.rT||[]).filter(function(r){return r.tipo==='trato'&&!r._apagado;})
   );
-  if(tipo)regs=regs.filter(function(r){return r.tipo===tipo;});
-  if(de)regs=regs.filter(function(r){return (r.dt||'')>=de;});
-  if(ate)regs=regs.filter(function(r){return (r.dt||'')<=ate;});
-  regs.sort(function(a,b){return (b.dt||'').localeCompare(a.dt||'');});
+  if(tipo) regs=regs.filter(function(r){return r.tipo===tipo;});
+  // Normalizar datas (rT pode ter dt='2026-05-25' ou ts='2026-05-25T15:...')
+  regs.forEach(function(r){if(!r.dt&&r.ts)r.dt=r.ts.substring(0,10);});
+  if(de)  regs=regs.filter(function(r){return (r.dt||'')>=de;});
+  if(ate) regs=regs.filter(function(r){return (r.dt||'')<=ate;});
+  regs.sort(function(a,b){return (b.dt||b.ts||'').localeCompare(a.dt||a.ts||'');});
   var lista=document.getElementById('hist-lista');
-  if(!lista)return;
-  if(!regs.length){lista.innerHTML='<div style="color:#888;font-size:13px;text-align:center;padding:20px">Nenhum registro.</div>';return;}
+  if(!lista) return;
+  if(!regs.length){
+    lista.innerHTML='<div style="color:#888;font-size:13px;text-align:center;padding:20px">Nenhum registro encontrado.</div>';
+    return;
+  }
   lista.innerHTML=regs.map(function(r){
+    var dtFmt=((r.dt||r.ts||'').substring(0,10)).split('-').reverse().join('/');
     if(r.tipo==='mudanca_pasto'){
       var oA=(MAPA_AREAS.find(function(a){return a.id===r.origem;})||{}).label||r.origem||'?';
       var dA=(MAPA_AREAS.find(function(a){return a.id===r.destino;})||{}).label||r.destino||'?';
-      return '<div style="padding:10px;border-bottom:1px solid #f0f0f0">'
-        +'<div style="display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:700;color:#1565C0">🔄 Mudança de Pasto</span>'
-        +'<span style="font-size:11px;color:#888">'+(r.dt||'').split('-').reverse().join('/')+'</span></div>'
-        +'<div style="font-size:13px;font-weight:600;margin-top:3px">🐄 '+r.lote+'</div>'
+      return '<div style="padding:10px 4px;border-bottom:1px solid #f0f0f0">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center">'
+        +  '<span style="font-size:13px;font-weight:700;color:#1565C0">🔄 Mudança de Pasto</span>'
+        +  '<span style="font-size:11px;color:#888">'+dtFmt+'</span>'
+        +'</div>'
+        +'<div style="font-size:13px;font-weight:600;margin-top:3px;color:#1B5E20">🐄 '+r.lote+'</div>'
         +'<div style="font-size:12px;color:#555;margin-top:2px">'+oA+' → '+dA+'</div>'
-        +'<div style="font-size:11px;color:#888;margin-top:2px">por '+(r.n||'—')+'</div></div>';
+        +'<div style="font-size:11px;color:#888;margin-top:1px">por '+(r.n||r.usuario||'—')+'</div>'
+        +'</div>';
     }
-    return '<div style="padding:10px;border-bottom:1px solid #f0f0f0">'
-      +'<div style="display:flex;justify-content:space-between"><span style="font-size:13px;font-weight:700;color:#2E7D32">🌾 Trato de Cocho</span>'
-      +'<span style="font-size:11px;color:#888">'+(r.dt||'').split('-').reverse().join('/')+'</span></div>'
+    return '<div style="padding:10px 4px;border-bottom:1px solid #f0f0f0">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center">'
+      +  '<span style="font-size:13px;font-weight:700;color:#2E7D32">🌾 Trato de Cocho</span>'
+      +  '<span style="font-size:11px;color:#888">'+dtFmt+'</span>'
+      +'</div>'
       +'<div style="font-size:13px;font-weight:600;margin-top:3px">'+(r.co||'—')+'</div>'
       +'<div style="font-size:12px;color:#555;margin-top:2px">'+(r.pr||'—')+' · '+(r.q||0)+' '+(r.unid||'saco')+'</div>'
-      +'<div style="font-size:11px;color:#888;margin-top:2px">por '+(r.n||'—')+'</div></div>';
+      +'<div style="font-size:11px;color:#888;margin-top:1px">por '+(r.n||'—')+'</div>'
+      +'</div>';
   }).join('');
 }
 
@@ -2372,15 +2452,17 @@ function expHistCSV(){
     (S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;}),
     (S.rT||[]).filter(function(r){return r.tipo==='trato'&&!r._apagado;})
   );
+  regs.forEach(function(r){if(!r.dt&&r.ts)r.dt=r.ts.substring(0,10);});
   regs.sort(function(a,b){return (b.dt||'').localeCompare(a.dt||'');});
   var csv='Tipo,Data,Fazenda,Lote,De,Para,Qtd,Por\n';
   regs.forEach(function(r){
+    var dt=(r.dt||r.ts||'').substring(0,10);
     if(r.tipo==='mudanca_pasto'){
       var o=(MAPA_AREAS.find(function(a){return a.id===r.origem;})||{}).label||r.origem||'';
       var d=(MAPA_AREAS.find(function(a){return a.id===r.destino;})||{}).label||r.destino||'';
-      csv+='Mudança,'+r.dt+',"'+r.faz+'","'+r.lote+'","'+o+'","'+d+'","","'+r.n+'"\n';
+      csv+='Mudança de Pasto,'+dt+',"'+(r.faz||'')+'","'+(r.lote||'')+'","'+o+'","'+d+'","","'+(r.n||r.usuario||'')+'"\n';
     } else {
-      csv+='Trato,'+r.dt+',"'+r.faz+'","'+(r.co||'')+'","'+(r.co||'')+'","'+(r.pr||'')+'",'+( r.q||0)+',"'+(r.n||'')+'"\n';
+      csv+='Trato de Cocho,'+dt+',"'+(r.faz||'')+'","'+(r.co||'')+'","'+(r.co||'')+'","'+(r.pr||'')+'",'+( r.q||0)+',"'+(r.n||'')+'"\n';
     }
   });
   var a=document.createElement('a');
@@ -3654,7 +3736,6 @@ function confirmarMudancaPasto(){
   if(!S.rT)S.rT=[];S.rT.push(r);
   try{enviarDado(r);}catch(ex){}
   salvar();
-  // Salvar MAPA_ALOC na nuvem imediatamente após mudança
   if(S.cfgGS&&navigator.onLine){try{salvarNuvem(null);}catch(ex){}}
   _sincMapa();
   document.getElementById('modal-mudanca-pasto').classList.remove('open');
