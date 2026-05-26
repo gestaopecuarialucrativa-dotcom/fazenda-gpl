@@ -2148,8 +2148,8 @@ function editArea(faz,id,tipo){
     if(nmEl)nmEl.value=area.nome||'';
     if(hEl2)hEl2.value=area.ha_total||'';
   }
-  var arCard=document.getElementById('ar-faz');
-  if(arCard)arCard.scrollIntoView({behavior:'smooth',block:'center'});
+  var el=document.getElementById('ar-faz');
+  if(el)el.scrollIntoView({behavior:'smooth',block:'center'});
 }
 function delArea(faz,id,tipo){
   if(!confirm('Excluir esta área?'))return;
@@ -4625,11 +4625,11 @@ function enviarPergunta(){
 }
 
 function _aiProxy(payload,cb){
-  if(!S.cfgGS){cb(null,'URL do Apps Script não configurada. Acesse Configurações e salve a URL.');return;}
+  if(!S.cfgGS){cb(null,'URL do Apps Script não configurada. Acesse Configurações e salve.');return;}
   var cbN='_ai_'+Date.now()+'_'+Math.floor(Math.random()*9999);
   var timeout=setTimeout(function(){
     delete window[cbN];
-    cb(null,'Timeout — Apps Script demorou demais. Verifique se a chave ANTHROPIC_KEY está nas Propriedades do Script.');
+    cb(null,'Timeout — verifique se ANTHROPIC_KEY está nas Propriedades do Script.');
   },30000);
   window[cbN]=function(data){
     clearTimeout(timeout);
@@ -4645,7 +4645,7 @@ function _aiProxy(payload,cb){
     clearTimeout(timeout);
     delete window[cbN];
     if(s.parentNode)s.parentNode.removeChild(s);
-    cb(null,'Erro ao chamar Apps Script. Verifique a URL e reimplante o script.');
+    cb(null,'Erro ao chamar Apps Script. Verifique a URL e reimplante.');
   };
   document.body.appendChild(s);
 }
