@@ -301,7 +301,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 27/05/2026 v6.4 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 27/05/2026 v6.5 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -990,6 +990,8 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <button class="sbtn" style="margin-top:8px;background:#185FA5" onclick="forcarCarregarNuvem()">☁️ Carregar dados da nuvem agora</button>
 <button class="sbtn" style="margin-top:8px;background:#2E7D32" onclick="forcarSalvarNuvem()">💾 Salvar dados na nuvem agora</button>
 <button class="sbtn" style="margin-top:8px;background:#C62828" onclick="limparTudoLocal()">🗑️ Limpar dados locais e recarregar</button>
+<button class="sbtn" style="margin-top:8px;background:#1565C0" onclick="reenviarTodosPendentes()">🔄 Reenviar todos os dados para planilha</button>
+<button class="sbtn" style="margin-top:8px;background:#4CAF50" onclick="exportarDadosLocais()">💾 Exportar backup dos dados locais</button>
 <button class="sbtn" style="margin-top:8px;background:#6A1B9A" onclick="resetFazPlanilha()">🔧 Corrigir fazendas na planilha (remover Santa Cruz)</button>
 <button class="sbtn" style="margin-top:8px;background:#7B1FA2" onclick="gerarArquivoSync()">📱 Gerar arquivo para sincronizar celular</button>
 <div class="ok" id="ok-cloud">✅ Concluído!</div>
@@ -1452,7 +1454,14 @@ enviarDado(r);showOk('ok-d');document.getElementById('d-val').value='';document.
 function envI(){const ins=[...document.querySelectorAll('#ins-l .ir')].map(r=>({p:r.querySelector('.ip').value,q:parseFloat(r.querySelector('.iq').value)||0,u:r.querySelector('.iu').value})).filter(x=>x.p&&x.q>0);if(!ins.length){alert('Adicione pelo menos um produto.');return;}const dt=(document.getElementById('i-data')||{}).value||TD;const dest=(document.getElementById('i-dest')||{}).value;baixar(ins,dt,dest);const r={tipo:'insumo',faz:(document.getElementById('i-faz')||{}).value,n:CU.n,dt,ins,dest};S.rD.push(r);enviarDado(r);showOk('ok-i');document.getElementById('i-dest').value='';document.getElementById('ins-l').innerHTML=`<div class="ir"><div style="flex:2"><div class="lbl">Produto</div><select class="ip" onchange="updInsInfo(this)"></select></div><div style="flex:1"><div class="lbl">Qtd</div><input type="number" class="iq" placeholder="0" min="0" step="0.5"></div><div style="flex:1"><div class="lbl">Unid.</div><select class="iu"><option>saco</option><option>kg</option><option>litro</option></select></div></div><div class="ins-info" style="display:none"></div>`;updInsProd();setTimeout(()=>{sp('home',false);rUlt();},1600);}
 function envT(){const co=(document.getElementById('t-cocho')||{}).value;const pr=(document.getElementById('t-prod')||{}).value;const q=parseFloat((document.getElementById('t-qtd')||{}).value)||0;if(!co||!pr||!q){alert('Selecione lote, produto e quantidade.');return;}const dt=(document.getElementById('t-data')||{}).value||TD;const faz=(document.getElementById('t-faz')||{}).value;const cab=parseInt((document.getElementById('t-cab')||{}).value)||0;if(pr&&S.EST&&S.EST[pr])baixar([{p:pr,q,u:'saco'}],dt,co);const pps=(S.EST&&pr&&S.EST[pr]&&S.EST[pr].peso_saco)?S.EST[pr].peso_saco:30;const r={tipo:'trato',faz,n:CU.n,dt,co,pr,q,unid:'saco',kg_fornecido:q*pps,cab,sit:coSel,escore:esTSel,obs:(document.getElementById('t-obs')||{}).value};S.rT.push(r);enviarDado(r);showOk('ok-t');document.getElementById('t-qtd').value='';document.getElementById('t-cab').value='';document.getElementById('t-obs').value='';document.querySelectorAll('#pg-trato .bopt').forEach(b=>b.classList.remove('sel'));coSel='';esTSel='';setTimeout(()=>{sp('home',false);rUlt();},1600);}
 function envEs(){if(!esSel){alert('Selecione o escore.');return;}const lote=(document.getElementById('es-cocho')||{}).value;let nanim=parseInt((document.getElementById('es-nanim')||{}).value)||0;if(!nanim){const lt=S.LOTES.find(l=>l.nome===lote);if(lt)nanim=lt.qtd;}const r={tipo:'escore',faz:(document.getElementById('es-faz')||{}).value,co:lote,dt:(document.getElementById('es-data')||{}).value||TD,es:esSel,cab:nanim,obs:(document.getElementById('es-obs')||{}).value,n:CU.n};S.rE.push(r);enviarDado(r);showOk('ok-es');esSel=0;document.querySelectorAll('.ec').forEach(c=>c.classList.remove('sel'));document.getElementById('es-box').style.display='none';document.getElementById('es-nanim').value='';document.getElementById('es-obs').value='';setTimeout(()=>{sp('home',false);rUlt();},1600);}
-function envCt(){const faz=(document.getElementById('ct-faz')||{}).value;const resp=(document.getElementById('ct-resp')||{}).value;if(!faz||!resp){alert('Preencha fazenda e responsável.');return;}let total=0,det='';if(cobT==='ref'){total=QT.cafe*S.PR.cafe+QT.almoco*S.PR.almoco+QT.janta*S.PR.janta;det=`Café:${QT.cafe} Alm:${QT.almoco} Jan:${QT.janta}`;}else{const n=parseInt((document.getElementById('ct-np')||{}).value)||0;const v=parseFloat((document.getElementById('ct-vd')||{}).value)||0;total=n*v;det=`${n}p×R$${v.toFixed(2)}`;}const r={tipo:'cantina',faz,resp,dt:(document.getElementById('ct-data')||{}).value||TD,det,total};S.rC.push(r);salvar();
+function envCt(){const faz=(document.getElementById('ct-faz')||{}).value;const resp=(document.getElementById('ct-resp')||{}).value;if(!faz||!resp){alert('Preencha fazenda e responsável.');return;}let total=0,det='';if(cobT==='ref'){total=QT.cafe*S.PR.cafe+QT.almoco*S.PR.almoco+QT.janta*S.PR.janta;det=`Café:${QT.cafe} Alm:${QT.almoco} Jan:${QT.janta}`;}else{const n=parseInt((document.getElementById('ct-np')||{}).value)||0;const v=parseFloat((document.getElementById('ct-vd')||{}).value)||0;total=n*v;det=`${n}p×R$${v.toFixed(2)}`;}const r={tipo:'cantina',faz,resp,dt:(document.getElementById('ct-data')||{}).value||TD,det,total};// Validar que os dados são reais (não placeholder)
+  if(!r.total && r.total !== 0 && !r.det){
+    alert('Preencha pelo menos uma refeição.');
+    return;
+  }
+  // Ignorar placeholders do sistema
+  if(String(r.det||'').indexOf('(registros') === 0) return;
+  S.rC.push(r);salvar();
   // Enviar para nuvem com confirmação visual
   var btnCt=document.getElementById('btn-envct');
   if(btnCt){btnCt.disabled=true;btnCt.textContent='⏳ Enviando...';}
@@ -1915,9 +1924,34 @@ function carregarNuvem(cb){
           }
           if(cfg.DIARISTAS)S.DIARISTAS=cfg.DIARISTAS;
           // Só substituir registros se nuvem trouxer dados — nunca apagar com vazio
-          if(cfg.rD&&cfg.rD.length>0)S.rD=cfg.rD;
-          if(cfg.rT&&cfg.rT.length>0)S.rT=cfg.rT;
-          if(cfg.rC&&cfg.rC.length>0)S.rC=cfg.rC;
+          if(cfg.rD&&cfg.rD.length>0){
+            S.rD=cfg.rD;
+          } else if((!cfg.rD||cfg.rD.length===0)&&S.rD&&S.rD.length>0){
+            // Preservar dados locais se nuvem vier vazia
+          }
+          if(cfg.rT&&cfg.rT.length>0){
+            // Normalizar IDs de área ao carregar (M4/P2 → M04P02, PA 8 → PA08)
+            S.rT=cfg.rT.map(function(r){
+              if(r.tipo!=='mudanca_pasto')return r;
+              function nId(v){
+                var s=String(v||'').trim();
+                s=s.replace(/^M(\d{1,2})\/P(\d{1,2})$/i,function(_,m,p){return 'M'+String(parseInt(m)).padStart(2,'0')+'P'+String(parseInt(p)).padStart(2,'0');});
+                s=s.replace(/^M(\d{1,2})P(\d{1,2})$/i,function(_,m,p){return 'M'+String(parseInt(m)).padStart(2,'0')+'P'+String(parseInt(p)).padStart(2,'0');});
+                s=s.replace(/^PA\s*(\d{1,2})$/i,function(_,n){return 'PA'+String(parseInt(n)).padStart(2,'0');});
+                return s;
+              }
+              return Object.assign({},r,{origem:nId(r.origem),destino:nId(r.destino)});
+            });
+          }
+          if(cfg.rC&&cfg.rC.length>0){
+            // Limpar registros com placeholder "(registros..."
+            S.rC=cfg.rC.filter(function(r){
+              return r && r.dt && String(r.det||'').indexOf('(registros')!==0;
+            });
+          } else if((!cfg.rC||cfg.rC.length===0)&&S.rC&&S.rC.length>0){
+            // Nuvem tem rC vazio mas local tem dados — preservar local
+            // Não sobrescrever com vazio
+          }
           if(cfg.rE&&cfg.rE.length>0)S.rE=cfg.rE;
           if(cfg.rDesp&&cfg.rDesp.length)S.rDesp=cfg.rDesp;
           if(cfg.mEst)S.mEst=cfg.mEst;
@@ -3238,6 +3272,60 @@ function salvarWppAdmin(){
     fetch(S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(d)),{method:'GET',mode:'no-cors'}).catch(function(){});
   }
   showOk('ok-wpp');
+}
+// ═══ RECUPERAÇÃO DE EMERGÊNCIA ═══
+function exportarDadosLocais(){
+  // Exporta todos os dados do celular como arquivo JSON para recuperação
+  try{
+    var dados={
+      exportadoEm: new Date().toISOString(),
+      dispositivo: navigator.userAgent,
+      rC: S.rC||[],
+      rD: S.rD||[],
+      rT: S.rT||[],
+      rE: S.rE||[],
+      queue: S.queue||[]
+    };
+    var json=JSON.stringify(dados, null, 2);
+    var blob=new Blob([json],{type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;
+    a.download='GPL_backup_'+new Date().toISOString().substring(0,10)+'.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    alert('✅ Backup baixado! Envie o arquivo para o consultor para recuperar os dados.');
+  }catch(e){
+    // Fallback: copiar para clipboard
+    try{
+      var txt=JSON.stringify({rC:S.rC||[],rD:S.rD||[],queue:S.queue||[]},null,2);
+      navigator.clipboard.writeText(txt).then(function(){
+        alert('✅ Dados copiados! Cole em um WhatsApp ou e-mail para o consultor.');
+      });
+    }catch(e2){
+      alert('Dados no celular:\n'+JSON.stringify({rC:(S.rC||[]).length+' registros de cantina',queue:(S.queue||[]).length+' pendentes'}));
+    }
+  }
+}
+
+function reenviarTodosPendentes(){
+  // Reenviar TUDO que está no localStorage para a planilha
+  if(!navigator.onLine){alert('❌ Sem internet.');return;}
+  if(!S.cfgGS){alert('Configure o Apps Script.');return;}
+  var todos=[];
+  (S.rC||[]).forEach(function(r){if(!r._apagado)todos.push(r);});
+  (S.rD||[]).forEach(function(r){if(!r._apagado)todos.push(r);});
+  (S.queue||[]).forEach(function(r){todos.push(r);});
+  if(!todos.length){alert('Nenhum dado pendente.');return;}
+  var enviados=0, total=todos.length;
+  todos.forEach(function(r){
+    try{enviarDado(r);}catch(e){}
+    enviados++;
+  });
+  S.queue=[];salvar();
+  alert('📤 '+enviados+' registros reenviados para a planilha. Aguarde 30 segundos e verifique.');
 }
 // ═══ UTILITÁRIOS ═══
 function showOk(id){const m=document.getElementById(id);if(!m)return;m.style.display='block';setTimeout(()=>m.style.display='none',3000);}
