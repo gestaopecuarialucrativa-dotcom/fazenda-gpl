@@ -301,7 +301,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 27/05/2026 v6.3 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 27/05/2026 v6.4 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -577,6 +577,17 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <div style="margin-top:8px;padding-top:8px;border-top:1px solid #f0f0f0;display:flex;justify-content:space-between">
     <span style="font-size:12px;color:#888">Total do mês:</span>
     <span style="font-size:14px;font-weight:700;color:#1B5E20" id="ct-hist-total">R$ 0,00</span>
+  </div>
+</div>
+
+<!-- PLANO B: WhatsApp fallback — aparece só quando envio falha -->
+<div id="ct-planob" style="display:none;margin-top:10px">
+  <div style="background:#FFF3E0;border:2px solid #FFB300;border-radius:12px;padding:14px;text-align:center">
+    <div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:8px">⚠️ Sem conexão com a planilha</div>
+    <div style="font-size:12px;color:#666;margin-bottom:12px">Seus dados estão salvos no celular.<br>Clique abaixo para enviar pelo WhatsApp:</div>
+    <button onclick="envCtWhatsApp()" style="width:100%;padding:14px;background:#25D366;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">
+      📲 Enviar dados via WhatsApp
+    </button>
   </div>
 </div>
 </div><!-- FIM pg-cantina ✅ -->
@@ -983,6 +994,14 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <button class="sbtn" style="margin-top:8px;background:#7B1FA2" onclick="gerarArquivoSync()">📱 Gerar arquivo para sincronizar celular</button>
 <div class="ok" id="ok-cloud">✅ Concluído!</div>
 <div class="ok" id="ok-integ">✅ Integração salva!</div>
+
+<div class="fg" style="margin-top:14px;padding-top:12px;border-top:1px solid #e0e0e0">
+  <div class="lbl">📲 WhatsApp do Consultor (Plano B)</div>
+  <input type="tel" id="cfg-wpp" placeholder="Ex: 63999999999 (só números, com DDD)" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px">
+  <div style="font-size:11px;color:#888;margin-top:4px">Se a internet falhar, os dados da cantina serão enviados para este número.</div>
+</div>
+<button class="sbtn" onclick="salvarWppAdmin()">💾 Salvar número WhatsApp</button>
+<div class="ok" id="ok-wpp">✅ Número salvo!</div>
 </div>
 <div class="card"><div class="stit">🔗 Links por Fazenda</div><div class="info-box" style="font-size:11px">📌 Cada fazenda recebe um link próprio.</div><div id="links-fazendas"></div></div>
 <div class="card"><div class="stit">👤 Links por Funcionário</div><div class="info-box">Link individual: abre direto no PIN da pessoa.</div><div id="links-usuarios"></div></div>
@@ -1071,7 +1090,7 @@ const EI=[null,{em:'💩',ti:'Escore 1 — Firmes e secas',re:'💡 Reduzir fibr
 const PL={diaria:'Diária',insumo:'Insumos',trato:'Trato cocho',escore:'Escore fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',mapa:'Mapa',historico:'Histórico',config:'Config.'};
 const TABS=[{id:'painel',l:'📊 Painel',p:'painel'},{id:'cantina',l:'🏪 Cantina',p:'cantina'},{id:'estoque',l:'📦 Estoque',p:'estoque'},{id:'mapa',l:'🗺️ Mapa',p:'mapa'},{id:'historico',l:'📋 Histórico',p:'historico'},{id:'config',l:'⚙️ Config.',p:'config'},{id:'consultor',l:'🌿 Visão Geral',p:'config'}];
 const ACTS=[{id:'diaria',l:'Lançar diária',s:'Serviço do dia',ic:'👤',c:'gr',p:'diaria'},{id:'insumo',l:'Insumos',s:'Depósito → campo',ic:'📦',c:'bl',p:'insumo'},{id:'trato',l:'Trato de cocho',s:'Proteinado, sal...',ic:'🛠',c:'tl',p:'trato'},{id:'lote',l:'Lotes',s:'Cadastro de lotes',ic:'🐄',c:'gr',p:'config'},{id:'escore',l:'Escore de fezes',s:'Avaliação do gado',ic:'🔬',c:'pu',p:'escore'}];
-const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbwc2lHSKdDzTsXxd-77mpxh0khrRNSB4BWt1XODEe7cOPq0h1sxkT4L5rc6TNgHdiZrMA/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,historico:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:1,config:0}},{n:'Elisangela',i:'E',c:'av-p',r:'Cantina',pin:'2222',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,mapa:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:38,peso:402,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 02',qtd:85,peso:360,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 03',qtd:79,peso:316,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 04',qtd:61,peso:269,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 05',qtd:69,peso:228,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 06',qtd:121,peso:204,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio']},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbwc2lHSKdDzTsXxd-77mpxh0khrRNSB4BWt1XODEe7cOPq0h1sxkT4L5rc6TNgHdiZrMA/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{},MAPA_ALOC:{'M03P01':'Lote 03','M01P06':'Lote 05','PA01':'Lote 06','PA09':'Lote 04','PA05':'Lote 01','M04P04':'Lote 02'}};
+const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbwc2lHSKdDzTsXxd-77mpxh0khrRNSB4BWt1XODEe7cOPq0h1sxkT4L5rc6TNgHdiZrMA/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,historico:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:1,config:0}},{n:'Elisangela',i:'E',c:'av-p',r:'Cantina',pin:'2222',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,mapa:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:38,peso:402,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 02',qtd:85,peso:360,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 03',qtd:79,peso:316,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 04',qtd:61,peso:269,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 05',qtd:69,peso:228,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 06',qtd:121,peso:204,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio']},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:8,almoco:15,janta:12},cfgGS:'https://script.google.com/macros/s/AKfycbwc2lHSKdDzTsXxd-77mpxh0khrRNSB4BWt1XODEe7cOPq0h1sxkT4L5rc6TNgHdiZrMA/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{},wppAdmin:'',MAPA_ALOC:{'M03P01':'Lote 03','M01P06':'Lote 05','PA01':'Lote 06','PA09':'Lote 04','PA05':'Lote 01','M04P04':'Lote 02'}};
 
 let S=null;
 function carregar(){try{const r=localStorage.getItem(STORAGE_KEY);if(r){const s=JSON.parse(r);S={...DEFAULT,...s};S.cfgGS=DEFAULT.cfgGS;if(!S.US||!S.US.length)S.US=DEFAULT.US;
@@ -1226,7 +1245,9 @@ function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.di
     } else {
       try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}
     }var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'inline-block':'none';setTimeout(function(){try{rMapaMain();rMapa();}catch(e){}},1000);};setTimeout(_rmapa,100);}if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();// Popular fazendas no select de areas
-var arFaz=document.getElementById('ar-faz');if(arFaz&&arFaz.options.length<=1){arFaz.innerHTML='<option value="">Selecione...</option>'+Object.keys(S.FAZ||{}).map(function(f){return'<option value="'+f+'">'+(f.replace('Fazenda ','🏠 '))+'</option>';}).join('');if(arFaz.options.length===2)arFaz.selectedIndex=1;}rListAreas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);
+var arFaz=document.getElementById('ar-faz');if(arFaz&&arFaz.options.length<=1){arFaz.innerHTML='<option value="">Selecione...</option>'+Object.keys(S.FAZ||{}).map(function(f){return'<option value="'+f+'">'+(f.replace('Fazenda ','🏠 '))+'</option>';}).join('');if(arFaz.options.length===2)arFaz.selectedIndex=1;}rListAreas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';
+  var _wppEl=document.getElementById('cfg-wpp');
+  if(_wppEl)_wppEl.value=S.wppAdmin||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);
   if(id==='historico')setTimeout(function(){if(S.cfgGS&&navigator.onLine){carregarNuvem(function(){rHistorico();});}else{rHistorico();}},50);if(id==='cantina')setTimeout(()=>{popAll();updPrecosCt();_updBtnSyncCt();if(S.cfgGS){carregarNuvem(function(ok){if(ok)rCtHist();});}else{rCtHist();}},50);if(id==='home')setTimeout(function(){try{rHomeMapa();buildActs();}catch(e){}},100);window.scrollTo(0,0);}
 function goBack(){if(prevPage)sp(prevPage,false);else sp('home',false);}
 function isV(u){return u.p.diaria||u.p.insumo||u.p.trato||u.p.escore;}
@@ -1309,6 +1330,7 @@ function sincronizarDadosCantina(){
       if(btn){btn.textContent='☁️ Enviar meus dados para a nuvem';btn.disabled=false;}
       if(erros===0){
         _showStatusCt('✅ Dados salvos com sucesso na planilha!','#1B5E20');
+    _mostrarPlanoBCantina(false);
       } else if(enviados>0){
         _showStatusCt('⚠️ '+enviados+' enviado(s), '+erros+' com erro. Tente novamente.','#E65100');
       } else {
@@ -1443,6 +1465,7 @@ function envCt(){const faz=(document.getElementById('ct-faz')||{}).value;const r
     if(btnCt){btnCt.disabled=false;btnCt.textContent='🏪 Enviar cantina';}
     showOk('ok-ct');
     _showStatusCt('✅ Dados salvos com sucesso na planilha!','#1B5E20');
+    _mostrarPlanoBCantina(false);
     ['cafe','almoco','janta'].forEach(x=>QT[x]=0);
     ['c','a','j'].forEach(x=>{const e=document.getElementById('q'+x);if(e)e.textContent='0';});
     calcCt();
@@ -1451,7 +1474,8 @@ function envCt(){const faz=(document.getElementById('ct-faz')||{}).value;const r
     delete window[cbN];if(s.parentNode)s.parentNode.removeChild(s);
     if(btnCt){btnCt.disabled=false;btnCt.textContent='🏪 Enviar cantina';}
     S.queue.push(r);salvar();
-    _showStatusCt('❌ Erro ao enviar. Seus dados foram guardados no celular. Tente novamente quando tiver sinal.','#C62828');
+    _showStatusCt('❌ Erro ao enviar. Dados guardados no celular.','#C62828');
+    _mostrarPlanoBCantina(true);
   };
   document.body.appendChild(s);}
 function entEst(){const p=(document.getElementById('ep')||{}).value;const q=parseFloat((document.getElementById('eq')||{}).value)||0;if(!p||!q){alert('Selecione produto e quantidade.');return;}S.EST[p].q=parseFloat((S.EST[p].q+q).toFixed(2));S.mEst.push({p,q,u:S.EST[p].u,t:'entrada',dt:(document.getElementById('ed')||{}).value||TD,loc:(document.getElementById('eo')||{}).value});salvar();rEst();showOk('ok-e');document.getElementById('eq').value='';document.getElementById('eo').value='';}
@@ -3163,6 +3187,58 @@ function expHistCSV(){
 function compartilharNota(faz,k){salvarNota(faz,k);const nota=S.NOTAS[faz]||'';const diarias=(S.rD||[]).filter(r=>r.faz===faz&&r.tipo==='diaria');const desp=(S.rDesp||[]).filter(r=>r.faz===faz&&r.st==='pagar');const totalD=diarias.reduce((a,r)=>a+r.v,0);const totalP=desp.reduce((a,r)=>a+r.val,0);let msg=`🌿 *Gestão Pecuária Lucrativa*\n*Rogério Avelino — Consultor*\n\n🏠 *${faz}*\n📅 ${new Date().toLocaleDateString('pt-BR')}\n\n📊 *Resumo:*\n• Diárias: R$ ${totalD.toFixed(2).replace('.',',')} (${diarias.length} reg.)\n`;if(totalP>0)msg+=`• A pagar: R$ ${totalP.toFixed(2).replace('.',',')}\n`;if(nota)msg+=`\n📝 *Observações:*\n${nota}`;window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');}
 function enviarRelatorioWpp(){const fazendas=Object.keys(S.FAZ);let msg='🌿 *Gestão Pecuária Lucrativa — Rogério Avelino*\n📅 '+new Date().toLocaleDateString('pt-BR')+'\n\n*RESUMO GERAL*\n\n';fazendas.forEach(faz=>{const diarias=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz&&r.tipo==='diaria');const desp=(S.rDesp||[]).filter(r=>r.faz===faz&&r.st==='pagar');const lotes=(S.LOTES||[]).filter(l=>l.faz===faz);const totalD=diarias.reduce((a,r)=>a+r.v,0);const totalP=desp.reduce((a,r)=>a+r.val,0);const animais=lotes.reduce((a,l)=>a+l.qtd,0);msg+=`🏠 *${faz}*\n• ${animais} animais · ${diarias.length} diárias · R$ ${totalD.toFixed(2).replace('.',',')}\n`;if(totalP>0)msg+=`• ⚠️ A pagar: R$ ${totalP.toFixed(2).replace('.',',')}\n`;const nota=S.NOTAS&&S.NOTAS[faz];if(nota)msg+=`• 📝 ${nota}\n`;msg+='\n';});window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');}
 
+// ═══ PLANO B — FALLBACK WHATSAPP ═══
+function envCtWhatsApp(){
+  // Pegar os últimos dados da cantina que falharam
+  var regs=(S.rC||[]).filter(function(r){return !r._apagado;});
+  var dt=new Date().toLocaleDateString('pt-BR');
+  var msg='🍽️ *CANTINA — Fazenda Estrela*\n';
+  msg+='📅 '+dt+'\n';
+  msg+='👤 Responsável: '+(S&&S.US&&CU?CU.n:'Elisangela')+'\n\n';
+  if(regs.length===0){
+    // Usar dados do formulário atual
+    var faz=(document.getElementById('ct-faz')||{}).value||'Fazenda Estrela';
+    var resp=(document.getElementById('ct-resp')||{}).value||'—';
+    var dtF=(document.getElementById('ct-data')||{}).value||dt;
+    var tot=0;
+    if(typeof QT!=='undefined'){
+      var PR=S&&S.PR?S.PR:{cafe:8,almoco:15,janta:12};
+      tot=QT.cafe*PR.cafe+QT.almoco*PR.almoco+QT.janta*PR.janta;
+      msg+='☕ Café: '+QT.cafe+'x R$'+PR.cafe+'\n';
+      msg+='🍽️ Almoço: '+QT.almoco+'x R$'+PR.almoco+'\n';
+      msg+='🌙 Janta: '+QT.janta+'x R$'+PR.janta+'\n';
+    }
+    msg+='💰 *TOTAL: R$ '+tot.toFixed(2)+'*\n';
+    msg+='\n⚠️ _Dado salvo no celular — não gravou na planilha_';
+  } else {
+    // Enviar todos os registros pendentes
+    regs.slice(-5).forEach(function(r){
+      msg+='📌 '+r.dt+' — '+r.det+'\n';
+      msg+='   💰 R$ '+parseFloat(r.total||0).toFixed(2)+'\n';
+    });
+    msg+='\n⚠️ _'+regs.length+' registro(s) pendente(s) no celular_';
+  }
+  var wpp=S&&S.wppAdmin?S.wppAdmin.replace(/\D/g,''):'';
+  var url=wpp?'https://wa.me/'+wpp+'?text='+encodeURIComponent(msg):'https://wa.me/?text='+encodeURIComponent(msg);
+  window.open(url,'_blank');
+}
+
+function _mostrarPlanoBCantina(mostrar){
+  var el=document.getElementById('ct-planob');
+  if(el)el.style.display=mostrar?'block':'none';
+}
+// ═══ wppAdmin ═══
+function salvarWppAdmin(){
+  var el=document.getElementById('cfg-wpp');
+  if(!el)return;
+  S.wppAdmin=(el.value||'').replace(/\D/g,'');
+  salvar();
+  if(S.cfgGS&&navigator.onLine){
+    var d={wppAdmin:S.wppAdmin};
+    fetch(S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(d)),{method:'GET',mode:'no-cors'}).catch(function(){});
+  }
+  showOk('ok-wpp');
+}
 // ═══ UTILITÁRIOS ═══
 function showOk(id){const m=document.getElementById(id);if(!m)return;m.style.display='block';setTimeout(()=>m.style.display='none',3000);}
 
