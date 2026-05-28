@@ -301,7 +301,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.14 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.15 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1777,6 +1777,14 @@ function ctSalvarPreco(ref, inputId){
   if(!S.PR) S.PR = {cafe:5, almoco:25, janta:25};
   S.PR[ref] = v;
   salvar();
+  // Enviar PR atualizado para a nuvem imediatamente
+  // Assim todos os dispositivos recebem na próxima abertura
+  if(S.cfgGS && navigator.onLine){
+    clearTimeout(ctSalvarPreco._t);
+    ctSalvarPreco._t = setTimeout(function(){
+      salvarNuvem(null);
+    }, 1000);
+  }
   ctCalcTotal();
 }
 
@@ -2101,7 +2109,7 @@ function ctExcluir(i){
     var url = getFazGasUrl(reg.faz||'');
     var cbN = '_dct_'+Date.now();
     var s = document.createElement('script');
-    s.src = url+'?data='+encodeURIComponent(JSON.stringify(payload))+'&callback='+cbN+'&t='+Date.now();
+    s.src = url+'?acao=excluir_cantina&data='+encodeURIComponent(JSON.stringify(payload))+'&callback='+cbN+'&t='+Date.now();
     window[cbN] = function(res){
       delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s);
       if(res && res.ok){
@@ -2153,11 +2161,15 @@ function initCantina(){
   // Data hoje
   var dt = document.getElementById('ct-data');
   if(dt) dt.value = TD;
-  // Preços
-  var PR = S && S.PR ? S.PR : {cafe:5, almoco:25, janta:25};
-  var pcf = document.getElementById('ct-pr-cafe');   if(pcf) pcf.value = PR.cafe;
-  var pal = document.getElementById('ct-pr-almoco'); if(pal) pal.value = PR.almoco;
-  var pja = document.getElementById('ct-pr-janta');  if(pja) pja.value = PR.janta;
+  // Preços — sempre aplicar da nuvem se disponível
+  _aplicarPRCantina();
+  // Se online, buscar PR atualizado da nuvem
+  if(S.cfgGS && navigator.onLine){
+    carregarNuvem(function(){
+      _aplicarPRCantina();
+      ctCalRender();
+    });
+  }
   // Tipo
   ctSetTipo('ref');
   // Zerar qtds
@@ -3722,6 +3734,18 @@ function expHistCSV(){
 
 function compartilharNota(faz,k){salvarNota(faz,k);const nota=S.NOTAS[faz]||'';const diarias=(S.rD||[]).filter(r=>r.faz===faz&&r.tipo==='diaria');const desp=(S.rDesp||[]).filter(r=>r.faz===faz&&r.st==='pagar');const totalD=diarias.reduce((a,r)=>a+r.v,0);const totalP=desp.reduce((a,r)=>a+r.val,0);let msg=`🌿 *Gestão Pecuária Lucrativa*\n*Rogério Avelino — Consultor*\n\n🏠 *${faz}*\n📅 ${new Date().toLocaleDateString('pt-BR')}\n\n📊 *Resumo:*\n• Diárias: R$ ${totalD.toFixed(2).replace('.',',')} (${diarias.length} reg.)\n`;if(totalP>0)msg+=`• A pagar: R$ ${totalP.toFixed(2).replace('.',',')}\n`;if(nota)msg+=`\n📝 *Observações:*\n${nota}`;window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');}
 function enviarRelatorioWpp(){const fazendas=Object.keys(S.FAZ);let msg='🌿 *Gestão Pecuária Lucrativa — Rogério Avelino*\n📅 '+new Date().toLocaleDateString('pt-BR')+'\n\n*RESUMO GERAL*\n\n';fazendas.forEach(faz=>{const diarias=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz&&r.tipo==='diaria');const desp=(S.rDesp||[]).filter(r=>r.faz===faz&&r.st==='pagar');const lotes=(S.LOTES||[]).filter(l=>l.faz===faz);const totalD=diarias.reduce((a,r)=>a+r.v,0);const totalP=desp.reduce((a,r)=>a+r.val,0);const animais=lotes.reduce((a,l)=>a+l.qtd,0);msg+=`🏠 *${faz}*\n• ${animais} animais · ${diarias.length} diárias · R$ ${totalD.toFixed(2).replace('.',',')}\n`;if(totalP>0)msg+=`• ⚠️ A pagar: R$ ${totalP.toFixed(2).replace('.',',')}\n`;const nota=S.NOTAS&&S.NOTAS[faz];if(nota)msg+=`• 📝 ${nota}\n`;msg+='\n';});window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');}
+
+// ══ APLICAR PREÇOS DA CANTINA ══
+function _aplicarPRCantina(){
+  var PR = (S && S.PR) ? S.PR : {cafe:5, almoco:25, janta:25};
+  var pcf = document.getElementById('ct-pr-cafe');
+  var pal = document.getElementById('ct-pr-almoco');
+  var pja = document.getElementById('ct-pr-janta');
+  if(pcf) pcf.value = PR.cafe   || 5;
+  if(pal) pal.value = PR.almoco || 25;
+  if(pja) pja.value = PR.janta  || 25;
+  ctCalcTotal();
+}
 
 // ═══ PLANO B — FALLBACK WHATSAPP ═══
 function envCtWhatsApp(){
