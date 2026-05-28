@@ -301,7 +301,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.18 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.19 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2716,9 +2716,23 @@ function rRelFazendaPreview(){
     return Math.max(0,Math.round((hoje-new Date(dt+'T12:00:00'))/864e5));
   }
 
-  var html='<style>.pv-table{width:100%;border-collapse:collapse;font-size:11px}.pv-table th{background:#1B5E20;color:#fff;padding:5px 8px;text-align:left}.pv-table td{padding:5px 8px;border-bottom:1px solid #eee}.pv-h2{font-size:12px;font-weight:800;color:#1B5E20;margin:10px 0 4px}</style>';
+  function corTx(v){return v>4?'#C62828':v>2?'#E65100':'#1B5E20';}
+  function corDias(d){if(d===null)return'#999';return d<=3?'#1B5E20':d<=7?'#388E3C':d<=14?'#E65100':'#C62828';}
 
-  // Lotes resumo
+  var css='<style>'
+    +'.pv-table{width:100%;border-collapse:collapse;font-size:11px}'
+    +'.pv-table th{background:#1B5E20;color:#fff;padding:5px 8px;text-align:left;font-size:10px}'
+    +'.pv-table td{padding:5px 8px;border-bottom:1px solid #eee}'
+    +'.pv-h2{font-size:12px;font-weight:800;color:#1B5E20;margin:12px 0 6px;padding:4px 0;border-bottom:2px solid #E8F5E9}'
+    +'.mod-hdr-pv{background:#E8F5E9;padding:7px 10px;border-radius:8px;margin:8px 0 4px;display:flex;justify-content:space-between;align-items:center}'
+    +'.mod-hdr-pv .mn{font-size:12px;font-weight:800;color:#1B5E20}'
+    +'.mod-hdr-pv .ms{display:flex;gap:14px}'
+    +'.mod-hdr-pv .ms span{font-size:11px}'
+    +'</style>';
+
+  var html=css;
+
+  // ── LOTES ──
   html+='<div class="pv-h2">🐄 Lotes</div>';
   html+='<table class="pv-table"><tr><th>Lote</th><th>Área</th><th>Animais</th><th>Peso</th><th>UA/ha</th><th>Dias</th><th>Última saída</th></tr>';
   lotes.forEach(function(lot){
@@ -2727,45 +2741,68 @@ function rRelFazendaPreview(){
     var ua=lot.qtd*lot.peso/450;
     var tx=aObj&&aObj.ha>0?ua/aObj.ha:0;
     var dias=aId?diasPasto(lot.nome,aId):null;
-    // Última saída (movimentação anterior do lote)
     var movsLote=movs.filter(function(m){return m.lote===lot.nome;});
     var ultSaida=movsLote.length>1?movsLote[movsLote.length-2]:null;
-    var ultSaidaStr=ultSaida?(ultSaida.dt||'').split('-').reverse().join('/')+' ('+( (ultSaida.origem||'?'))+')':'—';
-    var corD=dias===null?'#999':dias<=3?'#1B5E20':dias<=7?'#388E3C':dias<=14?'#E65100':'#C62828';
+    var ultStr=ultSaida?((ultSaida.dt||'').split('-').reverse().join('/')+(ultSaida.origem?' ('+ultSaida.origem+')':'')):'—';
+    var cD=corDias(dias);
     html+='<tr>'
       +'<td><b>'+lot.nome+'</b></td>'
       +'<td>'+(aObj?aObj.label:'—')+'</td>'
       +'<td>'+lot.qtd+'</td>'
       +'<td>'+lot.peso+'kg</td>'
-      +'<td style="color:'+(tx>4?'#C62828':tx>2?'#E65100':'#1B5E20');html+='">'+( tx>0?tx.toFixed(2):'—')+'</td>'
-      +'<td style="color:'+corD+';font-weight:700">'+(dias!==null?dias+'d':'—')+'</td>'
-      +'<td style="font-size:10px;color:#888">'+ultSaidaStr+'</td>'
+      +'<td style="color:'+corTx(tx)+';font-weight:700">'+(tx>0?tx.toFixed(2):'—')+'</td>'
+      +'<td style="color:'+cD+';font-weight:700">'+(dias!==null?dias+'d':'—')+'</td>'
+      +'<td style="font-size:10px;color:#888">'+ultStr+'</td>'
       +'</tr>';
   });
   html+='</table>';
 
-  // Módulos
-  html+='<div class="pv-h2">🔄 Módulos — Taxa de Lotação</div>';
-  html+='<table class="pv-table"><tr><th>Módulo</th><th>ha total</th><th>UA</th><th>UA/ha módulo</th></tr>';
+  // ── MÓDULOS com piquetes ──
+  html+='<div class="pv-h2">🔄 Módulos — Taxa de Lotação + Instantânea por Piquete</div>';
   var mods={};
   MAPA_AREAS.filter(function(a){return a.tipo==='modulo';}).forEach(function(a){
     var mk='M'+String(a.modulo).padStart(2,'0');
-    if(!mods[mk])mods[mk]={num:a.modulo,ha:0,ua:0};
-    mods[mk].ha+=a.ha;
+    if(!mods[mk])mods[mk]={num:a.modulo,ha:0,ua:0,piquetes:[]};
     var lotNm=aloc[a.id];
-    if(lotNm){var lot=lotes.find(function(l){return l.nome===lotNm;});if(lot)mods[mk].ua+=lot.qtd*lot.peso/450;}
+    var ua=0, qtd=0;
+    if(lotNm){var lot=lotes.find(function(l){return l.nome===lotNm;});if(lot){ua=lot.qtd*lot.peso/450;qtd=lot.qtd;}}
+    var dias=lotNm?diasPasto(lotNm,a.id):null;
+    mods[mk].ha+=a.ha;
+    mods[mk].ua+=ua;
+    mods[mk].piquetes.push({id:a.id,label:a.label,ha:a.ha,lote:lotNm||'',ua:ua,qtd:qtd,dias:dias});
   });
+
   Object.keys(mods).sort().forEach(function(mk){
-    var m=mods[mk];
-    var tx=m.ha>0?m.ua/m.ha:0;
-    html+='<tr><td><b>Módulo '+m.num+'</b></td><td>'+m.ha.toFixed(1)+'ha</td><td>'+m.ua.toFixed(1)+'</td>'
-      +'<td style="color:'+(tx>4?'#C62828':tx>2?'#E65100':'#1B5E20')+';font-weight:800">'+tx.toFixed(2)+' UA/ha</td></tr>';
+    var mod=mods[mk];
+    var txMod=mod.ha>0?mod.ua/mod.ha:0;
+    html+='<div class="mod-hdr-pv">'
+      +'<div class="mn">📦 Módulo '+mod.num+'</div>'
+      +'<div class="ms">'
+      +'<span>'+mod.ha.toFixed(1)+'ha total</span>'
+      +'<span>'+mod.ua.toFixed(1)+' UA</span>'
+      +'<span style="font-weight:800;color:'+corTx(txMod)+'">'+txMod.toFixed(2)+' UA/ha (módulo)</span>'
+      +'</div></div>';
+    html+='<table class="pv-table"><tr>'
+      +'<th>Piquete</th><th>ha</th><th>Lote atual</th><th>Animais</th>'
+      +'<th>UA/ha instantânea</th><th>Dias no pasto</th>'
+      +'</tr>';
+    mod.piquetes.forEach(function(p){
+      var txI=p.ha>0&&p.ua>0?p.ua/p.ha:0;
+      var cD=corDias(p.dias);
+      html+='<tr>'
+        +'<td><b>'+p.label+'</b></td>'
+        +'<td>'+p.ha.toFixed(2)+'</td>'
+        +'<td>'+(p.lote?'<span style="background:#E8F5E9;color:#1B5E20;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700">'+p.lote+'</span>':'<span style="color:#bbb;font-style:italic">vazio</span>')+'</td>'
+        +'<td>'+(p.qtd||'—')+'</td>'
+        +'<td style="font-weight:800;color:'+corTx(txI)+'">'+(txI>0?txI.toFixed(2)+' UA/ha':'—')+'</td>'
+        +'<td style="font-weight:700;color:'+cD+'">'+(p.dias!==null?p.dias+'d':'—')+'</td>'
+        +'</tr>';
+    });
+    html+='</table><br>';
   });
-  html+='</table>';
 
   el.innerHTML=html;
 }
-
 function rRelPagamentosPreview(){
   var el=document.getElementById('rel-pag-preview');
   if(!el) return;
@@ -5388,39 +5425,44 @@ function renderFCLista(lista, totalGeral, deFmt, ateFmt, faz){
 }
 
 function marcarFCSelecionadosComoPago(){
-  // Pega os colaboradores selecionados no fechamento de conta
-  var selecionados = document.querySelectorAll('.fc-colab-item.sel');
-  if(!selecionados.length){
-    alert('Selecione pelo menos um colaborador para marcar como pago.');
+  // Usa _fcSel (objeto de estado real) em vez de querySelector
+  if(!window._fcSel || !Object.keys(window._fcSel).length){
+    alert('Calcule o período primeiro.');
     return;
   }
-  if(!confirm('Marcar todos os selecionados como pago?')) return;
+  var selecionados = Object.keys(window._fcSel).filter(function(n){ return window._fcSel[n]!==false; });
+  if(!selecionados.length){
+    alert('Selecione pelo menos um colaborador.');
+    return;
+  }
+  if(!confirm('Marcar todos os selecionados como pago?\n\n'+selecionados.join(', '))) return;
+
   var marcados = 0;
   var faz = window._fcFaz || '';
   var de  = (document.getElementById('fc-de')||{}).value || '';
   var ate = (document.getElementById('fc-ate')||{}).value || '';
 
-  selecionados.forEach(function(el){
-    var nome = el.getAttribute('data-nome') || '';
-    // Marcar diárias deste colaborador no período como pagas
+  selecionados.forEach(function(nome){
     (S.rD||[]).forEach(function(r){
       if(r._apagado || r.pago) return;
-      if(nome && r.n !== nome) return;
+      if(r.n.toLowerCase() !== nome.toLowerCase()) return;
       if(faz && r.faz !== faz) return;
-      if(de && r.dt < de) return;
+      if(de  && r.dt < de)  return;
       if(ate && r.dt > ate) return;
-      r.pago = true;
-      r.status = 'Pago';
+      r.pago     = true;
+      r.pago_por = CU ? CU.n.split(' ')[0] : 'Sistema';
+      r.pago_dt  = TD;
       marcados++;
     });
   });
 
   salvar();
+
   if(marcados > 0){
     // Enviar cada diária paga para a planilha
     if(S.cfgGS && navigator.onLine){
       (S.rD||[]).forEach(function(r){
-        if(r.pago && r.pago_por && !r._envioPago){
+        if(r.pago && !r._envioPago){
           var p={tipo:'atualizar_diaria',dt:r.dt,n:r.n,srv:r.srv||'',v:r.v,st:'Pago',pago_por:r.pago_por,faz:r.faz||''};
           var url=getFazGasUrl(r.faz||'');
           var cb='_pmfc_'+Date.now()+'_'+Math.random().toString(36).substr(2,4);
@@ -5432,14 +5474,13 @@ function marcarFCSelecionadosComoPago(){
         }
       });
     }
-    alert('✅ ' + marcados + ' diária(s) marcada(s) como paga!');
+    alert('✅ '+marcados+' diária(s) marcada(s) como paga!');
     fecharFC();
     rPan();
   } else {
-    alert('Nenhuma diária encontrada no período para os selecionados.');
+    alert('Nenhuma diária pendente encontrada no período para os selecionados.');
   }
 }
-
 function toggleFCSel(nome){
   if(!window._fcSel) window._fcSel={};
   window._fcSel[nome] = window._fcSel[nome]===false ? true : false;
