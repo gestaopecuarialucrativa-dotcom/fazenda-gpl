@@ -301,7 +301,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.9 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.10 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -319,17 +319,6 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
 <!-- Ações rápidas -->
 <div class="agrid" id="vacts"></div>
-
-<!-- PAINEL VAQUEIRO: gauge de dias no pasto (só para r='Vaqueiro') -->
-<div id="home-vaqueiro-panel" style="display:none;margin-bottom:12px">
-  <div class="card" style="padding:14px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <div style="font-size:14px;font-weight:800;color:#1B5E20">🐄 Situação dos lotes</div>
-      <div style="font-size:10px;color:#888">toque para editar data</div>
-    </div>
-    <div id="vaq-gauge-grid"></div>
-  </div>
-</div>
 
 <!-- Mini-mapa da fazenda -->
 <div id="alerta-rotacao" style="display:none"></div>
@@ -359,6 +348,17 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
       <div style="font-size:18px;font-weight:800;color:#FF6F00" id="hm-estq">–</div>
       <div style="font-size:10px;color:#666">Estoques OK</div>
     </div>
+  </div>
+</div>
+
+<!-- PAINEL VAQUEIRO: gauge de dias no pasto (só para r='Vaqueiro') -->
+<div id="home-vaqueiro-panel" style="display:none;margin-top:10px;margin-bottom:12px">
+  <div class="card" style="padding:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:14px;font-weight:800;color:#1B5E20">🐄 Situação dos lotes</div>
+      
+    </div>
+    <div id="vaq-gauge-grid"></div>
   </div>
 </div>
 
@@ -2031,7 +2031,7 @@ function _ctMostrarDia(d, regs){
       + '<div style="display:flex;justify-content:space-between;align-items:flex-start">'
       + '<div><div style="font-size:12px;font-weight:700">'+r.resp+'</div>'
       + '<div style="font-size:11px;color:#888;margin-top:2px">'+r.det+'</div>'
-      + '<div style="margin-top:2px">'+enviado+(r._validado?' <span style="color:#1565C0;font-size:10px">✔ validado</span>':'')+'</div>'
+      + '<div style="margin-top:2px">'+enviado+(r.validado?' <span style="color:#1565C0;font-size:10px">✔ validado</span>':'')+'</div>'
       + '</div>'
       + '<div style="text-align:right">'
       + '<div style="font-size:16px;font-weight:900;color:#1B5E20">R$'+parseFloat(r.total||0).toFixed(2).replace('.',',')+'</div>';
@@ -2056,12 +2056,12 @@ function _ctMostrarDia(d, regs){
 // ── Editar / Validar / Excluir (só Consultor/Dono) ──
 function ctValidar(i){
   if(!window._ctDiaRegs || !window._ctDiaRegs[i]) return;
-  window._ctDiaRegs[i]._validado = true;
+  window._ctDiaRegs[i].validado = true;
   salvar(); ctCalRender();
 }
 function ctDesvalidar(i){
   if(!window._ctDiaRegs || !window._ctDiaRegs[i]) return;
-  window._ctDiaRegs[i]._validado = false;
+  window._ctDiaRegs[i].validado = false;
   salvar(); ctCalRender();
 }
 function ctExcluir(i){
@@ -3775,36 +3775,16 @@ function rVaqueiroPainel(){
       +   '<div style="font-size:12px;font-weight:800;color:#333">'+nm+'</div>'
       +   '<div style="font-size:11px;color:#555;margin-top:1px">'+areaNm+'</div>'
       +   '<div style="font-size:10px;color:#888;margin-top:1px">Entrada: '+dtFmt+'</div>'
-      +   '<div style="font-size:10px;font-weight:700;color:'+cor+';margin-top:2px">'+label+' · ✏️ editar</div>'
+      +   '<div style="font-size:10px;font-weight:700;color:'+cor+';margin-top:2px">'+label+'</div>'
       + '</div>'
       + '</div>';
   });
 
   html += '</div>';
   grid.innerHTML = html;
-  // Adicionar listeners nos itens do gauge
-  var items = grid.querySelectorAll('[id^="vg_"]');
-  items.forEach(function(el){
-    var id = el.id.replace('vg_','').replace(/_/g,' ');
-    // Recuperar dados do lote pelo nome
-    var lote = (S.LOTES||[]).find(function(l){ return l.nome.replace(/\s/g,'')===id; });
-    if(!lote) return;
-    var lotNm = lote.nome;
-    // Área e data de entrada
-    var aloc2 = S.MAPA_ALOC||{};
-    var arId2 = null;
-    Object.keys(aloc2).forEach(function(k){ if(aloc2[k]===lotNm) arId2=k; });
-    var movs2 = (S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&r.lote===lotNm&&!r._apagado;});
-    var dt2 = '';
-    for(var i=movs2.length-1;i>=0;i--){
-      if(movs2[i].destino===arId2){ dt2=(movs2[i].dt||'').substring(0,10); break; }
-    }
-    if(!dt2 && movs2.length) dt2=(movs2[movs2.length-1].dt||'').substring(0,10);
-    el.addEventListener('click', function(){
-      editarDataEntrada(lotNm, arId2||'', dt2);
-    });
-  });
+
 }
+
 // ═══ EDITAR DATA DE ENTRADA DO LOTE ═══
 function editarDataEntrada(loteNome, areaId, dtAtual){
   // Mostrar modal simples com input de data
@@ -4810,7 +4790,14 @@ function abrirDetalheLancamento(arr, gi){
 }
 
 function abrirDetalheCantinaDia(dt, faz){
-  var regs = (S.rC||[]).filter(function(r){return r.dt===dt&&r.faz===faz;});
+  // Buscar registros: incluir registros válidos e não apagados
+  var regs = (S.rC||[]).filter(function(r){
+    return !r._apagado && r.dt===dt && (r.faz===faz || !r.faz || !faz);
+  });
+  if(!regs.length){
+    // Tentar sem filtro de faz (compatibilidade)
+    regs = (S.rC||[]).filter(function(r){ return !r._apagado && r.dt===dt; });
+  }
   if(!regs.length) return;
   
   panCtx = {tipo:'cantina_dia', dt:dt, faz:faz};
