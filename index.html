@@ -200,7 +200,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   </div>
   <div id="det-body"></div>
   <div style="display:flex;gap:8px;margin-top:16px" id="det-btns">
-    <button id="det-val" style="flex:1;padding:11px;background:#2E7D32;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">✅ Validar</button>
+    <button id="det-val" style="flex:1;padding:11px;background:#2E7D32;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">✅ Marcar como pago</button>
     <button id="det-edit" style="flex:1;padding:11px;background:#1565C0;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">✏️ Editar</button>
     <button id="det-rep" style="padding:11px 14px;background:#E65100;color:#fff;border:none;border-radius:10px;font-size:14px;cursor:pointer">❌</button>
     <button id="det-del" style="padding:11px 14px;background:#B71C1C;color:#fff;border:none;border-radius:10px;font-size:14px;cursor:pointer">🗑️</button>
@@ -301,7 +301,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.11 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.12 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -4372,9 +4372,16 @@ function calcularFechamento(){
     var dt=r.dt||r.data||'';
     return dt>=de&&dt<=ate&&(!faz||r.faz===faz);
   }
-  var diarias=(S.rD||[]).filter(function(r){return r.tipo==='diaria'&&!r._apagado&&noperiodo(r);});
+  // Só inclui diárias NÃO pagas
+  var diarias=(S.rD||[]).filter(function(r){
+    return r.tipo==='diaria' && !r._apagado && !r.pago && noperiodo(r);
+  });
+  // Só inclui cantinas NÃO validadas/pagas
   var cantinas=(S.rC||[]).filter(function(r){
     if(!noperiodo(r)) return false;
+    if(r.validado) return false; // já paga/aprovada pelo dono
+    if(r._apagado) return false;
+    // Filtrar cantinas do próprio Consultor/Dono
     var rn=r.resp||r.n||'';
     var u=S.US.find(function(x){return x.n===rn;});
     if(!u) return true;
@@ -4644,6 +4651,8 @@ function filtrarPan(lista){
   return lista.filter(function(r){
     if(faz && r.faz !== faz) return false;
     if(r._apagado) return false;
+    // Excluir placeholders de cantina
+    if(r.tipo==='cantina' && (!r.dt || r.dt==='(registros' || !r.resp)) return false;
     if(r.tipo==='diaria') return !r.pago;
     return !r.validado && !r.pago;
   });
@@ -4867,7 +4876,7 @@ function abrirDetalheCantinaDia(dt, faz){
   btnVal.onclick = function(){
     regs.forEach(function(r){r.validado=true;r.validado_por=CU?CU.n:'';});
     salvar(); fecharDetModal(); rPan();
-    alert('✅ Cantina do dia '+dtFmt+' validada!');
+    alert('✅ Conta do dia '+dtFmt+' marcada como paga!');
   };
   btnEdit.onclick = function(){ fecharDetModal(); if(regs[0]) abrirEdicao('rC', S.rC.indexOf(regs[0])); };
   btnRep.onclick = function(){
