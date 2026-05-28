@@ -301,7 +301,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.13 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.14 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2084,9 +2084,53 @@ function ctDesvalidar(i){
 }
 function ctExcluir(i){
   if(!window._ctDiaRegs || !window._ctDiaRegs[i]) return;
-  if(!confirm('Excluir este registro?\n\n⚠️ Será ocultado no app. Delete a linha na planilha manualmente.')) return;
-  window._ctDiaRegs[i]._apagado = true;
-  salvar(); _ctDiaSel=null; ctCalRender();
+  if(!confirm('Excluir este registro?\n\nO registro será removido do app e da planilha.')) return;
+  var reg = window._ctDiaRegs[i];
+  reg._apagado = true;
+  salvar();
+  // Enviar exclusão para a planilha
+  if(S.cfgGS && navigator.onLine){
+    var payload = {
+      acao: 'excluir_cantina',
+      dt:    reg.dt   || '',
+      resp:  reg.resp || reg.n || '',
+      total: reg.total || 0,
+      det:   reg.det  || '',
+      faz:   reg.faz  || ''
+    };
+    var url = getFazGasUrl(reg.faz||'');
+    var cbN = '_dct_'+Date.now();
+    var s = document.createElement('script');
+    s.src = url+'?data='+encodeURIComponent(JSON.stringify(payload))+'&callback='+cbN+'&t='+Date.now();
+    window[cbN] = function(res){
+      delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s);
+      if(res && res.ok){
+        // Mostrar feedback de exclusão
+        var ok=document.createElement('div');
+        ok.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1B5E20;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;z-index:9999';
+        ok.textContent='🗑 Registro excluído da planilha';
+        document.body.appendChild(ok);
+        setTimeout(function(){if(ok.parentNode)ok.parentNode.removeChild(ok);},3000);
+      }
+    };
+    s.onerror = function(){
+      delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s);
+      // Excluído localmente mas não na planilha — avisar
+      var ok=document.createElement('div');
+      ok.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#E65100;color:#fff;padding:10px 20px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;text-align:center;max-width:300px';
+      ok.textContent='⚠️ Removido do app. Sem internet — delete na planilha manualmente.';
+      document.body.appendChild(ok);
+      setTimeout(function(){if(ok.parentNode)ok.parentNode.removeChild(ok);},4000);
+    };
+    document.body.appendChild(s);
+  } else if(!navigator.onLine){
+    var ok2=document.createElement('div');
+    ok2.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#555;color:#fff;padding:10px 20px;border-radius:20px;font-size:12px;z-index:9999;text-align:center;max-width:300px';
+    ok2.textContent='⚠️ Sem internet. Removido do app — delete na planilha quando tiver sinal.';
+    document.body.appendChild(ok2);
+    setTimeout(function(){if(ok2.parentNode)ok2.parentNode.removeChild(ok2);},4000);
+  }
+  _ctDiaSel=null; ctCalRender();
 }
 function ctEditarReg(i){
   if(!window._ctDiaRegs || !window._ctDiaRegs[i]) return;
@@ -4488,7 +4532,7 @@ function renderFCLista(lista, totalGeral, deFmt, ateFmt, faz){
     if(p.cantina.length)html+='Cantina: '+p.cantina.length+' dias → R$ '+p.totalC.toFixed(2).replace('.',',');
     html+='</div>';
     var pixEsc=pix.replace(/"/g,'&quot;');
-    if(pix&&sel)html+='<div class="fc-pix" style="display:flex;align-items:center;gap:8px">'      +'<span>Pix: '+pix+'</span>'      +'<button class="btn-copiar-pix" data-pix="'+pixEsc+'" style="padding:2px 8px;background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9;border-radius:6px;font-size:11px;cursor:pointer">📋 Copiar</button>'      +'</div>';
+    if(pix&&sel)html+='<div class="fc-pix">'      +'Pix: <span class="btn-copiar-pix" data-pix="'+pixEsc+'" '      +'title="Clique para copiar" '      +'style="color:#1565C0;font-weight:700;text-decoration:underline;cursor:pointer;user-select:all">'+pix+'</span>'      +'<span class="pix-copied-'+pixEsc+'" style="display:none;margin-left:6px;color:#1B5E20;font-size:10px;font-weight:700">✅ Copiado!</span>'      +'</div>';
     html+='</div>';
   });
 
@@ -4973,29 +5017,40 @@ function fecharDetModal(){
 }
 
 document.addEventListener('DOMContentLoaded', function(){
-  // Listener delegado para copiar PIX
+  // Listener delegado para copiar PIX (número azul clicável)
   document.addEventListener('click', function(e){
     if(e.target && e.target.classList.contains('btn-copiar-pix')){
       var pix = e.target.getAttribute('data-pix')||'';
       if(!pix) return;
-      var btn = e.target;
+      var span = e.target;
+      function _showCopied(){
+        span.textContent = '✅ Copiado!';
+        span.style.color = '#1B5E20';
+        span.style.textDecoration = 'none';
+        setTimeout(function(){
+          span.textContent = pix;
+          span.style.color = '#1565C0';
+          span.style.textDecoration = 'underline';
+        }, 2000);
+      }
       if(navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(pix).then(function(){
-          var orig = btn.textContent;
-          btn.textContent = '✅ Copiado!';
-          setTimeout(function(){ btn.textContent = orig; }, 2000);
-        }).catch(function(){ alert('PIX: '+pix); });
+        navigator.clipboard.writeText(pix).then(_showCopied).catch(function(){
+          var ta=document.createElement('textarea');
+          ta.value=pix; ta.style.position='fixed'; ta.style.opacity='0';
+          document.body.appendChild(ta); ta.focus(); ta.select();
+          try{document.execCommand('copy');_showCopied();}catch(e2){alert('PIX: '+pix);}
+          document.body.removeChild(ta);
+        });
       } else {
-        // Fallback para celulares sem clipboard API
-        var ta = document.createElement('textarea');
-        ta.value = pix; ta.style.position='fixed'; ta.style.opacity='0';
-        document.body.appendChild(ta); ta.select();
-        try{ document.execCommand('copy'); btn.textContent='✅ Copiado!'; setTimeout(function(){btn.textContent='📋 Copiar';},2000); }
-        catch(e2){ alert('PIX: '+pix); }
+        var ta=document.createElement('textarea');
+        ta.value=pix; ta.style.position='fixed'; ta.style.opacity='0';
+        document.body.appendChild(ta); ta.focus(); ta.select();
+        try{document.execCommand('copy');_showCopied();}catch(e2){alert('PIX: '+pix);}
         document.body.removeChild(ta);
       }
     }
   });
+
   var dm = document.getElementById('det-modal');
   var dc = document.getElementById('det-close');
   if(dc) dc.onclick = fecharDetModal;
