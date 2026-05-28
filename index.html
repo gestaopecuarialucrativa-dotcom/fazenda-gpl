@@ -301,7 +301,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.17 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.18 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -977,13 +977,58 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 </div>
 </div>
 
-<!-- CONSULTOR — irmão ✅ -->
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-  <button onclick="enviarRelatorioWpp()" style="padding:12px;background:#25D366;color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer">📲 WhatsApp</button>
-  <button onclick="gerarRelatorioPDF()" style="padding:12px;background:#C62828;color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer">📄 PDF</button>
+<!-- Botões de relatório movidos para aba Relatório -->
 </div>
 
 </div>
+
+
+<!-- RELATÓRIO ✅ -->
+<div id="pg-relatorio" class="pg" style="display:none">
+
+  <!-- Seletor de relatório -->
+  <div style="display:flex;gap:8px;margin-bottom:16px">
+    <button id="rel-tab-fazenda" onclick="rRelTab('fazenda')" class="pbtn on" style="flex:1;padding:10px;font-size:12px">🌿 Fazenda</button>
+    <button id="rel-tab-pagamentos" onclick="rRelTab('pagamentos')" class="pbtn" style="flex:1;padding:10px;font-size:12px">💰 Pagamentos</button>
+    <button id="rel-tab-dashboard" onclick="rRelTab('dashboard')" class="pbtn" style="flex:1;padding:10px;font-size:12px">📈 Dashboard</button>
+  </div>
+
+  <!-- ABA FAZENDA -->
+  <div id="rel-fazenda">
+    <div class="card" style="padding:14px;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700;color:#1B5E20;margin-bottom:10px">🌿 Relatório da Fazenda</div>
+      <div style="font-size:12px;color:#666;margin-bottom:12px">Taxa de lotação, módulos, piquetes e histórico de rotação.</div>
+      <div id="rel-fazenda-preview" style="max-height:420px;overflow-y:auto;border:1px solid #eee;border-radius:8px;padding:8px;background:#fafafa;font-size:11px"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button onclick="rRelFazendaPreview()" style="flex:1;padding:10px;background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">👁 Visualizar</button>
+        <button onclick="gerarRelPDF()" style="flex:1;padding:10px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">📄 Gerar PDF</button>
+        <button onclick="enviarRelatorioWppGPL()" style="flex:1;padding:10px;background:#25D366;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">📲 WhatsApp</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABA PAGAMENTOS -->
+  <div id="rel-pagamentos" style="display:none">
+    <div class="card" style="padding:14px;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700;color:#1B5E20;margin-bottom:10px">💰 Relatório de Pagamentos</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div class="fg"><div class="lbl">Data início</div><input type="date" id="rp-de" style="width:100%;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:13px"></div>
+        <div class="fg"><div class="lbl">Data fim</div><input type="date" id="rp-ate" style="width:100%;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:13px"></div>
+      </div>
+      <div id="rel-pag-preview" style="max-height:380px;overflow-y:auto;border:1px solid #eee;border-radius:8px;padding:8px;background:#fafafa"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button onclick="rRelPagamentosPreview()" style="flex:1;padding:10px;background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">👁 Visualizar</button>
+        <button onclick="gerarRelPagamentosPDF()" style="flex:1;padding:10px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">📄 Gerar PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABA DASHBOARD -->
+  <div id="rel-dashboard" style="display:none">
+    <div id="dashboard-container"></div>
+  </div>
+
+</div><!-- FIM pg-relatorio ✅ -->
 
 <!-- HISTÓRICO ✅ -->
 <div id="pg-historico" class="pg" style="display:none;padding-bottom:20px">
@@ -1165,7 +1210,7 @@ const TD=new Date().toISOString().split('T')[0];
 const EC=['','#7B3F00','#A0522D','#2d7a1f','#CC8800','#CC2200'];
 const EI=[null,{em:'💩',ti:'Escore 1 — Firmes e secas',re:'💡 Reduzir fibra'},{em:'💩',ti:'Escore 2 — Firmes com espalhamento',re:'💡 Monitorar'},{em:'✅',ti:'Escore 3 — Ideal (panqueca)',re:'💡 Nutrição equilibrada!'},{em:'⚠️',ti:'Escore 4 — Soltas e espalhadas',re:'💡 Revisar proteína e água'},{em:'🚨',ti:'Escore 5 — Diarreia',re:'💡 Ação imediata!'}];
 const PL={diaria:'Diária',insumo:'Insumos',trato:'Trato cocho',escore:'Escore fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',mapa:'Mapa',historico:'Histórico',config:'Config.'};
-const TABS=[{id:'painel',l:'📊 Painel',p:'painel'},{id:'cantina',l:'🏪 Cantina',p:'cantina'},{id:'estoque',l:'📦 Estoque',p:'estoque'},{id:'mapa',l:'🗺️ Mapa',p:'mapa'},{id:'historico',l:'📋 Histórico',p:'historico'},{id:'config',l:'⚙️ Config.',p:'config'}];
+const TABS=[{id:'painel',l:'📊 Painel',p:'painel'},{id:'cantina',l:'🏪 Cantina',p:'cantina'},{id:'estoque',l:'📦 Estoque',p:'estoque'},{id:'mapa',l:'🗺️ Mapa',p:'mapa'},{id:'historico',l:'📋 Histórico',p:'historico'},{id:'relatorio',l:'📈 Relatório',p:'painel'},{id:'config',l:'⚙️ Config.',p:'config'}];
 const ACTS=[{id:'diaria',l:'Lançar diária',s:'Serviço do dia',ic:'👤',c:'gr',p:'diaria'},{id:'insumo',l:'Insumos',s:'Depósito → campo',ic:'📦',c:'bl',p:'insumo'},{id:'trato',l:'Trato de cocho',s:'Proteinado, sal...',ic:'🛠',c:'tl',p:'trato'},{id:'lote',l:'Lotes',s:'Cadastro de lotes',ic:'🐄',c:'gr',p:'config'},{id:'escore',l:'Escore de fezes',s:'Avaliação do gado',ic:'🔬',c:'pu',p:'escore'}];
 const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbwc2lHSKdDzTsXxd-77mpxh0khrRNSB4BWt1XODEe7cOPq0h1sxkT4L5rc6TNgHdiZrMA/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,historico:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:1,config:0}},{n:'Elisangela',i:'E',c:'av-p',r:'Cantina',pin:'2222',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,mapa:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:38,peso:402,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 02',qtd:85,peso:360,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 03',qtd:79,peso:316,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 04',qtd:61,peso:269,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 05',qtd:69,peso:228,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 06',qtd:121,peso:204,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio']},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:5,almoco:25,janta:25},cfgGS:'https://script.google.com/macros/s/AKfycbwc2lHSKdDzTsXxd-77mpxh0khrRNSB4BWt1XODEe7cOPq0h1sxkT4L5rc6TNgHdiZrMA/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{},wppAdmin:'',MAPA_ALOC:{'M03P01':'Lote 03','M01P06':'Lote 05','PA01':'Lote 06','PA09':'Lote 04','PA05':'Lote 01','M04P04':'Lote 02'}};
 
@@ -1318,7 +1363,7 @@ function rHomeMapa(){
   }
 }
 
-function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home'){setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);setTimeout(function(){try{rHomeMapa();}catch(e){}},600);setTimeout(function(){try{rHomeMapa();}catch(e){}},1500);}if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}if(_nuvemCarregando){setTimeout(()=>{try{rPan();}catch(e){}},3500);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _mt=0;var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');var img=document.getElementById('mapa-img-sat');var ok=wrap&&wrap.offsetWidth>0&&img&&(img.complete||img._loaded);if(!ok&&_mt++<30){setTimeout(_rmapa,300);return;}
+function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',relatorio:'Relatório & Dashboard',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home'){setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);setTimeout(function(){try{rHomeMapa();}catch(e){}},600);setTimeout(function(){try{rHomeMapa();}catch(e){}},1500);}if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}if(_nuvemCarregando){setTimeout(()=>{try{rPan();}catch(e){}},3500);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _mt=0;var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');var img=document.getElementById('mapa-img-sat');var ok=wrap&&wrap.offsetWidth>0&&img&&(img.complete||img._loaded);if(!ok&&_mt++<30){setTimeout(_rmapa,300);return;}
     // Se MAPA_COORDS vazio, carregar da nuvem primeiro
     if(S.cfgGS&&(!S.MAPA_COORDS||!Object.keys(S.MAPA_COORDS).length)){
       carregarNuvem(function(){try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}});
@@ -1337,7 +1382,7 @@ var arFaz=document.getElementById('ar-faz');if(arFaz&&arFaz.options.length<=1){a
     var dobs=document.getElementById('d-obs'); if(dobs)dobs.value='';
     var dout=document.getElementById('d-out-wrap'); if(dout)dout.style.display='none';
     try{popAll();}catch(e){}
-  },50);if(id==='cantina')setTimeout(function(){try{initCantina();}catch(e){console.error('initCantina',e);}},50);if(id==='home')setTimeout(function(){try{rHomeMapa();buildActs();}catch(e){}},100);window.scrollTo(0,0);}
+  },50);if(id==='cantina')setTimeout(function(){try{initCantina();}catch(e){console.error('initCantina',e);}},50);if(id==='relatorio')setTimeout(function(){try{sp_relatorio_init();}catch(e){}},50);if(id==='home')setTimeout(function(){try{rHomeMapa();buildActs();}catch(e){}},100);window.scrollTo(0,0);}
 function goBack(){if(prevPage)sp(prevPage,false);else sp('home',false);}
 function isV(u){return u.p.diaria||u.p.insumo||u.p.trato||u.p.escore;}
 function isA(u){return u.p.cantina||u.p.estoque||u.p.painel||u.p.config;}
@@ -1609,7 +1654,25 @@ function filtrar(lista,per){const now=new Date();const faz=(document.getElementB
 let perA='quinzena';
 function rPan(){try{const lv=filtrar(S.rD.filter(r=>r.tipo==='diaria'&&!r._apagado&&!r.pago),perA);const lc=filtrar(S.rC,perA);const lt=filtrar(S.rT,perA);const le=filtrar(S.rE,perA);const td=lv.reduce((a,r)=>a+r.v,0);const tc=lc.reduce((a,r)=>a+r.total,0);document.getElementById('s-d').textContent='R$ '+Math.round(td);document.getElementById('s-ds').textContent=lv.length+' reg.';document.getElementById('s-c').textContent='R$ '+Math.round(tc);document.getElementById('s-cs').textContent=lc.length+' reg.';document.getElementById('s-t').textContent=lt.length;if(le.length){const m=(le.reduce((a,r)=>a+r.es,0)/le.length).toFixed(1);document.getElementById('s-e').innerHTML=`<span style="color:${EC[Math.round(parseFloat(m))]}">${m}</span>`;document.getElementById('s-es').textContent=le.length+' aval.';}else{document.getElementById('s-e').textContent='—';document.getElementById('s-es').textContent='sem reg.';}const despFil=filtrar(S.rDesp||[],perA);const pagar=despFil.filter(r=>r.st==='pagar');const pago=despFil.filter(r=>r.st==='pago');const totP=pagar.reduce((a,r)=>a+r.val,0);const totPg=pago.reduce((a,r)=>a+r.val,0);document.getElementById('s-dp').textContent='R$ '+Math.round(totP);document.getElementById('s-dpg').textContent='R$ '+Math.round(totPg);document.getElementById('s-dps').textContent=pagar.length+' lançadas';document.getElementById('s-dpgs').textContent=pago.length+' pagas';const pe=CU&&(CU.r==='Consultor'||CU.r==='Dono');document.getElementById('l-d').innerHTML=lv.length?[...lv].reverse().map(r=>{const gi=S.rD.indexOf(r);const av=r.av==='otimo'?'<span class="bdg bg">Ótimo</span>':r.av==='bom'?'<span class="bdg ba">Bom</span>':'<span class="bdg br">Ruim</span>';const pg=r.pago?` <span style="font-size:10px;color:#2E7D32;font-weight:600">✅ Paga</span>`:'';const lancou=r.lancadoPor?` <span style="font-size:10px;color:#888">por ${r.lancadoPor}</span>`:'';const bp=(!r.pago&&r.v>0)?`<button class="btn-pagar-diaria" data-idx="${gi}" style="margin-top:5px;padding:4px 12px;font-size:11px;font-weight:600;background:#2E7D32;color:#fff;border:none;border-radius:6px;cursor:pointer">✅ Marcar como paga</button>`:'';const bd=pe?`<button class="btn-del-reg" data-arr="rD" data-idx="${gi}" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer;margin-left:8px">🗑️</button>`:'';return`<div class="ri">${bd}<div class="rt"><span class="rn">${r.n}${av}</span><span class="rv">${r.pago?'<s style="color:#aaa">':''}R$ ${r.v.toFixed(2).replace('.',',')}${r.pago?'</s>':''}</span></div><div class="rd">${(r.dt||'').split('-').reverse().join('/')} · ${r.faz} · ${r.srv}${pg}${lancou}</div>${bp}</div>`;}).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';document.querySelectorAll('.btn-pagar-diaria').forEach(btn=>btn.addEventListener('click',function(){pagarDiaria(parseInt(this.getAttribute('data-idx')));}));document.querySelectorAll('.btn-del-reg').forEach(btn=>btn.addEventListener('click',function(){excluirRegistro(this.getAttribute('data-arr'),parseInt(this.getAttribute('data-idx')));}));document.getElementById('l-e').innerHTML=le.length?[...le].reverse().map(r=>{const gi=S.rE.indexOf(r);const del=pe?`<button class="btn-del-reg" data-arr="rE" data-idx="${gi}" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer">🗑️</button>`:'';return`<div class="ri">${del}<div class="rt"><span class="rn">${r.co||r.faz}</span><span style="font-size:14px;font-weight:700;color:${EC[r.es]}">${EI[r.es].em} E${r.es}</span></div><div class="rd">${(r.dt||'').split('-').reverse().join('/')} · ${r.faz} · ${r.cab||0} animais</div></div>`;}).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';document.getElementById('l-t').innerHTML=lt.length?[...lt].reverse().map(r=>{const gi=S.rT.indexOf(r);const del=pe?`<button class="btn-del-reg" data-arr="rT" data-idx="${gi}" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer">🗑️</button>`:'';return`<div class="ri">${del}<div class="rt"><span class="rn">${r.co||'—'}</span><span class="rv">${r.q} ${r.unid||'saco'}</span></div><div class="rd">${(r.dt||'').split('-').reverse().join('/')} · ${r.faz} · ${r.pr} · ${r.cab||0} cab</div></div>`;}).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';document.getElementById('l-ct').innerHTML=lc.length?[...lc].reverse().map(r=>{const gi=S.rC.indexOf(r);const del=pe?`<button class="btn-del-reg" data-arr="rC" data-idx="${gi}" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer">🗑️</button>`:'';return`<div class="ri">${del}<div class="rt"><span class="rn">${r.resp}</span><span class="rv">R$ ${r.total.toFixed(2).replace('.',',')}</span></div><div class="rd">${(r.dt||'').split('-').reverse().join('/')} · ${r.faz} · ${r.det}</div></div>`;}).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';document.querySelectorAll('#l-e .btn-del-reg,#l-t .btn-del-reg,#l-ct .btn-del-reg').forEach(btn=>btn.addEventListener('click',function(){excluirRegistro(this.getAttribute('data-arr'),parseInt(this.getAttribute('data-idx')));}));rListDesp();rChart();}catch(e){console.error('rPan:',e);}}
 function sPer(el,p){document.querySelectorAll('.pbtn').forEach(b=>b.classList.remove('on'));el.classList.add('on');perA=p;const si=document.getElementById('safra-info');if(si){if(p==='safra'){const sf=getSafra();si.style.display='block';si.textContent='🌾 Safra '+sf.label;}else si.style.display='none';}rPan();}
-function pagarDiaria(idx){const r=S.rD[idx];if(!r)return;r.pago=true;r.pago_por=CU?CU.n.split(' ')[0]:'Sistema';r.pago_dt=new Date().toLocaleDateString('pt-BR');if(S.rDesp){const desc='Diária: '+r.n;const desp=S.rDesp.find(d=>d.desc===desc&&d.venc===r.dt&&d.faz===r.faz&&d.st==='pagar');if(desp)desp.st='pago';}salvar();rPan();}
+function pagarDiaria(idx){
+  var r=S.rD[idx]; if(!r) return;
+  r.pago=true;
+  r.pago_por=CU?CU.n.split(' ')[0]:'Sistema';
+  r.pago_dt=TD;
+  salvar();
+  // Enviar para a planilha: atualizar col G (Status Pgto) para "Pago"
+  if(S.cfgGS && navigator.onLine){
+    var payload={tipo:'atualizar_diaria',dt:r.dt,n:r.n,srv:r.srv||'',v:r.v,st:'Pago',pago_por:r.pago_por,faz:r.faz||''};
+    var url=getFazGasUrl(r.faz||'');
+    var cbN='_pd_'+Date.now();
+    var s=document.createElement('script');
+    s.src=url+'?acao=atualizar_diaria&data='+encodeURIComponent(JSON.stringify(payload))+'&callback='+cbN+'&t='+Date.now();
+    window[cbN]=function(){delete window[cbN];if(s.parentNode)s.parentNode.removeChild(s);};
+    s.onerror=function(){delete window[cbN];if(s.parentNode)s.parentNode.removeChild(s);};
+    document.body.appendChild(s);
+  }
+  rPan();
+}
 function excluirRegistro(arr,idx){if(!confirm('⚠️ Excluir este registro?'))return;if(!S[arr]||idx<0||idx>=S[arr].length)return;S[arr][idx]._apagado=true;salvar();if(S.cfgGS)salvarNuvem(function(){});rPan();if(typeof rListDesp==='function')rListDesp();}
 
 // ═══ CONFIG ═══
@@ -2616,6 +2679,298 @@ function gerarRelPDF(){
   setTimeout(function(){ janela.print(); }, 800);
 }
 // ═══════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════
+// ABA RELATÓRIO — Funções
+// ═══════════════════════════════════════════════════════
+
+function rRelTab(aba){
+  ['fazenda','pagamentos','dashboard'].forEach(function(a){
+    document.getElementById('rel-tab-'+a).className='pbtn'+(a===aba?' on':'');
+    document.getElementById('rel-'+a).style.display=a===aba?'block':'none';
+  });
+  if(aba==='dashboard') rRenderDashboard();
+  if(aba==='pagamentos'){
+    var hoje=new Date();
+    var d1=new Date(hoje); d1.setDate(hoje.getDate()-15);
+    var fmt=function(d){return d.toISOString().substring(0,10);};
+    var rp=document.getElementById('rp-de'); if(rp&&!rp.value)rp.value=fmt(d1);
+    var ra=document.getElementById('rp-ate'); if(ra&&!ra.value)ra.value=fmt(hoje);
+  }
+}
+
+function rRelFazendaPreview(){
+  var el=document.getElementById('rel-fazenda-preview');
+  if(!el) return;
+  var aloc=S.MAPA_ALOC||{};
+  var lotes=S.LOTES||[];
+  var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
+  var hoje=new Date(); hoje.setHours(12,0,0,0);
+
+  function diasPasto(lotNm,areaId){
+    var ml=movs.filter(function(m){return m.lote===lotNm;});
+    var dt=null;
+    for(var i=ml.length-1;i>=0;i--){if(ml[i].destino===areaId){dt=ml[i].dt;break;}}
+    if(!dt&&ml.length)dt=ml[ml.length-1].dt;
+    if(!dt)return null;
+    return Math.max(0,Math.round((hoje-new Date(dt+'T12:00:00'))/864e5));
+  }
+
+  var html='<style>.pv-table{width:100%;border-collapse:collapse;font-size:11px}.pv-table th{background:#1B5E20;color:#fff;padding:5px 8px;text-align:left}.pv-table td{padding:5px 8px;border-bottom:1px solid #eee}.pv-h2{font-size:12px;font-weight:800;color:#1B5E20;margin:10px 0 4px}</style>';
+
+  // Lotes resumo
+  html+='<div class="pv-h2">🐄 Lotes</div>';
+  html+='<table class="pv-table"><tr><th>Lote</th><th>Área</th><th>Animais</th><th>Peso</th><th>UA/ha</th><th>Dias</th><th>Última saída</th></tr>';
+  lotes.forEach(function(lot){
+    var aId=null; Object.keys(aloc).forEach(function(k){if(aloc[k]===lot.nome)aId=k;});
+    var aObj=aId?MAPA_AREAS.find(function(a){return a.id===aId;}):null;
+    var ua=lot.qtd*lot.peso/450;
+    var tx=aObj&&aObj.ha>0?ua/aObj.ha:0;
+    var dias=aId?diasPasto(lot.nome,aId):null;
+    // Última saída (movimentação anterior do lote)
+    var movsLote=movs.filter(function(m){return m.lote===lot.nome;});
+    var ultSaida=movsLote.length>1?movsLote[movsLote.length-2]:null;
+    var ultSaidaStr=ultSaida?(ultSaida.dt||'').split('-').reverse().join('/')+' ('+( (ultSaida.origem||'?'))+')':'—';
+    var corD=dias===null?'#999':dias<=3?'#1B5E20':dias<=7?'#388E3C':dias<=14?'#E65100':'#C62828';
+    html+='<tr>'
+      +'<td><b>'+lot.nome+'</b></td>'
+      +'<td>'+(aObj?aObj.label:'—')+'</td>'
+      +'<td>'+lot.qtd+'</td>'
+      +'<td>'+lot.peso+'kg</td>'
+      +'<td style="color:'+(tx>4?'#C62828':tx>2?'#E65100':'#1B5E20');html+='">'+( tx>0?tx.toFixed(2):'—')+'</td>'
+      +'<td style="color:'+corD+';font-weight:700">'+(dias!==null?dias+'d':'—')+'</td>'
+      +'<td style="font-size:10px;color:#888">'+ultSaidaStr+'</td>'
+      +'</tr>';
+  });
+  html+='</table>';
+
+  // Módulos
+  html+='<div class="pv-h2">🔄 Módulos — Taxa de Lotação</div>';
+  html+='<table class="pv-table"><tr><th>Módulo</th><th>ha total</th><th>UA</th><th>UA/ha módulo</th></tr>';
+  var mods={};
+  MAPA_AREAS.filter(function(a){return a.tipo==='modulo';}).forEach(function(a){
+    var mk='M'+String(a.modulo).padStart(2,'0');
+    if(!mods[mk])mods[mk]={num:a.modulo,ha:0,ua:0};
+    mods[mk].ha+=a.ha;
+    var lotNm=aloc[a.id];
+    if(lotNm){var lot=lotes.find(function(l){return l.nome===lotNm;});if(lot)mods[mk].ua+=lot.qtd*lot.peso/450;}
+  });
+  Object.keys(mods).sort().forEach(function(mk){
+    var m=mods[mk];
+    var tx=m.ha>0?m.ua/m.ha:0;
+    html+='<tr><td><b>Módulo '+m.num+'</b></td><td>'+m.ha.toFixed(1)+'ha</td><td>'+m.ua.toFixed(1)+'</td>'
+      +'<td style="color:'+(tx>4?'#C62828':tx>2?'#E65100':'#1B5E20')+';font-weight:800">'+tx.toFixed(2)+' UA/ha</td></tr>';
+  });
+  html+='</table>';
+
+  el.innerHTML=html;
+}
+
+function rRelPagamentosPreview(){
+  var el=document.getElementById('rel-pag-preview');
+  if(!el) return;
+  var de=(document.getElementById('rp-de')||{}).value||'';
+  var ate=(document.getElementById('rp-ate')||{}).value||'';
+  var diarias=(S.rD||[]).filter(function(r){return !r._apagado&&(!de||r.dt>=de)&&(!ate||r.dt<=ate);});
+  var total=diarias.reduce(function(a,r){return a+r.v;},0);
+  var totalPago=diarias.filter(function(r){return r.pago;}).reduce(function(a,r){return a+r.v;},0);
+
+  var html='<style>.pv-table{width:100%;border-collapse:collapse;font-size:11px}.pv-table th{background:#1565C0;color:#fff;padding:5px 8px}.pv-table td{padding:5px 8px;border-bottom:1px solid #eee}</style>';
+  html+='<div style="display:flex;gap:8px;margin-bottom:8px">'
+    +'<div style="flex:1;background:#E8F5E9;border-radius:6px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:800;color:#1B5E20">R$'+total.toFixed(2).replace('.',',')+'</div><div style="font-size:9px;color:#555">Total</div></div>'
+    +'<div style="flex:1;background:#E3F2FD;border-radius:6px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:800;color:#1565C0">R$'+totalPago.toFixed(2).replace('.',',')+'</div><div style="font-size:9px;color:#555">Pago</div></div>'
+    +'<div style="flex:1;background:#FFF3E0;border-radius:6px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:800;color:#E65100">R$'+(total-totalPago).toFixed(2).replace('.',',')+'</div><div style="font-size:9px;color:#555">A Pagar</div></div>'
+    +'</div>';
+  html+='<table class="pv-table"><tr><th>Data</th><th>Nome</th><th>Serviço</th><th>Valor</th><th>Status</th></tr>';
+  diarias.slice().sort(function(a,b){return (a.dt||'')>(b.dt||'')?1:-1;}).forEach(function(r){
+    var cor=r.pago?'#1B5E20':'#E65100';
+    var st=r.pago?'✅ Pago':'⏳ A pagar';
+    html+='<tr>'
+      +'<td>'+(r.dt||'').split('-').reverse().join('/')+'</td>'
+      +'<td>'+r.n+'</td>'
+      +'<td>'+(r.srv||'')+'</td>'
+      +'<td>R$'+parseFloat(r.v||0).toFixed(2).replace('.',',')+'</td>'
+      +'<td style="color:'+cor+';font-weight:700">'+st+'</td>'
+      +'</tr>';
+  });
+  html+='</table>';
+  el.innerHTML=html;
+}
+
+function gerarRelPagamentosPDF(){
+  rRelPagamentosPreview();
+  var el=document.getElementById('rel-pag-preview');
+  if(!el||!el.innerHTML){alert('Clique em Visualizar primeiro.');return;}
+  var de=(document.getElementById('rp-de')||{}).value||'';
+  var ate=(document.getElementById('rp-ate')||{}).value||'';
+  var faz=Object.keys(S.FAZ||{})[0]||'Fazenda Estrela';
+  var hoje=new Date().toLocaleDateString('pt-BR');
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Pagamentos</title>'
+    +'<style>body{font-family:Arial,sans-serif;padding:20px;color:#1a1a1a}'
+    +'h1{color:#1B5E20;font-size:18px}h2{color:#1565C0;font-size:14px;margin-top:14px}'
+    +'table{width:100%;border-collapse:collapse;font-size:12px}'
+    +'th{background:#1565C0;color:#fff;padding:6px 10px;text-align:left}'
+    +'td{padding:6px 10px;border-bottom:1px solid #eee}'
+    +'@media print{@page{margin:12mm}}</style></head><body>'
+    +'<h1>💰 Relatório de Pagamentos — '+faz+'</h1>'
+    +'<p style="color:#888;font-size:12px">Período: '+( de.split('-').reverse().join('/'))+' a '+(ate.split('-').reverse().join('/'))+' · Emitido em: '+hoje+'</p>'
+    +el.innerHTML
+    +'<div style="margin-top:20px;font-size:10px;color:#aaa;text-align:center">GPL — Gestão Pecuária Lucrativa · Rogério Avelino</div>'
+    +'</body></html>';
+  var j=window.open('','_blank','width=900,height=700');
+  if(!j){alert('Permita pop-ups.');return;}
+  j.document.write(html); j.document.close();
+  setTimeout(function(){j.print();},800);
+}
+
+function enviarRelatorioWppGPL(){
+  var faz=Object.keys(S.FAZ||{})[0]||'Fazenda Estrela';
+  var lotes=S.LOTES||[];
+  var aloc=S.MAPA_ALOC||{};
+  var hoje=new Date(); hoje.setHours(12,0,0,0);
+  var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
+  var msg='🌿 *RELATÓRIO DA FAZENDA*\n';
+  msg+='📍 '+faz+' · '+new Date().toLocaleDateString('pt-BR')+'\n\n';
+  msg+='🐄 *LOTES*\n';
+  lotes.forEach(function(lot){
+    var aId=null; Object.keys(aloc).forEach(function(k){if(aloc[k]===lot.nome)aId=k;});
+    var aObj=aId?MAPA_AREAS.find(function(a){return a.id===aId;}):null;
+    var ua=lot.qtd*lot.peso/450;
+    var tx=aObj&&aObj.ha>0?ua/aObj.ha:0;
+    var ml=movs.filter(function(m){return m.lote===lot.nome;});
+    var dt=null;
+    for(var i=ml.length-1;i>=0;i--){if(ml[i].destino===aId){dt=ml[i].dt;break;}}
+    var dias=dt?Math.max(0,Math.round((hoje-new Date(dt+'T12:00:00'))/864e5)):null;
+    msg+=lot.nome+': '+(aObj?aObj.label:'—')+' | '+lot.qtd+' ani | '+lot.peso+'kg | '+(dias!==null?dias+'d':'—')+'\n';
+  });
+  var dono=Object.values(S.US||{}).find?((S.US||[]).find?.(u=>u.r==='Dono')):null;
+  var tel=dono&&dono.tel?dono.tel.replace(/[^\d]/g,''):'';
+  var url=tel?'https://wa.me/'+tel+'?text='+encodeURIComponent(msg):'https://wa.me/?text='+encodeURIComponent(msg);
+  window.open(url,'_blank');
+}
+
+// ── DASHBOARD com gráficos SVG ──
+function rRenderDashboard(){
+  var cont=document.getElementById('dashboard-container');
+  if(!cont) return;
+  var lotes=S.LOTES||[];
+  var aloc=S.MAPA_ALOC||{};
+  var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
+  var hoje=new Date(); hoje.setHours(12,0,0,0);
+
+  function diasPasto(lotNm,aId){
+    var ml=movs.filter(function(m){return m.lote===lotNm;});
+    var dt=null;
+    for(var i=ml.length-1;i>=0;i--){if(ml[i].destino===aId){dt=ml[i].dt;break;}}
+    if(!dt&&ml.length)dt=ml[ml.length-1].dt;
+    if(!dt)return null;
+    return Math.max(0,Math.round((hoje-new Date(dt+'T12:00:00'))/864e5));
+  }
+
+  // Calcular dados
+  var dadosLotes=lotes.map(function(lot){
+    var aId=null; Object.keys(aloc).forEach(function(k){if(aloc[k]===lot.nome)aId=k;});
+    var aObj=aId?MAPA_AREAS.find(function(a){return a.id===aId;}):null;
+    var ua=lot.qtd*lot.peso/450;
+    var tx=aObj&&aObj.ha>0?ua/aObj.ha:0;
+    var dias=aId?diasPasto(lot.nome,aId):null;
+    return {nome:lot.nome,qtd:lot.qtd,peso:lot.peso,ua:ua,tx:tx,dias:dias,area:aObj?aObj.label:'—'};
+  });
+
+  // Calcular módulos
+  var mods={};
+  MAPA_AREAS.filter(function(a){return a.tipo==='modulo';}).forEach(function(a){
+    var mk='M'+String(a.modulo).padStart(2,'0');
+    if(!mods[mk])mods[mk]={num:a.modulo,ha:0,ua:0};
+    mods[mk].ha+=a.ha;
+    var lotNm=aloc[a.id];
+    if(lotNm){var lot=lotes.find(function(l){return l.nome===lotNm;});if(lot)mods[mk].ua+=lot.qtd*lot.peso/450;}
+  });
+
+  var diarias=(S.rD||[]).filter(function(r){return !r._apagado;});
+  var totalDiar=diarias.reduce(function(a,r){return a+r.v;},0);
+  var pago=diarias.filter(function(r){return r.pago;}).reduce(function(a,r){return a+r.v;},0);
+  var aPagar=totalDiar-pago;
+
+  function bar(val,max,cor,label,sub){
+    var pct=max>0?Math.min(val/max,1):0;
+    var w=Math.max(4,Math.round(pct*200));
+    return '<div style="margin-bottom:8px">'
+      +'<div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px"><span style="font-weight:700">'+label+'</span><span style="color:#666">'+sub+'</span></div>'
+      +'<div style="background:#f0f0f0;border-radius:20px;height:20px;overflow:hidden">'
+      +'<div style="width:'+w+'px;max-width:100%;background:'+cor+';height:100%;border-radius:20px;display:flex;align-items:center;padding-left:6px;transition:width .4s">'
+      +'<span style="font-size:9px;color:#fff;font-weight:700;white-space:nowrap">'+sub+'</span>'
+      +'</div></div></div>';
+  }
+
+  var html='';
+
+  // CARD 1: KPIs gerais
+  var totalAnim=lotes.reduce(function(a,l){return a+l.qtd;},0);
+  var totalUA=lotes.reduce(function(a,l){return a+(l.qtd*l.peso/450);},0);
+  var pesoMed=lotes.length?lotes.reduce(function(a,l){return a+l.peso;},0)/lotes.length:0;
+  html+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">';
+  [{v:totalAnim,l:'Animais',c:'#1B5E20'},{v:totalUA.toFixed(0)+' UA',l:'UA Total',c:'#1565C0'},{v:pesoMed.toFixed(0)+'kg',l:'Peso Médio',c:'#E65100'}].forEach(function(k){
+    html+='<div style="background:#fff;border-radius:12px;padding:14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.06);border-top:3px solid '+k.c+'">'
+      +'<div style="font-size:22px;font-weight:900;color:'+k.c+'">'+k.v+'</div>'
+      +'<div style="font-size:10px;color:#888;margin-top:2px">'+k.l+'</div>'
+      +'</div>';
+  });
+  html+='</div>';
+
+  // CARD 2: Dias no pasto por lote
+  html+='<div style="background:#fff;border-radius:12px;padding:14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.06)">'
+    +'<div style="font-size:13px;font-weight:800;color:#1B5E20;margin-bottom:12px">⏱ Dias no Pasto Atual</div>';
+  var maxDias=21;
+  dadosLotes.forEach(function(d){
+    var dias=d.dias!==null?d.dias:0;
+    var cor=dias<=3?'#1B5E20':dias<=7?'#4CAF50':dias<=14?'#FF8F00':'#C62828';
+    html+=bar(dias,maxDias,cor,d.nome,(d.dias!==null?d.dias+'d':'—')+' · '+d.area);
+  });
+  html+='</div>';
+
+  // CARD 3: UA/ha por módulo
+  var modKeys=Object.keys(mods).sort();
+  html+='<div style="background:#fff;border-radius:12px;padding:14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.06)">'
+    +'<div style="font-size:13px;font-weight:800;color:#1B5E20;margin-bottom:12px">📦 UA/ha por Módulo</div>';
+  var maxTx=6;
+  modKeys.forEach(function(mk){
+    var m=mods[mk];
+    var tx=m.ha>0?m.ua/m.ha:0;
+    var cor=tx>4?'#C62828':tx>2?'#FF8F00':'#1B5E20';
+    html+=bar(tx,maxTx,cor,'Módulo '+m.num,tx.toFixed(2)+' UA/ha · '+m.ha.toFixed(1)+'ha');
+  });
+  html+='</div>';
+
+  // CARD 4: Financeiro
+  html+='<div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.06)">'
+    +'<div style="font-size:13px;font-weight:800;color:#1B5E20;margin-bottom:12px">💰 Financeiro — Diárias</div>';
+  html+='<div style="display:flex;gap:8px;margin-bottom:10px">'
+    +'<div style="flex:1;background:#E8F5E9;border-radius:8px;padding:10px;text-align:center">'
+    +'<div style="font-size:16px;font-weight:900;color:#1B5E20">R$'+pago.toFixed(0)+'</div>'
+    +'<div style="font-size:10px;color:#666">✅ Pago</div></div>'
+    +'<div style="flex:1;background:#FFF3E0;border-radius:8px;padding:10px;text-align:center">'
+    +'<div style="font-size:16px;font-weight:900;color:#E65100">R$'+aPagar.toFixed(0)+'</div>'
+    +'<div style="font-size:10px;color:#666">⏳ A Pagar</div></div>'
+    +'</div>';
+  // Barra de progresso pago vs a pagar
+  var pctPago=totalDiar>0?pago/totalDiar:0;
+  html+='<div style="background:#f0f0f0;border-radius:20px;height:24px;overflow:hidden;display:flex">'
+    +'<div style="width:'+(pctPago*100).toFixed(0)+'%;background:#1B5E20;height:100%;display:flex;align-items:center;justify-content:center">'
+    +'<span style="font-size:10px;color:#fff;font-weight:700">'+(pctPago*100).toFixed(0)+'%</span></div>'
+    +'<div style="flex:1;display:flex;align-items:center;justify-content:center">'
+    +'<span style="font-size:10px;color:#E65100;font-weight:700">'+((1-pctPago)*100).toFixed(0)+'%</span></div>'
+    +'</div>';
+  html+='</div>';
+
+  cont.innerHTML=html;
+}
+
+function sp_relatorio_init(){
+  rRelTab('fazenda');
+  rRelFazendaPreview();
+}
+// ═══════════════════════════════════════════════════════
 function initSync(){atualizarSync();window.addEventListener('online',()=>{atualizarSync();if(S.queue.length>0)syncAgora();});window.addEventListener('offline',()=>atualizarSync());setInterval(()=>{if(navigator.onLine&&S.queue.length>0&&S.cfgGS)syncAgora();},30000);}
 
 // ═══ NUVEM ═══
@@ -2818,7 +3173,22 @@ function carregarNuvem(cb){
           if(cfg.DIARISTAS)S.DIARISTAS=cfg.DIARISTAS;
           // Só substituir registros se nuvem trouxer dados — nunca apagar com vazio
           if(cfg.rD&&cfg.rD.length>0){
-            S.rD=cfg.rD;
+            // Merge: usar dados da nuvem mas preservar status pago marcado localmente
+            var rdLocal = S.rD || [];
+            var pagosLocal = {};
+            rdLocal.forEach(function(r){
+              if(r.pago){
+                var k = (r.dt||'')+'|'+(r.n||'')+'|'+(r.srv||'')+'|'+(r.v||0);
+                pagosLocal[k] = {pago_por:r.pago_por||'', pago_dt:r.pago_dt||''};
+              }
+            });
+            S.rD = cfg.rD.map(function(r){
+              var k = (r.dt||'')+'|'+(r.n||'')+'|'+(r.srv||'')+'|'+(r.v||0);
+              if(pagosLocal[k]){
+                return Object.assign({},r,{pago:true,pago_por:pagosLocal[k].pago_por,pago_dt:pagosLocal[k].pago_dt});
+              }
+              return r;
+            });
           } else if((!cfg.rD||cfg.rD.length===0)&&S.rD&&S.rD.length>0){
             // Preservar dados locais se nuvem vier vazia
           }
@@ -5047,8 +5417,21 @@ function marcarFCSelecionadosComoPago(){
 
   salvar();
   if(marcados > 0){
-    // Enviar atualização para a planilha
-    if(S.cfgGS && navigator.onLine){ salvarNuvem(null); }
+    // Enviar cada diária paga para a planilha
+    if(S.cfgGS && navigator.onLine){
+      (S.rD||[]).forEach(function(r){
+        if(r.pago && r.pago_por && !r._envioPago){
+          var p={tipo:'atualizar_diaria',dt:r.dt,n:r.n,srv:r.srv||'',v:r.v,st:'Pago',pago_por:r.pago_por,faz:r.faz||''};
+          var url=getFazGasUrl(r.faz||'');
+          var cb='_pmfc_'+Date.now()+'_'+Math.random().toString(36).substr(2,4);
+          var s=document.createElement('script');
+          s.src=url+'?acao=atualizar_diaria&data='+encodeURIComponent(JSON.stringify(p))+'&callback='+cb+'&t='+Date.now();
+          window[cb]=function(){r._envioPago=true;salvar();delete window[cb];if(s.parentNode)s.parentNode.removeChild(s);};
+          s.onerror=function(){delete window[cb];if(s.parentNode)s.parentNode.removeChild(s);};
+          document.body.appendChild(s);
+        }
+      });
+    }
     alert('✅ ' + marcados + ' diária(s) marcada(s) como paga!');
     fecharFC();
     rPan();
