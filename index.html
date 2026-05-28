@@ -301,7 +301,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.7 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.8 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -319,6 +319,17 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
 <!-- Ações rápidas -->
 <div class="agrid" id="vacts"></div>
+
+<!-- PAINEL VAQUEIRO: gauge de dias no pasto (só para r='Vaqueiro') -->
+<div id="home-vaqueiro-panel" style="display:none;margin-bottom:12px">
+  <div class="card" style="padding:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:14px;font-weight:800;color:#1B5E20">🐄 Situação dos lotes</div>
+      <div style="font-size:10px;color:#888">toque para editar data</div>
+    </div>
+    <div id="vaq-gauge-grid"></div>
+  </div>
+</div>
 
 <!-- Mini-mapa da fazenda -->
 <div id="alerta-rotacao" style="display:none"></div>
@@ -1150,6 +1161,7 @@ function entrar(i){CU=S.US[i];document.getElementById('login-screen').style.disp
     try{popAll();}catch(e){}
     try{buildActs();}catch(e){}
     try{rUlt();}catch(e){}
+  try{rVaqueiroPainel();}catch(e){}
   try{_alertaRotacao();}catch(e){}
     try{rPan();}catch(e){}
     try{_sincMapa();}catch(e){}
@@ -2762,26 +2774,30 @@ function _rTaxaLotacaoPiquetes(){
     if(a.tipo!=='modulo') return;
     var mk='Módulo '+String(a.modulo).padStart(2,'0');
     if(!modulos[mk]) modulos[mk]=[];
-    // Buscar ha do piquete em S.AREAS
-    var ha=0;
-    Object.values(S.AREAS||{}).forEach(function(lista){
-      if(!Array.isArray(lista)) return;
-      lista.forEach(function(ar){
-        if(ar.tipo==='modulo'){
-          var lbl='M'+String(a.modulo).padStart(2,'0');
-          if(ar.label===lbl) ha=ar.ha_piquete||0;
-        }
+    // Usar ha diretamente do MAPA_AREAS (já configurado no código)
+    var ha = a.ha || 0;
+    // Fallback: tentar S.AREAS se disponível
+    if(!ha){
+      Object.values(S.AREAS||{}).forEach(function(lista){
+        if(!Array.isArray(lista)) return;
+        lista.forEach(function(ar){
+          if(ar.tipo==='modulo'){
+            var lbl='M'+String(a.modulo).padStart(2,'0');
+            if(ar.label===lbl) ha=ar.ha_piquete||0;
+          }
+        });
       });
-    });
+    }
     // Lote alocado neste piquete
     var loteNm=aloc[a.id]||'';
     var loteObj=loteNm?(lotes.find(function(l){return l.nome===loteNm;})||null):null;
     var ua=loteObj?(parseInt(loteObj.qtd||0)*(parseFloat(loteObj.peso||0)/450)):0;
     var txLot=ha>0&&ua>0?(ua/ha).toFixed(2):'—';
-    modulos[mk].push({
-      label:a.label, id:a.id, ha:ha,
-      lote:loteNm, ua:ua.toFixed(1), txLot:txLot
-    });
+    // Última saída deste piquete
+    var movsPiq=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&r.origem===a.id&&!r._apagado;});
+    var dtSaida='', loteAnterior='';
+    if(movsPiq.length){var us=movsPiq[movsPiq.length-1];dtSaida=(us.dt||'').substring(0,10).split('-').reverse().join('/');loteAnterior=us.lote||'';}
+    modulos[mk].push({label:a.label,id:a.id,ha:ha,lote:loteNm,ua:ua.toFixed(1),txLot:txLot,dtSaida:dtSaida,loteAnterior:loteAnterior,isAtual:!!loteNm});
   });
 
   if(!Object.keys(modulos).length){
@@ -2802,18 +2818,15 @@ function _rTaxaLotacaoPiquetes(){
       +  '<th style="padding:5px 6px;text-align:left;font-weight:700;color:#555">Lote</th>'
       +  '<th style="padding:5px 6px;text-align:right;font-weight:700;color:#555">UA</th>'
       +  '<th style="padding:5px 6px;text-align:right;font-weight:700;color:#555">UA/ha</th>'
+      +  '<th style="padding:5px 6px;text-align:center;font-weight:700;color:#555">Última saída</th>'
       +'</tr>';
     piquetes.forEach(function(p,i){
       var txNum=parseFloat(p.txLot)||0;
       var cor=p.txLot==='—'?'#888':txNum<=3?'#1B5E20':txNum<=6?'#F57F17':'#B71C1C';
       var bg=i%2===0?'#fff':'#fafafa';
-      html+='<tr style="background:'+bg+'">'
-        +'<td style="padding:5px 6px;font-weight:700;color:#333">'+p.label+'</td>'
-        +'<td style="padding:5px 6px;text-align:right;color:#555">'+(p.ha||'—')+'</td>'
-        +'<td style="padding:5px 6px;color:'+(p.lote?'#1B5E20':'#aaa')+'">'+(p.lote||'vazio')+'</td>'
-        +'<td style="padding:5px 6px;text-align:right;color:#555">'+(p.lote?p.ua:'—')+'</td>'
-        +'<td style="padding:5px 6px;text-align:right;font-weight:800;color:'+cor+'">'+p.txLot+'</td>'
-        +'</tr>';
+      var bgLinha=p.isAtual?'#E8F5E9':(p.dtSaida?'#F9FBE7':bg);
+      var bordL=p.isAtual?'border-left:3px solid #1B5E20;':(p.dtSaida?'border-left:3px solid #AED581;':'');
+      html+='<tr style="background:'+bgLinha+';'+bordL+'">'        +'<td style="padding:5px 6px;font-weight:700;color:#333">'+p.label+(p.isAtual?' <span style="font-size:9px;background:#1B5E20;color:#fff;padding:1px 4px;border-radius:4px">●</span>':'')+'</td>'        +'<td style="padding:5px 6px;text-align:right;color:#555">'+(p.ha||'—')+'</td>'        +'<td style="padding:5px 6px;color:'+(p.lote?'#1B5E20':'#aaa')+'">'+(p.lote||'vazio')+'</td>'        +'<td style="padding:5px 6px;text-align:right;color:#555">'+(p.lote?p.ua:'—')+'</td>'        +'<td style="padding:5px 6px;text-align:right;font-weight:800;color:'+cor+'">'+p.txLot+'</td>'        +'<td style="padding:5px 6px;text-align:center;font-size:10px;color:#777">'+(p.dtSaida?p.dtSaida+'<br><span style="font-size:9px;color:#aaa">'+p.loteAnterior+'</span>':'—')+'</td>'        +'</tr>';
     });
     html+='</table></div></div>';
   });
@@ -2828,17 +2841,20 @@ function _rTaxaLotacaoPiquetes(){
     pastos.forEach(function(p,i){
       var loteNm=aloc[p.id]||'';
       if(!loteNm) return;
-      var ha=0;
-      Object.values(S.AREAS||{}).forEach(function(lista){
-        if(!Array.isArray(lista)) return;
-        lista.forEach(function(ar){
-          if(ar.tipo==='pasto'){
-            var aN=(ar.nome||'').replace(/\s/g,'').toUpperCase();
-            var pN=p.id.replace(/\s/g,'').toUpperCase();
-            if(aN===pN) ha=ar.ha_total||0;
-          }
+      // Usar ha diretamente do MAPA_AREAS
+      var ha = p.ha || 0;
+      if(!ha){
+        Object.values(S.AREAS||{}).forEach(function(lista){
+          if(!Array.isArray(lista)) return;
+          lista.forEach(function(ar){
+            if(ar.tipo==='pasto'){
+              var aN=(ar.nome||'').replace(/\s/g,'').toUpperCase();
+              var pN=p.id.replace(/\s/g,'').toUpperCase();
+              if(aN===pN) ha=ar.ha_total||0;
+            }
+          });
         });
-      });
+      }
       var loteObj=lotes.find(function(l){return l.nome===loteNm;})||null;
       var ua=loteObj?(parseInt(loteObj.qtd||0)*(parseFloat(loteObj.peso||0)/450)):0;
       var tx=ha>0&&ua>0?(ua/ha).toFixed(2):'—';
@@ -3297,6 +3313,130 @@ function salvarWppAdmin(){
     fetch(S.cfgGS+'?acao=salvar_config&data='+encodeURIComponent(JSON.stringify(d)),{method:'GET',mode:'no-cors'}).catch(function(){});
   }
   showOk('ok-wpp');
+}
+// ═══ PAINEL VAQUEIRO — GAUGES DE DIAS NO PASTO ═══
+function rVaqueiroPainel(){
+  var panel = document.getElementById('home-vaqueiro-panel');
+  var grid  = document.getElementById('vaq-gauge-grid');
+  if(!panel || !grid) return;
+
+  // Só mostrar para vaqueiro
+  var isVaq = CU && CU.r === 'Vaqueiro';
+  if(!isVaq){ panel.style.display='none'; return; }
+  panel.style.display = 'block';
+
+  var aloc  = S.MAPA_ALOC || {};
+  var lotes = S.LOTES || [];
+  var movs  = (S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
+  var hoje  = new Date();
+  hoje.setHours(12,0,0,0);
+
+  var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+
+  lotes.forEach(function(lote){
+    var nm   = lote.nome;
+    // Área atual
+    var areaId = null;
+    Object.keys(aloc).forEach(function(k){ if(aloc[k]===nm) areaId=k; });
+    var areaObj = areaId ? MAPA_AREAS.find(function(a){return a.id===areaId;}) : null;
+    var areaNm  = areaObj ? areaObj.label : '—';
+
+    // Data de entrada
+    var movsLote = movs.filter(function(m){return m.lote===nm;});
+    var dtEnt = null;
+    for(var i=movsLote.length-1;i>=0;i--){
+      if(movsLote[i].destino===areaId){
+        dtEnt = (movsLote[i].dt||'').substring(0,10);
+        break;
+      }
+    }
+    if(!dtEnt && movsLote.length){
+      dtEnt = (movsLote[movsLote.length-1].dt||'').substring(0,10);
+    }
+
+    var dias = 0;
+    if(dtEnt && dtEnt.length===10){
+      dias = Math.max(0, Math.round((hoje - new Date(dtEnt+'T12:00:00'))/864e5));
+    }
+
+    // Gauge: máx 21 dias (21d = cheio = critical)
+    var maxDias = 21;
+    var pct     = Math.min(dias/maxDias, 1);
+    var angStart = -135, angEnd = 135;
+    var ang     = angStart + pct*(angEnd - angStart);
+
+    // Cor: 0-3 verde ideal, 4-7 ok, 8-14 atenção, 15+ crítico
+    var cor   = dias<=3?'#1B5E20':dias<=7?'#4CAF50':dias<=14?'#FF8F00':'#C62828';
+    var label = dias<=3?'Ideal':dias<=7?'Ok':dias<=14?'Atenção':'Crítico';
+    var dtFmt = dtEnt ? dtEnt.split('-').reverse().join('/') : '—';
+
+    // SVG velocímetro
+    var cx=70, cy=70, r=50, stroke=10;
+    function polar(a, radius){
+      var rad = a * Math.PI / 180;
+      return {x: cx + radius*Math.cos(rad), y: cy + radius*Math.sin(rad)};
+    }
+    // Arco de fundo
+    var p1=polar(angStart-90, r), p2=polar(angEnd-90, r);
+    var arcBg='M '+p1.x+' '+p1.y+' A '+r+' '+r+' 0 1 1 '+p2.x+' '+p2.y;
+    // Arco preenchido
+    var pFill=polar(ang-90, r);
+    var largeArc = pct>0.5?1:0;
+    var arcFill='M '+p1.x+' '+p1.y+' A '+r+' '+r+' 0 '+largeArc+' 1 '+pFill.x+' '+pFill.y;
+    // Agulha
+    var needle=polar(ang-90, r-8);
+    var needleStr='M '+cx+' '+cy+' L '+needle.x+' '+needle.y;
+
+    // ID para editar data
+    var editId = encodeURIComponent(areaId||nm);
+
+    var _vaqId='vg_'+nm.replace(/\s/g,'');
+    html += '<div id="'+_vaqId+'" style="background:#fff;border-radius:14px;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:pointer;border:2px solid '+(areaId?cor:'#eee')+'";'
+      + 'style="background:#fff;border-radius:14px;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:pointer;border:2px solid '+(areaId?cor:'#eee')+';">'
+      // SVG velocímetro
+      + '<svg viewBox="0 0 140 90" style="width:100%;display:block">'
+      +   '<path d="'+arcBg+'" fill="none" stroke="#eee" stroke-width="'+stroke+'" stroke-linecap="round"/>'
+      +   (pct>0?'<path d="'+arcFill+'" fill="none" stroke="'+cor+'" stroke-width="'+stroke+'" stroke-linecap="round"/>'
+              +'<line x1="'+cx+'" y1="'+cy+'" x2="'+needle.x+'" y2="'+needle.y+'" stroke="'+cor+'" stroke-width="3" stroke-linecap="round"/>'
+          :'')
+      +   '<circle cx="'+cx+'" cy="'+cy+'" r="4" fill="'+cor+'"/>'
+      +   '<text x="'+cx+'" y="'+(cy+20)+'" text-anchor="middle" font-size="22" font-weight="900" fill="'+cor+'">'+dias+'</text>'
+      +   '<text x="'+cx+'" y="'+(cy+33)+'" text-anchor="middle" font-size="9" fill="#888">dias</text>'
+      + '</svg>'
+      // Info
+      + '<div style="text-align:center;margin-top:2px">'
+      +   '<div style="font-size:12px;font-weight:800;color:#333">'+nm+'</div>'
+      +   '<div style="font-size:11px;color:#555;margin-top:1px">'+areaNm+'</div>'
+      +   '<div style="font-size:10px;color:#888;margin-top:1px">Entrada: '+dtFmt+'</div>'
+      +   '<div style="font-size:10px;font-weight:700;color:'+cor+';margin-top:2px">'+label+' · ✏️ editar</div>'
+      + '</div>'
+      + '</div>';
+  });
+
+  html += '</div>';
+  grid.innerHTML = html;
+  // Adicionar listeners nos itens do gauge
+  var items = grid.querySelectorAll('[id^="vg_"]');
+  items.forEach(function(el){
+    var id = el.id.replace('vg_','').replace(/_/g,' ');
+    // Recuperar dados do lote pelo nome
+    var lote = (S.LOTES||[]).find(function(l){ return l.nome.replace(/\s/g,'')===id; });
+    if(!lote) return;
+    var lotNm = lote.nome;
+    // Área e data de entrada
+    var aloc2 = S.MAPA_ALOC||{};
+    var arId2 = null;
+    Object.keys(aloc2).forEach(function(k){ if(aloc2[k]===lotNm) arId2=k; });
+    var movs2 = (S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&r.lote===lotNm&&!r._apagado;});
+    var dt2 = '';
+    for(var i=movs2.length-1;i>=0;i--){
+      if(movs2[i].destino===arId2){ dt2=(movs2[i].dt||'').substring(0,10); break; }
+    }
+    if(!dt2 && movs2.length) dt2=(movs2[movs2.length-1].dt||'').substring(0,10);
+    el.addEventListener('click', function(){
+      editarDataEntrada(lotNm, arId2||'', dt2);
+    });
+  });
 }
 // ═══ EDITAR DATA DE ENTRADA DO LOTE ═══
 function editarDataEntrada(loteNome, areaId, dtAtual){
