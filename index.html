@@ -301,7 +301,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.12 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.13 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2358,13 +2358,35 @@ function carregarNuvem(cb){
             });
           }
           if(cfg.rC&&cfg.rC.length>0){
-            // Limpar registros com placeholder "(registros..."
-            S.rC=cfg.rC.filter(function(r){
-              return r && r.dt && String(r.det||'').indexOf('(registros')!==0;
+            // Filtrar placeholders da nuvem
+            var rcNuvem = cfg.rC.filter(function(r){
+              return r && r.dt && String(r.det||'').indexOf('(registros')!==0 && r.resp;
+            });
+            // Preservar flags locais: _apagado, _enviado, _offline
+            // Se o usuário apagou localmente, não trazer de volta
+            var rcLocal = S.rC || [];
+            var apagadosLocal = {};
+            rcLocal.forEach(function(r){
+              if(r._apagado){
+                var key = (r.dt||'')+'|'+(r.resp||r.n||'')+'|'+(r.total||0)+'|'+(r.det||'');
+                apagadosLocal[key] = true;
+              }
+            });
+            S.rC = rcNuvem.filter(function(r){
+              var key = (r.dt||'')+'|'+(r.resp||r.n||'')+'|'+(r.total||0)+'|'+(r.det||'');
+              return !apagadosLocal[key]; // não trazer de volta o que foi apagado
+            });
+            // Recolocar registros locais offline que não estão na nuvem
+            rcLocal.forEach(function(r){
+              if(r._offline && !r._apagado){
+                var jaExiste = S.rC.some(function(nr){
+                  return nr.dt===r.dt && nr.resp===r.resp && nr.total===r.total && nr.det===r.det;
+                });
+                if(!jaExiste) S.rC.push(r);
+              }
             });
           } else if((!cfg.rC||cfg.rC.length===0)&&S.rC&&S.rC.length>0){
-            // Nuvem tem rC vazio mas local tem dados — preservar local
-            // Não sobrescrever com vazio
+            // Nuvem vazia — preservar local
           }
           if(cfg.rE&&cfg.rE.length>0)S.rE=cfg.rE;
           if(cfg.rDesp&&cfg.rDesp.length)S.rDesp=cfg.rDesp;
@@ -4367,6 +4389,21 @@ function calcularFechamento(){
   var ate=(document.getElementById('fc-ate')||{}).value||'';
   var faz=(document.getElementById('fc-faz')||{}).value||'';
   if(!de||!ate){alert('Selecione o período.');return;}
+  // Buscar dados atualizados da planilha antes de calcular
+  var btnCalc = document.querySelector('[onclick="calcularFechamento()"]');
+  if(btnCalc){ btnCalc.disabled=true; btnCalc.textContent='⏳ Buscando dados...'; }
+  function _executarCalculo(){
+    if(btnCalc){ btnCalc.disabled=false; btnCalc.textContent='📊 Calcular período'; }
+    _calcularFechamentoInterno(de, ate, faz);
+  }
+  if(S.cfgGS && navigator.onLine){
+    carregarNuvem(function(){ _executarCalculo(); });
+  } else {
+    _executarCalculo();
+  }
+}
+
+function _calcularFechamentoInterno(de, ate, faz){
 
   function noperiodo(r){
     var dt=r.dt||r.data||'';
@@ -4450,7 +4487,8 @@ function renderFCLista(lista, totalGeral, deFmt, ateFmt, faz){
     if(p.diarias.length)html+='Diárias: '+p.diarias.length+'x → R$ '+p.totalD.toFixed(2).replace('.',',')+'<br>';
     if(p.cantina.length)html+='Cantina: '+p.cantina.length+' dias → R$ '+p.totalC.toFixed(2).replace('.',',');
     html+='</div>';
-    if(pix&&sel)html+='<div class="fc-pix">Pix: '+pix+'</div>';
+    var pixEsc=pix.replace(/"/g,'&quot;');
+    if(pix&&sel)html+='<div class="fc-pix" style="display:flex;align-items:center;gap:8px">'      +'<span>Pix: '+pix+'</span>'      +'<button class="btn-copiar-pix" data-pix="'+pixEsc+'" style="padding:2px 8px;background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9;border-radius:6px;font-size:11px;cursor:pointer">📋 Copiar</button>'      +'</div>';
     html+='</div>';
   });
 
@@ -4499,8 +4537,9 @@ function gerarFCMsg(){
     linhas.push('Colaborador: '+p.n);
     if(p.diarias.length){
       linhas.push('  Diarias ('+p.diarias.length+'x): R$ '+p.totalD.toFixed(2).replace('.',','));
-      // Serviços com datas
-      p.diarias.forEach(function(r){
+      // Serviços ordenados por data
+      var dOrd = p.diarias.slice().sort(function(a,b){return (a.dt||'')>(b.dt||'')?1:-1;});
+      dOrd.forEach(function(r){
         if(r.srv){
           var dtFmt=r.dt?r.dt.split('-').reverse().join('/'):'';
           linhas.push('  '+dtFmt+': '+r.srv);
@@ -4763,7 +4802,7 @@ function rPanLista(){
         ? '<span style="background:#FFEBEE;color:#C62828;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700">❌ Reprovado</span>'
         : '<span style="background:#FFF3E0;color:#E65100;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700">⏳ Pendente</span>';
       
-      return '<div data-dt="'+dia.dt+'" data-faz="'+dia.faz+'" onclick="var e=this;abrirDetalheCantinaDia(e.getAttribute("data-dt"),e.getAttribute("data-faz"))" style="background:#fff;border-radius:12px;padding:13px;margin-bottom:8px;border:1px solid #e0e0e0;cursor:pointer;border-left:4px solid '+(todoVal?'#2E7D32':algRep?'#C62828':'#FFB300')+';">'
+      return '<div data-dt="'+dia.dt+'" data-faz="'+dia.faz+'" onclick="_abrirCtDia(this)" style="background:#fff;border-radius:12px;padding:13px;margin-bottom:8px;border:1px solid #e0e0e0;cursor:pointer;border-left:4px solid '+(todoVal?'#2E7D32':algRep?'#C62828':'#FFB300')+';">'
         +'<div style="display:flex;justify-content:space-between;align-items:flex-start">'
         +'<div><div style="font-size:14px;font-weight:700">'+resp+'</div>'
         +'<div style="font-size:12px;color:#666;margin-top:2px">'+dia.regs.length+' refeições</div>'
@@ -4824,6 +4863,12 @@ function abrirDetalheLancamento(arr, gi){
   };
   
   modal.classList.add('open');
+}
+
+function _abrirCtDia(el){
+  var dt = el.getAttribute('data-dt')||'';
+  var faz = el.getAttribute('data-faz')||'';
+  abrirDetalheCantinaDia(dt, faz);
 }
 
 function abrirDetalheCantinaDia(dt, faz){
@@ -4928,6 +4973,29 @@ function fecharDetModal(){
 }
 
 document.addEventListener('DOMContentLoaded', function(){
+  // Listener delegado para copiar PIX
+  document.addEventListener('click', function(e){
+    if(e.target && e.target.classList.contains('btn-copiar-pix')){
+      var pix = e.target.getAttribute('data-pix')||'';
+      if(!pix) return;
+      var btn = e.target;
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(pix).then(function(){
+          var orig = btn.textContent;
+          btn.textContent = '✅ Copiado!';
+          setTimeout(function(){ btn.textContent = orig; }, 2000);
+        }).catch(function(){ alert('PIX: '+pix); });
+      } else {
+        // Fallback para celulares sem clipboard API
+        var ta = document.createElement('textarea');
+        ta.value = pix; ta.style.position='fixed'; ta.style.opacity='0';
+        document.body.appendChild(ta); ta.select();
+        try{ document.execCommand('copy'); btn.textContent='✅ Copiado!'; setTimeout(function(){btn.textContent='📋 Copiar';},2000); }
+        catch(e2){ alert('PIX: '+pix); }
+        document.body.removeChild(ta);
+      }
+    }
+  });
   var dm = document.getElementById('det-modal');
   var dc = document.getElementById('det-close');
   if(dc) dc.onclick = fecharDetModal;
