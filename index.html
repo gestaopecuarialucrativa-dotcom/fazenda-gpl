@@ -301,7 +301,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.10 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.11 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1355,7 +1355,16 @@ function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.di
 var arFaz=document.getElementById('ar-faz');if(arFaz&&arFaz.options.length<=1){arFaz.innerHTML='<option value="">Selecione...</option>'+Object.keys(S.FAZ||{}).map(function(f){return'<option value="'+f+'">'+(f.replace('Fazenda ','🏠 '))+'</option>';}).join('');if(arFaz.options.length===2)arFaz.selectedIndex=1;}rListAreas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';
   var _wppEl=document.getElementById('cfg-wpp');
   if(_wppEl)_wppEl.value=S.wppAdmin||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);
-  if(id==='historico')setTimeout(function(){if(S.cfgGS&&navigator.onLine){carregarNuvem(function(){rHistorico();});}else{rHistorico();}},50);if(id==='cantina')setTimeout(function(){try{initCantina();}catch(e){console.error('initCantina',e);}},50);if(id==='home')setTimeout(function(){try{rHomeMapa();buildActs();}catch(e){}},100);window.scrollTo(0,0);}
+  if(id==='historico')setTimeout(function(){if(S.cfgGS&&navigator.onLine){carregarNuvem(function(){rHistorico();});}else{rHistorico();}},50);if(id==='diaria')setTimeout(function(){
+    // Resetar seleções para novo lançamento
+    srvSel=''; avSel='';
+    document.querySelectorAll('#d-servs .bopt').forEach(function(b){b.classList.remove('sel');});
+    document.querySelectorAll('.avbtn').forEach(function(b){b.classList.remove('sel');});
+    var dval=document.getElementById('d-val'); if(dval)dval.value='';
+    var dobs=document.getElementById('d-obs'); if(dobs)dobs.value='';
+    var dout=document.getElementById('d-out-wrap'); if(dout)dout.style.display='none';
+    try{popAll();}catch(e){}
+  },50);if(id==='cantina')setTimeout(function(){try{initCantina();}catch(e){console.error('initCantina',e);}},50);if(id==='home')setTimeout(function(){try{rHomeMapa();buildActs();}catch(e){}},100);window.scrollTo(0,0);}
 function goBack(){if(prevPage)sp(prevPage,false);else sp('home',false);}
 function isV(u){return u.p.diaria||u.p.insumo||u.p.trato||u.p.escore;}
 function isA(u){return u.p.cantina||u.p.estoque||u.p.painel||u.p.config;}
@@ -1823,9 +1832,11 @@ function envCtNovo(){
   if(!url || !navigator.onLine){
     if(btn){ btn.disabled=false; btn.textContent='🏪 Enviar cantina'; }
     reg._enviado = false;
+    reg._offline = true; // marcado para o botão azul
     salvar();
     _ctStatusMsg('❌ Sem conexão. Dado salvo no celular.', '#C62828');
     _mostrarPlanoBCantina(true);
+    _updBtnSyncCtNovo();
     ctReset();
     ctCalRender();
     return;
@@ -1837,7 +1848,10 @@ function envCtNovo(){
   var tmout = setTimeout(function(){
     delete window[cbN]; if(s.parentNode) s.parentNode.removeChild(s);
     if(btn){ btn.disabled=false; btn.textContent='🏪 Enviar cantina'; }
-    reg._enviado = false; salvar();
+    reg._enviado = false;
+    reg._offline = true;
+    salvar();
+    _updBtnSyncCtNovo();
     _ctStatusMsg('❌ Erro ao enviar. Dado salvo no celular.', '#C62828');
     _mostrarPlanoBCantina(true);
     ctReset(); ctCalRender();
@@ -1856,9 +1870,12 @@ function envCtNovo(){
     clearTimeout(tmout);
     delete window[cbN]; if(s.parentNode) s.parentNode.removeChild(s);
     if(btn){ btn.disabled=false; btn.textContent='🏪 Enviar cantina'; }
-    reg._enviado = false; salvar();
+    reg._enviado = false;
+    reg._offline = true; // marcado para o botão azul
+    salvar();
     _ctStatusMsg('❌ Erro ao enviar. Dado salvo no celular.', '#C62828');
     _mostrarPlanoBCantina(true);
+    _updBtnSyncCtNovo();
     ctReset(); ctCalRender();
   };
   document.body.appendChild(s);
@@ -1897,9 +1914,9 @@ function sincronizarDadosCantina(){
     _ctStatusMsg('❌ Configure o Apps Script primeiro.', '#C62828');
     return;
   }
-  // Somente registros reais e não enviados
+  // Somente registros que ficaram offline e não foram enviados
   var pendentes = (S.rC||[]).filter(function(r){
-    return !r._apagado && !r._enviado && r.dt && r.dt !== '(registros' && r.resp;
+    return !r._apagado && r._offline && !r._enviado && r.dt && r.dt !== '(registros' && r.resp;
   });
   var btn = document.getElementById('btn-sync-ct');
   if(!pendentes.length){
@@ -1931,12 +1948,13 @@ function sincronizarDadosCantina(){
 }
 
 function _updBtnSyncCtNovo(){
+  // Só conta registros que ficaram offline (não conseguiram enviar)
   var pendentes = (S.rC||[]).filter(function(r){
-    return !r._apagado && !r._enviado && r.dt && r.dt !== '(registros' && r.resp;
+    return !r._apagado && r._offline && !r._enviado && r.dt && r.dt !== '(registros' && r.resp;
   }).length;
   var btn = document.getElementById('btn-sync-ct');
   var wrap = document.getElementById('ct-sync-wrap');
-  if(btn) btn.textContent = pendentes > 0 ? '☁️ Enviar '+pendentes+' registro(s) para a nuvem' : '☁️ Sincronizar com a nuvem';
+  if(btn) btn.textContent = pendentes > 0 ? '☁️ Enviar '+pendentes+' dado(s) offline' : '☁️ Sincronizar com a nuvem';
   if(wrap) wrap.style.display = pendentes > 0 ? 'block' : 'none';
 }
 
@@ -2102,6 +2120,16 @@ function initCantina(){
   ctReset();
   // Botão azul
   _updBtnSyncCtNovo();
+  // Limpar registros enviados com sucesso (marcar _enviado=true para os que têm dt válida e resp)
+  // Isso resolve os 3 registros "Café:1 Alm:1" que já chegaram na planilha
+  // mas foram marcados _enviado=false por bug anterior
+  // Lógica: se um registro tem dt e resp e NÃO é _offline → já foi enviado
+  if(S.rC) S.rC.forEach(function(r){
+    if(r.dt && r.dt !== '(registros' && r.resp && !r._offline && !r._apagado){
+      r._enviado = true;
+    }
+  });
+
   // Calendário
   _ctCalMesAtual = new Date().getMonth();
   _ctCalAnoAtual = new Date().getFullYear();
