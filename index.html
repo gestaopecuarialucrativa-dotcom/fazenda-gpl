@@ -301,7 +301,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.19 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.20 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1209,7 +1209,7 @@ const STORAGE_KEY='gpl_v17_data';
 const TD=new Date().toISOString().split('T')[0];
 const EC=['','#7B3F00','#A0522D','#2d7a1f','#CC8800','#CC2200'];
 const EI=[null,{em:'💩',ti:'Escore 1 — Firmes e secas',re:'💡 Reduzir fibra'},{em:'💩',ti:'Escore 2 — Firmes com espalhamento',re:'💡 Monitorar'},{em:'✅',ti:'Escore 3 — Ideal (panqueca)',re:'💡 Nutrição equilibrada!'},{em:'⚠️',ti:'Escore 4 — Soltas e espalhadas',re:'💡 Revisar proteína e água'},{em:'🚨',ti:'Escore 5 — Diarreia',re:'💡 Ação imediata!'}];
-const PL={diaria:'Diária',insumo:'Insumos',trato:'Trato cocho',escore:'Escore fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',mapa:'Mapa',historico:'Histórico',config:'Config.'};
+const PL={diaria:'Diária',insumo:'Insumos',trato:'Trato cocho',escore:'Escore fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',mapa:'Mapa',historico:'📋 Histórico',config:'Config.'};
 const TABS=[{id:'painel',l:'📊 Painel',p:'painel'},{id:'cantina',l:'🏪 Cantina',p:'cantina'},{id:'estoque',l:'📦 Estoque',p:'estoque'},{id:'mapa',l:'🗺️ Mapa',p:'mapa'},{id:'historico',l:'📋 Histórico',p:'historico'},{id:'relatorio',l:'📈 Relatório',p:'painel'},{id:'config',l:'⚙️ Config.',p:'config'}];
 const ACTS=[{id:'diaria',l:'Lançar diária',s:'Serviço do dia',ic:'👤',c:'gr',p:'diaria'},{id:'insumo',l:'Insumos',s:'Depósito → campo',ic:'📦',c:'bl',p:'insumo'},{id:'trato',l:'Trato de cocho',s:'Proteinado, sal...',ic:'🛠',c:'tl',p:'trato'},{id:'lote',l:'Lotes',s:'Cadastro de lotes',ic:'🐄',c:'gr',p:'config'},{id:'escore',l:'Escore de fezes',s:'Avaliação do gado',ic:'🔬',c:'pu',p:'escore'}];
 const DEFAULT={FAZ:{'Fazenda Estrela':{cochos:['Lote 01','Lote 02','Lote 03','Curral'],prods:['TECNOCORTE ENERGY HD','TECNOCORTE ECOBOV NA+','TECNOCORTE PROTEICO 30M'],gasUrl:'https://script.google.com/macros/s/AKfycbwc2lHSKdDzTsXxd-77mpxh0khrRNSB4BWt1XODEe7cOPq0h1sxkT4L5rc6TNgHdiZrMA/exec',sheetId:'1KE-B91QOJ--FWLzk5NdtHMpOnbhMCYfMyDDqhmqvUIo'},},US:[{n:'Rogério Avelino',i:'RA',c:'av-g',r:'Consultor',pin:'1234',fs:[],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:1,estoque:1,painel:1,mapa:1,historico:1,config:1}},{n:'Rafael (proprietário)',i:'RA',c:'av-b',r:'Dono',pin:'5678',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:1,painel:1,mapa:1,config:0}},{n:'Fábio',i:'FA',c:'av-a',r:'Vaqueiro',pin:'1111',fs:['Fazenda Estrela'],p:{diaria:1,insumo:1,trato:1,escore:1,cantina:0,estoque:0,painel:0,mapa:1,config:0}},{n:'Elisangela',i:'E',c:'av-p',r:'Cantina',pin:'2222',fs:['Fazenda Estrela'],p:{diaria:0,insumo:0,trato:0,escore:0,cantina:1,estoque:0,painel:0,mapa:0,config:0}}],EST:{'TECNOCORTE ENERGY HD':{q:100,min:10,u:'saco',pct:0.3,peso_saco:30},'TECNOCORTE ECOBOV NA+':{q:100,min:10,u:'saco',pct:0.05,peso_saco:30},'TECNOCORTE PROTEICO 30M':{q:100,min:10,u:'saco',pct:0.1,peso_saco:30}},LOTES:[{faz:'Fazenda Estrela',nome:'Lote 01',qtd:38,peso:402,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 02',qtd:85,peso:360,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 03',qtd:79,peso:316,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 04',qtd:61,peso:269,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 05',qtd:69,peso:228,insumos:[]},{faz:'Fazenda Estrela',nome:'Lote 06',qtd:121,peso:204,insumos:[]}],DIARISTAS:{'Fazenda Estrela':['Fábio']},SERVS:['Roçagem','Marcação','Aceiro de cerca','Herbicida','Aplicação','Curral','Banheiro','Outro'],PR:{cafe:5,almoco:25,janta:25},cfgGS:'https://script.google.com/macros/s/AKfycbwc2lHSKdDzTsXxd-77mpxh0khrRNSB4BWt1XODEe7cOPq0h1sxkT4L5rc6TNgHdiZrMA/exec',cfgGHT:'',rD:[],rT:[],rC:[],rE:[],mEst:[],queue:[],rDesp:[],NOTAS:{},wppAdmin:'',MAPA_ALOC:{'M03P01':'Lote 03','M01P06':'Lote 05','PA01':'Lote 06','PA09':'Lote 04','PA05':'Lote 01','M04P04':'Lote 02'}};
@@ -1363,7 +1363,7 @@ function rHomeMapa(){
   }
 }
 
-function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',relatorio:'Relatório & Dashboard',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home'){setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);setTimeout(function(){try{rHomeMapa();}catch(e){}},600);setTimeout(function(){try{rHomeMapa();}catch(e){}},1500);}if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}if(_nuvemCarregando){setTimeout(()=>{try{rPan();}catch(e){}},3500);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _mt=0;var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');var img=document.getElementById('mapa-img-sat');var ok=wrap&&wrap.offsetWidth>0&&img&&(img.complete||img._loaded);if(!ok&&_mt++<30){setTimeout(_rmapa,300);return;}
+function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',relatorio:'📈 Relatório & Dashboard',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home'){setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);setTimeout(function(){try{rHomeMapa();}catch(e){}},600);setTimeout(function(){try{rHomeMapa();}catch(e){}},1500);}if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}if(_nuvemCarregando){setTimeout(()=>{try{rPan();}catch(e){}},3500);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _mt=0;var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');var img=document.getElementById('mapa-img-sat');var ok=wrap&&wrap.offsetWidth>0&&img&&(img.complete||img._loaded);if(!ok&&_mt++<30){setTimeout(_rmapa,300);return;}
     // Se MAPA_COORDS vazio, carregar da nuvem primeiro
     if(S.cfgGS&&(!S.MAPA_COORDS||!Object.keys(S.MAPA_COORDS).length)){
       carregarNuvem(function(){try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}});
@@ -2618,7 +2618,7 @@ function gerarRelPDF(){
     html += '<div class="mod-hdr"><div class="name">📦 Módulo '+mod.num+'</div><div class="stats">';
     html += '<div class="stat"><div class="v">'+mod.haTotal.toFixed(1)+'ha</div><div class="l">Área total</div></div>';
     html += '<div class="stat"><div class="v">'+uaTotal.toFixed(1)+'</div><div class="l">UA total</div></div>';
-    html += '<div class="stat"><div class="v" style="color:'+corTx+'">'+txMod.toFixed(2)+'</div><div class="l">UA/ha (módulo)</div></div>';
+    html += '<div class="stat"><div class="v" style="color:'+corTx+'">'+txMod.toFixed(2)+'</div><div class="l">Lotação</div></div>';
     html += '</div></div>';
     html += '<table><tr><th>Piquete</th><th>ha</th><th>Lote atual</th><th>Animais</th><th>UA/ha instantânea</th><th>Dias no pasto</th></tr>';
     mod.piquetes.forEach(function(p){
@@ -2780,11 +2780,11 @@ function rRelFazendaPreview(){
       +'<div class="ms">'
       +'<span>'+mod.ha.toFixed(1)+'ha total</span>'
       +'<span>'+mod.ua.toFixed(1)+' UA</span>'
-      +'<span style="font-weight:800;color:'+corTx(txMod)+'">'+txMod.toFixed(2)+' UA/ha (módulo)</span>'
+      +'<span style="font-weight:800;color:'+corTx(txMod)+'">'+txMod.toFixed(2)+' Lotação</span>'
       +'</div></div>';
     html+='<table class="pv-table"><tr>'
       +'<th>Piquete</th><th>ha</th><th>Lote atual</th><th>Animais</th>'
-      +'<th>UA/ha instantânea</th><th>Dias no pasto</th>'
+      +'<th>Instantânea</th><th>Dias no pasto</th>'
       +'</tr>';
     mod.piquetes.forEach(function(p){
       var txI=p.ha>0&&p.ua>0?p.ua/p.ha:0;
@@ -4116,7 +4116,16 @@ function _rTaxaLotacaoPiquetes(){
     var movsPiq=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&r.origem===a.id&&!r._apagado;});
     var dtSaida='', loteAnterior='';
     if(movsPiq.length){var us=movsPiq[movsPiq.length-1];dtSaida=(us.dt||'').substring(0,10).split('-').reverse().join('/');loteAnterior=us.lote||'';}
-    modulos[mk].push({label:a.label,id:a.id,ha:ha,lote:loteNm,ua:ua.toFixed(1),txLot:txLot,dtSaida:dtSaida,loteAnterior:loteAnterior,isAtual:!!loteNm});
+    // Calcular UA/ha do lote anterior (histórico) se piquete vazio
+    var uaAnt=0, txAnt='—';
+    if(!loteNm && loteAnterior){
+      var lotAntObj=(lotes||[]).find(function(l){return l.nome===loteAnterior;});
+      if(lotAntObj){
+        uaAnt=parseInt(lotAntObj.qtd||0)*(parseFloat(lotAntObj.peso||0)/450);
+        txAnt=ha>0&&uaAnt>0?(uaAnt/ha).toFixed(2):'—';
+      }
+    }
+    modulos[mk].push({label:a.label,id:a.id,ha:ha,lote:loteNm,ua:ua.toFixed(1),txLot:txLot,dtSaida:dtSaida,loteAnterior:loteAnterior,isAtual:!!loteNm,uaAnt:uaAnt.toFixed(1),txAnt:txAnt});
   });
 
   if(!Object.keys(modulos).length){
@@ -4145,7 +4154,23 @@ function _rTaxaLotacaoPiquetes(){
       var bg=i%2===0?'#fff':'#fafafa';
       var bgLinha=p.isAtual?'#E8F5E9':(p.dtSaida?'#F9FBE7':bg);
       var bordL=p.isAtual?'border-left:3px solid #1B5E20;':(p.dtSaida?'border-left:3px solid #AED581;':'');
-      html+='<tr style="background:'+bgLinha+';'+bordL+'">'        +'<td style="padding:5px 6px;font-weight:700;color:#333">'+p.label+(p.isAtual?' <span style="font-size:9px;background:#1B5E20;color:#fff;padding:1px 4px;border-radius:4px">●</span>':'')+'</td>'        +'<td style="padding:5px 6px;text-align:right;color:#555">'+(p.ha||'—')+'</td>'        +'<td style="padding:5px 6px;color:'+(p.lote?'#1B5E20':'#aaa')+'">'+(p.lote||'vazio')+'</td>'        +'<td style="padding:5px 6px;text-align:right;color:#555">'+(p.lote?p.ua:'—')+'</td>'        +'<td style="padding:5px 6px;text-align:right;font-weight:800;color:'+cor+'">'+p.txLot+'</td>'        +'<td style="padding:5px 6px;text-align:center;font-size:10px;color:#777">'+(p.dtSaida?p.dtSaida+'<br><span style="font-size:9px;color:#aaa">'+p.loteAnterior+'</span>':'—')+'</td>'        +'</tr>';
+      // Quando vazio mas tem histórico: mostrar lote anterior em cinza
+      var loteDisplay = p.lote
+        ? '<span style="color:#1B5E20;font-weight:700">'+p.lote+'</span>'
+        : (p.loteAnterior
+            ? '<span style="color:#aaa;font-size:10px">'+p.loteAnterior+' <span style="font-size:9px;background:#f0f0f0;padding:1px 4px;border-radius:4px">hist.</span></span>'
+            : '<span style="color:#ccc;font-style:italic">vazio</span>');
+      var uaDisplay  = p.lote ? p.ua  : (p.loteAnterior ? '<span style="color:#bbb">'+p.uaAnt+'</span>' : '—');
+      var txDisplay  = p.lote ? '<span style="font-weight:800;color:'+cor+'">'+p.txLot+'</span>'
+                               : (p.loteAnterior ? '<span style="color:#bbb">'+p.txAnt+'</span>' : '—');
+      html+='<tr style="background:'+bgLinha+';'+bordL+'">'
+        +'<td style="padding:5px 6px;font-weight:700;color:#333">'+p.label+(p.isAtual?' <span style="font-size:9px;background:#1B5E20;color:#fff;padding:1px 4px;border-radius:4px">●</span>':'')+'</td>'
+        +'<td style="padding:5px 6px;text-align:right;color:#555">'+(p.ha||'—')+'</td>'
+        +'<td style="padding:5px 6px">'+loteDisplay+'</td>'
+        +'<td style="padding:5px 6px;text-align:right;color:#555">'+uaDisplay+'</td>'
+        +'<td style="padding:5px 6px;text-align:right">'+txDisplay+'</td>'
+        +'<td style="padding:5px 6px;text-align:center;font-size:10px;color:#777">'+(p.dtSaida?p.dtSaida+'<br><span style="font-size:9px;color:#aaa">'+p.loteAnterior+'</span>':'—')+'</td>'
+        +'</tr>';
     });
     html+='</table></div></div>';
   });
