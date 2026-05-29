@@ -301,7 +301,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.20 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.21 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2270,7 +2270,22 @@ function gerarRelPDF(){
     if(!modulos[mk]) modulos[mk]={num:a.modulo,piquetes:[],haTotal:0};
     var inf=getUAArea(a.id);
     var dias=inf.lote?diasNoPasto(inf.lote,a.id):null;
-    modulos[mk].piquetes.push({id:a.id,label:a.label,ha:a.ha,lote:inf.lote,ua:inf.ua,qtd:inf.qtd,peso:inf.peso,dias:dias});
+    // Histórico: lote anterior quando piquete vazio
+    var movsPiq2=movs.filter(function(m){return m.tipo==='mudanca_pasto'&&m.origem===a.id&&!m._apagado;});
+    var loteAnt2='', dtSaida2='', uaAnt2=0, txAnt2='—';
+    if(movsPiq2.length){
+      var us2=movsPiq2[movsPiq2.length-1];
+      loteAnt2=us2.lote||'';
+      dtSaida2=(us2.dt||'').split('-').reverse().join('/');
+    }
+    if(!inf.lote && loteAnt2){
+      var lotAntObj2=lotes.find(function(l){return l.nome===loteAnt2;});
+      if(lotAntObj2){
+        uaAnt2=lotAntObj2.qtd*lotAntObj2.peso/450;
+        txAnt2=a.ha>0?( uaAnt2/a.ha).toFixed(2):'—';
+      }
+    }
+    modulos[mk].piquetes.push({id:a.id,label:a.label,ha:a.ha,lote:inf.lote,ua:inf.ua,qtd:inf.qtd,peso:inf.peso,dias:dias,loteAnt:loteAnt2,dtSaida:dtSaida2,uaAnt:uaAnt2.toFixed(1),txAnt:txAnt2});
     modulos[mk].haTotal+=a.ha;
   });
 
@@ -2408,13 +2423,18 @@ function gerarRelPDF(){
       var txI=p.ha>0&&p.ua>0?p.ua/p.ha:0;
       var cTx=txI>6?'tx-alt':txI>3?'tx-med':'tx-bom';
       var cDias=corDias(p.dias);
+      var loteCell2=p.lote?'<span class="tag tag-lote">'+p.lote+'</span>':(p.loteAnt?'<span style="color:#aaa;font-size:10px">'+p.loteAnt+' <span style="background:#f0f0f0;padding:1px 3px;border-radius:4px;font-size:9px">hist.</span></span>':'<span class="tag tag-vazio">vazio</span>');
+      var txI2=txI>0?txI:(p.loteAnt&&p.txAnt!=='—'?parseFloat(p.txAnt):0);
+      var cTx2=txI2>6?'tx-alt':txI2>3?'tx-med':'tx-bom';
+      var txCell2=txI>0?'<span class="'+cTx+'">'+txI.toFixed(2)+' UA/ha</span>':(p.loteAnt&&p.txAnt!=='—'?'<span style="color:#bbb">'+p.txAnt+' UA/ha</span>':'—');
+      var diasCell2=p.dias!==null?'<span class="tag tag-dias" style="background:'+cDias+'">'+p.dias+'d</span>':(p.dtSaida?'<span style="color:#bbb;font-size:10px">saiu '+p.dtSaida+'</span>':'—');
       html+='<tr>'
         +'<td><b>'+p.label+'</b></td>'
         +'<td>'+p.ha.toFixed(2)+'</td>'
-        +'<td>'+(p.lote?'<span class="tag tag-lote">'+p.lote+'</span>':'<span class="tag tag-vazio">vazio</span>')+'</td>'
-        +'<td>'+(p.qtd||'—')+'</td>'
-        +'<td>'+(txI>0?'<span class="'+cTx+'">'+txI.toFixed(2)+' UA/ha</span>':'—')+'</td>'
-        +'<td>'+(p.dias!==null?'<span class="tag tag-dias" style="background:'+cDias+'">'+p.dias+'d</span>':'—')+'</td>'
+        +'<td>'+loteCell2+'</td>'
+        +'<td>'+(p.lote?p.qtd:p.loteAnt?'<span style="color:#bbb">'+p.uaAnt+'</span>':'—')+'</td>'
+        +'<td>'+txCell2+'</td>'
+        +'<td>'+diasCell2+'</td>'
         +'</tr>';
     });
     html+='</table></div>';
@@ -2464,7 +2484,7 @@ function gerarRelPDF(){
   if(!janela){alert('Permita pop-ups para gerar o relatório.');return;}
   janela.document.write(html);
   janela.document.close();
-  setTimeout(function(){janela.print();},1200);
+  // Usuário clica no botão 🖨️ para imprimir/salvar PDF
 }
 // ═══════════════════════════════════════════════════════
 function gerarRelPDF(){
