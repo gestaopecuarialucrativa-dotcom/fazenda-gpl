@@ -301,7 +301,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.22 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/05/2026 v6.23 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1000,8 +1000,9 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
       <div style="font-size:12px;color:#666;margin-bottom:12px">Taxa de lotação, módulos, piquetes e histórico de rotação.</div>
       <div id="rel-fazenda-preview" style="max-height:420px;overflow-y:auto;border:1px solid #eee;border-radius:8px;padding:8px;background:#fafafa;font-size:11px"></div>
       <div style="display:flex;gap:8px;margin-top:10px">
-        <button onclick="rRelFazendaPreview()" style="flex:1;padding:10px;background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">👁 Visualizar</button>
+        <button onclick="rRelFazendaPreview();setTimeout(function(){var el=document.getElementById('rel-fazenda-preview');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},100)" style="flex:1;padding:10px;background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">👁 Visualizar</button>
         <button onclick="gerarRelPDF()" style="flex:1;padding:10px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">📄 Gerar PDF</button>
+        <button onclick="gerarRelPreviewPDF()" style="flex:1;padding:10px;background:#1565C0;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">📋 PDF Preview</button>
         <button onclick="enviarRelatorioWppGPL()" style="flex:1;padding:10px;background:#25D366;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">📲 WhatsApp</button>
       </div>
     </div>
@@ -1421,10 +1422,10 @@ function buildActs(){
   document.getElementById('vacts').innerHTML = btns;
 }
 function buildTabs(){
-  var icons={'painel':'📊','cantina':'🏪','estoque':'📦','mapa':'🗺️','config':'⚙️','consultor':'🌿'};
+  var icons={'painel':'📊','cantina':'🏪','estoque':'📦','mapa':'🗺️','config':'⚙️','consultor':'🌿','historico':'📋','relatorio':'📈'};
   document.getElementById('tabs').innerHTML=TABS.filter(t=>CU.p[t.p]).map(t=>{
     var ic=icons[t.id]||'';
-    var lbl=t.l.replace(/^[^\w]+/,'').trim(); // remove emoji do label
+    var lbl=t.l.replace(/^[^\wÀ-ɏ]+/,'').trim(); // remove só emojis, preserva letras acentuadas
     return`<div class="tab" id="tab-${t.id}" onclick="goTab('${t.id}')" style="display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px"><span style="font-size:18px;line-height:1">${ic}</span><span style="font-size:11px;line-height:1">${lbl}</span></div>`;
   }).join('');
 }
@@ -1598,7 +1599,14 @@ function rUlt(){
 
     html += '<div onclick="calDia('+dia+')" style="cursor:'+(temLanc?'pointer':'default')+';text-align:center;border-radius:6px;padding:4px 2px;background:'+bg+';border:'+borda+';position:relative">'
       +'<span style="font-size:11px;font-weight:'+(isHoje||isSel?'800':'400')+';color:'+cor+'">'+d+'</span>'
-      +(temLanc ? '<div style="width:4px;height:4px;border-radius:50%;background:'+(isSel?'#A5D6A7':'#4CAF50')+';margin:1px auto 0"></div>' : '<div style="height:5px"></div>')
+      +(temLanc ? (function(){
+        var regs=diasComLanc[d]||[];
+        var temDiar=regs.some(function(r){return r.tipo==='diaria'||r.srv;});
+        var todoPago=temDiar&&regs.filter(function(r){return r.tipo==='diaria'||r.srv;}).every(function(r){return r.pago;});
+        var algumPago=temDiar&&regs.some(function(r){return (r.tipo==='diaria'||r.srv)&&r.pago;});
+        var ptCor=isSel?'#A5D6A7':todoPago?'#1B5E20':algumPago?'#FF8F00':'#4CAF50';
+        return '<div style="width:5px;height:5px;border-radius:50%;background:'+ptCor+';margin:1px auto 0"></div>';
+      })() : '<div style="height:6px"></div>')
       +'</div>';
   }
 
@@ -1633,12 +1641,17 @@ function _calMostrarDia(d, lancs){
     var tipo = r.tipo==='cantina' ? 'Cantina' : r.tipo==='trato' ? 'Trato' : r.tipo==='escore' ? 'Escore' : r.tipo==='insumo' ? 'Insumos' : (r.srv||'Diária');
     var val = r.total !== undefined ? 'R$ '+r.total.toFixed(2).replace('.',',') : r.v !== undefined ? 'R$ '+r.v.toFixed(2).replace('.',',') : '';
     var extra = r.n ? r.n : r.faz ? r.faz : '';
+    var statusBadge = (r.tipo==='diaria'||r.srv)
+      ? (r.pago
+          ? '<span style="background:#1B5E20;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;margin-left:4px;font-weight:700">✅ Pago</span>'
+          : '<span style="background:#E65100;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;margin-left:4px;font-weight:700">⏳ A pagar</span>')
+      : '';
     var av = r.av==='otimo' ? '<span style="background:#2E7D32;color:#fff;font-size:9px;padding:1px 5px;border-radius:4px;margin-left:4px">Ótimo</span>' 
            : r.av==='bom' ? '<span style="background:#F57F17;color:#fff;font-size:9px;padding:1px 5px;border-radius:4px;margin-left:4px">Bom</span>'
            : r.av==='ruim' ? '<span style="background:#B71C1C;color:#fff;font-size:9px;padding:1px 5px;border-radius:4px;margin-left:4px">Ruim</span>' : '';
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 8px;border-radius:8px;background:#f8f8f8;margin-bottom:4px">'
       +'<div>'
-        +'<span style="font-size:12px;font-weight:700;color:#222">'+tipo+'</span>'+av
+        +'<span style="font-size:12px;font-weight:700;color:#222">'+tipo+'</span>'+av+statusBadge
         +(extra ? '<div style="font-size:10px;color:#888;margin-top:1px">'+extra+'</div>' : '')
       +'</div>'
       +(val ? '<span style="font-size:12px;font-weight:700;color:#1B5E20">'+val+'</span>' : '')
@@ -2478,6 +2491,9 @@ function gerarRelPDF(){
     +'<button onclick="window.print()" style="padding:12px 36px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer">🖨️ Imprimir / Salvar PDF</button>'
     +'</div>';
 
+  html+='<div class="no-print" style="position:fixed;top:16px;right:16px;z-index:999">'
+    +'<button onclick="window.close()" style="padding:8px 20px;background:#C62828;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2)">✕ Fechar</button>'
+    +'</div>';
   html+='</div></body></html>';
 
   var janela=window.open('','_blank','width=1060,height=860');
@@ -2868,6 +2884,35 @@ function sp_relatorio_init(){
   rRelFazendaPreview();
 }
 // ═══════════════════════════════════════════════════════
+
+// ══ PDF DO PREVIEW (seções do relatório) ══
+function gerarRelPreviewPDF(){
+  rRelFazendaPreview();
+  var el=document.getElementById('rel-fazenda-preview');
+  if(!el||!el.innerHTML.trim()){alert('Clique em Visualizar primeiro.');return;}
+  var faz=Object.keys(S.FAZ||{})[0]||'Fazenda Estrela';
+  var hoje=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+  var css=[
+    'body{font-family:Arial,sans-serif;background:#F1F5F1;padding:24px;color:#1a1a1a}',
+    '.wrap{max-width:900px;margin:0 auto}',
+    '.hdr{background:linear-gradient(135deg,#1B5E20,#388E3C);color:#fff;border-radius:16px;padding:22px 28px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}',
+    '.hdr h1{font-size:20px;font-weight:900}',
+    '.hdr p{font-size:11px;opacity:.75;margin-top:3px}',
+    '.content{background:#fff;border-radius:16px;padding:20px 24px;box-shadow:0 2px 10px rgba(0,0,0,.06)}',
+    '@media print{body{background:#fff;padding:0}.no-print{display:none!important}.content{box-shadow:none}@page{margin:12mm}}'
+  ].join('');
+  var j=window.open('','_blank','width=980,height=800');
+  if(!j){alert('Permita pop-ups.');return;}
+  j.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Preview GPL</title><style>'+css+'</style></head><body><div class="wrap">');
+  j.document.write('<div class="hdr"><div><h1>'+faz+'</h1><p>Relatório · Rogério Avelino · '+hoje+'</p></div></div>');
+  j.document.write('<div class="content">'+el.innerHTML+'</div>');
+  j.document.write('<div class="no-print" style="position:fixed;top:16px;right:16px;display:flex;gap:8px">');
+  j.document.write('<button onclick="window.print()" style="padding:8px 20px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">🖨️ Salvar PDF</button>');
+  j.document.write('<button onclick="window.close()" style="padding:8px 20px;background:#C62828;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">✕ Fechar</button>');
+  j.document.write('</div></div></body></html>');
+  j.document.close();
+}
+// ══════════════════════════════
 function initSync(){atualizarSync();window.addEventListener('online',()=>{atualizarSync();if(S.queue.length>0)syncAgora();});window.addEventListener('offline',()=>atualizarSync());setInterval(()=>{if(navigator.onLine&&S.queue.length>0&&S.cfgGS)syncAgora();},30000);}
 
 // ═══ NUVEM ═══
@@ -4610,14 +4655,14 @@ function rVaqueiroPainel(){
     html += '<div id="'+_vaqId+'" style="background:#fff;border-radius:14px;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:pointer;border:2px solid '+(areaId?cor:'#eee')+'";'
       + 'style="background:#fff;border-radius:14px;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:pointer;border:2px solid '+(areaId?cor:'#eee')+';">'
       // SVG velocímetro
-      + '<svg viewBox="0 0 140 90" style="width:100%;display:block">'
+      + '<svg viewBox="0 0 140 110" style="width:100%;display:block">'
       +   '<path d="'+arcBg+'" fill="none" stroke="#eee" stroke-width="'+stroke+'" stroke-linecap="round"/>'
       +   (pct>0?'<path d="'+arcFill+'" fill="none" stroke="'+cor+'" stroke-width="'+stroke+'" stroke-linecap="round"/>'
               +'<line x1="'+cx+'" y1="'+cy+'" x2="'+needle.x+'" y2="'+needle.y+'" stroke="'+cor+'" stroke-width="3" stroke-linecap="round"/>'
           :'')
       +   '<circle cx="'+cx+'" cy="'+cy+'" r="4" fill="'+cor+'"/>'
-      +   '<text x="'+cx+'" y="'+(cy+28)+'" text-anchor="middle" font-size="24" font-weight="900" fill="'+cor+'">'+dias+'</text>'
-      +   '<text x="'+cx+'" y="'+(cy+40)+'" text-anchor="middle" font-size="9" fill="#888">dias</text>'
+      +   '<text x="'+cx+'" y="'+(cy+32)+'" text-anchor="middle" font-size="26" font-weight="900" fill="'+cor+'">'+dias+'</text>'
+      +   '<text x="'+cx+'" y="'+(cy+46)+'" text-anchor="middle" font-size="10" fill="#888">dias</text>'
       + '</svg>'
       // Info
       + '<div style="text-align:center;margin-top:2px">'
@@ -4630,7 +4675,27 @@ function rVaqueiroPainel(){
   });
 
   html += '</div>';
-  grid.innerHTML = html;
+
+  // Pontos de atenção
+  var alertasHtml='';
+  lotes.forEach(function(lote){
+    var nm=lote.nome;
+    var areaId2=null; Object.keys(aloc).forEach(function(k){if(aloc[k]===nm)areaId2=k;});
+    var movsL2=movs.filter(function(m){return m.lote===nm;});
+    var dtEnt3=null;
+    for(var i=movsL2.length-1;i>=0;i--){if(movsL2[i].destino===areaId2){dtEnt3=(movsL2[i].dt||'').substring(0,10);break;}}
+    if(!dtEnt3&&movsL2.length)dtEnt3=(movsL2[movsL2.length-1].dt||'').substring(0,10);
+    if(!dtEnt3)return;
+    var h3=new Date();h3.setHours(12,0,0,0);
+    var dias3=Math.max(0,Math.round((h3-new Date(dtEnt3+'T12:00:00'))/864e5));
+    if(dias3>14) alertasHtml+='<div style="background:#FFEBEE;border-left:3px solid #C62828;border-radius:6px;padding:8px 10px;font-size:12px;margin-bottom:4px">⚠️ <b>'+nm+'</b> — '+dias3+' dias. Hora de rotacionar!</div>';
+    else if(dias3>7) alertasHtml+='<div style="background:#FFF3E0;border-left:3px solid #FF8F00;border-radius:6px;padding:8px 10px;font-size:12px;margin-bottom:4px">👀 <b>'+nm+'</b> — '+dias3+' dias. Fique de olho.</div>';
+  });
+  var alertasDiv = alertasHtml
+    ? '<div style="margin-top:10px"><div style="font-size:13px;font-weight:800;color:#1B5E20;margin-bottom:6px">🔍 Pontos de atenção</div>'+alertasHtml+'</div>'
+    : '<div style="margin-top:8px;background:#E8F5E9;border-radius:8px;padding:8px 12px;font-size:12px;color:#1B5E20;font-weight:700">✅ Todos os lotes dentro do prazo ideal.</div>';
+
+  grid.innerHTML = html + alertasDiv;
 
 }
 
