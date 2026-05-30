@@ -1129,6 +1129,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
       <div style="font-size:10px;color:#888;margin-top:8px;line-height:1.4">A nota de cada pasto cruza esses tempos com as suas respostas sobre o capim. Uso intenso só vira alerta vermelho se você responder que o capim está rapado.</div>
     </div>
   </div>
+  <button onclick="gerarPDFPastos()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px">📄 Gerar Relatório PDF</button>
   <div id="hist-ranking-pastos"></div>
 </div>
 
@@ -4570,6 +4571,9 @@ function rHistRankingPastos(){
   comHist.sort(function(a,b){return b.score-a.score;});
   semHist.sort(function(a,b){return a.label.localeCompare(b.label);});
 
+  // Expõe o resultado calculado para reuso (PDF), sem recalcular.
+  window._rkpPerfis={comHist:comHist, semHist:semHist, cfg:cfg};
+
   // Alertas que pedem resposta (no topo)
   var pendentes=comHist.filter(function(p){return p.alerta && p.respCod!=='reforma';});
 
@@ -4672,6 +4676,76 @@ function rkpResponder(areaId, cod){
   salvar();
   try{ enviarDado(reg); }catch(e){}
   try{ rHistRankingPastos(); }catch(e){}
+}
+
+// Gera o PDF do diagnóstico dos pastos. Reaproveita os perfis já
+// calculados por rHistRankingPastos (window._rkpPerfis). Mesmo motor
+// de PDF do resto do app: window.open + print, sem biblioteca externa.
+function gerarPDFPastos(){
+  try{ rHistRankingPastos(); }catch(e){}
+  var dados=window._rkpPerfis;
+  if(!dados||!dados.comHist){ alert('Sem dados de pastos para o relatório.'); return; }
+  var cfg=dados.cfg||{ideal:30,parado:60,intenso:5};
+  var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
+  var notaTxt={verde:'🟢 Produtivo',amarelo:'🟡 Atenção',vermelho:'🔴 Avaliar',cinza:'⚪ —'};
+
+  var linhas=dados.comHist.map(function(p,idx){
+    var uaHaTxt=p.uaHa>0?p.uaHa.toFixed(2):'—';
+    var uaMaxTxt=p.uaMax>0?p.uaMax.toFixed(1):'—';
+    var descTxt=p.descMedio!==null?p.descMedio+' d':'—';
+    var statusAtual=p.ocupadoAgora
+      ? ('Ocupado ('+p.loteAtual+') há '+p.diasOcupadoAgora+' d')
+      : (p.diasVazio!==null?('Vazio há '+p.diasVazio+' d'):'—');
+    return '<tr>'
+      +'<td style="text-align:center">'+(idx+1)+'</td>'
+      +'<td>'+p.label+'<br><span style="color:#999;font-size:10px">'+(p.ha?p.ha.toFixed(2)+' ha':'')+'</span></td>'
+      +'<td>'+notaTxt[p.nota]+'</td>'
+      +'<td>'+p.motivo+'</td>'
+      +'<td style="text-align:center">'+statusAtual+'</td>'
+      +'<td style="text-align:center">'+descTxt+'</td>'
+      +'<td style="text-align:center">'+p.ciclos+'</td>'
+      +'<td style="text-align:center">'+uaMaxTxt+'</td>'
+      +'<td style="text-align:center">'+uaHaTxt+'</td>'
+      +'</tr>';
+  }).join('');
+
+  var semTxt=dados.semHist.length
+    ? dados.semHist.map(function(p){return p.label;}).join(', ')
+    : '';
+
+  var resumo={verde:0,amarelo:0,vermelho:0,cinza:0};
+  dados.comHist.forEach(function(p){ if(resumo[p.nota]!==undefined) resumo[p.nota]++; });
+
+  var w=window.open('','_blank');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Diagnóstico de Pastos — GPL</title>'
+    +'<style>body{font-family:Arial,sans-serif;padding:20px;color:#222}'
+    +'h1{color:#1B5E20;font-size:18px;margin-bottom:2px}'
+    +'.sub{color:#666;font-size:11px;margin-bottom:14px}'
+    +'table{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}'
+    +'th{background:#1B5E20;color:#fff;padding:6px;text-align:left;font-size:10px}'
+    +'td{padding:6px;border-bottom:1px solid #eee;vertical-align:top}'
+    +'.resumo{display:flex;gap:14px;margin:10px 0;font-size:12px;font-weight:700}'
+    +'.crit{font-size:10px;color:#666;margin-top:6px;line-height:1.5}'
+    +'.footer{margin-top:26px;font-size:10px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:8px}'
+    +'@media print{button{display:none}}'
+    +'</style></head><body>'
+    +'<div style="display:flex;justify-content:space-between;align-items:flex-start">'
+    +'<div><h1>🌱 Diagnóstico de Pastos</h1><div class="sub">Gestão Pecuária Lucrativa · Rogério Avelino</div></div>'
+    +'<div style="text-align:right;font-size:11px;color:#666">Emitido em: '+new Date().toLocaleDateString('pt-BR')+'<br>Fazenda: '+faz+'</div>'
+    +'</div>'
+    +'<div class="resumo"><span style="color:#1B5E20">🟢 '+resumo.verde+' produtivos</span>'
+    +'<span style="color:#E65100">🟡 '+resumo.amarelo+' atenção</span>'
+    +'<span style="color:#B71C1C">🔴 '+resumo.vermelho+' avaliar</span></div>'
+    +'<table><tr><th>#</th><th>Pasto</th><th>Nota</th><th>Diagnóstico</th><th>Situação</th><th>Descanso médio</th><th>Ciclos</th><th>Carga máx (UA)</th><th>UA/ha</th></tr>'
+    +(linhas||'<tr><td colspan="9" style="text-align:center;color:#999">Sem movimentações para avaliar.</td></tr>')
+    +'</table>'
+    +(semTxt?'<p class="crit"><b>Sem histórico ainda:</b> '+semTxt+'</p>':'')
+    +'<p class="crit">Critérios: descanso ideal '+cfg.ideal+' dias · parado demais a partir de '+cfg.parado+' dias · uso intenso abaixo de '+cfg.intenso+' dias de descanso. Carga em UA (unidade animal = 450 kg). Avaliação baseada nos dados lançados e nas suas respostas sobre o capim.</p>'
+    +'<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:12px">🖨️ Imprimir / Salvar PDF</button>'
+    +'<div class="footer">GPL — Gestão Pecuária Lucrativa · Rogério Avelino · Gerado em '+new Date().toLocaleDateString('pt-BR')+'</div>'
+    +'</body></html>');
+  w.document.close();
+  setTimeout(function(){ try{w.print();}catch(e){} },500);
 }
 
 // ── ABA REGISTROS ─────────────────────────────────────────
