@@ -1044,6 +1044,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <div class="tgo on" id="htab-lotes"   onclick="sHistTab('lotes')"   style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px">🐄 Lotes</div>
   <div class="tgo"    id="htab-rotacao" onclick="sHistTab('rotacao')" style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px">🔄 Rotação</div>
   <div class="tgo"    id="htab-reg"     onclick="sHistTab('reg')"     style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px">📋 Registros</div>
+  <div class="tgo"    id="htab-pastos"  onclick="sHistTab('pastos')"  style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px">🌱 Pastos</div>
 </div>
 
 <div id="htab-lotes-content">
@@ -1102,6 +1103,33 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <div class="card">
     <div id="hist-lista"></div>
   </div>
+</div>
+
+<div id="htab-pastos-content" style="display:none">
+  <div class="card" style="margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="var el=document.getElementById('rkp-cfg-body');el.style.display=el.style.display==='none'?'block':'none'">
+      <div class="stit" style="margin:0">⚙️ Parâmetros de avaliação</div>
+      <span style="font-size:12px;color:#888">▼</span>
+    </div>
+    <div id="rkp-cfg-body" style="display:none;margin-top:10px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div style="flex:1;min-width:90px">
+          <div style="font-size:10px;color:#666;margin-bottom:3px">Descanso ideal (dias)</div>
+          <input type="number" id="rkp-ideal" value="30" min="1" onchange="rHistRankingPastos()" style="width:100%;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px">
+        </div>
+        <div style="flex:1;min-width:90px">
+          <div style="font-size:10px;color:#666;margin-bottom:3px">Parado demais (dias)</div>
+          <input type="number" id="rkp-parado" value="60" min="1" onchange="rHistRankingPastos()" style="width:100%;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px">
+        </div>
+        <div style="flex:1;min-width:90px">
+          <div style="font-size:10px;color:#666;margin-bottom:3px">Uso intenso (descanso &lt; dias)</div>
+          <input type="number" id="rkp-intenso" value="5" min="1" onchange="rHistRankingPastos()" style="width:100%;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px">
+        </div>
+      </div>
+      <div style="font-size:10px;color:#888;margin-top:8px;line-height:1.4">A nota de cada pasto cruza esses tempos com as suas respostas sobre o capim. Uso intenso só vira alerta vermelho se você responder que o capim está rapado.</div>
+    </div>
+  </div>
+  <div id="hist-ranking-pastos"></div>
 </div>
 
 </div>
@@ -3894,7 +3922,7 @@ function salvarNota(faz,k){if(!S.NOTAS)S.NOTAS={};const ta=document.getElementBy
 
 // ═══ HISTÓRICO ═══
 function sHistTab(tab){
-  ['lotes','rotacao','reg'].forEach(function(t){
+  ['lotes','rotacao','reg','pastos'].forEach(function(t){
     var b=document.getElementById('htab-'+t);
     var c=document.getElementById('htab-'+t+'-content');
     if(b) b.classList.toggle('on', t===tab);
@@ -3902,6 +3930,7 @@ function sHistTab(tab){
   });
   if(tab==='lotes') rHistLotes();
   else if(tab==='rotacao') rHistRotacao();
+  else if(tab==='pastos') rHistRankingPastos();
   else rHistReg();
 }
 
@@ -4343,6 +4372,306 @@ function rHistRotacao(){
     out+='</div>';
   });
   div.innerHTML=out;
+}
+
+// ── ABA PASTOS (Ranking / Diagnóstico) ────────────────────
+// Reconstrói a linha do tempo de cada área pela CADEIA DE DESTINOS
+// dos lotes (igual rHistRotacao). NÃO depende do campo "origem".
+// As respostas do usuário sobre o capim ficam em S.rT como
+// registros tipo 'status_pasto' (cada resposta é um evento no
+// histórico; a mais recente manda no selo atual).
+
+function _rkpCfg(){
+  function n(id,def){var e=document.getElementById(id);var v=e?parseInt(e.value,10):def;return (isNaN(v)||v<1)?def:v;}
+  return {ideal:n('rkp-ideal',30), parado:n('rkp-parado',60), intenso:n('rkp-intenso',5)};
+}
+
+function _rkpDiasEntre(isoA,isoB){
+  if(!isoA||!isoB) return 0;
+  var a=new Date(isoA+'T12:00:00'), b=new Date(isoB+'T12:00:00');
+  if(isNaN(a)||isNaN(b)) return 0;
+  return Math.max(0, Math.round((b-a)/864e5));
+}
+
+// Monta, por área, a lista de ocupações: {entrada, saida, dias, lote, ua}
+function _rkpOcupacoesPorArea(){
+  var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
+  movs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
+  var lotes=S.LOTES||[];
+  // Para cada lote, percorrer seus movimentos em ordem: cada destino é uma
+  // entrada na área; a saída é a data do próximo movimento do mesmo lote.
+  var porLote={};
+  movs.forEach(function(m){ if(!porLote[m.lote]) porLote[m.lote]=[]; porLote[m.lote].push(m); });
+  var areas={}; // id -> {ocupacoes:[], label, ha}
+  function garante(id){
+    if(!areas[id]){
+      var ao=MAPA_AREAS.find(function(a){return a.id===id;});
+      areas[id]={id:id, label:ao?ao.label:id, ha:ao?(ao.ha||0):0, ocupacoes:[]};
+    }
+    return areas[id];
+  }
+  Object.keys(porLote).forEach(function(lt){
+    var seq=porLote[lt];
+    var lotObj=lotes.find(function(l){return l.nome===lt;});
+    var ua=lotObj?(lotObj.qtd*lotObj.peso/450):0;
+    for(var i=0;i<seq.length;i++){
+      var destino=seq[i].destino; if(!destino) continue;
+      var entrada=(seq[i].dt||seq[i].ts||'').substring(0,10);
+      var saida=(i+1<seq.length)?((seq[i+1].dt||seq[i+1].ts||'').substring(0,10)):''; // '' = ainda ocupado
+      var dias=saida?_rkpDiasEntre(entrada,saida):_rkpDiasEntre(entrada,TD);
+      garante(destino).ocupacoes.push({entrada:entrada,saida:saida,dias:dias,lote:lt,ua:ua});
+    }
+  });
+  return areas;
+}
+
+// Última resposta de capim registrada para uma área (ou null)
+function _rkpUltimaResposta(areaId){
+  var rs=(S.rT||[]).filter(function(r){return r.tipo==='status_pasto'&&r.area===areaId&&!r._apagado;});
+  if(!rs.length) return null;
+  rs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
+  return rs[rs.length-1];
+}
+// Todas as respostas de uma área, em ordem (para tendência)
+function _rkpRespostas(areaId){
+  var rs=(S.rT||[]).filter(function(r){return r.tipo==='status_pasto'&&r.area===areaId&&!r._apagado;});
+  rs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
+  return rs;
+}
+
+function rHistRankingPastos(){
+  var div=document.getElementById('hist-ranking-pastos');
+  if(!div) return;
+  var cfg=_rkpCfg();
+  if(!S.MAPA_ALOC) S.MAPA_ALOC={};
+  var lotes=S.LOTES||[];
+  var ocupMap=_rkpOcupacoesPorArea();
+
+  // Monta um perfil por área de TODO o MAPA_AREAS (mesmo as que nunca
+  // receberam lote — elas aparecem como "sem histórico").
+  var perfis=MAPA_AREAS.map(function(a){
+    var oc=(ocupMap[a.id]?ocupMap[a.id].ocupacoes:[]);
+    // Ocupado agora?
+    var alocLote=S.MAPA_ALOC[a.id];
+    var loteObjA=alocLote?lotes.find(function(l){return l.nome===alocLote;}):null;
+    var ocupadoAgora=!!(loteObjA&&(loteObjA.qtd||0)>0);
+
+    // Ciclos = ocupações já encerradas (com saída)
+    var encerradas=oc.filter(function(o){return o.saida;});
+    var ciclos=encerradas.length;
+
+    // Dias ocupado/vazio acumulados e descanso médio entre ocupações
+    var totalOcup=0; oc.forEach(function(o){ totalOcup+=o.dias; });
+    var descansos=[];
+    for(var i=0;i<oc.length-1;i++){
+      if(oc[i].saida && oc[i+1].entrada){
+        descansos.push(_rkpDiasEntre(oc[i].saida, oc[i+1].entrada));
+      }
+    }
+    var descMedio = descansos.length ? Math.round(descansos.reduce(function(s,d){return s+d;},0)/descansos.length) : null;
+
+    // UA máxima suportada (a maior carga que comprovadamente recebeu)
+    var uaMax=0; oc.forEach(function(o){ if(o.ua>uaMax) uaMax=o.ua; });
+    var uaHa = (a.ha>0 && uaMax>0) ? (uaMax/a.ha) : 0;
+
+    // Situação atual de tempo
+    var ultima=encerradas.length?encerradas[encerradas.length-1]:null;
+    var diasVazio = ocupadoAgora ? 0 : (ultima ? _rkpDiasEntre(ultima.saida, TD) : null);
+    var diasOcupadoAgora = ocupadoAgora ? (oc.length?oc[oc.length-1].dias:0) : 0;
+
+    // Resposta de capim mais recente + tendência
+    var resp=_rkpUltimaResposta(a.id);
+    var respCod = resp?resp.cod:'';
+    var todas=_rkpRespostas(a.id);
+    var rapadoSeq=0; // quantas respostas seguidas de degradação no fim do histórico
+    for(var j=todas.length-1;j>=0;j--){
+      if(todas[j].cod==='rapado'||todas[j].cod==='mais_tempo') rapadoSeq++; else break;
+    }
+
+    return {
+      id:a.id, label:a.label, ha:a.ha,
+      ocupadoAgora:ocupadoAgora, loteAtual:alocLote||'',
+      ciclos:ciclos, totalOcup:totalOcup,
+      descMedio:descMedio, uaMax:uaMax, uaHa:uaHa,
+      diasVazio:diasVazio, diasOcupadoAgora:diasOcupadoAgora,
+      semHistorico:(oc.length===0),
+      respCod:respCod, rapadoSeq:rapadoSeq
+    };
+  });
+
+  // ── Classifica nota de saúde e score de produtividade ──
+  perfis.forEach(function(p){
+    // Nota: 🟢 produtivo / 🟡 atenção / 🔴 avaliar
+    var nota='verde', motivo='Rebrota e carga dentro do esperado.', alerta='';
+
+    if(p.semHistorico){
+      nota='cinza'; motivo='Ainda sem movimentações registradas.';
+    } else {
+      // Parado demais (vazio acima do limite) → avaliar
+      if(p.diasVazio!==null && p.diasVazio>=cfg.parado){
+        nota='vermelho';
+        motivo='Vazio há '+p.diasVazio+' dias (acima de '+cfg.parado+').';
+        alerta='parado';
+      }
+      // Uso intenso: descanso médio abaixo do limite
+      if(p.descMedio!==null && p.descMedio<cfg.intenso){
+        if(p.respCod==='rapado'){
+          nota='vermelho';
+          motivo='Giro rápido ('+p.descMedio+'d de descanso) e capim rapado.';
+          alerta='intenso';
+        } else if(p.respCod==='ok'){
+          // capim acompanha o giro → ponto positivo, não rebaixa
+          if(nota==='verde'){ motivo='Rebrota excelente: gira em '+p.descMedio+'d e o capim segue no ponto.'; }
+        } else {
+          // giro rápido sem resposta ainda → pede avaliação do capim
+          if(nota!=='vermelho'){ nota='amarelo'; }
+          motivo='Giro rápido ('+p.descMedio+'d de descanso). Confirme o capim.';
+          alerta='intenso';
+        }
+      }
+      // Tendência de degradação nas respostas
+      if(p.rapadoSeq>=3 && nota!=='vermelho'){
+        nota='amarelo';
+        motivo='Respostas seguidas de capim cansado ('+p.rapadoSeq+'x). Avaliar.';
+      }
+      // Resposta explícita "precisa de mais tempo" recente
+      if(p.respCod==='mais_tempo'){
+        if(nota==='verde'){ nota='amarelo'; }
+        motivo='Você marcou que precisa de mais tempo. Avaliar reforma/adubação.';
+      }
+      // Em reforma → fora do julgamento normal
+      if(p.respCod==='reforma'){
+        nota='cinza'; motivo='Marcado em reforma de pastagem.'; alerta='';
+      }
+    }
+    p.nota=nota; p.motivo=motivo; p.alerta=alerta;
+
+    // Score de produtividade (para ordenar o ranking): rebrota rápida +
+    // carga suportada por ha + ciclos, penalizando degradação. Sem R$.
+    var score=0;
+    if(!p.semHistorico){
+      score += p.uaHa*10;                       // capacidade por hectare
+      score += p.ciclos*3;                       // já provou que reutiliza
+      if(p.descMedio!==null && p.descMedio>0){   // rebrota rápida = melhor
+        score += Math.max(0, 60 - p.descMedio);
+      }
+      if(p.respCod==='ok') score += 15;          // capim confirmado no ponto
+      score -= p.rapadoSeq*12;                    // degradação puxa pra baixo
+      if(p.nota==='vermelho') score -= 25;
+      if(p.respCod==='reforma') score -= 40;
+    }
+    p.score=score;
+  });
+
+  // ── Render ──
+  // Ordena: maior score primeiro (campeões no topo); sem-histórico ao fim.
+  var comHist=perfis.filter(function(p){return !p.semHistorico;});
+  var semHist=perfis.filter(function(p){return p.semHistorico;});
+  comHist.sort(function(a,b){return b.score-a.score;});
+  semHist.sort(function(a,b){return a.label.localeCompare(b.label);});
+
+  // Alertas que pedem resposta (no topo)
+  var pendentes=comHist.filter(function(p){return p.alerta && p.respCod!=='reforma';});
+
+  var out='';
+
+  // Bloco de alertas
+  if(pendentes.length){
+    out+='<div class="card" style="margin-bottom:10px;border-left:4px solid #E65100">'
+      +'<div class="stit" style="margin-bottom:8px">🔔 Pedem sua avaliação</div>';
+    pendentes.forEach(function(p){
+      if(p.alerta==='parado'){
+        out+='<div style="background:#FFF3E0;border:1px solid #FFCC80;border-radius:8px;padding:10px;margin-bottom:8px">'
+          +'<div style="font-weight:700;font-size:13px;color:#E65100">'+p.label+' · vazio há '+p.diasVazio+' dias</div>'
+          +'<div style="font-size:11px;color:#666;margin:4px 0 8px">Por que ainda não recebeu animais?</div>'
+          +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
+          +'<button onclick="rkpResponder(\''+p.id+'\',\'mais_tempo\')" style="flex:1;min-width:120px;background:#fff;border:1px solid #FFB74D;color:#E65100;border-radius:8px;padding:7px;font-size:11px;font-weight:600;cursor:pointer">⏳ Não está no ponto</button>'
+          +'<button onclick="rkpResponder(\''+p.id+'\',\'falta_animal\')" style="flex:1;min-width:120px;background:#fff;border:1px solid #90CAF9;color:#1565C0;border-radius:8px;padding:7px;font-size:11px;font-weight:600;cursor:pointer">🐄 Faltam animais</button>'
+          +'<button onclick="rkpResponder(\''+p.id+'\',\'reforma\')" style="flex:1;min-width:120px;background:#fff;border:1px solid #CE93D8;color:#6A1B9A;border-radius:8px;padding:7px;font-size:11px;font-weight:600;cursor:pointer">🚜 Em reforma</button>'
+          +'</div></div>';
+      } else if(p.alerta==='intenso'){
+        out+='<div style="background:#FFEBEE;border:1px solid #EF9A9A;border-radius:8px;padding:10px;margin-bottom:8px">'
+          +'<div style="font-weight:700;font-size:13px;color:#B71C1C">'+p.label+' · descanso de só '+p.descMedio+' dias</div>'
+          +'<div style="font-size:11px;color:#666;margin:4px 0 8px">Recebe lote com pouco descanso. Como está o capim?</div>'
+          +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
+          +'<button onclick="rkpResponder(\''+p.id+'\',\'rapado\')" style="flex:1;min-width:120px;background:#fff;border:1px solid #EF9A9A;color:#B71C1C;border-radius:8px;padding:7px;font-size:11px;font-weight:600;cursor:pointer">🥀 Rapado / passou do ponto</button>'
+          +'<button onclick="rkpResponder(\''+p.id+'\',\'ok\')" style="flex:1;min-width:120px;background:#fff;border:1px solid #A5D6A7;color:#1B5E20;border-radius:8px;padding:7px;font-size:11px;font-weight:600;cursor:pointer">🌱 No ponto, aguenta</button>'
+          +'<button onclick="rkpResponder(\''+p.id+'\',\'reforma\')" style="flex:1;min-width:120px;background:#fff;border:1px solid #CE93D8;color:#6A1B9A;border-radius:8px;padding:7px;font-size:11px;font-weight:600;cursor:pointer">🚜 Em reforma</button>'
+          +'</div></div>';
+      }
+    });
+    out+='</div>';
+  }
+
+  // Ranking
+  out+='<div class="card" style="margin-bottom:10px">'
+    +'<div class="stit" style="margin-bottom:4px">🏆 Ranking dos pastos</div>'
+    +'<div style="font-size:10px;color:#888;margin-bottom:10px">Do mais produtivo (rebrota rápido e aguenta carga) ao que pede avaliação. Sem achismo: cada área é avaliada pelos dados lançados.</div>';
+
+  if(!comHist.length){
+    out+='<div style="color:#888;font-size:12px;text-align:center;padding:16px">Ainda não há movimentações para avaliar os pastos.</div>';
+  } else {
+    var emoji={verde:'🟢',amarelo:'🟡',vermelho:'🔴',cinza:'⚪'};
+    var corBorda={verde:'#A5D6A7',amarelo:'#FFE082',vermelho:'#EF9A9A',cinza:'#E0E0E0'};
+    var corBg={verde:'#E8F5E9',amarelo:'#FFF8E1',vermelho:'#FFEBEE',cinza:'#FAFAFA'};
+    comHist.forEach(function(p,idx){
+      var uaHaTxt = p.uaHa>0 ? p.uaHa.toFixed(2)+' UA/ha' : '—';
+      var uaMaxTxt = p.uaMax>0 ? p.uaMax.toFixed(1)+' UA' : '—';
+      var descTxt = p.descMedio!==null ? p.descMedio+' d' : '—';
+      var statusAtual = p.ocupadoAgora
+        ? ('🐄 ocupado ('+p.loteAtual+') há '+p.diasOcupadoAgora+' d')
+        : (p.diasVazio!==null ? ('💤 vazio há '+p.diasVazio+' d') : '—');
+      out+='<div style="display:flex;gap:10px;align-items:flex-start;padding:10px;background:'+corBg[p.nota]+';border:1px solid '+corBorda[p.nota]+';border-radius:8px;margin-bottom:6px">'
+        +'<div style="font-size:18px;font-weight:900;color:#999;min-width:22px;text-align:center">'+(idx+1)+'</div>'
+        +'<div style="flex:1">'
+        +  '<div style="font-weight:800;font-size:13px;color:#1B5E20">'+emoji[p.nota]+' '+p.label+'<span style="font-weight:600;color:#999;font-size:10px"> · '+(p.ha?p.ha.toFixed(2)+' ha':'')+'</span></div>'
+        +  '<div style="font-size:11px;color:#555;margin:3px 0">'+p.motivo+'</div>'
+        +  '<div style="font-size:10px;color:#777">'+statusAtual+'</div>'
+        +  '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">'
+        +    '<div><div style="font-size:9px;color:#999">Descanso médio</div><div style="font-size:12px;font-weight:700;color:#2E7D32">'+descTxt+'</div></div>'
+        +    '<div><div style="font-size:9px;color:#999">Ciclos</div><div style="font-size:12px;font-weight:700;color:#2E7D32">'+p.ciclos+'</div></div>'
+        +    '<div><div style="font-size:9px;color:#999">Carga máx.</div><div style="font-size:12px;font-weight:700;color:#2E7D32">'+uaMaxTxt+'</div></div>'
+        +    '<div><div style="font-size:9px;color:#999">Por hectare</div><div style="font-size:12px;font-weight:700;color:#2E7D32">'+uaHaTxt+'</div></div>'
+        +  '</div>'
+        +'</div></div>';
+    });
+  }
+  out+='</div>';
+
+  // Áreas sem histórico
+  if(semHist.length){
+    out+='<div class="card" style="margin-bottom:10px">'
+      +'<div class="stit" style="margin-bottom:8px">⚪ Sem histórico ainda</div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    semHist.forEach(function(p){
+      out+='<span style="font-size:11px;background:#F5F5F5;border:1px solid #E0E0E0;border-radius:8px;padding:4px 8px;color:#777">'+p.label+'</span>';
+    });
+    out+='</div></div>';
+  }
+
+  div.innerHTML=out;
+}
+
+// Grava a resposta do usuário como evento no histórico (S.rT) e
+// re-renderiza. Mesmo padrão de persistência das demais funções.
+function rkpResponder(areaId, cod){
+  var ao=MAPA_AREAS.find(function(a){return a.id===areaId;});
+  var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
+  var reg={
+    tipo:'status_pasto',
+    faz:faz,
+    area:areaId,
+    areaLabel:ao?ao.label:areaId,
+    cod:cod,
+    n:CU?CU.n:'',
+    dt:TD,
+    ts:new Date().toISOString()
+  };
+  if(!S.rT) S.rT=[];
+  S.rT.push(reg);
+  salvar();
+  try{ enviarDado(reg); }catch(e){}
+  try{ rHistRankingPastos(); }catch(e){}
 }
 
 // ── ABA REGISTROS ─────────────────────────────────────────
