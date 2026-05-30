@@ -1049,6 +1049,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <div class="tgo"    id="htab-rotacao" onclick="sHistTab('rotacao')" style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px">🔄 Rotação</div>
   <div class="tgo"    id="htab-reg"     onclick="sHistTab('reg')"     style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px">📋 Registros</div>
   <div class="tgo"    id="htab-pastos"  onclick="sHistTab('pastos')"  style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px">🌱 Pastos</div>
+  <div class="tgo"    id="htab-consumo" onclick="sHistTab('consumo')" style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px">🛒 Consumo</div>
 </div>
 
 <div id="htab-lotes-content">
@@ -1135,6 +1136,11 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   </div>
   <button onclick="gerarPDFPastos()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px">📄 Gerar Relatório PDF</button>
   <div id="hist-ranking-pastos"></div>
+</div>
+
+<div id="htab-consumo-content" style="display:none">
+  <button onclick="gerarPDFConsumo()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px">📄 Gerar Relatório PDF</button>
+  <div id="hist-consumo"></div>
 </div>
 
 </div>
@@ -3954,7 +3960,7 @@ function salvarNota(faz,k){if(!S.NOTAS)S.NOTAS={};const ta=document.getElementBy
 
 // ═══ HISTÓRICO ═══
 function sHistTab(tab){
-  ['lotes','rotacao','reg','pastos'].forEach(function(t){
+  ['lotes','rotacao','reg','pastos','consumo'].forEach(function(t){
     var b=document.getElementById('htab-'+t);
     var c=document.getElementById('htab-'+t+'-content');
     if(b) b.classList.toggle('on', t===tab);
@@ -3963,6 +3969,7 @@ function sHistTab(tab){
   if(tab==='lotes') rHistLotes();
   else if(tab==='rotacao') rHistRotacao();
   else if(tab==='pastos') rHistRankingPastos();
+  else if(tab==='consumo') rHistConsumo();
   else rHistReg();
 }
 
@@ -4909,6 +4916,203 @@ function gerarPDFPastos(){
     +'</table>'
     +(semTxt?'<p class="crit"><b>Sem histórico ainda:</b> '+semTxt+'</p>':'')
     +'<p class="crit">Critérios: descanso ideal '+cfg.ideal+' dias · parado demais a partir de '+cfg.parado+' dias · uso intenso abaixo de '+cfg.intenso+' dias de descanso. Carga em UA (unidade animal = 450 kg). Avaliação baseada nos dados lançados e nas suas respostas sobre o capim.</p>'
+    +'<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:12px">🖨️ Imprimir / Salvar PDF</button>'
+    +_pdfRodape()
+    +'</body></html>');
+  w.document.close();
+  setTimeout(function(){ try{w.print();}catch(e){} },500);
+}
+
+// ── ABA CONSUMO (consumo por lote a partir dos tratos) ────
+// Cada trato guarda: lote(co), prod, q(sacos), kg_fornecido, dt, cab.
+// Calcula por lote: total sacos/kg, período (1º ao último trato),
+// kg/dia, kg/cab, produtos usados (sacos+período) e consumo vs
+// recomendado (usa o % por cab/dia cadastrado em S.EST[prod].pct).
+
+function _consumoDias(dtA,dtB){
+  if(!dtA||!dtB) return 0;
+  var a=new Date(dtA+'T12:00:00'), b=new Date(dtB+'T12:00:00');
+  if(isNaN(a)||isNaN(b)) return 0;
+  return Math.max(0, Math.round((b-a)/864e5));
+}
+
+// Monta os perfis de consumo por lote (reusado por tela e PDF)
+function _consumoPerfis(){
+  var tratos=(S.rT||[]).filter(function(r){return r.tipo==='trato'&&!r._apagado;});
+  tratos.forEach(function(r){ if(!r.dt&&r.ts) r.dt=r.ts.substring(0,10); });
+  var lotes=S.LOTES||[];
+  var porLote={};
+  tratos.forEach(function(t){
+    var ln=t.lote||t.co||'?';
+    if(!porLote[ln]) porLote[ln]={lote:ln, sacos:0, kg:0, datas:[], prods:{}, cabUlt:0};
+    var sacos=parseFloat(t.q||t.qtd||0)||0;
+    var kg=parseFloat(t.kg_fornecido||0)||0;
+    if(!kg){ // se não veio kg, tenta pelo peso do saco cadastrado
+      var estP=S.EST&&t.pr?S.EST[t.pr]:null;
+      var ps=(estP&&estP.peso_saco)?estP.peso_saco:30;
+      kg=sacos*ps;
+    }
+    porLote[ln].sacos+=sacos;
+    porLote[ln].kg+=kg;
+    var dt=(t.dt||'').substring(0,10);
+    if(dt) porLote[ln].datas.push(dt);
+    if(t.cab) porLote[ln].cabUlt=parseInt(t.cab)||porLote[ln].cabUlt;
+    var pr=t.pr||t.prod||'?';
+    if(!porLote[ln].prods[pr]) porLote[ln].prods[pr]={sacos:0, kg:0, datas:[]};
+    porLote[ln].prods[pr].sacos+=sacos;
+    porLote[ln].prods[pr].kg+=kg;
+    if(dt) porLote[ln].prods[pr].datas.push(dt);
+  });
+
+  var perfis=Object.keys(porLote).map(function(ln){
+    var o=porLote[ln];
+    o.datas.sort();
+    var ini=o.datas[0]||'', fim=o.datas[o.datas.length-1]||'';
+    var dias=_consumoDias(ini,fim); // período do 1º ao último trato
+    var diasCorr=Math.max(1,dias);  // evita divisão por zero p/ médias
+    // cabeças: do lote atual, senão do último trato
+    var loteObj=lotes.find(function(l){return l.nome===ln;});
+    var cab=(loteObj&&loteObj.qtd)?loteObj.qtd:(o.cabUlt||0);
+    var kgDia=o.kg/diasCorr;
+    var kgCab=cab>0?o.kg/cab:0;
+    // produtos: array com período e recomendado
+    var prods=Object.keys(o.prods).map(function(pr){
+      var pp=o.prods[pr]; pp.datas.sort();
+      var pini=pp.datas[0]||'', pfim=pp.datas[pp.datas.length-1]||'';
+      var pdias=_consumoDias(pini,pfim);
+      // recomendado: % por cab/dia × peso médio × cab × dias do produto
+      var est=S.EST&&S.EST[pr]?S.EST[pr]:null;
+      var pct=(est&&est.pct)?est.pct:0;
+      var pesoMed=(loteObj&&loteObj.peso)?loteObj.peso:0;
+      var recKg=0;
+      if(pct>0&&pesoMed>0&&cab>0){
+        var diasP=Math.max(1,pdias);
+        recKg=(pct/100)*pesoMed*cab*diasP;
+      }
+      return {nome:pr, sacos:pp.sacos, kg:pp.kg, ini:pini, fim:pfim, dias:pdias, recKg:recKg};
+    }).sort(function(a,b){return b.kg-a.kg;});
+    return {lote:ln, sacos:o.sacos, kg:o.kg, ini:ini, fim:fim, dias:dias,
+      cab:cab, kgDia:kgDia, kgCab:kgCab, prods:prods};
+  }).sort(function(a,b){return b.kg-a.kg;});
+
+  return perfis;
+}
+
+// Gráfico de consumo por lote (barra colorida) — tela e PDF
+function _consumoGrafico(perfis){
+  if(!perfis.length) return '';
+  var maxKg=0; perfis.forEach(function(p){ if(p.kg>maxKg) maxKg=p.kg; });
+  if(maxKg<=0) maxKg=1;
+  var barras=perfis.map(function(p){
+    var pct=Math.round((p.kg/maxKg)*100); if(p.kg>0&&pct<2)pct=2;
+    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">'
+      +'<div style="width:90px;font-size:10px;color:#555;text-align:right;flex-shrink:0">'+p.lote+'</div>'
+      +'<div style="flex:1;background:#F0F0F0;border-radius:4px;height:16px;overflow:hidden">'
+      +  '<div style="width:'+pct+'%;background:#2E7D32;height:100%;border-radius:4px"></div>'
+      +'</div>'
+      +'<div style="width:80px;font-size:10px;color:#333;font-weight:700;flex-shrink:0">'+p.kg.toFixed(0)+' kg</div>'
+      +'</div>';
+  }).join('');
+  return '<div style="margin-bottom:6px">'
+    +'<div style="font-size:11px;font-weight:700;color:#1B5E20;margin-bottom:6px">📊 Consumo total por lote (kg)</div>'
+    +barras+'</div>';
+}
+
+function rHistConsumo(){
+  var div=document.getElementById('hist-consumo');
+  var perfis=_consumoPerfis();
+  window._consumoPerfis=perfis; // reuso no PDF
+  if(!div) return;
+
+  if(!perfis.length){
+    div.innerHTML='<div class="card"><div style="color:#888;font-size:12px;text-align:center;padding:16px">Ainda não há tratos lançados para calcular consumo.</div></div>';
+    return;
+  }
+
+  var out='';
+  // Gráfico
+  var graf=_consumoGrafico(perfis);
+  if(graf) out+='<div class="card" style="margin-bottom:10px">'+graf+'</div>';
+
+  // Card por lote
+  perfis.forEach(function(p){
+    var periodo = (p.ini&&p.fim)
+      ? (p.ini.split('-').reverse().join('/')+' a '+p.fim.split('-').reverse().join('/'))
+      : '—';
+    var prodHtml=p.prods.map(function(pr){
+      var per=(pr.ini&&pr.fim)?(pr.ini.split('-').reverse().join('/')+' a '+pr.fim.split('-').reverse().join('/')):'—';
+      var recTxt='';
+      if(pr.recKg>0){
+        var dif=pr.kg-pr.recKg;
+        var cor=Math.abs(dif)/pr.recKg<0.1?'#2E7D32':(dif>0?'#C62828':'#FF8F00');
+        var sinal=dif>0?'acima':'abaixo';
+        recTxt='<div style="font-size:10px;color:'+cor+'">Recomendado ~'+pr.recKg.toFixed(0)+' kg · '+(Math.abs(dif)<1?'no ponto':(Math.abs(dif).toFixed(0)+' kg '+sinal))+'</div>';
+      }
+      return '<div style="padding:6px 0;border-bottom:1px solid #f5f5f5">'
+        +'<div style="font-size:12px;font-weight:600;color:#1B5E20">'+pr.nome+'</div>'
+        +'<div style="font-size:10px;color:#666">'+pr.sacos.toFixed(0)+' sacos · '+pr.kg.toFixed(0)+' kg · usado de '+per+' ('+pr.dias+' dias)</div>'
+        +recTxt
+        +'</div>';
+    }).join('');
+
+    out+='<div class="card" style="margin-bottom:10px">'
+      +'<div class="stit" style="margin-bottom:6px">🐄 '+p.lote+'</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">'
+      +  '<div><div style="font-size:9px;color:#999">Total</div><div style="font-size:13px;font-weight:700;color:#2E7D32">'+p.sacos.toFixed(0)+' sacos</div></div>'
+      +  '<div><div style="font-size:9px;color:#999">Em kg</div><div style="font-size:13px;font-weight:700;color:#2E7D32">'+p.kg.toFixed(0)+' kg</div></div>'
+      +  '<div><div style="font-size:9px;color:#999">Período</div><div style="font-size:13px;font-weight:700;color:#2E7D32">'+p.dias+' dias</div></div>'
+      +  '<div><div style="font-size:9px;color:#999">Por dia</div><div style="font-size:13px;font-weight:700;color:#2E7D32">'+p.kgDia.toFixed(1)+' kg</div></div>'
+      +  '<div><div style="font-size:9px;color:#999">Por cabeça</div><div style="font-size:13px;font-weight:700;color:#2E7D32">'+(p.kgCab>0?p.kgCab.toFixed(1)+' kg':'—')+'</div></div>'
+      +'</div>'
+      +'<div style="font-size:10px;color:#888;margin-bottom:4px">Consumiu de '+periodo+'</div>'
+      +'<div style="font-size:11px;font-weight:700;color:#555;margin-top:6px">Produtos usados:</div>'
+      +prodHtml
+      +'</div>';
+  });
+
+  div.innerHTML=out;
+}
+
+function gerarPDFConsumo(){
+  try{ rHistConsumo(); }catch(e){}
+  var perfis=window._consumoPerfis;
+  if(!perfis||!perfis.length){ alert('Sem tratos para o relatório de consumo.'); return; }
+  var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
+
+  var linhas=perfis.map(function(p){
+    var periodo=(p.ini&&p.fim)?(p.ini.split('-').reverse().join('/')+' a '+p.fim.split('-').reverse().join('/')):'—';
+    var prodTxt=p.prods.map(function(pr){
+      var rec=pr.recKg>0?(' (rec ~'+pr.recKg.toFixed(0)+' kg)'):'';
+      return pr.nome+': '+pr.sacos.toFixed(0)+' sc / '+pr.kg.toFixed(0)+' kg, '+pr.dias+'d'+rec;
+    }).join('<br>');
+    return '<tr>'
+      +'<td>'+p.lote+'</td>'
+      +'<td style="text-align:center">'+p.sacos.toFixed(0)+'</td>'
+      +'<td style="text-align:center">'+p.kg.toFixed(0)+'</td>'
+      +'<td style="text-align:center">'+p.dias+'</td>'
+      +'<td style="text-align:center">'+p.kgDia.toFixed(1)+'</td>'
+      +'<td style="text-align:center">'+(p.kgCab>0?p.kgCab.toFixed(1):'—')+'</td>'
+      +'<td style="font-size:10px">'+periodo+'</td>'
+      +'<td style="font-size:10px">'+prodTxt+'</td>'
+      +'</tr>';
+  }).join('');
+
+  var w=window.open('','_blank');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Consumo por Lote — GPL</title>'
+    +'<style>body{font-family:Arial,sans-serif;padding:20px;color:#222}'
+    +'table{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}'
+    +'th{background:#1B5E20;color:#fff;padding:6px;text-align:left;font-size:10px}'
+    +'td{padding:6px;border-bottom:1px solid #eee;vertical-align:top}'
+    +'.crit{font-size:10px;color:#666;margin-top:6px;line-height:1.5}'
+    +_pdfTimbreCss()
+    +'@media print{button{display:none}}'
+    +'</style></head><body>'
+    +_pdfTimbre('🛒 Consumo por Lote', null, faz)
+    +'<div style="margin:14px 0">'+_consumoGrafico(perfis)+'</div>'
+    +'<table><tr><th>Lote</th><th>Sacos</th><th>Kg</th><th>Dias</th><th>Kg/dia</th><th>Kg/cab</th><th>Período</th><th>Produtos (sacos/kg, dias)</th></tr>'
+    +linhas
+    +'</table>'
+    +'<p class="crit">Período = do primeiro ao último trato do lote. Recomendado calculado pelo % por cabeça/dia cadastrado, peso médio e nº de cabeças do lote. Sem custo em R$ nesta versão.</p>'
     +'<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:12px">🖨️ Imprimir / Salvar PDF</button>'
     +_pdfRodape()
     +'</body></html>');
