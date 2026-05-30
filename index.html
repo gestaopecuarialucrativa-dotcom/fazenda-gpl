@@ -366,6 +366,10 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     </div>
     <div id="vaq-gauge-grid"></div>
   </div>
+  <div class="card" id="vaq-graf-card" style="padding:14px;margin-top:10px;display:none">
+    <div style="font-size:14px;font-weight:800;color:#1B5E20;margin-bottom:10px">🌱 Aproveitamento dos pastos</div>
+    <div id="vaq-graf-pastos"></div>
+  </div>
 </div>
 
 <!-- Calendário de Lançamentos -->
@@ -4469,6 +4473,50 @@ function _rkpGraficos(comHist){
       +'</div>';
   }
 
+  // ── (a2) Carga por MÓDULO (soma dos piquetes de cada módulo) ──
+  // Usa a ocupação ATUAL (S.MAPA_ALOC + S.LOTES): soma UA e ha dos
+  // piquetes de cada módulo e divide. Pasto avulso não entra aqui.
+  var aloc=S.MAPA_ALOC||{};
+  var lotesG=S.LOTES||[];
+  var mods={};
+  MAPA_AREAS.filter(function(a){return a.tipo==='modulo';}).forEach(function(a){
+    var mk=a.modulo;
+    if(!mods[mk]) mods[mk]={num:mk, ha:0, ua:0, ocup:0, tot:0};
+    mods[mk].ha+=(a.ha||0);
+    mods[mk].tot++;
+    var lnm=aloc[a.id];
+    if(lnm){
+      var lo=lotesG.find(function(l){return l.nome===lnm;});
+      if(lo){ mods[mk].ua += (lo.qtd*lo.peso/450); mods[mk].ocup++; }
+    }
+  });
+  var modList=Object.keys(mods).map(function(k){return mods[k];})
+    .sort(function(a,b){return a.num-b.num;});
+  if(modList.length){
+    var maxModUaHa=0;
+    modList.forEach(function(m){ var u=m.ha>0?m.ua/m.ha:0; if(u>maxModUaHa) maxModUaHa=u; });
+    if(maxModUaHa<=0) maxModUaHa=1;
+    var barrasMod=modList.map(function(m){
+      var uaHa=m.ha>0?m.ua/m.ha:0;
+      var pct=Math.round((uaHa/maxModUaHa)*100);
+      if(uaHa>0 && pct<2) pct=2;
+      var corMod=uaHa<=0?'#BDBDBD':(uaHa<1.5?'#F9A825':'#2E7D32');
+      var val=uaHa>0?uaHa.toFixed(2)+' UA/ha':'vazio';
+      var sub=m.ocup+'/'+m.tot+' piq.';
+      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">'
+        +'<div style="width:74px;font-size:10px;color:#555;text-align:right;flex-shrink:0">Módulo '+m.num+'<br><span style="font-size:8px;color:#999">'+sub+'</span></div>'
+        +'<div style="flex:1;background:#F0F0F0;border-radius:4px;height:16px;position:relative;overflow:hidden">'
+        +  '<div style="width:'+pct+'%;background:'+corMod+';height:100%;border-radius:4px"></div>'
+        +'</div>'
+        +'<div style="width:64px;font-size:10px;color:#333;font-weight:700;flex-shrink:0">'+val+'</div>'
+        +'</div>';
+    }).join('');
+    out+='<div style="margin-bottom:14px">'
+      +'<div style="font-size:11px;font-weight:700;color:#1B5E20;margin-bottom:6px">🧩 Carga por módulo (ocupação atual)</div>'
+      +barrasMod
+      +'</div>';
+  }
+
   // ── (b) Distribuição da saúde (quantos 🟢🟡🔴) ──
   var cont={verde:0,amarelo:0,vermelho:0,cinza:0};
   comHist.forEach(function(p){ if(cont[p.nota]!==undefined) cont[p.nota]++; });
@@ -4494,7 +4542,6 @@ function _rkpGraficos(comHist){
 
 function rHistRankingPastos(){
   var div=document.getElementById('hist-ranking-pastos');
-  if(!div) return;
   var cfg=_rkpCfg();
   if(!S.MAPA_ALOC) S.MAPA_ALOC={};
   var lotes=S.LOTES||[];
@@ -4623,8 +4670,12 @@ function rHistRankingPastos(){
   comHist.sort(function(a,b){return b.score-a.score;});
   semHist.sort(function(a,b){return a.label.localeCompare(b.label);});
 
-  // Expõe o resultado calculado para reuso (PDF), sem recalcular.
+  // Expõe o resultado calculado para reuso (PDF e painel do vaqueiro), sem recalcular.
   window._rkpPerfis={comHist:comHist, semHist:semHist, cfg:cfg};
+
+  // Sem container de render (ex.: usuário vaqueiro sem aba Histórico):
+  // o cálculo acima já populou window._rkpPerfis; nada a desenhar aqui.
+  if(!div) return;
 
   // Alertas que pedem resposta (no topo)
   var pendentes=comHist.filter(function(p){return p.alerta && p.respCod!=='reforma';});
@@ -5198,6 +5249,27 @@ function rVaqueiroPainel(){
     : '<div style="margin-top:8px;background:#E8F5E9;border-radius:8px;padding:8px 12px;font-size:12px;color:#1B5E20;font-weight:700">✅ Todos os lotes dentro do prazo ideal.</div>';
 
   grid.innerHTML = html + alertasDiv;
+
+  // Gráfico dos pastos no painel do vaqueiro (só-leitura).
+  // Reusa o cálculo de rHistRankingPastos via window._rkpPerfis.
+  try{
+    var gcard=document.getElementById('vaq-graf-card');
+    var gdiv=document.getElementById('vaq-graf-pastos');
+    if(gcard && gdiv){
+      // Garante que os perfis estão calculados (sem depender da aba Histórico)
+      if(!window._rkpPerfis || !window._rkpPerfis.comHist){
+        try{ rHistRankingPastos(); }catch(e){}
+      }
+      var perfis=window._rkpPerfis;
+      if(perfis && perfis.comHist){
+        var g=_rkpGraficos(perfis.comHist);
+        if(g){ gdiv.innerHTML=g; gcard.style.display='block'; }
+        else { gcard.style.display='none'; }
+      } else {
+        gcard.style.display='none';
+      }
+    }
+  }catch(e){ console.error('vaq graf:',e); }
 
 }
 
