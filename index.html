@@ -1582,7 +1582,7 @@ function _estoqueEditado(){
 function entEst(){const p=(document.getElementById('ep')||{}).value;const q=parseFloat((document.getElementById('eq')||{}).value)||0;if(!p||!q){alert('Selecione produto e quantidade.');return;}S.EST[p].q=parseFloat((S.EST[p].q+q).toFixed(2));S.mEst.push({p,q,u:S.EST[p].u,t:'entrada',dt:(document.getElementById('ed')||{}).value||TD,loc:(document.getElementById('eo')||{}).value});_estoqueEditado();_enviarEstoque(p);rEst();showOk('ok-e');document.getElementById('eq').value='';document.getElementById('eo').value='';}
 
 // ═══ RENDER ═══
-function rEst(){const el=document.getElementById('est-l');if(!el)return;el.innerHTML=Object.entries(S.EST).map(([nome,d])=>{const pc=Math.min(100,Math.round(d.q/Math.max(d.q,d.min*3)*100));const cl=d.q<=d.min?'l':d.q<=d.min*2?'m':'';const badge=d.q<=d.min?`<span class="lb">⚠️ Baixo!</span>`:d.q<=d.min*2?`<span class="wb">Atenção</span>`:'';return`<div class="er"><div style="flex:1"><div style="font-size:13px;font-weight:700">${nome} ${badge}</div><div style="font-size:11px;color:#888;margin-top:2px">${d.q} ${d.u} · mín ${d.min}<div class="ebw"><div class="ebar ${cl}" style="width:${pc}%;height:100%"></div></div></div></div><div style="text-align:right;padding-left:10px"><div style="font-size:18px;font-weight:700;color:${d.q<=d.min?'#CC2200':'#2d7a1f'}">${d.q}<div style="font-size:10px;font-weight:400;color:#888">${d.u}</div></div><button onclick="editarProdutoEst('${nome}')" style="margin-top:4px;padding:2px 8px;font-size:10px;background:#f0f0f0;border:none;border-radius:5px;cursor:pointer">✏️</button></div></div>`;}).join('');const ml=document.getElementById('mov-l');if(!ml)return;ml.innerHTML=S.mEst.length?[...S.mEst].reverse().slice(0,20).map(m=>`<div class="ri"><div class="rt"><span class="rn">${m.p}</span><span style="font-size:13px;font-weight:700;color:${m.t==='entrada'?'#2d7a1f':'#CC2200'}">${m.t==='entrada'?'+':'-'}${m.q} ${m.u}</span></div><div class="rd">${m.dt.split('-').reverse().join('/')} · ${m.t==='entrada'?'Entrada':'Saída → '+m.loc}</div></div>`).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:12px">Nenhuma.</div>';}
+function rEst(){const el=document.getElementById('est-l');if(!el)return;el.innerHTML=Object.entries(S.EST).map(([nome,d])=>{const pc=Math.min(100,Math.round(d.q/Math.max(d.q,d.min*3)*100));const cl=d.q<=d.min?'l':d.q<=d.min*2?'m':'';const badge=d.q<=d.min?`<span class="lb">⚠️ Baixo!</span>`:d.q<=d.min*2?`<span class="wb">Atenção</span>`:'';return`<div class="er"><div style="flex:1"><div style="font-size:13px;font-weight:700">${nome} ${badge}</div><div style="font-size:11px;color:#888;margin-top:2px">${d.q} ${d.u} · mín ${d.min}<div class="ebw"><div class="ebar ${cl}" style="width:${pc}%;height:100%"></div></div></div></div><div style="text-align:right;padding-left:10px"><div style="font-size:18px;font-weight:700;color:${d.q<=d.min?'#CC2200':'#2d7a1f'}">${d.q}<div style="font-size:10px;font-weight:400;color:#888">${d.u}</div></div><button onclick="editarProdutoEst('${nome}')" style="margin-top:4px;padding:2px 8px;font-size:10px;background:#f0f0f0;border:none;border-radius:5px;cursor:pointer">✏️</button><button onclick="excluirProdutoEst('${nome}')" style="margin-top:4px;margin-left:4px;padding:2px 8px;font-size:10px;background:#FFEBEE;color:#C62828;border:none;border-radius:5px;cursor:pointer">🗑️</button></div></div>`;}).join('');const ml=document.getElementById('mov-l');if(!ml)return;ml.innerHTML=S.mEst.length?[...S.mEst].reverse().slice(0,20).map(m=>`<div class="ri"><div class="rt"><span class="rn">${m.p}</span><span style="font-size:13px;font-weight:700;color:${m.t==='entrada'?'#2d7a1f':'#CC2200'}">${m.t==='entrada'?'+':'-'}${m.q} ${m.u}</span></div><div class="rd">${m.dt.split('-').reverse().join('/')} · ${m.t==='entrada'?'Entrada':'Saída → '+m.loc}</div></div>`).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:12px">Nenhuma.</div>';}
 var _calAno = new Date().getFullYear();
 var _calMes = new Date().getMonth(); // 0-indexed
 var _calDiaSel = null;
@@ -3909,6 +3909,31 @@ function rListProdutos(){const el=document.getElementById('prod-lista');if(!el)r
 function removerProduto(nome,faz){if(!confirm('Remover produto "'+nome+'"?'))return;if(S.FAZ[faz]&&S.FAZ[faz].prods)S.FAZ[faz].prods=S.FAZ[faz].prods.filter(p=>p!==nome);if(S.EST)delete S.EST[nome];salvar();rListProdutos();updInsProd();}
 function updInsInfo(sel){const nome=sel.value;const row=sel.closest?sel.closest('.ir'):null;const infoEl=row?row.nextElementSibling:null;if(!infoEl||!infoEl.classList.contains('ins-info')){return;}if(!nome||!S.EST||!S.EST[nome]){infoEl.style.display='none';return;}const est=S.EST[nome];infoEl.textContent='📦 '+nome+' · Estoque: '+est.q+' '+est.u+(est.pct?' · '+est.pct+'% PV':'');infoEl.style.display='block';const uSel=row.querySelector('.iu');if(uSel&&est.u)uSel.value=est.u;}
 function editarProdutoEst(nome){const d=S.EST[nome]||{};const nv=prompt('Nome:',nome);if(!nv)return;const qtd=parseFloat(prompt('Estoque atual:',d.q||0));const min=parseFloat(prompt('Estoque mínimo:',d.min||0));const unid=prompt('Unidade:',d.u||'kg');const pct=parseFloat(prompt('% consumo PV:',d.pct||0));if(nv!==nome){S.EST[nv]=S.EST[nome];delete S.EST[nome];Object.keys(S.FAZ).forEach(f=>{if(S.FAZ[f].prods){const i=S.FAZ[f].prods.indexOf(nome);if(i>=0)S.FAZ[f].prods[i]=nv;}});nome=nv;}if(!isNaN(qtd))S.EST[nome].q=qtd;if(!isNaN(min))S.EST[nome].min=min;if(unid)S.EST[nome].u=unid;if(!isNaN(pct))S.EST[nome].pct=pct;_estoqueEditado();_enviarEstoque(nome);rEst();updInsProd();alert('✅ Produto atualizado!');}
+
+// Exclui um produto do estoque: confirma, remove do app e apaga a linha
+// na aba 📦 Estoque (via ação estoque_del no Apps Script).
+function excluirProdutoEst(nome){
+  if(!S.EST||!S.EST[nome])return;
+  if(!confirm('Tem certeza que quer excluir "'+nome+'" do estoque?\n\nIsso remove o produto da lista e da planilha. Não dá pra desfazer.'))return;
+  // Remove do app
+  delete S.EST[nome];
+  // Remove o produto da lista de produtos das fazendas
+  Object.keys(S.FAZ||{}).forEach(function(f){
+    if(S.FAZ[f]&&S.FAZ[f].prods){
+      var i=S.FAZ[f].prods.indexOf(nome);
+      if(i>=0)S.FAZ[f].prods.splice(i,1);
+    }
+  });
+  window._estEditTs=Date.now();
+  salvarLocal();
+  // Manda apagar na planilha (caminho do trato, que funciona)
+  var faz=(CU&&CU.fs&&CU.fs.length?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||''));
+  enviarDado({tipo:'estoque_del', faz:faz, produto:nome});
+  // Também sobe a config (pra refletir a remoção no estado geral)
+  if(S.cfgGS&&navigator.onLine&&_podeSync()){ try{ salvarNuvem(null); }catch(e){} }
+  rEst();updInsProd();
+  alert('🗑️ Produto "'+nome+'" excluído.');
+}
 
 // ═══ DESPESAS ═══
 let despStSel='pagar',despFiltSel='a_pagar';
