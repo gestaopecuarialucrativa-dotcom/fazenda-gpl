@@ -3153,10 +3153,19 @@ function carregarNuvem(cb){
             S.US=lu;
           }
           if(cfg.EST){
-            // Não sobrescrever se o usuário editou o estoque há pouco (≤30s)
-            // e a edição ainda pode não ter subido. Mesmo cuidado do trato.
+            // Edição recente (≤30s): preserva tudo o que está local, não sobrescreve.
             var _editRecente = window._estEditTs && (Date.now()-window._estEditTs < 30000);
-            if(!_editRecente) S.EST=cfg.EST;
+            if(!_editRecente){
+              // Merge: parte do estoque da nuvem, mas mantém produtos que só
+              // existem localmente (cadastro novo que ainda não voltou na nuvem).
+              var estMerge = Object.assign({}, cfg.EST);
+              if(S.EST){
+                Object.keys(S.EST).forEach(function(nome){
+                  if(estMerge[nome]===undefined){ estMerge[nome]=S.EST[nome]; }
+                });
+              }
+              S.EST = estMerge;
+            }
           }
           if(cfg.SERVS&&cfg.SERVS.length)S.SERVS=cfg.SERVS;
           if(cfg.PR)S.PR=cfg.PR;
@@ -3204,21 +3213,27 @@ function carregarNuvem(cb){
           if(cfg.DIARISTAS)S.DIARISTAS=cfg.DIARISTAS;
           // Só substituir registros se nuvem trouxer dados — nunca apagar com vazio
           if(cfg.rD&&cfg.rD.length>0){
-            // Merge: usar dados da nuvem mas preservar status pago marcado localmente
+            // Merge: usar dados da nuvem mas preservar status pago E exclusões locais
             var rdLocal = S.rD || [];
             var pagosLocal = {};
+            var apagadosLocal = {};
             rdLocal.forEach(function(r){
+              var k = (r.dt||'')+'|'+(r.n||'')+'|'+(r.srv||'')+'|'+(r.v||0);
               if(r.pago){
-                var k = (r.dt||'')+'|'+(r.n||'')+'|'+(r.srv||'')+'|'+(r.v||0);
                 pagosLocal[k] = {pago_por:r.pago_por||'', pago_dt:r.pago_dt||''};
               }
+              if(r._apagado){ apagadosLocal[k] = true; }
             });
             S.rD = cfg.rD.map(function(r){
               var k = (r.dt||'')+'|'+(r.n||'')+'|'+(r.srv||'')+'|'+(r.v||0);
+              var out = r;
               if(pagosLocal[k]){
-                return Object.assign({},r,{pago:true,pago_por:pagosLocal[k].pago_por,pago_dt:pagosLocal[k].pago_dt});
+                out = Object.assign({},r,{pago:true,pago_por:pagosLocal[k].pago_por,pago_dt:pagosLocal[k].pago_dt});
               }
-              return r;
+              if(apagadosLocal[k]){
+                out = Object.assign({},out,{_apagado:true});
+              }
+              return out;
             });
           } else if((!cfg.rD||cfg.rD.length===0)&&S.rD&&S.rD.length>0){
             // Preservar dados locais se nuvem vier vazia
