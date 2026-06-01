@@ -706,15 +706,9 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
 <!-- ESTOQUE — irmão de pg-cantina ✅ -->
 <div id="pg-estoque" class="pg" style="display:none">
-<div class="card"><div class="stit">📦 Estoque atual</div><div id="est-l"></div></div>
-<div class="card">
-<div class="stit">⬇️ Entrada de produto</div>
-<div class="fg"><div class="lbl">Produto</div><select id="ep"></select></div>
-<div class="brow" style="margin-bottom:11px"><div><div class="lbl">Quantidade</div><input type="number" id="eq" placeholder="0" min="0" step="0.5"></div><div><div class="lbl">Data</div><input type="date" id="ed"></div></div>
-<div class="fg" style="margin-bottom:0"><div class="lbl">NF / Fornecedor</div><input type="text" id="eo" placeholder="Ex: NF 1234"></div>
-<button class="sbtn" style="margin-top:10px" onclick="entEst()">⬇️ Registrar entrada</button>
-<div class="ok" id="ok-e">✅ Entrada registrada!</div>
-</div>
+<div class="card"><div class="stit">📦 Estoque</div><div id="est-l"></div></div>
+<div class="card"><div class="stit">🛠️ Total tratado</div><div id="est-tratado"></div></div>
+<div class="card"><div class="stit">📊 Saldo estoque</div><div id="est-saldo"></div></div>
 <div class="card"><div class="stit">🕐 Movimentações</div><div id="mov-l"><div style="font-size:12px;color:#888;text-align:center;padding:12px">Nenhuma.</div></div></div>
 </div>
 
@@ -1582,7 +1576,55 @@ function _estoqueEditado(){
 function entEst(){const p=(document.getElementById('ep')||{}).value;const q=parseFloat((document.getElementById('eq')||{}).value)||0;if(!p||!q){alert('Selecione produto e quantidade.');return;}S.EST[p].q=parseFloat((S.EST[p].q+q).toFixed(2));S.mEst.push({p,q,u:S.EST[p].u,t:'entrada',dt:(document.getElementById('ed')||{}).value||TD,loc:(document.getElementById('eo')||{}).value});_estoqueEditado();_enviarEstoque(p);rEst();showOk('ok-e');document.getElementById('eq').value='';document.getElementById('eo').value='';}
 
 // ═══ RENDER ═══
-function rEst(){const el=document.getElementById('est-l');if(!el)return;el.innerHTML=Object.entries(S.EST).map(([nome,d])=>{const pc=Math.min(100,Math.round(d.q/Math.max(d.q,d.min*3)*100));const cl=d.q<=d.min?'l':d.q<=d.min*2?'m':'';const badge=d.q<=d.min?`<span class="lb">⚠️ Baixo!</span>`:d.q<=d.min*2?`<span class="wb">Atenção</span>`:'';return`<div class="er"><div style="flex:1"><div style="font-size:13px;font-weight:700">${nome} ${badge}</div><div style="font-size:11px;color:#888;margin-top:2px">${d.q} ${d.u} · mín ${d.min}<div class="ebw"><div class="ebar ${cl}" style="width:${pc}%;height:100%"></div></div></div></div><div style="text-align:right;padding-left:10px"><div style="font-size:18px;font-weight:700;color:${d.q<=d.min?'#CC2200':'#2d7a1f'}">${d.q}<div style="font-size:10px;font-weight:400;color:#888">${d.u}</div></div><button onclick="editarProdutoEst('${nome}')" style="margin-top:4px;padding:2px 8px;font-size:10px;background:#f0f0f0;border:none;border-radius:5px;cursor:pointer">✏️</button><button onclick="excluirProdutoEst('${nome}')" style="margin-top:4px;margin-left:4px;padding:2px 8px;font-size:10px;background:#FFEBEE;color:#C62828;border:none;border-radius:5px;cursor:pointer">🗑️</button></div></div>`;}).join('');const ml=document.getElementById('mov-l');if(!ml)return;ml.innerHTML=S.mEst.length?[...S.mEst].reverse().slice(0,20).map(m=>`<div class="ri"><div class="rt"><span class="rn">${m.p}</span><span style="font-size:13px;font-weight:700;color:${m.t==='entrada'?'#2d7a1f':'#CC2200'}">${m.t==='entrada'?'+':'-'}${m.q} ${m.u}</span></div><div class="rd">${m.dt.split('-').reverse().join('/')} · ${m.t==='entrada'?'Entrada':'Saída → '+m.loc}</div></div>`).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:12px">Nenhuma.</div>';}
+function rEst(){const el=document.getElementById('est-l');if(!el)return;el.innerHTML=Object.entries(S.EST).map(([nome,d])=>{const pc=Math.min(100,Math.round(d.q/Math.max(d.q,d.min*3)*100));const cl=d.q<=d.min?'l':d.q<=d.min*2?'m':'';const badge=d.q<=d.min?`<span class="lb">⚠️ Baixo!</span>`:d.q<=d.min*2?`<span class="wb">Atenção</span>`:'';return`<div class="er"><div style="flex:1"><div style="font-size:13px;font-weight:700">${nome} ${badge}</div><div style="font-size:11px;color:#888;margin-top:2px">${d.q} ${d.u} · mín ${d.min}<div class="ebw"><div class="ebar ${cl}" style="width:${pc}%;height:100%"></div></div></div></div><div style="text-align:right;padding-left:10px"><div style="font-size:18px;font-weight:700;color:${d.q<=d.min?'#CC2200':'#2d7a1f'}">${d.q}<div style="font-size:10px;font-weight:400;color:#888">${d.u}</div></div><button onclick="editarProdutoEst('${nome}')" style="margin-top:4px;padding:2px 8px;font-size:10px;background:#f0f0f0;border:none;border-radius:5px;cursor:pointer">✏️</button><button onclick="excluirProdutoEst('${nome}')" style="margin-top:4px;margin-left:4px;padding:2px 8px;font-size:10px;background:#FFEBEE;color:#C62828;border:none;border-radius:5px;cursor:pointer">🗑️</button></div></div>`;}).join('');const ml=document.getElementById('mov-l');if(!ml)return;ml.innerHTML=S.mEst.length?[...S.mEst].reverse().slice(0,20).map(m=>`<div class="ri"><div class="rt"><span class="rn">${m.p}</span><span style="font-size:13px;font-weight:700;color:${m.t==='entrada'?'#2d7a1f':'#CC2200'}">${m.t==='entrada'?'+':'-'}${m.q} ${m.u}</span></div><div class="rd">${m.dt.split('-').reverse().join('/')} · ${m.t==='entrada'?'Entrada':'Saída → '+m.loc}</div></div>`).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:12px">Nenhuma.</div>';
+  _rEstTratadoSaldo();}
+
+// Preenche os blocos "Total tratado" e "Saldo estoque" da aba Estoque.
+// Total tratado = soma dos sacos lançados nos tratos, por produto.
+// Saldo = Estoque atual (S.EST[p].q) − Total tratado. (Caminho A: o
+// sistema calcula, não depende de ler fórmula da planilha.)
+function _rEstTratadoSaldo(){
+  var elT=document.getElementById('est-tratado');
+  var elS=document.getElementById('est-saldo');
+  if(!elT&&!elS)return;
+  // Soma tratos por produto
+  var tratado={};
+  (S.rT||[]).filter(function(r){return r.tipo==='trato'&&!r._apagado;}).forEach(function(r){
+    var pr=r.pr||r.prod||'?';
+    var q=parseFloat(r.q||r.qtd||0)||0;
+    tratado[pr]=(tratado[pr]||0)+q;
+  });
+  var nomes=Object.keys(S.EST||{});
+  // Bloco Total tratado
+  if(elT){
+    if(!nomes.length){ elT.innerHTML='<div style="font-size:12px;color:#888;text-align:center;padding:12px">Sem produtos.</div>'; }
+    else {
+      elT.innerHTML=nomes.map(function(nome){
+        var t=tratado[nome]||0;
+        var u=(S.EST[nome].u)||'saco';
+        return '<div class="er"><div style="flex:1"><div style="font-size:13px;font-weight:700">'+nome+'</div></div>'
+          +'<div style="text-align:right;padding-left:10px"><div style="font-size:18px;font-weight:700;color:#6A1B9A">'+t+'<div style="font-size:10px;font-weight:400;color:#888">'+u+'</div></div></div></div>';
+      }).join('');
+    }
+  }
+  // Bloco Saldo
+  if(elS){
+    if(!nomes.length){ elS.innerHTML='<div style="font-size:12px;color:#888;text-align:center;padding:12px">Sem produtos.</div>'; }
+    else {
+      elS.innerHTML=nomes.map(function(nome){
+        var d=S.EST[nome];
+        var t=tratado[nome]||0;
+        var saldo=parseFloat((d.q-t).toFixed(2));
+        var u=d.u||'saco';
+        var baixo=saldo<=d.min;
+        var badge=baixo?'<span class="lb">⚠️ Baixo!</span>':'';
+        return '<div class="er"><div style="flex:1"><div style="font-size:13px;font-weight:700">'+nome+' '+badge+'</div>'
+          +'<div style="font-size:11px;color:#888;margin-top:2px">'+d.q+' − '+t+' tratado</div></div>'
+          +'<div style="text-align:right;padding-left:10px"><div style="font-size:18px;font-weight:700;color:'+(baixo?'#CC2200':'#2d7a1f')+'">'+saldo+'<div style="font-size:10px;font-weight:400;color:#888">'+u+'</div></div></div></div>';
+      }).join('');
+    }
+  }
+}
 var _calAno = new Date().getFullYear();
 var _calMes = new Date().getMonth(); // 0-indexed
 var _calDiaSel = null;
