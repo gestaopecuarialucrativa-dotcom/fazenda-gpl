@@ -995,6 +995,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     <button id="rel-tab-fazenda" onclick="rRelTab('fazenda')" class="pbtn on" style="flex:1;padding:10px;font-size:12px">🌿 Fazenda</button>
     <button id="rel-tab-pagamentos" onclick="rRelTab('pagamentos')" class="pbtn" style="flex:1;padding:10px;font-size:12px">💰 Pagamentos</button>
     <button id="rel-tab-dashboard" onclick="rRelTab('dashboard')" class="pbtn" style="flex:1;padding:10px;font-size:12px">📈 Dashboard</button>
+    <button id="rel-tab-compra" onclick="rRelTab('compra')" class="pbtn" style="flex:1;padding:10px;font-size:12px">🛒 Compra</button>
   </div>
 
   <!-- ABA FAZENDA -->
@@ -1031,6 +1032,20 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <!-- ABA DASHBOARD -->
   <div id="rel-dashboard" style="display:none">
     <div id="dashboard-container"></div>
+  </div>
+
+  <!-- ABA COMPRA (planejamento de pedido de suplemento) -->
+  <div id="rel-compra" style="display:none">
+    <div class="card" style="padding:14px;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700;color:#1B5E20;margin-bottom:6px">🛒 Planejamento de Compra</div>
+      <div style="font-size:11px;color:#666;margin-bottom:12px">Escolha o produto de cada lote. O cálculo de sacos para 30, 60 e 90 dias é automático (consumo = peso × % × nº de animais). É só planejamento — não registra compra nem baixa estoque.</div>
+      <div id="compra-lotes"></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button onclick="rCompraCalc()" style="flex:1;padding:10px;background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🧮 Calcular</button>
+        <button onclick="gerarPDFCompra()" style="flex:1;padding:10px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">📄 Gerar PDF</button>
+      </div>
+    </div>
+    <div id="compra-resultado"></div>
   </div>
 
 </div><!-- FIM pg-relatorio ✅ -->
@@ -2615,11 +2630,12 @@ function gerarRelPDF(){
 // ═══════════════════════════════════════════════════════
 
 function rRelTab(aba){
-  ['fazenda','pagamentos','dashboard'].forEach(function(a){
-    document.getElementById('rel-tab-'+a).className='pbtn'+(a===aba?' on':'');
-    document.getElementById('rel-'+a).style.display=a===aba?'block':'none';
+  ['fazenda','pagamentos','dashboard','compra'].forEach(function(a){
+    var b=document.getElementById('rel-tab-'+a); if(b)b.className='pbtn'+(a===aba?' on':'');
+    var c=document.getElementById('rel-'+a); if(c)c.style.display=a===aba?'block':'none';
   });
   if(aba==='dashboard') rRenderDashboard();
+  if(aba==='compra') rCompraLotes();
   if(aba==='pagamentos'){
     var hoje=new Date();
     var d1=new Date(hoje); d1.setDate(hoje.getDate()-15);
@@ -2627,6 +2643,160 @@ function rRelTab(aba){
     var rp=document.getElementById('rp-de'); if(rp&&!rp.value)rp.value=fmt(d1);
     var ra=document.getElementById('rp-ate'); if(ra&&!ra.value)ra.value=fmt(hoje);
   }
+}
+
+// ── PLANEJAMENTO DE COMPRA DE SUPLEMENTO ──
+// Puxa lotes (S.LOTES) e produtos (S.EST) do sistema. Para cada lote,
+// o usuário escolhe o produto; calcula sacos para 30/60/90 dias.
+// Consumo/dia = peso × (% por cab/dia /100) × nº animais.
+// Sacos = ceil( consumo_dia × dias / peso_saco ). Só planejamento.
+var SACO_KG_PADRAO=30;
+
+function rCompraLotes(){
+  var div=document.getElementById('compra-lotes');
+  if(!div)return;
+  var lotes=(S.LOTES||[]).filter(function(l){return (l.qtd||0)>0;});
+  var prods=Object.keys(S.EST||{});
+  if(!lotes.length){
+    div.innerHTML='<div style="font-size:12px;color:#888;text-align:center;padding:16px">Nenhum lote cadastrado.</div>';
+    return;
+  }
+  if(!prods.length){
+    div.innerHTML='<div style="font-size:12px;color:#888;text-align:center;padding:16px">Nenhum produto cadastrado no estoque.</div>';
+    return;
+  }
+  div.innerHTML=lotes.map(function(l,i){
+    var opts='<option value="">— não comprar —</option>'+prods.map(function(p){return '<option value="'+p.replace(/"/g,'&quot;')+'">'+p+'</option>';}).join('');
+    return '<div class="card" style="padding:10px;margin-bottom:8px;background:#fafafa">'
+      +'<div style="font-size:13px;font-weight:700;color:#1B5E20">'+l.nome+'</div>'
+      +'<div style="font-size:10px;color:#888;margin-bottom:6px">'+l.qtd+' animais · '+l.peso+' kg médio</div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end">'
+      +  '<div style="flex:2;min-width:140px"><div style="font-size:10px;color:#666;margin-bottom:2px">Produto</div>'
+      +    '<select id="cmp-prod-'+i+'" onchange="rCompraSyncPct('+i+')" style="width:100%;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px">'+opts+'</select></div>'
+      +  '<div style="flex:1;min-width:70px"><div style="font-size:10px;color:#666;margin-bottom:2px">% PV/dia</div>'
+      +    '<input type="number" id="cmp-pct-'+i+'" step="0.01" min="0" placeholder="0" style="width:100%;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px"></div>'
+      +'</div></div>';
+  }).join('');
+}
+
+// Ao escolher o produto, preenche o % com o cadastrado (editável)
+function rCompraSyncPct(i){
+  var sel=document.getElementById('cmp-prod-'+i);
+  var inp=document.getElementById('cmp-pct-'+i);
+  if(!sel||!inp)return;
+  var p=sel.value;
+  if(p&&S.EST[p]&&S.EST[p].pct!=null){ inp.value=S.EST[p].pct; }
+  else { inp.value=''; }
+}
+
+// Calcula e devolve as linhas do plano (reuso por tela e PDF)
+function _compraPlano(){
+  var lotes=(S.LOTES||[]).filter(function(l){return (l.qtd||0)>0;});
+  var linhas=[];
+  lotes.forEach(function(l,i){
+    var sel=document.getElementById('cmp-prod-'+i);
+    var inp=document.getElementById('cmp-pct-'+i);
+    if(!sel||!sel.value)return; // lote sem produto escolhido = não entra
+    var prod=sel.value;
+    var pct=parseFloat(inp&&inp.value)||0;
+    if(pct<=0)return;
+    var saco=(S.EST[prod]&&S.EST[prod].peso_saco)?S.EST[prod].peso_saco:SACO_KG_PADRAO;
+    var consDia=l.peso*(pct/100)*l.qtd; // kg/dia do lote
+    function sacos(dias){ return Math.ceil((consDia*dias)/saco); }
+    linhas.push({
+      lote:l.nome, qtd:l.qtd, peso:l.peso, prod:prod, pct:pct, saco:saco,
+      consDia:consDia,
+      s30:sacos(30), s60:sacos(60), s90:sacos(90),
+      kg30:consDia*30, kg60:consDia*60, kg90:consDia*90
+    });
+  });
+  return linhas;
+}
+
+function rCompraCalc(){
+  var div=document.getElementById('compra-resultado');
+  if(!div)return;
+  var linhas=_compraPlano();
+  if(!linhas.length){
+    div.innerHTML='<div class="card" style="padding:14px"><div style="font-size:12px;color:#888;text-align:center">Escolha o produto de pelo menos um lote e clique em Calcular.</div></div>';
+    return;
+  }
+  // Por lote
+  var out='<div class="card" style="padding:12px;margin-bottom:10px">'
+    +'<div style="font-size:13px;font-weight:700;color:#1B5E20;margin-bottom:8px">Sacos por lote</div>';
+  linhas.forEach(function(r){
+    out+='<div style="padding:8px 0;border-bottom:1px solid #f0f0f0">'
+      +'<div style="font-size:12px;font-weight:700">'+r.lote+' · '+r.prod+'</div>'
+      +'<div style="font-size:10px;color:#888;margin-bottom:4px">'+r.qtd+' animais × '+r.peso+' kg × '+r.pct+'% = '+r.consDia.toFixed(1)+' kg/dia</div>'
+      +'<div style="display:flex;gap:10px">'
+      +  '<div><div style="font-size:9px;color:#999">30 dias</div><div style="font-size:14px;font-weight:700;color:#2E7D32">'+r.s30+' sc</div></div>'
+      +  '<div><div style="font-size:9px;color:#999">60 dias</div><div style="font-size:14px;font-weight:700;color:#2E7D32">'+r.s60+' sc</div></div>'
+      +  '<div><div style="font-size:9px;color:#999">90 dias</div><div style="font-size:14px;font-weight:700;color:#2E7D32">'+r.s90+' sc</div></div>'
+      +'</div></div>';
+  });
+  out+='</div>';
+  // Total por produto
+  var tot={};
+  linhas.forEach(function(r){
+    if(!tot[r.prod])tot[r.prod]={s30:0,s60:0,s90:0};
+    tot[r.prod].s30+=r.s30; tot[r.prod].s60+=r.s60; tot[r.prod].s90+=r.s90;
+  });
+  out+='<div class="card" style="padding:12px"><div style="font-size:13px;font-weight:700;color:#1B5E20;margin-bottom:8px">Total por produto (pedido ao fornecedor)</div>';
+  Object.keys(tot).forEach(function(p){
+    var t=tot[p];
+    out+='<div style="padding:8px 0;border-bottom:1px solid #f0f0f0">'
+      +'<div style="font-size:12px;font-weight:700">'+p+'</div>'
+      +'<div style="display:flex;gap:10px;margin-top:2px">'
+      +  '<div><div style="font-size:9px;color:#999">30 dias</div><div style="font-size:15px;font-weight:800;color:#1B5E20">'+t.s30+' sc</div></div>'
+      +  '<div><div style="font-size:9px;color:#999">60 dias</div><div style="font-size:15px;font-weight:800;color:#1B5E20">'+t.s60+' sc</div></div>'
+      +  '<div><div style="font-size:9px;color:#999">90 dias</div><div style="font-size:15px;font-weight:800;color:#1B5E20">'+t.s90+' sc</div></div>'
+      +'</div></div>';
+  });
+  out+='</div>';
+  div.innerHTML=out;
+}
+
+function gerarPDFCompra(){
+  var linhas=_compraPlano();
+  if(!linhas.length){ alert('Escolha o produto de pelo menos um lote antes de gerar o PDF.'); return; }
+  var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
+  var tot={};
+  linhas.forEach(function(r){ if(!tot[r.prod])tot[r.prod]={s30:0,s60:0,s90:0}; tot[r.prod].s30+=r.s30; tot[r.prod].s60+=r.s60; tot[r.prod].s90+=r.s90; });
+
+  var linhasTab=linhas.map(function(r){
+    return '<tr><td>'+r.lote+'</td><td>'+r.prod+'</td><td style="text-align:center">'+r.qtd+'</td>'
+      +'<td style="text-align:center">'+r.peso+'</td><td style="text-align:center">'+r.pct+'%</td>'
+      +'<td style="text-align:center">'+r.consDia.toFixed(1)+'</td>'
+      +'<td style="text-align:center">'+r.s30+'</td><td style="text-align:center">'+r.s60+'</td><td style="text-align:center">'+r.s90+'</td></tr>';
+  }).join('');
+  var linhasTot=Object.keys(tot).map(function(p){
+    var t=tot[p];
+    return '<tr style="font-weight:700;background:#E8F5E9"><td colspan="6" style="text-align:right">'+p+'</td>'
+      +'<td style="text-align:center">'+t.s30+'</td><td style="text-align:center">'+t.s60+'</td><td style="text-align:center">'+t.s90+'</td></tr>';
+  }).join('');
+
+  var w=window.open('','_blank');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Planejamento de Compra — GPL</title>'
+    +'<style>body{font-family:Arial,sans-serif;padding:20px;color:#222}'
+    +'table{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}'
+    +'th{background:#1B5E20;color:#fff;padding:6px;text-align:left;font-size:10px}'
+    +'td{padding:6px;border-bottom:1px solid #eee}'
+    +'.crit{font-size:10px;color:#666;margin-top:6px;line-height:1.5}'
+    +_pdfTimbreCss()
+    +'@media print{button{display:none}}'
+    +'</style></head><body>'
+    +_pdfTimbre('🛒 Planejamento de Compra', null, faz)
+    +'<table><tr><th>Lote</th><th>Produto</th><th>Animais</th><th>Peso (kg)</th><th>% PV</th><th>Kg/dia</th><th>30 dias</th><th>60 dias</th><th>90 dias</th></tr>'
+    +linhasTab
+    +'<tr><td colspan="9" style="background:#fff;border:none;padding-top:8px;font-weight:700;color:#1B5E20">TOTAL POR PRODUTO (sacos)</td></tr>'
+    +linhasTot
+    +'</table>'
+    +'<p class="crit">Sacos arredondados para cima. Consumo/dia = peso médio × % do peso vivo × nº de animais. Valores de planejamento — não representam compra registrada. Saco padrão conforme cadastro de cada produto.</p>'
+    +'<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:12px">🖨️ Imprimir / Salvar PDF</button>'
+    +_pdfRodape()
+    +'</body></html>');
+  w.document.close();
+  setTimeout(function(){ try{w.print();}catch(e){} },500);
 }
 
 function rRelFazendaPreview(){
