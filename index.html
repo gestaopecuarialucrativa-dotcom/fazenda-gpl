@@ -714,6 +714,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
 <!-- PAINEL — irmão de pg-cantina ✅ -->
 <div id="pg-painel" class="pg" style="display:none">
+<button id="btn-feed-acesso" onclick="sp('feed','painel')" style="display:none;width:100%;background:#1B5E20;color:#fff;padding:11px;border:none;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:8px;cursor:pointer">📋 Conferir lançamentos da equipe</button>
 <div id="diag-btn" style="background:#FF6F00;color:#fff;padding:8px;border-radius:8px;text-align:center;margin-bottom:8px;cursor:pointer;font-size:12px" onclick="var m='v:'+S.rD.length+' cfgGS:'+(S.cfgGS?'OK':'VAZIO')+' FAZ:'+Object.keys(S.FAZ).join(',');alert(m)">🔍 diagnóstico</div>
 
 <!-- FILTROS -->
@@ -1051,6 +1052,21 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 </div><!-- FIM pg-relatorio ✅ -->
 
 <!-- HISTÓRICO ✅ -->
+<div id="pg-feed" class="pg" style="display:none;padding:14px;padding-bottom:24px">
+  <div style="font-size:12px;color:#666;margin-bottom:10px">Acompanhe os lançamentos da equipe. Confira se está certo e toque em 🗑️ para excluir um lançamento errado (depois é só relançar correto).</div>
+  <div class="card" style="padding:10px;margin-bottom:4px">
+    <div style="font-size:10px;color:#666;margin-bottom:3px">Quem lançou</div>
+    <select id="feed-user" onchange="feedSetUser(this.value)" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:8px"><option value="">Todos os usuários</option></select>
+    <div style="display:flex;gap:6px">
+      <button class="feedpb" onclick="feedSetPer(this,'dia')" style="flex:1;padding:7px 0;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:#f0f0f0;color:#333">Hoje</button>
+      <button class="feedpb on" onclick="feedSetPer(this,'semana')" style="flex:1;padding:7px 0;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:#1B5E20;color:#fff">7 dias</button>
+      <button class="feedpb" onclick="feedSetPer(this,'mes')" style="flex:1;padding:7px 0;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:#f0f0f0;color:#333">30 dias</button>
+      <button class="feedpb" onclick="feedSetPer(this,'tudo')" style="flex:1;padding:7px 0;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:#f0f0f0;color:#333">Tudo</button>
+    </div>
+  </div>
+  <div id="feed-cont" style="font-size:11px;color:#888;margin:6px 2px 8px"></div>
+  <div id="feed-lista"></div>
+</div>
 <div id="pg-historico" class="pg" style="display:none;padding-bottom:20px">
 
 <div style="display:flex;gap:0;margin-bottom:12px;background:#f0f0f0;border-radius:10px;padding:3px">
@@ -1419,7 +1435,7 @@ function rHomeMapa(){
   }
 }
 
-function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',relatorio:'📈 Relatório & Dashboard',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home'){setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);setTimeout(function(){try{rHomeMapa();}catch(e){}},600);setTimeout(function(){try{rHomeMapa();}catch(e){}},1500);}if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}if(_nuvemCarregando){setTimeout(()=>{try{rPan();}catch(e){}},3500);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _mt=0;var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');var img=document.getElementById('mapa-img-sat');var ok=wrap&&wrap.offsetWidth>0&&img&&(img.complete||img._loaded);if(!ok&&_mt++<30){setTimeout(_rmapa,300);return;}
+function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',relatorio:'📈 Relatório & Dashboard',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda',feed:'📋 Conferir Lançamentos'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home'){setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);setTimeout(function(){try{rHomeMapa();}catch(e){}},600);setTimeout(function(){try{rHomeMapa();}catch(e){}},1500);}if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}try{var _fb=document.getElementById('btn-feed-acesso');if(_fb)_fb.style.display=(CU&&CU.r==='Consultor')?'block':'none';}catch(e){}if(_nuvemCarregando){setTimeout(()=>{try{rPan();}catch(e){}},3500);}},50);if(id==='feed')setTimeout(()=>{try{rFeedConsultor();}catch(e){}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _mt=0;var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');var img=document.getElementById('mapa-img-sat');var ok=wrap&&wrap.offsetWidth>0&&img&&(img.complete||img._loaded);if(!ok&&_mt++<30){setTimeout(_rmapa,300);return;}
     // Se MAPA_COORDS vazio, carregar da nuvem primeiro
     if(S.cfgGS&&(!S.MAPA_COORDS||!Object.keys(S.MAPA_COORDS).length)){
       carregarNuvem(function(){try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}});
@@ -1811,6 +1827,61 @@ function pagarDiaria(idx){
   rPan();
 }
 function excluirRegistro(arr,idx){if(!confirm('⚠️ Excluir este registro?'))return;if(!S[arr]||idx<0||idx>=S[arr].length)return;S[arr][idx]._apagado=true;salvar();if(S.cfgGS)salvarNuvem(function(){});rPan();if(typeof rListDesp==='function')rListDesp();}
+
+// ── FEED DE CONFERÊNCIA (Consultor) — acompanhar lançamentos da equipe ──
+var _feedPer='semana', _feedUser='';
+function _feedTs(r){ if(r&&r._ts)return r._ts; if(r&&r.id)return Math.floor(r.id); var dt=r&&(r.dt||r.data); if(dt){var p=(''+dt).split('-'); if(p.length===3)return new Date(+p[0],+p[1]-1,+p[2]).getTime();} return 0; }
+function _feedItens(){
+  var it=[];
+  (S.rD||[]).forEach(function(r,i){ if(r._apagado)return;
+    if(r.tipo==='diaria') it.push({arr:'rD',idx:i,ts:_feedTs(r),tipo:'Diária',cor:'#1565C0',autor:r.lancadoPor||r.n||'—',dt:r.dt,faz:r.faz,resumo:'R$ '+(parseFloat(r.v)||0).toFixed(2).replace('.',',')+' · '+(r.srv||'')+(r.n?' · '+r.n:'')});
+    else if(r.tipo==='insumo') it.push({arr:'rD',idx:i,ts:_feedTs(r),tipo:'Insumo',cor:'#6A1B9A',autor:r.n||'—',dt:r.dt,faz:r.faz,resumo:((r.ins||[]).map(function(x){return x.p+' '+x.q+(x.u||'');}).join(', '))+(r.dest?' → '+r.dest:'')});
+  });
+  (S.rT||[]).forEach(function(r,i){ if(r._apagado)return; it.push({arr:'rT',idx:i,ts:_feedTs(r),tipo:'Trato',cor:'#2E7D32',autor:r.n||'—',dt:r.dt,faz:r.faz,resumo:(r.co||r.lote||'')+' · '+(r.pr||r.prod||'')+' · '+(r.q||r.qtd||0)+' '+(r.unid||'saco')}); });
+  (S.rE||[]).forEach(function(r,i){ if(r._apagado)return; it.push({arr:'rE',idx:i,ts:_feedTs(r),tipo:'Escore',cor:'#E65100',autor:r.n||'—',dt:r.dt,faz:r.faz,resumo:(r.co||'')+' · E'+(r.es)+' · '+(r.cab||0)+' cab'}); });
+  (S.rC||[]).forEach(function(r,i){ if(r._apagado)return; it.push({arr:'rC',idx:i,ts:_feedTs(r),tipo:'Cantina',cor:'#AD1457',autor:r.resp||'—',dt:r.dt,faz:r.faz,resumo:'R$ '+(parseFloat(r.total)||0).toFixed(2).replace('.',',')+(r.det?' · '+r.det:'')}); });
+  (S.rDesp||[]).forEach(function(r,i){ if(r._apagado)return; it.push({arr:'rDesp',idx:i,ts:_feedTs(r),tipo:'Despesa',cor:'#C62828',autor:'—',dt:r.dt,faz:r.faz,resumo:'R$ '+(parseFloat(r.val)||0).toFixed(2).replace('.',',')+(r.desc?' · '+r.desc:'')}); });
+  return it;
+}
+function _feedNoPeriodo(ts){
+  if(_feedPer==='tudo')return true;
+  var now=new Date(); var d=new Date(ts);
+  if(_feedPer==='dia') return d.toDateString()===now.toDateString();
+  var dias=_feedPer==='semana'?7:30;
+  var lim=new Date(now); lim.setDate(now.getDate()-dias); lim.setHours(0,0,0,0);
+  return d>=lim;
+}
+function feedSetUser(v){ _feedUser=v; rFeedConsultor(); }
+function feedSetPer(el,p){ _feedPer=p; document.querySelectorAll('.feedpb').forEach(function(b){b.classList.remove('on');b.style.background='#f0f0f0';b.style.color='#333';}); if(el){el.classList.add('on');el.style.background='#1B5E20';el.style.color='#fff';} rFeedConsultor(); }
+function feedExcluir(arr,idx){ excluirRegistro(arr,idx); setTimeout(function(){try{rFeedConsultor();}catch(e){}},60); }
+function rFeedConsultor(){
+  var us=document.getElementById('feed-user');
+  if(us && us.options.length<=1){
+    var nomes=(S.US||[]).map(function(u){return u.n;});
+    us.innerHTML='<option value="">Todos os usuários</option>'+nomes.map(function(n){return '<option value="'+(''+n).replace(/"/g,'&quot;')+'">'+n+'</option>';}).join('');
+    us.value=_feedUser;
+  }
+  var el=document.getElementById('feed-lista'); if(!el)return;
+  var it=_feedItens().filter(function(o){ return _feedNoPeriodo(o.ts) && (!_feedUser || o.autor===_feedUser); });
+  it.sort(function(a,b){return b.ts-a.ts;});
+  var cnt=document.getElementById('feed-cont'); if(cnt)cnt.textContent=it.length+' lançamento'+(it.length===1?'':'s');
+  if(!it.length){ el.innerHTML='<div style="font-size:13px;color:#888;text-align:center;padding:24px">Nenhum lançamento no período/filtro selecionado.</div>'; return; }
+  var html=''; var diaAtual='';
+  it.forEach(function(o){
+    var dBR=(o.dt||'').split('-').reverse().join('/');
+    if(dBR!==diaAtual){ diaAtual=dBR; html+='<div style="font-size:11px;font-weight:700;color:#1B5E20;margin:12px 0 4px">'+dBR+'</div>'; }
+    html+='<div class="card" style="padding:10px;margin-bottom:6px;display:flex;align-items:flex-start;gap:8px">'
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span style="font-size:10px;font-weight:700;color:#fff;background:'+o.cor+';padding:2px 7px;border-radius:10px">'+o.tipo+'</span>'
+      +'<span style="font-size:12px;font-weight:700">'+o.autor+'</span></div>'
+      +'<div style="font-size:12px;color:#444;margin-top:3px;word-break:break-word">'+o.resumo+'</div>'
+      +(o.faz?'<div style="font-size:10px;color:#999;margin-top:2px">'+o.faz+'</div>':'')
+      +'</div>'
+      +'<button onclick="feedExcluir(\''+o.arr+'\','+o.idx+')" style="padding:4px 9px;font-size:13px;background:#FFEBEE;color:#C62828;border:none;border-radius:6px;cursor:pointer;flex-shrink:0">🗑️</button>'
+      +'</div>';
+  });
+  el.innerHTML=html;
+}
 
 // ═══ CONFIG ═══
 function rFazCfg(){const c=document.getElementById('faz-cfg');if(!c)return;c.innerHTML=Object.entries(S.FAZ).map(([faz,d])=>{const k=faz.replace(/[\s']/g,'_');const lotes=(S.LOTES||[]).filter(l=>l.faz===faz).length;return`<div style="background:#f9f9f9;border-radius:10px;padding:10px;margin-bottom:10px;border:1px solid #e0e0e0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-weight:700;font-size:14px">🏠 ${faz}</span><div style="display:flex;gap:6px"><span onclick="editFaz('${faz}')" style="font-size:11px;background:#E6F1FB;color:#0C447C;padding:3px 8px;border-radius:6px;cursor:pointer">✏️</span><span onclick="delFaz('${faz}')" style="font-size:11px;background:#FCEBEB;color:#CC2200;padding:3px 8px;border-radius:6px;cursor:pointer">🗑️</span></div></div><div style="font-size:11px;color:#666;margin-bottom:6px">${lotes} lote(s)</div><div style="margin-bottom:6px"><div style="font-size:11px;color:#888;margin-bottom:3px">URL Apps Script:</div><div style="display:flex;gap:6px"><input id="gas-${k}" type="text" value="${d.gasUrl||''}" placeholder="https://script.google.com/..." style="flex:1;padding:6px 8px;border:1.5px solid #ddd;border-radius:7px;font-size:11px"><button onclick="salvarGasFaz('${faz}','${k}')" style="padding:6px 10px;background:#1B5E20;color:#fff;border:none;border-radius:7px;font-size:11px;cursor:pointer">💾</button></div></div><div><div style="font-size:11px;color:#888;margin-bottom:3px">Lotes/Cochos:</div><div id="chl-${k}">${(d.cochos||[]).map(c=>`<span class="chip">${c} <span class="cdel" onclick="delCo('${faz}','${c}')">×</span></span>`).join('')}</div><div class="addr"><input type="text" id="nc-${k}" placeholder="Novo cocho/lote" style="flex:1"><button class="savb" onclick="addCo('${faz}')">＋</button></div></div></div>`;}).join('');}
