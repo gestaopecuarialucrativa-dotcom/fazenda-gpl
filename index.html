@@ -4868,6 +4868,49 @@ function _hTimeline(movsLote){
 }
 
 // ── ABA ROTAÇÃO ───────────────────────────────────────────
+// Classificação de rotação: percorre TODAS as movimentações, calcula dias em
+// cada pasto (entrada→próxima entrada do mesmo lote; última = até hoje) e agrega
+// por pasto/piquete e por módulo. UA·dia usa peso ATUAL do lote (aproximação).
+function _rotacaoStats(){
+  var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
+  movs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
+  var lotes=S.LOTES||[];
+  function uaLote(nome){ var l=lotes.find(function(x){return x.nome===nome;}); return l?(l.qtd*l.peso/450):0; }
+  function labelArea(id){ var a=MAPA_AREAS.find(function(x){return x.id===id;}); return a?a.label:(id||'—'); }
+  function moduloDe(id){
+    var a=MAPA_AREAS.find(function(x){return x.id===id;});
+    if(!a) return {k:'?',nome:'—'};
+    if(a.tipo==='pasto') return {k:'PA',nome:'Pastos (PA)'};
+    if(a.tipo==='modulo') return {k:'M'+String(a.modulo).padStart(2,'0'),nome:'Módulo '+a.modulo};
+    return {k:'?',nome:'—'};
+  }
+  var hoje=new Date(); hoje.setHours(12,0,0,0);
+  // agrupa por lote pra calcular o tempo em cada destino
+  var porLote={};
+  movs.forEach(function(m){ if(!porLote[m.lote])porLote[m.lote]=[]; porLote[m.lote].push(m); });
+  var pastos={}, modulos={};
+  Object.keys(porLote).forEach(function(lt){
+    var seq=porLote[lt]; // já ordenado por data
+    var ua=uaLote(lt);
+    seq.forEach(function(m,i){
+      var pasto=m.destino; if(!pasto) return;
+      var ent=(m.dt||m.ts||'').substring(0,10); if(!ent) return;
+      var sai = (i<seq.length-1) ? (seq[i+1].dt||seq[i+1].ts||'').substring(0,10) : null;
+      var fim = sai ? new Date(sai+'T12:00:00') : hoje;
+      var dias=Math.max(0,Math.round((fim-new Date(ent+'T12:00:00'))/864e5));
+      var aberta = !sai;
+      if(!pastos[pasto]) pastos[pasto]={id:pasto,label:labelArea(pasto),pass:0,dias:0,uaDia:0,aberta:false};
+      pastos[pasto].pass++; pastos[pasto].dias+=dias; pastos[pasto].uaDia+=ua*dias;
+      if(aberta) pastos[pasto].aberta=true;
+      var mod=moduloDe(pasto);
+      if(!modulos[mod.k]) modulos[mod.k]={k:mod.k,nome:mod.nome,pass:0,dias:0,uaDia:0};
+      modulos[mod.k].pass++; modulos[mod.k].dias+=dias; modulos[mod.k].uaDia+=ua*dias;
+    });
+  });
+  function arr(o){ return Object.keys(o).map(function(k){var v=o[k]; v.media=v.pass?Math.round(v.dias/v.pass):0; return v;}); }
+  return { pastos:arr(pastos), modulos:arr(modulos) };
+}
+
 function rHistRotacao(){
   var sl=document.getElementById('hist-lote-rot');
   if(sl&&sl.options.length<=1){
@@ -4927,6 +4970,41 @@ function rHistRotacao(){
     });
     out+='</div>';
   });
+
+  // ── Classificação por pasto/piquete e por módulo (sempre todos os lotes) ──
+  var st=_rotacaoStats();
+  function tabRank(titulo, itens, nomeCampo){
+    var byDias=itens.slice().sort(function(a,b){return b.dias-a.dias;});
+    if(!byDias.length) return '';
+    var linhas=byDias.map(function(p,i){
+      var nm=p[nomeCampo]||p.label||p.nome;
+      return '<tr style="border-bottom:1px solid #f0f0f0">'
+        +'<td style="padding:6px 4px;text-align:center;color:#999;font-size:11px">'+(i+1)+'</td>'
+        +'<td style="padding:6px 4px;font-size:12px;font-weight:600">'+nm+(p.aberta?' <span style="font-size:9px;color:#1565C0">(ocupado)</span>':'')+'</td>'
+        +'<td style="padding:6px 4px;text-align:center;font-size:13px;font-weight:800;color:#1B5E20">'+p.dias+'</td>'
+        +'<td style="padding:6px 4px;text-align:center;font-size:11px;color:#666">'+p.pass+'</td>'
+        +'<td style="padding:6px 4px;text-align:center;font-size:11px;color:#666">'+p.media+'</td>'
+        +'<td style="padding:6px 4px;text-align:center;font-size:12px;font-weight:700;color:#E65100">'+Math.round(p.uaDia)+'</td>'
+        +'</tr>';
+    }).join('');
+    return '<div class="card" style="margin-top:10px;padding:12px">'
+      +'<div style="font-size:13px;font-weight:800;color:#1B5E20;margin-bottom:6px">'+titulo+'</div>'
+      +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:340px">'
+      +'<tr style="border-bottom:2px solid #1B5E20"><th style="padding:5px 4px;font-size:9px;color:#999">#</th>'
+      +'<th style="padding:5px 4px;font-size:9px;color:#999;text-align:left">Local</th>'
+      +'<th style="padding:5px 4px;font-size:9px;color:#999">Dias</th>'
+      +'<th style="padding:5px 4px;font-size:9px;color:#999">Passag.</th>'
+      +'<th style="padding:5px 4px;font-size:9px;color:#999">Média</th>'
+      +'<th style="padding:5px 4px;font-size:9px;color:#999">UA·dia</th></tr>'
+      +linhas+'</table></div>'
+      +'<div style="font-size:9px;color:#aaa;margin-top:5px">Ordenado por total de dias. UA·dia = carga (animais×peso atual÷450) × dias — comparativo, não exato.</div>'
+      +'</div>';
+  }
+  out+=tabRank('🏆 Classificação por Pasto / Piquete', st.pastos, 'label');
+  out+=tabRank('🏆 Classificação por Módulo', st.modulos, 'nome');
+  if(st.pastos.length){
+    out+='<button onclick="gerarPDFRotacao()" style="width:100%;margin-top:12px;background:#1B5E20;color:#fff;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer">🖨️ Gerar PDF da Rotação</button>';
+  }
   div.innerHTML=out;
 }
 
@@ -5442,7 +5520,49 @@ function gerarPDFPastos(){
   setTimeout(function(){ try{w.print();}catch(e){} },500);
 }
 
-// ── ABA CONSUMO (consumo por lote a partir dos tratos) ────
+// PDF da Rotação: classificação por pasto/piquete e por módulo (dias + UA·dia).
+function gerarPDFRotacao(){
+  var st;
+  try{ st=_rotacaoStats(); }catch(e){ alert('Não foi possível calcular a rotação.'); return; }
+  if(!st || !st.pastos.length){ alert('Sem movimentações para o relatório.'); return; }
+  var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
+  function linhas(itens, nomeCampo){
+    return itens.slice().sort(function(a,b){return b.dias-a.dias;}).map(function(p,i){
+      var nm=p[nomeCampo]||p.label||p.nome;
+      return '<tr>'
+        +'<td style="text-align:center">'+(i+1)+'</td>'
+        +'<td>'+nm+(p.aberta?' <span style="color:#1565C0;font-size:9px">(ocupado)</span>':'')+'</td>'
+        +'<td style="text-align:center;font-weight:700">'+p.dias+'</td>'
+        +'<td style="text-align:center">'+p.pass+'</td>'
+        +'<td style="text-align:center">'+p.media+'</td>'
+        +'<td style="text-align:center">'+Math.round(p.uaDia)+'</td>'
+        +'</tr>';
+    }).join('');
+  }
+  var cab='<tr><th>#</th><th>Local</th><th>Total dias</th><th>Passagens</th><th>Média dias</th><th>UA·dia</th></tr>';
+  var w=window.open('','_blank');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Rotação de Pastos — GPL</title>'
+    +'<style>body{font-family:Arial,sans-serif;padding:20px;color:#222}'
+    +'h2{color:#1B5E20;font-size:14px;margin:16px 0 4px}'
+    +'table{width:100%;border-collapse:collapse;font-size:11px;margin-top:6px}'
+    +'th{background:#1B5E20;color:#fff;padding:6px;text-align:left;font-size:10px}'
+    +'td{padding:6px;border-bottom:1px solid #eee}'
+    +'.crit{font-size:10px;color:#666;margin-top:8px;line-height:1.5}'
+    +_pdfTimbreCss()
+    +'@media print{button{display:none}}'
+    +'</style></head><body>'
+    +_pdfTimbre('🔄 Rotação de Pastos', 'Dias de ocupação e carga por área', faz)
+    +'<h2>🏆 Classificação por Pasto / Piquete</h2>'
+    +'<table>'+cab+linhas(st.pastos,'label')+'</table>'
+    +'<h2>🏆 Classificação por Módulo</h2>'
+    +'<table>'+cab+linhas(st.modulos,'nome')+'</table>'
+    +'<p class="crit">Total dias = soma dos dias de ocupação em todas as passagens. Média = dias por passagem. <b>UA·dia</b> = carga (nº animais × peso atual ÷ 450 kg) × dias de ocupação — serve para comparar áreas entre si; não representa carga histórica exata, pois usa o peso atual do lote. Dias calculados pelas datas de entrada das movimentações.</p>'
+    +'<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:12px">🖨️ Imprimir / Salvar PDF</button>'
+    +_pdfRodape()
+    +'</body></html>');
+  w.document.close();
+  setTimeout(function(){ try{w.print();}catch(e){} },500);
+}
 // Cada trato guarda: lote(co), prod, q(sacos), kg_fornecido, dt, cab.
 // Calcula por lote: total sacos/kg, período (1º ao último trato),
 // kg/dia, kg/cab, produtos usados (sacos+período) e consumo vs
