@@ -1853,7 +1853,79 @@ function _feedNoPeriodo(ts){
 }
 function feedSetUser(v){ _feedUser=v; rFeedConsultor(); }
 function feedSetPer(el,p){ _feedPer=p; document.querySelectorAll('.feedpb').forEach(function(b){b.classList.remove('on');b.style.background='#f0f0f0';b.style.color='#333';}); if(el){el.classList.add('on');el.style.background='#1B5E20';el.style.color='#fff';} rFeedConsultor(); }
-function feedExcluir(arr,idx){ excluirRegistro(arr,idx); setTimeout(function(){try{rFeedConsultor();}catch(e){}},60); }
+// Exclui do feed garantindo que apague TAMBÉM na planilha (senão volta no recarregar).
+// Trato, cantina e diária são relidos da aba pelo backend → precisam de ação no servidor.
+// Escore, despesa e insumo vivem no CONFIG → o _apagado já basta.
+function feedExcluir(arr,idx){
+  var r=S[arr]&&S[arr][idx];
+  if(!r){ return; }
+  if(!confirm('⚠️ Excluir este lançamento?\n\nSerá removido do app e da planilha.')) return;
+  var tipo=r.tipo;
+  var precisaServidor=(tipo==='trato'||tipo==='cantina'||tipo==='diaria');
+  if(precisaServidor && !(S.cfgGS && navigator.onLine)){
+    alert('⚠️ Sem conexão com a planilha. Este tipo de lançamento só pode ser excluído online (senão volta ao recarregar). Tente quando estiver online.');
+    return;
+  }
+  if(!precisaServidor){ // escore/despesa/insumo: CONFIG já basta
+    r._apagado=true; salvar(); if(S.cfgGS)salvarNuvem(function(){});
+    try{rFeedConsultor();}catch(e){} try{rPan();}catch(e){}
+    return;
+  }
+  // trato / cantina / diaria → confirmar na planilha ANTES de apagar no app
+  var acao, payload;
+  if(tipo==='cantina'){ acao='excluir_cantina'; payload={dt:r.dt||'',resp:r.resp||r.n||'',total:r.total||0,det:r.det||'',faz:r.faz||''}; }
+  else if(tipo==='diaria'){ acao='diaria_del'; payload={dt:r.dt||'',n:r.n||r.lancadoPor||'',srv:r.srv||'',v:parseFloat(r.v)||0,faz:r.faz||''}; }
+  else { acao='trato_del'; payload={dt:r.dt||'',n:r.n||'',lote:r.co||r.lote||'',prod:r.pr||r.prod||'',q:parseFloat(r.q||r.qtd)||0,faz:r.faz||''}; }
+  var url=getFazGasUrl(r.faz||'');
+  var cbN='_fdel_'+Date.now();
+  var s=document.createElement('script');
+  s.src=url+'?acao='+acao+'&data='+encodeURIComponent(JSON.stringify(payload))+'&callback='+cbN+'&t='+Date.now();
+  window[cbN]=function(res){
+    delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s);
+    if(res && res.ok){
+      r._apagado=true; salvar();
+      try{rFeedConsultor();}catch(e){} try{rPan();}catch(e){}
+    } else {
+      alert('⚠️ Não encontrei este lançamento na planilha para excluir — nada foi removido. Pode ser duplicado (mesma data/pessoa/dados) ou ainda não sincronizado.');
+    }
+  };
+  s.onerror=function(){ delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s); alert('⚠️ Erro de conexão. Nada foi removido.'); };
+  document.body.appendChild(s);
+}
+// Editar trato (produto + sacos). Só grava no app depois que a planilha confirma.
+function feedEditarTrato(idx){
+  var r=S.rT[idx];
+  if(!r||r.tipo!=='trato'){ alert('Registro não encontrado.'); return; }
+  if(!(S.cfgGS && navigator.onLine)){ alert('⚠️ Sem conexão. A edição precisa de internet para gravar na planilha.'); return; }
+  var prodOld=r.pr||r.prod||'', qOld=parseFloat(r.q||r.qtd)||0;
+  var prodNew=prompt('Produto:', prodOld);
+  if(prodNew===null) return;
+  prodNew=(''+prodNew).trim();
+  if(!prodNew){ alert('O produto não pode ficar vazio.'); return; }
+  var qStr=prompt('Quantidade (sacos):', String(qOld));
+  if(qStr===null) return;
+  var qNew=parseFloat((''+qStr).replace(',','.'));
+  if(isNaN(qNew)||qNew<0){ alert('Quantidade inválida.'); return; }
+  if(prodNew===prodOld && Math.abs(qNew-qOld)<0.01){ return; }
+  if(!confirm('Confirmar edição deste trato?\n\nProduto: '+prodNew+'\nQtd: '+qNew+' saco(s)')) return;
+  var payload={dt:r.dt||'',n:r.n||'',lote:r.co||r.lote||'',prod_old:prodOld,q_old:qOld,prod_new:prodNew,q_new:qNew,faz:r.faz||''};
+  var url=getFazGasUrl(r.faz||'');
+  var cbN='_etr_'+Date.now();
+  var s=document.createElement('script');
+  s.src=url+'?acao=trato_edit&data='+encodeURIComponent(JSON.stringify(payload))+'&callback='+cbN+'&t='+Date.now();
+  window[cbN]=function(res){
+    delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s);
+    if(res && res.ok){
+      r.pr=prodNew; r.prod=prodNew; r.q=qNew; r.qtd=qNew; salvar();
+      try{rFeedConsultor();}catch(e){}
+      alert('✅ Trato editado na planilha.');
+    } else {
+      alert('⚠️ Não encontrei este trato na planilha para editar — nada foi alterado. Pode ser duplicado ou ainda não sincronizado.');
+    }
+  };
+  s.onerror=function(){ delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s); alert('⚠️ Erro de conexão. Nada foi alterado.'); };
+  document.body.appendChild(s);
+}
 // Editar diária (valor + serviço). Só grava no app DEPOIS que a planilha confirmar,
 // porque o carregar lê as diárias da aba 👤 Diárias (fonte da verdade).
 function feedEditarDiaria(idx){
@@ -1916,6 +1988,7 @@ function rFeedConsultor(){
       +(o.faz?'<div style="font-size:10px;color:#999;margin-top:2px">'+o.faz+'</div>':'')
       +'</div>'
       +(o.tipo==='Diária'?'<button onclick="feedEditarDiaria('+o.idx+')" style="padding:4px 9px;font-size:13px;background:#E8F5E9;color:#1B5E20;border:none;border-radius:6px;cursor:pointer;flex-shrink:0;margin-right:4px">✏️</button>':'')
+      +(o.tipo==='Trato'?'<button onclick="feedEditarTrato('+o.idx+')" style="padding:4px 9px;font-size:13px;background:#E8F5E9;color:#1B5E20;border:none;border-radius:6px;cursor:pointer;flex-shrink:0;margin-right:4px">✏️</button>':'')
       +'<button onclick="feedExcluir(\''+o.arr+'\','+o.idx+')" style="padding:4px 9px;font-size:13px;background:#FFEBEE;color:#C62828;border:none;border-radius:6px;cursor:pointer;flex-shrink:0">🗑️</button>'
       +'</div>';
   });
