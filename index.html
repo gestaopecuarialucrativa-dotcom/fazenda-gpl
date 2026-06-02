@@ -1854,6 +1854,44 @@ function _feedNoPeriodo(ts){
 function feedSetUser(v){ _feedUser=v; rFeedConsultor(); }
 function feedSetPer(el,p){ _feedPer=p; document.querySelectorAll('.feedpb').forEach(function(b){b.classList.remove('on');b.style.background='#f0f0f0';b.style.color='#333';}); if(el){el.classList.add('on');el.style.background='#1B5E20';el.style.color='#fff';} rFeedConsultor(); }
 function feedExcluir(arr,idx){ excluirRegistro(arr,idx); setTimeout(function(){try{rFeedConsultor();}catch(e){}},60); }
+// Editar diária (valor + serviço). Só grava no app DEPOIS que a planilha confirmar,
+// porque o carregar lê as diárias da aba 👤 Diárias (fonte da verdade).
+function feedEditarDiaria(idx){
+  var r=S.rD[idx];
+  if(!r||r.tipo!=='diaria'){ alert('Registro não encontrado.'); return; }
+  var srvOld=r.srv||'', vOld=parseFloat(r.v)||0;
+  var srvNew=prompt('Serviço:', srvOld);
+  if(srvNew===null) return;
+  srvNew=(''+srvNew).trim();
+  if(!srvNew){ alert('O serviço não pode ficar vazio.'); return; }
+  var vStr=prompt('Valor (R$):', vOld.toFixed(2).replace('.',','));
+  if(vStr===null) return;
+  var vNew=parseFloat((''+vStr).replace(',','.'));
+  if(isNaN(vNew)||vNew<0){ alert('Valor inválido.'); return; }
+  if(srvNew===srvOld && Math.abs(vNew-vOld)<0.01){ return; }
+  if(!confirm('Confirmar edição desta diária?\n\nServiço: '+srvNew+'\nValor: R$ '+vNew.toFixed(2).replace('.',','))) return;
+  if(!(S.cfgGS && navigator.onLine)){
+    alert('⚠️ Sem conexão com a planilha. A edição precisa de internet para gravar na nuvem (senão volta ao antigo no próximo carregamento). Tente de novo quando estiver online.');
+    return;
+  }
+  var payload={dt:r.dt,n:r.n,srv_old:srvOld,v_old:vOld,srv_new:srvNew,v_new:vNew,faz:r.faz||''};
+  var url=getFazGasUrl(r.faz||'');
+  var cbN='_ediD_'+Date.now();
+  var s=document.createElement('script');
+  s.src=url+'?acao=editar_diaria&data='+encodeURIComponent(JSON.stringify(payload))+'&callback='+cbN+'&t='+Date.now();
+  window[cbN]=function(res){
+    delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s);
+    if(res && res.ok){
+      r.srv=srvNew; r.v=vNew; salvar();
+      try{rFeedConsultor();}catch(e){}
+      alert('✅ Diária editada na planilha.');
+    } else {
+      alert('⚠️ Não encontrei essa diária na planilha para editar — nada foi alterado. Pode ser lançamento duplicado (mesmo dia/nome/serviço/valor) ou ainda não sincronizado.');
+    }
+  };
+  s.onerror=function(){ delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s); alert('⚠️ Erro de conexão. Nada foi alterado.'); };
+  document.body.appendChild(s);
+}
 function rFeedConsultor(){
   var us=document.getElementById('feed-user');
   if(us && us.options.length<=1){
@@ -1877,6 +1915,7 @@ function rFeedConsultor(){
       +'<div style="font-size:12px;color:#444;margin-top:3px;word-break:break-word">'+o.resumo+'</div>'
       +(o.faz?'<div style="font-size:10px;color:#999;margin-top:2px">'+o.faz+'</div>':'')
       +'</div>'
+      +(o.tipo==='Diária'?'<button onclick="feedEditarDiaria('+o.idx+')" style="padding:4px 9px;font-size:13px;background:#E8F5E9;color:#1B5E20;border:none;border-radius:6px;cursor:pointer;flex-shrink:0;margin-right:4px">✏️</button>':'')
       +'<button onclick="feedExcluir(\''+o.arr+'\','+o.idx+')" style="padding:4px 9px;font-size:13px;background:#FFEBEE;color:#C62828;border:none;border-radius:6px;cursor:pointer;flex-shrink:0">🗑️</button>'
       +'</div>';
   });
