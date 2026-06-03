@@ -7003,15 +7003,29 @@ function _calcularFechamentoInterno(de, ate, faz){
   var pessoas={};
   diarias.forEach(function(r){
     var n=r.n||'?';
-    if(!pessoas[n])pessoas[n]={n:n,diarias:[],cantina:[],totalD:0,totalC:0};
+    if(!pessoas[n])pessoas[n]={n:n,diarias:[],cantina:[],despesas:[],totalD:0,totalC:0,totalX:0};
     pessoas[n].diarias.push(r);
     pessoas[n].totalD+=r.v||0;
   });
   cantinas.forEach(function(r){
     var n=r.resp||r.n||'Cantina';
-    if(!pessoas[n])pessoas[n]={n:n,diarias:[],cantina:[],totalD:0,totalC:0};
+    if(!pessoas[n])pessoas[n]={n:n,diarias:[],cantina:[],despesas:[],totalD:0,totalC:0,totalX:0};
     pessoas[n].cantina.push(r);
     pessoas[n].totalC+=r.total||0;
+  });
+  // Despesas avulsas NÃO pagas do período (exceto as geradas pelo próprio fechamento)
+  var despesas=(S.rDesp||[]).filter(function(r){
+    if(r._apagado||r.st==='pago') return false;
+    if((r.desc||'').indexOf('Fechamento:')===0) return false; // evita dupla contagem
+    var dt=r.venc||r.dt||'';
+    return dt>=de && dt<=ate && (!faz||!r.faz||r.faz===faz);
+  });
+  despesas.forEach(function(r){
+    var n=(r.rec||'').trim()||'Despesas da fazenda';
+    if(!pessoas[n])pessoas[n]={n:n,diarias:[],cantina:[],despesas:[],totalD:0,totalC:0,totalX:0};
+    if(!pessoas[n].despesas)pessoas[n].despesas=[];
+    pessoas[n].despesas.push(r);
+    pessoas[n].totalX=(pessoas[n].totalX||0)+(r.val||0);
   });
 
   var lista=Object.values(pessoas).filter(function(p){
@@ -7024,7 +7038,7 @@ function _calcularFechamentoInterno(de, ate, faz){
     return;
   }
 
-  var totalGeral=lista.reduce(function(a,p){return a+p.totalD+p.totalC;},0);
+  var totalGeral=lista.reduce(function(a,p){return a+p.totalD+p.totalC+(p.totalX||0);},0);
   var deFmt=de.split('-').reverse().join('/');
   var ateFmt=ate.split('-').reverse().join('/');
 
@@ -7047,7 +7061,7 @@ function renderFCLista(lista, totalGeral, deFmt, ateFmt, faz){
   var html='<div style="font-size:12px;color:#888;margin-bottom:8px">Toque para selecionar quem vai na mensagem:</div>';
 
   lista.forEach(function(p){
-    var total=p.totalD+p.totalC;
+    var total=p.totalD+p.totalC+(p.totalX||0);
     var pixObj=(function(n){var d=S.PIX_D||{};var k=Object.keys(d).find(function(x){return x.toLowerCase()===n.toLowerCase();});return k?d[k]:{}})(p.n);var pix=typeof pixObj==='string'?pixObj:(pixObj.chave||'');
     var sel=window._fcSel[p.n]!==false;
     var border=sel?'border-left:3px solid #1B5E20;':'border-left:3px solid #ccc;opacity:.55;';
@@ -7060,7 +7074,8 @@ function renderFCLista(lista, totalGeral, deFmt, ateFmt, faz){
     html+='</div>';
     html+='<div class="fc-det">';
     if(p.diarias.length)html+='Diárias: '+p.diarias.length+'x → R$ '+p.totalD.toFixed(2).replace('.',',')+'<br>';
-    if(p.cantina.length)html+='Cantina: '+p.cantina.length+' dias → R$ '+p.totalC.toFixed(2).replace('.',',');
+    if(p.cantina.length)html+='Cantina: '+p.cantina.length+' dias → R$ '+p.totalC.toFixed(2).replace('.',',')+(p.despesas&&p.despesas.length?'<br>':'');
+    if(p.despesas&&p.despesas.length)html+='Despesas: '+p.despesas.length+'x → R$ '+(p.totalX||0).toFixed(2).replace('.',',');
     html+='</div>';
     var pixEsc=pix.replace(/"/g,'&quot;');
     if(pix&&sel)html+='<div class="fc-pix">'      +'Pix: <span class="btn-copiar-pix" data-pix="'+pixEsc+'" '      +'title="Clique para copiar" '      +'style="color:#1565C0;font-weight:700;text-decoration:underline;cursor:pointer;user-select:all">'+pix+'</span>'      +'<span class="pix-copied-'+pixEsc+'" style="display:none;margin-left:6px;color:#1B5E20;font-size:10px;font-weight:700">✅ Copiado!</span>'      +'</div>';
@@ -7069,7 +7084,7 @@ function renderFCLista(lista, totalGeral, deFmt, ateFmt, faz){
 
   // Calcular total dos selecionados
   var totalSel=lista.filter(function(p){return window._fcSel[p.n]!==false;})
-    .reduce(function(a,p){return a+p.totalD+p.totalC;},0);
+    .reduce(function(a,p){return a+p.totalD+p.totalC+(p.totalX||0);},0);
 
   var dono=S.US.find(function(u){return u.r==='Dono'&&(!faz||u.fs.length===0||u.fs.includes(faz));});
   var telDono=dono&&dono.tel?dono.tel.replace(/[^\d]/g,''):'';
@@ -7099,6 +7114,7 @@ function marcarFCSelecionadosComoPago(){
   if(!confirm('Marcar todos os selecionados como pago?\n\n'+selecionados.join(', '))) return;
 
   var marcados = 0;
+  var despMarcadas = 0;
   var faz = window._fcFaz || '';
   var de  = (document.getElementById('fc-de')||{}).value || '';
   var ate = (document.getElementById('fc-ate')||{}).value || '';
@@ -7115,9 +7131,25 @@ function marcarFCSelecionadosComoPago(){
       r.pago_dt  = TD;
       marcados++;
     });
+    // Despesas avulsas (agrupadas por quem recebe = rec, ou "Despesas da fazenda")
+    (S.rDesp||[]).forEach(function(r){
+      if(r._apagado || r.st==='pago') return;
+      if((r.desc||'').indexOf('Fechamento:')===0) return;
+      var rn=(r.rec||'').trim()||'Despesas da fazenda';
+      if(rn.toLowerCase() !== nome.toLowerCase()) return;
+      var dt=r.venc||r.dt||'';
+      if(de  && dt < de)  return;
+      if(ate && dt > ate) return;
+      if(faz && r.faz && r.faz !== faz) return;
+      r.st='pago';
+      r.pago_por = CU ? CU.n.split(' ')[0] : 'Sistema';
+      r.pago_dt  = TD;
+      despMarcadas++;
+    });
   });
 
   salvar();
+  if(despMarcadas>0 && S.cfgGS) salvarNuvem(function(){});
 
   if(marcados > 0){
     // Enviar cada diária paga para a planilha
@@ -7135,18 +7167,25 @@ function marcarFCSelecionadosComoPago(){
         }
       });
     }
-    alert('✅ '+marcados+' diária(s) marcada(s) como paga!');
+    var msg=[];
+    if(marcados>0)msg.push(marcados+' diária(s)');
+    if(despMarcadas>0)msg.push(despMarcadas+' despesa(s)');
+    alert('✅ '+msg.join(' e ')+' marcada(s) como paga!');
+    fecharFC();
+    rPan();
+  } else if(despMarcadas>0){
+    alert('✅ '+despMarcadas+' despesa(s) marcada(s) como paga!');
     fecharFC();
     rPan();
   } else {
-    alert('Nenhuma diária pendente encontrada no período para os selecionados.');
+    alert('Nenhum item pendente encontrado no período para os selecionados.');
   }
 }
 function toggleFCSel(nome){
   if(!window._fcSel) window._fcSel={};
   window._fcSel[nome] = window._fcSel[nome]===false ? true : false;
   renderFCLista(window._fcLista,
-    window._fcLista.reduce(function(a,p){return a+p.totalD+p.totalC;},0),
+    window._fcLista.reduce(function(a,p){return a+p.totalD+p.totalC+(p.totalX||0);},0),
     window._fcDe, window._fcAte, window._fcFaz);
 }
 
@@ -7165,7 +7204,7 @@ function gerarFCMsg(){
   linhas.push('');
 
   sel.forEach(function(p){
-    var total=p.totalD+p.totalC;
+    var total=p.totalD+p.totalC+(p.totalX||0);
     var pixObj=(function(n){var d=S.PIX_D||{};var k=Object.keys(d).find(function(x){return x.toLowerCase()===n.toLowerCase();});return k?d[k]:{}})(p.n);var pix=typeof pixObj==='string'?pixObj:(pixObj.chave||'');
     linhas.push('Colaborador: '+p.n);
     if(p.diarias.length){
@@ -7180,6 +7219,12 @@ function gerarFCMsg(){
       });
     }
     if(p.cantina.length)linhas.push('  Cantina ('+p.cantina.length+' dias): R$ '+p.totalC.toFixed(2).replace('.',','));
+    if(p.despesas&&p.despesas.length){
+      linhas.push('  Despesas ('+p.despesas.length+'x): R$ '+(p.totalX||0).toFixed(2).replace('.',','));
+      p.despesas.slice().sort(function(a,b){return (a.venc||a.dt||'')>(b.venc||b.dt||'')?1:-1;}).forEach(function(r){
+        linhas.push('  - '+(r.desc||'Despesa'));
+      });
+    }
     linhas.push('  TOTAL A PAGAR: R$ '+total.toFixed(2).replace('.',','));
     if(pix){
       var pixTit=(function(n){var d=S.PIX_D||{};var k=Object.keys(d).find(function(x){return x.toLowerCase()===n.toLowerCase();});return k&&typeof d[k]==='object'?d[k].titular||'':'';})(p.n);
@@ -7189,7 +7234,7 @@ function gerarFCMsg(){
     linhas.push('');
   });
 
-  var totalSel=sel.reduce(function(a,p){return a+p.totalD+p.totalC;},0);
+  var totalSel=sel.reduce(function(a,p){return a+p.totalD+p.totalC+(p.totalX||0);},0);
   linhas.push('------------------------');
   linhas.push('TOTAL: R$ '+totalSel.toFixed(2).replace('.',','));
   linhas.push('');
