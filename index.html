@@ -2890,8 +2890,19 @@ function rCompraLotes(){
   rCompraAvulsos();
 }
 
-// Nome de exibição na cotação: genérico cadastrado, ou o nome real
-function _compraRotulo(prod){ return (S.PROD_GEN&&S.PROD_GEN[prod])?S.PROD_GEN[prod]:prod; }
+// Nome de exibição na cotação:
+// 1) nome manual cadastrado (manda mais); senão
+// 2) automático pela % PV/dia: >=0,1 = "Proteinado X,X" · <0,1 = "Sal adensado"; senão
+// 3) o nome real do produto
+function _compraRotulo(prod, pct){
+  if(S.PROD_GEN && S.PROD_GEN[prod]) return S.PROD_GEN[prod];
+  if(pct!=null && pct!=='' && !isNaN(parseFloat(pct))){
+    var n=parseFloat(pct);
+    if(n>=0.1) return 'Proteinado '+String(n).replace('.',',');
+    if(n>0) return 'Sal adensado';
+  }
+  return prod;
+}
 
 // ── Nomes genéricos (cadastro uma vez, persiste no CONFIG) ──
 function rCompraGenericos(){
@@ -2994,7 +3005,7 @@ function _compraTotais(linhas){
   var saldoEst=_compraSaldoEst();
   var tot={};
   linhas.forEach(function(r){
-    if(!tot[r.prod])tot[r.prod]={s30:0,s60:0,s90:0,preco:r.preco,consDia:0,saco:r.saco};
+    if(!tot[r.prod])tot[r.prod]={s30:0,s60:0,s90:0,preco:r.preco,consDia:0,saco:r.saco,pct:r.pct};
     tot[r.prod].s30+=r.s30; tot[r.prod].s60+=r.s60; tot[r.prod].s90+=r.s90;
     tot[r.prod].consDia+=r.consDia;
     if(r.preco>0)tot[r.prod].preco=r.preco;
@@ -3046,7 +3057,7 @@ function rCompraCalc(){
         +'<div style="font-size:9px;color:#888">'+kg.toFixed(0)+' kg</div>'+custo+'</div>';
     }
     out+='<div style="padding:8px 0;border-bottom:1px solid #f0f0f0">'
-      +'<div style="font-size:12px;font-weight:700">'+r.lote+' · '+_compraRotulo(r.prod)+'</div>'
+      +'<div style="font-size:12px;font-weight:700">'+r.lote+' · '+_compraRotulo(r.prod,r.pct)+'</div>'
       +'<div style="font-size:10px;color:#888;margin-bottom:4px">'+r.qtd+' animais × '+r.peso+' kg × '+r.pct+'% = '+r.consDia.toFixed(1)+' kg/dia · saco '+r.saco+' kg'+(r.preco>0?(' · '+fmtR(r.preco)+'/saco'):'')+'</div>'
       +'<div style="display:flex;gap:12px;flex-wrap:wrap">'+bloco('30 dias',r.kg30,r.s30)+bloco('60 dias',r.kg60,r.s60)+bloco('90 dias',r.kg90,r.s90)+'</div>'
       +'</div>';
@@ -3065,7 +3076,7 @@ function rCompraCalc(){
     var lp=prazos.map(function(d){return '<td style="text-align:center;font-size:11px;color:#666;padding:1px 2px">'+_vp(t,d)+'</td>';}).join('');
     var lt=prazos.map(function(){return '<td style="text-align:center;font-size:11px;color:#999;padding:1px 2px">−'+t.saldo+'</td>';}).join('');
     var lc=prazos.map(function(d){var sc=_vc(t,d);var r=t.preco>0?('<div style="font-size:9px;color:#1565C0;font-weight:700">'+fmtR(sc*t.preco)+'</div>'):'';return '<td style="text-align:center;font-size:13px;font-weight:800;color:#1B5E20;padding:1px 2px">'+sc+' sc'+r+'</td>';}).join('');
-    var nome=_compraRotulo(p)+(t.avulso?' <span style="font-size:9px;color:#E65100;font-weight:700">avulso</span>':'');
+    var nome=(t.avulso? p : _compraRotulo(p,t.pct))+(t.avulso?' <span style="font-size:9px;color:#E65100;font-weight:700">avulso</span>':'');
     var alerta = t.avulso ? '' : ((t.diasCobre!=null&&t.diasCobre>=90)
       ? '<div style="font-size:10px;color:#2E7D32;margin-top:5px">✅ Saldo ('+t.saldo+' sacos ≈ '+t.diasCobre+' dias) já cobre o período. Sem compra urgente.</div>'
       : '<div style="font-size:10px;color:#E65100;margin-top:5px">⏳ '+t.saldo+' sacos no galpão ≈ '+(t.diasCobre==null?'—':t.diasCobre)+' dias de trato. Garanta a entrega em até '+(t.diasCobre==null?'—':t.diasCobre)+' dias.</div>');
@@ -3108,7 +3119,7 @@ function gerarPDFCompra(){
 
   var linhasTab=linhas.map(function(r){
     function cel(d){var sc=_vs(r,d),kg=_vk(r,d);return '<td style="text-align:center">'+sc+' sacos<br><span style="font-size:9px;color:#888">'+kg.toFixed(0)+' kg</span>'+(r.preco>0?'<br><span style="font-size:9px;color:#1565C0">'+fmtR(sc*r.preco)+'</span>':'')+'</td>';}
-    return '<tr><td>'+r.lote+'</td><td>'+_compraRotulo(r.prod)+'</td><td style="text-align:center">'+r.qtd+'</td>'
+    return '<tr><td>'+r.lote+'</td><td>'+_compraRotulo(r.prod,r.pct)+'</td><td style="text-align:center">'+r.qtd+'</td>'
       +'<td style="text-align:center">'+r.peso+'</td><td style="text-align:center">'+r.pct+'%</td>'
       +'<td style="text-align:center">'+r.consDia.toFixed(1)+' kg</td>'
       +prazos.map(cel).join('')+'</tr>';
@@ -3118,7 +3129,7 @@ function gerarPDFCompra(){
     function cP(d){ return '<td style="text-align:center;color:#777;font-size:10px">'+_vp(t,d)+'</td>'; }
     function cT(){ return '<td style="text-align:center;color:#999;font-size:10px">−'+t.saldo+'</td>'; }
     function cC(d){ var sc=_vc(t,d); return '<td style="text-align:center;font-weight:800;color:#1B5E20">'+sc+' sc'+(t.preco>0?'<br><span style="font-size:9px;color:#1565C0">'+fmtR(sc*t.preco)+'</span>':'')+'</td>'; }
-    var nome=_compraRotulo(p);
+    var nome=(t.avulso? p : _compraRotulo(p,t.pct));
     if(t.avulso){
       return '<tr style="background:#FFF8E1;font-weight:700"><td colspan="6">'+nome+' <span style="color:#E65100;font-size:9px">(avulso)</span> — A comprar</td>'+prazos.map(cC).join('')+'</tr>';
     }
