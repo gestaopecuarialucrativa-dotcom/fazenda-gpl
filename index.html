@@ -6959,6 +6959,17 @@ function setFCPer(p){
   if(ateEl)ateEl.value=fmt(hoje);
 }
 
+// Busca a chave/titular PIX por nome, ignorando acentos, espaços e maiúsc/minúsc.
+function _normNome(s){ return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase(); }
+function _fcPix(n){
+  var d=S.PIX_D||{}; var alvo=_normNome(n);
+  var k=Object.keys(d).find(function(x){return _normNome(x)===alvo;});
+  var o=k?d[k]:{};
+  var chave=typeof o==='string'?o:(o.chave||'');
+  var titular=(o&&typeof o==='object')?(o.titular||''):'';
+  return {chave:chave, titular:titular};
+}
+
 function calcularFechamento(){
   var de=(document.getElementById('fc-de')||{}).value||'';
   var ate=(document.getElementById('fc-ate')||{}).value||'';
@@ -7062,7 +7073,7 @@ function renderFCLista(lista, totalGeral, deFmt, ateFmt, faz){
 
   lista.forEach(function(p){
     var total=p.totalD+p.totalC+(p.totalX||0);
-    var pixObj=(function(n){var d=S.PIX_D||{};var k=Object.keys(d).find(function(x){return x.toLowerCase()===n.toLowerCase();});return k?d[k]:{}})(p.n);var pix=typeof pixObj==='string'?pixObj:(pixObj.chave||'');
+    var pix=_fcPix(p.n).chave;
     var sel=window._fcSel[p.n]!==false;
     var border=sel?'border-left:3px solid #1B5E20;':'border-left:3px solid #ccc;opacity:.55;';
     var check=sel?'✅':'⬜';
@@ -7205,7 +7216,7 @@ function gerarFCMsg(){
 
   sel.forEach(function(p){
     var total=p.totalD+p.totalC+(p.totalX||0);
-    var pixObj=(function(n){var d=S.PIX_D||{};var k=Object.keys(d).find(function(x){return x.toLowerCase()===n.toLowerCase();});return k?d[k]:{}})(p.n);var pix=typeof pixObj==='string'?pixObj:(pixObj.chave||'');
+    var pix=_fcPix(p.n).chave;
     linhas.push('Colaborador: '+p.n);
     if(p.diarias.length){
       linhas.push('  Diarias ('+p.diarias.length+'x): R$ '+p.totalD.toFixed(2).replace('.',','));
@@ -7227,7 +7238,7 @@ function gerarFCMsg(){
     }
     linhas.push('  TOTAL A PAGAR: R$ '+total.toFixed(2).replace('.',','));
     if(pix){
-      var pixTit=(function(n){var d=S.PIX_D||{};var k=Object.keys(d).find(function(x){return x.toLowerCase()===n.toLowerCase();});return k&&typeof d[k]==='object'?d[k].titular||'':'';})(p.n);
+      var pixTit=_fcPix(p.n).titular;
       linhas.push('  Pix: '+pix);
       if(pixTit)linhas.push('  Favorecido: '+pixTit);
     }
