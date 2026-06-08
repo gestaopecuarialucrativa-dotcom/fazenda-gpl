@@ -7710,8 +7710,13 @@ function rPanLista(){
       el.innerHTML='<div style="text-align:center;color:#888;padding:20px;font-size:13px">Nenhuma cantina no período.</div>';
       return;
     }
-    
-    el.innerHTML = dias.map(function(dia){
+    var podeValidar = CU && (CU.r==='Consultor' || CU.r==='Dono');
+    var diasPend = dias.filter(function(d){ return !d.regs.every(function(r){return r.validado;}); });
+    var header = '';
+    if(podeValidar && diasPend.length){
+      header = '<button onclick="validarCantinaTudo()" style="width:100%;padding:12px;margin-bottom:10px;background:#2E7D32;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">✅ Validar tudo ('+diasPend.length+' dia'+(diasPend.length>1?'s':'')+' pendente'+(diasPend.length>1?'s':'')+')</button>';
+    }
+    el.innerHTML = header + dias.map(function(dia){
       var dtFmt = (dia.dt||'').split('-').reverse().join('/');
       var resp = [...new Set(dia.regs.map(function(r){return r.resp||r.n||'—';}))].join(', ');
       var gi = S.rC.indexOf(dia.regs[0]);
@@ -7723,6 +7728,9 @@ function rPanLista(){
         ? '<span style="background:#FFEBEE;color:#C62828;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700">❌ Reprovado</span>'
         : '<span style="background:#FFF3E0;color:#E65100;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700">⏳ Pendente</span>';
       
+      var btnVal = (podeValidar && !todoVal)
+        ? '<button onclick="event.stopPropagation();validarCantinaDia(\''+dia.dt+'\',\''+(dia.faz||'').replace(/'/g,"\\'")+'\')" style="margin-top:8px;width:100%;padding:9px;background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">✅ Validar este dia</button>'
+        : '';
       return '<div data-dt="'+dia.dt+'" data-faz="'+dia.faz+'" onclick="_abrirCtDia(this)" style="background:#fff;border-radius:12px;padding:13px;margin-bottom:8px;border:1px solid #e0e0e0;cursor:pointer;border-left:4px solid '+(todoVal?'#2E7D32':algRep?'#C62828':'#FFB300')+';">'
         +'<div style="display:flex;justify-content:space-between;align-items:flex-start">'
         +'<div><div style="font-size:14px;font-weight:700">'+resp+'</div>'
@@ -7732,7 +7740,7 @@ function rPanLista(){
         +'</div>'
         +'<div style="text-align:right"><div style="font-size:18px;font-weight:800;color:#1B5E20">R$ '+dia.total.toFixed(2).replace('.',',')+'</div>'
         +'<div style="font-size:11px;color:#aaa;margin-top:2px">toque para ver</div>'
-        +'</div></div></div>';
+        +'</div></div>'+btnVal+'</div>';
     }).join('');
   }
 }
@@ -7872,6 +7880,58 @@ function validarLancamento(arr, gi){
   fecharDetModal();
   rPan();
   alert('✅ Lançamento validado!');
+}
+
+// ════════ VALIDAÇÃO DA CANTINA (persiste na planilha via backend) ════════
+// Marca todos os registros de um dia (data+fazenda) como validados.
+function validarCantinaDia(dt, faz){
+  var quem = CU ? CU.n : '';
+  (S.rC||[]).forEach(function(r){
+    if(r.tipo!=='cantina' && r.total===undefined) return;
+    if((r.dt||'')===dt && (r.faz||'')===(faz||'')){ r.validado=true; r.validado_por=quem; r.reprovado=false; }
+  });
+  salvar();
+  rPan();
+  _cantinaValidarNuvem([{dt:dt, faz:faz||''}], function(){});
+}
+// Valida todos os dias pendentes do filtro atual.
+function validarCantinaTudo(){
+  var lista = filtrarPan(S.rC||[]);
+  if(!lista.length){ alert('Não há cantina pendente para validar.'); return; }
+  // dias únicos pendentes
+  var mapa = {};
+  lista.forEach(function(r){ if(!r.validado){ mapa[(r.dt||'')+'|'+(r.faz||'')] = {dt:r.dt||'', faz:r.faz||''}; } });
+  var itens = Object.keys(mapa).map(function(k){ return mapa[k]; });
+  if(!itens.length){ alert('Não há cantina pendente para validar.'); return; }
+  if(!confirm('Validar '+itens.length+' dia(s) de cantina?\nEles saem dos pendentes.')) return;
+  var quem = CU ? CU.n : '';
+  (S.rC||[]).forEach(function(r){
+    if(itens.some(function(it){return it.dt===(r.dt||'')&&it.faz===(r.faz||'');})){ r.validado=true; r.validado_por=quem; r.reprovado=false; }
+  });
+  salvar();
+  rPan();
+  _cantinaValidarNuvem(itens, function(ok){});
+}
+// Envia a validação para a planilha (canal próprio; persiste de verdade).
+function _cantinaValidarNuvem(itens, cb){
+  if(!S.cfgGS){ if(cb)cb(false); return; }
+  var quem = CU ? CU.n : '';
+  var url = S.cfgGS+'?acao=cantina_validar&v=Sim&quem='+encodeURIComponent(quem);
+  var corpo = JSON.stringify(itens);
+  if((url+'&itens='+encodeURIComponent(corpo)).length < 7000){
+    var _cb='_ctv_'+Date.now()+'_'+Math.floor(Math.random()*9999);
+    var s=document.createElement('script');
+    s.src=url+'&itens='+encodeURIComponent(corpo)+'&callback='+_cb+'&t='+Date.now();
+    var done=false;
+    window[_cb]=function(){done=true;delete window[_cb];if(s.parentNode)s.parentNode.removeChild(s);updCloudStatus&&updCloudStatus('ok');if(cb)cb(true);};
+    s.onerror=function(){if(done)return;delete window[_cb];if(s.parentNode)s.parentNode.removeChild(s);if(cb)cb(false);};
+    document.body.appendChild(s);
+    setTimeout(function(){ if(!done){ try{delete window[_cb];}catch(e){} if(cb)cb(false);} }, 12000);
+  } else {
+    fetch(url+'&t='+Date.now(),{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:corpo})
+      .then(function(){updCloudStatus&&updCloudStatus('ok');if(cb)cb(true);})
+      .catch(function(){if(cb)cb(false);});
+  }
 }
 
 function reprovarLancamento(arr, gi){
