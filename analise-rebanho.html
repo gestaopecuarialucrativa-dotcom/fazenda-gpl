@@ -1462,6 +1462,19 @@ function rebAplicarData(){
   document.getElementById('reb-cloud-status').textContent=_rebBR(dt)+' carregada - confira os lotes e confirme.';
 }
 window.addEventListener('load',function(){try{var u=localStorage.getItem('gpl_cmp_url');if(u&&document.getElementById('reb-url'))document.getElementById('reb-url').value=u;}catch(e){}});
+window.addEventListener('load',function(){
+  try{
+    var raw=localStorage.getItem('gpl_reb_import');
+    if(!raw)return;
+    localStorage.removeItem('gpl_reb_import');
+    var dados=JSON.parse(raw);
+    if(!dados||!dados.lotes||!dados.lotes.length)return;
+    if(typeof abrirModalImport==='function')abrirModalImport();
+    _aplicarImportReb(dados);
+    var s=document.getElementById('reb-cloud-status');
+    if(s)s.textContent='Pesagem vinda do Comparativo'+(dados.data?(' ('+dados.data+')'):'')+' - confira e confirme.';
+  }catch(e){}
+});
 function lerXLSXImport(input){
   var file=input.files[0];if(!file)return;
   var st=document.getElementById('imp-status');
