@@ -3084,8 +3084,9 @@ function salvarPesagemNuvem(cb){
     document.body.appendChild(s);
     setTimeout(function(){ if(!done){ try{delete window[_cb];}catch(e){} if(cb)cb(false);} }, 12000);
   } else {
-    fetch(S.cfgGS,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({acao:'salvar_pesagem',data:dados})})
+    // POST: 'acao' vai na URL (o backend lê e.parameter); o corpo é a pesagem pura (e.postData.contents)
+    fetch(S.cfgGS+'?acao=salvar_pesagem&t='+Date.now(),{method:'POST',mode:'no-cors',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},body:dados})
       .then(function(){updCloudStatus('ok');if(cb)cb(true);})
       .catch(function(){if(cb)cb(false);});
   }
