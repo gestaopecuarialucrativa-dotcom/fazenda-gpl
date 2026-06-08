@@ -4668,7 +4668,11 @@ function rListLotes(){
     return'<div style="background:#fff;border:1px solid #eee;border-radius:10px;padding:12px;margin-bottom:8px">'
       +'<div style="display:flex;justify-content:space-between;align-items:center">'
       +'<span style="font-weight:700;font-size:14px">🐄 '+l.nome+'</span>'
+      +'<div style="display:flex;gap:5px">'
+      +'<button onclick="editLotePesagem(\''+l.nome.replace(/'/g,"'")+'\',\''+((l.faz||'').replace(/'/g,"'"))+'\')" style="border:none;background:#E8F5E9;color:#1B5E20;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer">⚖️ Pesagem</button>'
       +'<button onclick="editLote(\''+l.nome.replace(/'/g,"'")+'\',\''+((l.faz||'').replace(/'/g,"'"))+'\')" style="border:none;background:#f0f0f0;padding:3px 8px;border-radius:6px;font-size:11px;cursor:pointer">✏️ Editar</button>'
+      +'<button onclick="excluirLote(\''+l.nome.replace(/'/g,"'")+'\',\''+((l.faz||'').replace(/'/g,"'"))+'\')" style="border:none;background:#FFEBEE;color:#C62828;padding:3px 8px;border-radius:6px;font-size:11px;cursor:pointer">🗑️</button>'
+      +'</div>'
       +'</div>'
       +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px">'
       +'<div style="text-align:center;background:#f0f9e8;border-radius:6px;padding:6px"><div style="font-size:10px;color:#666">Animais</div><div style="font-weight:700;color:#1B5E20">'+l.qtd+'</div></div>'
@@ -4689,6 +4693,32 @@ function editLote(nome,faz){
   document.getElementById('lt-peso').value=l.peso||0;
   ltInsumos=l.insumos?l.insumos.slice():[];
   calcLote();window.scrollTo(0,0);
+}
+// Extrai o número do lote a partir do nome ("Lote 06" -> "6")
+function _loteNumero(nome){ var m=String(nome||'').match(/(\d+)/); return m?String(parseInt(m[1],10)):''; }
+// Abre o lote para edição já com qtd e peso médio preenchidos pela última pesagem importada
+function editLotePesagem(nome,faz){
+  var num=_loteNumero(nome);
+  var p=(S.PESAGEM||{})[num];
+  if(!p||!p.animais||!p.animais.length){ alert('Não há pesagem importada para o '+nome+'.\nImporte a planilha de pesagem primeiro (na Consulta de Pesagem).'); return; }
+  var qtd=p.animais.length;
+  var soma=p.animais.reduce(function(s,a){return s+(parseFloat(a.peso)||0);},0);
+  var peso=qtd?Math.round(soma/qtd):0;
+  editLote(nome,faz); // abre o form
+  var qEl=document.getElementById('lt-qtd'), pEl=document.getElementById('lt-peso');
+  if(qEl)qEl.value=qtd; if(pEl)pEl.value=peso;
+  calcLote();
+  alert('⚖️ Preenchido pela pesagem de '+_dataBR(p.data)+':\n'+qtd+' animais · peso médio '+peso+' kg.\n\nConfira e toque em Salvar para aplicar ao lote.');
+}
+// Exclui um lote (vive no CONFIG; a aba 🐄 Lotes é reescrita pelo backend ao salvar)
+function excluirLote(nome,faz){
+  if(!confirm('Excluir o lote "'+nome+'"?\n\nIsso remove o lote do sistema (não mexe na pesagem nem no histórico). Não dá pra desfazer.'))return;
+  S.LOTES=(S.LOTES||[]).filter(function(l){return !(l.nome===nome&&l.faz===faz);});
+  salvar();
+  if(S.cfgGS)salvarNuvem(function(){});
+  rListLotes();
+  try{updTLLotes();}catch(e){}
+  showOk('ok-lt');
 }
 function updTratoLote(){const lNome=(document.getElementById('t-cocho')||{}).value||'';const faz=(document.getElementById('t-faz')||{}).value||'';const infoEl=document.getElementById('t-lote-info');const cabHid=document.getElementById('t-cab');const cabInfo=document.getElementById('t-cab-info');if(!lNome){if(infoEl)infoEl.style.display='none';if(cabInfo)cabInfo.textContent='Selecione o lote acima ↑';if(cabHid)cabHid.value=0;return;}const lote=(S.LOTES||[]).find(l=>l.nome===lNome&&(!faz||l.faz===faz));if(lote){if(infoEl){infoEl.style.display='block';infoEl.textContent=lote.qtd+' animais · '+lote.peso+' kg/cab · Total: '+(lote.qtd*lote.peso).toFixed(0)+' kg';}if(cabInfo)cabInfo.textContent=lote.qtd+' animais · '+lote.peso+' kg/cab';if(cabHid)cabHid.value=lote.qtd;const ps=document.getElementById('t-prod');if(ps){const fazProds=((S.FAZ[faz]||{}).prods)||Object.keys(S.EST||{});let opts='<option value="">Selecione...</option>';fazProds.forEach(p=>{const est=S.EST&&S.EST[p];const pct=est&&est.pct?est.pct:0;if(pct>0&&lote.peso&&lote.qtd){const cons=(pct/100)*lote.peso*lote.qtd;opts+=`<option value="${p}" data-cons="${cons.toFixed(1)}">${p} (Rec: ${cons.toFixed(1)} kg)</option>`;}else opts+=`<option value="${p}">${p}</option>`;});ps.innerHTML=opts;}}}
 function updEsLote(){const lNome=(document.getElementById('es-cocho')||{}).value||'';const faz=(document.getElementById('es-faz')||{}).value||'';const infoEl=document.getElementById('es-lote-info');const hidEl=document.getElementById('es-nanim');const nInfo=document.getElementById('es-nanim-info');if(!lNome){if(infoEl)infoEl.style.display='none';if(nInfo)nInfo.textContent='Selecione o lote acima ↑';if(hidEl)hidEl.value=0;return;}const lote=(S.LOTES||[]).find(l=>l.nome===lNome&&(!faz||l.faz===faz));if(lote){if(infoEl){infoEl.style.display='block';infoEl.textContent=lote.qtd+' animais · '+lote.peso+' kg/cabeça';}if(nInfo)nInfo.textContent=lote.qtd+' animais · '+lote.peso+' kg/cab';if(hidEl)hidEl.value=lote.qtd;}}
