@@ -994,7 +994,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <div class="card" style="padding:16px">
     <div style="font-size:13px;color:#666;margin-bottom:10px">Digite o número do brinco para ver de qual lote o animal é, o peso e a data da última pesagem.</div>
     <div style="display:flex;gap:8px">
-      <input id="pes-busca" type="text" inputmode="numeric" placeholder="Nº do brinco (ex: 152)" autocomplete="off"
+      <input id="pes-busca" type="text" inputmode="text" placeholder="Nº do brinco (ex: 152 ou 111x)" autocomplete="off" autocapitalize="none" spellcheck="false"
         oninput="rPesagemBusca()" style="flex:1;padding:16px;border:2px solid #1B5E20;border-radius:12px;font-size:24px;font-weight:800;text-align:center;letter-spacing:1px">
       <button onclick="document.getElementById('pes-busca').value='';rPesagemBusca();document.getElementById('pes-busca').focus()" style="padding:0 16px;background:#F1F8E9;color:#1B5E20;border:1px solid #A5D6A7;border-radius:12px;font-size:18px;cursor:pointer">✕</button>
     </div>
@@ -3060,10 +3060,35 @@ function pesagemConfirmarImport(){
   if(!_pesImport){ alert('Selecione uma planilha primeiro.'); return; }
   var r=_pesagemImportar(_pesImport.animais, _pesImport.data);
   salvar();
-  if(S.cfgGS)salvarNuvem(function(){});
-  _pesImport=null;
-  alert('✅ Importado! Lotes atualizados: '+r.lotes.join(', ')+' · '+r.total+' animais.\nOs dados vão para os celulares quando sincronizarem.');
-  rPesagem();
+  salvarPesagemNuvem(function(ok){
+    _pesImport=null;
+    alert((ok?'✅ Importado e salvo na nuvem!':'✅ Importado no aparelho (a nuvem pode não ter confirmado — verifique a internet).')
+      +'\nLotes atualizados: '+r.lotes.join(', ')+' · '+r.total+' animais.'
+      +(ok?'\nOs dados vão para os celulares quando sincronizarem.':''));
+    rPesagem();
+  });
+}
+// Salva a pesagem em canal próprio (célula separada no backend), fora do config grande.
+function salvarPesagemNuvem(cb){
+  if(!S.cfgGS){ if(cb)cb(false); return; }
+  var dados=JSON.stringify(S.PESAGEM||{});
+  var url=S.cfgGS+'?acao=salvar_pesagem';
+  // JSONP por GET se couber; senão POST no-cors
+  if((url+'&data='+encodeURIComponent(dados)).length<7000){
+    var _cb='_pes_'+Date.now()+'_'+Math.floor(Math.random()*9999);
+    var s=document.createElement('script');
+    s.src=url+'&data='+encodeURIComponent(dados)+'&callback='+_cb+'&t='+Date.now();
+    var done=false;
+    window[_cb]=function(){done=true;delete window[_cb];if(s.parentNode)s.parentNode.removeChild(s);updCloudStatus('ok');if(cb)cb(true);};
+    s.onerror=function(){if(done)return;delete window[_cb];if(s.parentNode)s.parentNode.removeChild(s);if(cb)cb(false);};
+    document.body.appendChild(s);
+    setTimeout(function(){ if(!done){ try{delete window[_cb];}catch(e){} if(cb)cb(false);} }, 12000);
+  } else {
+    fetch(S.cfgGS,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({acao:'salvar_pesagem',data:dados})})
+      .then(function(){updCloudStatus('ok');if(cb)cb(true);})
+      .catch(function(){if(cb)cb(false);});
+  }
 }
 
 // Nome de exibição na cotação:
@@ -3782,7 +3807,7 @@ function salvarNuvem(cb){
   var cfgBase={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,
     LOTES:S.LOTES,AREAS:S.AREAS||{},MAPA_ALOC:S.MAPA_ALOC||{},
     DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT||'',
-    NOTAS:S.NOTAS||{},PIX_D:S.PIX_D||{},PROD_GEN:S.PROD_GEN||{},PESAGEM:S.PESAGEM||{}};
+    NOTAS:S.NOTAS||{},PIX_D:S.PIX_D||{},PROD_GEN:S.PROD_GEN||{}};
   var cfgReg={rD:(S.rD||[]).filter(function(r){return !r._apagado;}),rT:(S.rT||[]).filter(function(r){return !r._apagado;}),rC:(S.rC||[]).filter(function(r){return !r._apagado;}),rE:(S.rE||[]).filter(function(r){return !r._apagado;}),
     rDesp:S.rDesp,mEst:S.mEst,queue:S.queue||[]};
 
