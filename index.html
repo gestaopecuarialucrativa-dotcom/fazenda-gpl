@@ -417,7 +417,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="fg"><div class="lbl">Fazenda</div><select id="i-cad-faz" onchange="rListProdutos()"></select></div>
 <div style="display:flex;gap:8px;flex-wrap:wrap"><div style="flex:2;min-width:140px"><div class="lbl">Nome do produto</div><input type="text" id="i-cad-nome" placeholder="Ex: Proteinado Bovmax"></div><div style="flex:1;min-width:70px"><div class="lbl">Unidade</div><select id="i-cad-unid"><option>kg</option><option>saco</option><option>litro</option><option>unid.</option></select></div></div>
 <div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap"><div style="flex:1;min-width:80px"><div class="lbl">Estoque atual</div><input type="number" id="i-cad-estq" placeholder="0" min="0" step="0.5"></div><div style="flex:1;min-width:80px"><div class="lbl">Estoque mínimo</div><input type="number" id="i-cad-min" placeholder="0" min="0" step="0.5"></div></div>
-<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;align-items:flex-end"><div style="flex:1;min-width:100px"><div class="lbl">Consumo (% do peso vivo)</div><input type="number" id="i-cad-pct" placeholder="Ex: 0.3" min="0" max="10" step="0.01"></div><div style="flex:1;min-width:100px;background:#E8F5E9;border-radius:8px;padding:8px;font-size:11px;color:#1B5E20">Animal 400kg × 0,3% = <b>1,2 kg/dia</b></div></div>
+<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;align-items:flex-end"><div style="flex:1;min-width:100px"><div class="lbl">Consumo (% do peso vivo)</div><input type="number" id="i-cad-pct" placeholder="Ex: 0.3" min="0" max="10" step="0.01"></div><div style="flex:1;min-width:100px"><div class="lbl">R$ / saco</div><input type="number" id="i-cad-preco" placeholder="Ex: 85,00" min="0" step="0.01"></div><div style="flex:1;min-width:100px;background:#E8F5E9;border-radius:8px;padding:8px;font-size:11px;color:#1B5E20">Animal 400kg × 0,3% = <b>1,2 kg/dia</b></div></div>
 <button class="sbtn" style="margin-top:10px" onclick="salvarProduto()">💾 Salvar produto</button>
 <div class="ok" id="ok-prod">✅ Produto salvo!</div>
 <div id="prod-lista" style="margin-top:10px"></div>
@@ -4726,8 +4726,8 @@ function updEsLote(){const lNome=(document.getElementById('es-cocho')||{}).value
 
 // ═══ PRODUTOS ═══
 function updInsCadFaz(){const sel=document.getElementById('i-cad-faz');if(!sel)return;sel.innerHTML=getFL().map(f=>`<option>${f}</option>`).join('');rListProdutos();}
-function salvarProduto(){const faz=(document.getElementById('i-cad-faz')||{}).value||'';const nome=((document.getElementById('i-cad-nome')||{}).value||'').trim();const unid=(document.getElementById('i-cad-unid')||{}).value||'kg';const estq=parseFloat((document.getElementById('i-cad-estq')||{}).value)||0;const min=parseFloat((document.getElementById('i-cad-min')||{}).value)||0;const pct=parseFloat((document.getElementById('i-cad-pct')||{}).value)||0;if(!nome){alert('Informe o nome do produto.');return;}if(!faz){alert('Selecione a fazenda.');return;}if(!S.FAZ[faz])S.FAZ[faz]={cochos:[],prods:[]};if(!S.FAZ[faz].prods)S.FAZ[faz].prods=[];if(!S.FAZ[faz].prods.includes(nome))S.FAZ[faz].prods.push(nome);if(!S.EST)S.EST={};S.EST[nome]={q:estq,min,u:unid,pct};salvar();_enviarEstoque(nome,faz);updInsProd();rListProdutos();['i-cad-nome','i-cad-estq','i-cad-min','i-cad-pct'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});showOk('ok-prod');}
-function rListProdutos(){const el=document.getElementById('prod-lista');if(!el)return;const faz=(document.getElementById('i-cad-faz')||{}).value||getFL()[0]||'';const prods=S.FAZ&&S.FAZ[faz]?(S.FAZ[faz].prods||[]):[];if(!prods.length){el.innerHTML='<div style="font-size:12px;color:#aaa;padding:4px">Nenhum produto cadastrado.</div>';return;}el.innerHTML='<div style="font-size:11px;color:#666;margin-bottom:4px">Produtos cadastrados:</div>'+prods.map(p=>{const est=S.EST&&S.EST[p]?S.EST[p]:{};const pctTxt=est.pct?' · '+est.pct+'% PV':'';return`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f5f5f5"><div><span style="font-size:13px;font-weight:600">${p}</span><span style="font-size:11px;color:#888"> ${est.q||0} ${est.u||''}${pctTxt}</span></div><button onclick="removerProduto('${p.replace(/'/g,"'")}','${faz.replace(/'/g,"'")}')" style="border:none;background:none;color:#C62828;font-size:14px;cursor:pointer">✕</button></div>`;}).join('');}
+function salvarProduto(){const faz=(document.getElementById('i-cad-faz')||{}).value||'';const nome=((document.getElementById('i-cad-nome')||{}).value||'').trim();const unid=(document.getElementById('i-cad-unid')||{}).value||'kg';const estq=parseFloat((document.getElementById('i-cad-estq')||{}).value)||0;const min=parseFloat((document.getElementById('i-cad-min')||{}).value)||0;const pct=parseFloat((document.getElementById('i-cad-pct')||{}).value)||0;const preco=parseFloat((document.getElementById('i-cad-preco')||{}).value)||0;if(!nome){alert('Informe o nome do produto.');return;}if(!faz){alert('Selecione a fazenda.');return;}if(!S.FAZ[faz])S.FAZ[faz]={cochos:[],prods:[]};if(!S.FAZ[faz].prods)S.FAZ[faz].prods=[];if(!S.FAZ[faz].prods.includes(nome))S.FAZ[faz].prods.push(nome);if(!S.EST)S.EST={};S.EST[nome]={q:estq,min,u:unid,pct,preco_saco:preco};salvar();_enviarEstoque(nome,faz);updInsProd();rListProdutos();['i-cad-nome','i-cad-estq','i-cad-min','i-cad-pct','i-cad-preco'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});showOk('ok-prod');}
+function rListProdutos(){const el=document.getElementById('prod-lista');if(!el)return;const faz=(document.getElementById('i-cad-faz')||{}).value||getFL()[0]||'';const prods=S.FAZ&&S.FAZ[faz]?(S.FAZ[faz].prods||[]):[];if(!prods.length){el.innerHTML='<div style="font-size:12px;color:#aaa;padding:4px">Nenhum produto cadastrado.</div>';return;}el.innerHTML='<div style="font-size:11px;color:#666;margin-bottom:4px">Produtos cadastrados:</div>'+prods.map(p=>{const est=S.EST&&S.EST[p]?S.EST[p]:{};const pctTxt=est.pct?' · '+est.pct+'% PV':'';const precoTxt=est.preco_saco?' · R$'+parseFloat(est.preco_saco).toFixed(2).replace('.',',')+'/'+(est.u||'saco'):'';return`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f5f5f5"><div><span style="font-size:13px;font-weight:600">${p}</span><span style="font-size:11px;color:#888"> ${est.q||0} ${est.u||''}${pctTxt}${precoTxt}</span></div><button onclick="removerProduto('${p.replace(/'/g,"'")}','${faz.replace(/'/g,"'")}')" style="border:none;background:none;color:#C62828;font-size:14px;cursor:pointer">✕</button></div>`;}).join('');}
 function removerProduto(nome,faz){if(!confirm('Remover produto "'+nome+'"?'))return;if(S.FAZ[faz]&&S.FAZ[faz].prods)S.FAZ[faz].prods=S.FAZ[faz].prods.filter(p=>p!==nome);if(S.EST)delete S.EST[nome];salvar();rListProdutos();updInsProd();}
 function updInsInfo(sel){const nome=sel.value;const row=sel.closest?sel.closest('.ir'):null;const infoEl=row?row.nextElementSibling:null;if(!infoEl||!infoEl.classList.contains('ins-info')){return;}if(!nome||!S.EST||!S.EST[nome]){infoEl.style.display='none';return;}const est=S.EST[nome];infoEl.textContent='📦 '+nome+' · Estoque: '+est.q+' '+est.u+(est.pct?' · '+est.pct+'% PV':'');infoEl.style.display='block';const uSel=row.querySelector('.iu');if(uSel&&est.u)uSel.value=est.u;}
 function editarProdutoEst(nome){const d=S.EST[nome]||{};const nv=prompt('Nome:',nome);if(!nv)return;const qtd=parseFloat(prompt('Estoque atual:',d.q||0));const min=parseFloat(prompt('Estoque mínimo:',d.min||0));const unid=prompt('Unidade:',d.u||'kg');const pct=parseFloat(prompt('% consumo PV:',d.pct||0));if(nv!==nome){S.EST[nv]=S.EST[nome];delete S.EST[nome];Object.keys(S.FAZ).forEach(f=>{if(S.FAZ[f].prods){const i=S.FAZ[f].prods.indexOf(nome);if(i>=0)S.FAZ[f].prods[i]=nv;}});nome=nv;}if(!isNaN(qtd))S.EST[nome].q=qtd;if(!isNaN(min))S.EST[nome].min=min;if(unid)S.EST[nome].u=unid;if(!isNaN(pct))S.EST[nome].pct=pct;_estoqueEditado();_enviarEstoque(nome);rEst();updInsProd();alert('✅ Produto atualizado!');}
@@ -4915,7 +4915,7 @@ function rHistLotes(){
       +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'
       +  _hKpi('TX. LOTAÇÃO',txLot,'UA/ha',ha>0)
       +  _hKpi('SUPORTE CARGA',supCg,'animais',ha>0)
-      +  _hKpi('PESO MÉDIO',peso>0?peso+'kg':'—','',true)
+      +  '<div style="background:#E8F5E9;border-radius:10px;padding:8px;text-align:center"><div style="font-size:9px;font-weight:700;color:#555;margin-bottom:2px">PESO MÉDIO</div><div style="font-size:16px;font-weight:800;color:#1B5E20">'+(peso>0?peso+' kg':'—')+'</div><button onclick="editarPesoHistLote(\''+nm.replace(/'/g,"\\'")+'\')" style="margin-top:4px;font-size:10px;background:#fff;border:1px solid #A5D6A7;color:#1B5E20;border-radius:6px;padding:2px 8px;cursor:pointer">✏️ Editar</button></div>'
       +'</div>'
       +_hConsumoLote(nm, qtd)
       +(movsLote.length?_hTimeline(movsLote):'')
@@ -4929,6 +4929,21 @@ function rHistLotes(){
 
   // ── Gráfico de barras: dias no pasto atual ──────────
   _rGraficoDias(lotes, aloc, movs, hoje);
+}
+
+function editarPesoHistLote(nome){
+  var idx=(S.LOTES||[]).findIndex(function(l){return l.nome===nome;});
+  if(idx<0){alert('Lote não encontrado.');return;}
+  var atual=S.LOTES[idx].peso||0;
+  var novo=prompt('Peso médio atual do '+nome+' (kg):', atual);
+  if(novo===null)return;
+  var val=parseFloat(String(novo).replace(',','.'));
+  if(isNaN(val)||val<=0){alert('Valor inválido.');return;}
+  S.LOTES[idx].peso=val;
+  salvar();
+  if(S.cfgGS)salvarNuvem(function(){});
+  rHistLotes();
+  alert('✅ Peso médio do '+nome+' atualizado para '+val+' kg.');
 }
 
 function _rTaxaLotacaoPiquetes(){
@@ -6081,15 +6096,19 @@ function _consumoPerfis(){
       var est=S.EST&&S.EST[pr]?S.EST[pr]:null;
       var pct=(est&&est.pct)?est.pct:0;
       var pesoMed=(loteObj&&loteObj.peso)?loteObj.peso:0;
+      var precoSaco=(est&&est.preco_saco)?parseFloat(est.preco_saco):0;
+      var custoTotal=precoSaco>0?pp.sacos*precoSaco:0;
       var recKg=0;
       if(pct>0&&pesoMed>0&&cab>0){
         var diasP=Math.max(1,pdias);
         recKg=(pct/100)*pesoMed*cab*diasP;
       }
-      return {nome:pr, sacos:pp.sacos, kg:pp.kg, ini:pini, fim:pfim, dias:pdias, recKg:recKg};
+      return {nome:pr, sacos:pp.sacos, kg:pp.kg, ini:pini, fim:pfim, dias:pdias, recKg:recKg, custoTotal:custoTotal};
     }).sort(function(a,b){return b.kg-a.kg;});
+    var custoLote=prods.reduce(function(s,p){return s+p.custoTotal;},0);
+    var custoCab=cab>0&&custoLote>0?custoLote/cab:0;
     return {lote:ln, sacos:o.sacos, kg:o.kg, ini:ini, fim:fim, dias:dias,
-      cab:cab, kgDia:kgDia, kgCab:kgCab, prods:prods};
+      cab:cab, kgDia:kgDia, kgCab:kgCab, custoLote:custoLote, custoCab:custoCab, prods:prods};
   }).sort(function(a,b){return b.kg-a.kg;});
 
   return perfis;
@@ -6159,7 +6178,8 @@ function rHistConsumo(){
       +  '<div><div style="font-size:9px;color:#999">Em kg</div><div style="font-size:13px;font-weight:700;color:#2E7D32">'+p.kg.toFixed(0)+' kg</div></div>'
       +  '<div><div style="font-size:9px;color:#999">Período</div><div style="font-size:13px;font-weight:700;color:#2E7D32">'+p.dias+' dias</div></div>'
       +  '<div><div style="font-size:9px;color:#999">Por dia</div><div style="font-size:13px;font-weight:700;color:#2E7D32">'+p.kgDia.toFixed(1)+' kg</div></div>'
-      +  '<div><div style="font-size:9px;color:#999">Por cabeça</div><div style="font-size:13px;font-weight:700;color:#2E7D32">'+(p.kgCab>0?p.kgCab.toFixed(1)+' kg':'—')+'</div></div>'
+      +  '<div><div style="font-size:9px;color:#999">R$/cabeça</div><div style="font-size:13px;font-weight:700;color:'+(p.custoCab>0?'#E65100':'#aaa')+'">'+( p.custoCab>0?'R$ '+p.custoCab.toFixed(2).replace('.',','):'—')+'</div></div>'
+      +(p.custoLote>0?'<div><div style="font-size:9px;color:#999">Custo total</div><div style="font-size:13px;font-weight:700;color:#E65100">R$ '+p.custoLote.toFixed(2).replace('.',',')+'</div></div>':'')
       +'</div>'
       +'<div style="font-size:10px;color:#888;margin-bottom:4px">Consumiu de '+periodo+'</div>'
       +'<div style="font-size:11px;font-weight:700;color:#555;margin-top:6px">Produtos usados:</div>'
