@@ -4645,8 +4645,7 @@ function salvarLote(){
   var lote={faz,nome,qtd,peso,insumos:ltInsumos.slice()};
   if(idx>=0)S.LOTES[idx]=lote;else S.LOTES.push(lote);
   salvar();
-  // Sincronizar lotes com a planilha
-  enviarDado({tipo:'lote',faz:faz,nome:nome,qtd:qtd,peso:peso});
+  if(S.cfgGS)salvarNuvem(function(){});
   ltInsumos=[];rListLotes();
   ['lt-nome','lt-qtd','lt-peso'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
   var ptEl=document.getElementById('lt-peso-total');if(ptEl)ptEl.textContent='—';
