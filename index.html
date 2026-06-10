@@ -4913,8 +4913,18 @@ function rHistLotes(){
       +    '<div style="font-size:14px;margin-top:1px">'+eD+'</div>'
       +  '</div>'
       +'</div>'
-      +'<div style="background:#E8F5E9;border-radius:10px;padding:8px;text-align:center"><div style="font-size:9px;font-weight:700;color:#555;margin-bottom:2px">ANIMAIS</div><div style="font-size:16px;font-weight:800;color:#1B5E20">'+qtd+'</div><button onclick="editarQtdHistLote(this)" data-lote-nm="'+encodeURIComponent(nm)+'" style="margin-top:4px;font-size:10px;background:#fff;border:1px solid #A5D6A7;color:#1B5E20;border-radius:6px;padding:2px 8px;cursor:pointer">✏️ Editar</button></div>'
-      +  '<div style="background:#E8F5E9;border-radius:10px;padding:8px;text-align:center"><div style="font-size:9px;font-weight:700;color:#555;margin-bottom:2px">PESO MÉDIO</div><div style="font-size:16px;font-weight:800;color:#1B5E20">'+(peso>0?peso+' kg':'—')+'</div><button onclick="editarPesoHistLote(\''+nm.replace(/'/g,"\\'")+'\')" style="margin-top:4px;font-size:10px;background:#fff;border:1px solid #A5D6A7;color:#1B5E20;border-radius:6px;padding:2px 8px;cursor:pointer">✏️ Editar</button></div>'
+      +'<div style="display:flex;gap:8px;margin:10px 0">'
+      +'<div style="flex:1;background:#E8F5E9;border-radius:10px;padding:10px;text-align:center">'
+      +'<div style="font-size:9px;font-weight:700;color:#555;margin-bottom:3px">ANIMAIS</div>'
+      +'<div style="font-size:22px;font-weight:900;color:#1B5E20;line-height:1.1">'+qtd+'</div>'
+      +'<button onclick="editarQtdHistLote(this)" data-lote-nm="'+encodeURIComponent(nm)+'" style="margin-top:5px;font-size:10px;background:#fff;border:1px solid #A5D6A7;color:#1B5E20;border-radius:6px;padding:3px 10px;cursor:pointer">✏️ Editar</button>'
+      +'</div>'
+      +'<div style="flex:1;background:#E8F5E9;border-radius:10px;padding:10px;text-align:center">'
+      +'<div style="font-size:9px;font-weight:700;color:#555;margin-bottom:3px">PESO MÉDIO</div>'
+      +'<div style="font-size:22px;font-weight:900;color:#1B5E20;line-height:1.1">'+(peso>0?peso+' kg':'—')+'</div>'
+      +'<button onclick="editarPesoHistLote(this)" data-lote-nm="'+encodeURIComponent(nm)+'" style="margin-top:5px;font-size:10px;background:#fff;border:1px solid #A5D6A7;color:#1B5E20;border-radius:6px;padding:3px 10px;cursor:pointer">✏️ Editar</button>'
+      +'</div>'
+      +'</div>'
       +'</div>'
       +_hConsumoLote(nm, qtd)
       +(movsLote.length?_hTimeline(movsLote):'')
@@ -4944,8 +4954,8 @@ function editarQtdHistLote(btn){
   rHistLotes();
   alert('✅ Quantidade do '+nome+' atualizada para '+val+' animais.');
 }
-function editarPesoHistLote(nome){
-  var idx=(S.LOTES||[]).findIndex(function(l){return l.nome===nome;});
+function editarPesoHistLote(btn){
+  var nome=decodeURIComponent((btn&&btn.getAttribute?btn.getAttribute('data-lote-nm'):btn)||String(btn||'')); var idx=(S.LOTES||[]).findIndex(function(l){return l.nome===nome;});
   if(idx<0){alert('Lote não encontrado.');return;}
   var atual=S.LOTES[idx].peso||0;
   var novo=prompt('Peso médio atual do '+nome+' (kg):', atual);
