@@ -1526,6 +1526,22 @@ function buildActs(){
     +'<div class="abtn-l">Consulta de Pesagem</div>'
     +'<div class="abtn-s">Digite o nº do brinco → lote, peso e data</div>'
     +'</div>';
+  // Botão do trator — aparece para Vaqueiro/Consultor quando o link estiver configurado
+  var tratorUrl = '';
+  if(CU && CU.fs && CU.fs.length){
+    var faz1 = CU.fs[0];
+    tratorUrl = (S.FAZ[faz1] && S.FAZ[faz1].tratorUrl) ? S.FAZ[faz1].tratorUrl : '';
+  } else if(CU && CU.r==='Consultor'){
+    var fazKeys = Object.keys(S.FAZ||{});
+    if(fazKeys.length) tratorUrl = (S.FAZ[fazKeys[0]] && S.FAZ[fazKeys[0]].tratorUrl) ? S.FAZ[fazKeys[0]].tratorUrl : '';
+  }
+  if(tratorUrl){
+    btns += '<div class="abtn" style="grid-column:1/-1;cursor:pointer;background:#E65100;color:#fff" onclick="window.open(\''+tratorUrl+'\',\'_blank\')">'
+      +'<span style="font-size:26px;display:block;margin-bottom:6px">🚜</span>'
+      +'<div class="abtn-l" style="color:#fff">Trator</div>'
+      +'<div class="abtn-s" style="color:rgba(255,255,255,.85)">Registrar início / fim de serviço</div>'
+      +'</div>';
+  }
   document.getElementById('vacts').innerHTML = btns;
 }
 function buildTabs(){
@@ -2045,8 +2061,9 @@ function rFeedConsultor(){
 }
 
 // ═══ CONFIG ═══
-function rFazCfg(){const c=document.getElementById('faz-cfg');if(!c)return;c.innerHTML=Object.entries(S.FAZ).map(([faz,d])=>{const k=faz.replace(/[\s']/g,'_');const lotes=(S.LOTES||[]).filter(l=>l.faz===faz).length;return`<div style="background:#f9f9f9;border-radius:10px;padding:10px;margin-bottom:10px;border:1px solid #e0e0e0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-weight:700;font-size:14px">🏠 ${faz}</span><div style="display:flex;gap:6px"><span onclick="editFaz('${faz}')" style="font-size:11px;background:#E6F1FB;color:#0C447C;padding:3px 8px;border-radius:6px;cursor:pointer">✏️</span><span onclick="delFaz('${faz}')" style="font-size:11px;background:#FCEBEB;color:#CC2200;padding:3px 8px;border-radius:6px;cursor:pointer">🗑️</span></div></div><div style="font-size:11px;color:#666;margin-bottom:6px">${lotes} lote(s)</div><div style="margin-bottom:6px"><div style="font-size:11px;color:#888;margin-bottom:3px">URL Apps Script:</div><div style="display:flex;gap:6px"><input id="gas-${k}" type="text" value="${d.gasUrl||''}" placeholder="https://script.google.com/..." style="flex:1;padding:6px 8px;border:1.5px solid #ddd;border-radius:7px;font-size:11px"><button onclick="salvarGasFaz('${faz}','${k}')" style="padding:6px 10px;background:#1B5E20;color:#fff;border:none;border-radius:7px;font-size:11px;cursor:pointer">💾</button></div></div><div><div style="font-size:11px;color:#888;margin-bottom:3px">Lotes/Cochos:</div><div id="chl-${k}">${(d.cochos||[]).map(c=>`<span class="chip">${c} <span class="cdel" onclick="delCo('${faz}','${c}')">×</span></span>`).join('')}</div><div class="addr"><input type="text" id="nc-${k}" placeholder="Novo cocho/lote" style="flex:1"><button class="savb" onclick="addCo('${faz}')">＋</button></div></div></div>`;}).join('');}
+function rFazCfg(){const c=document.getElementById('faz-cfg');if(!c)return;c.innerHTML=Object.entries(S.FAZ).map(([faz,d])=>{const k=faz.replace(/[\s']/g,'_');const lotes=(S.LOTES||[]).filter(l=>l.faz===faz).length;return`<div style="background:#f9f9f9;border-radius:10px;padding:10px;margin-bottom:10px;border:1px solid #e0e0e0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-weight:700;font-size:14px">🏠 ${faz}</span><div style="display:flex;gap:6px"><span onclick="editFaz('${faz}')" style="font-size:11px;background:#E6F1FB;color:#0C447C;padding:3px 8px;border-radius:6px;cursor:pointer">✏️</span><span onclick="delFaz('${faz}')" style="font-size:11px;background:#FCEBEB;color:#CC2200;padding:3px 8px;border-radius:6px;cursor:pointer">🗑️</span></div></div><div style="font-size:11px;color:#666;margin-bottom:6px">${lotes} lote(s)</div><div style="margin-bottom:6px"><div style="font-size:11px;color:#888;margin-bottom:3px">URL Apps Script:</div><div style="display:flex;gap:6px"><input id="gas-${k}" type="text" value="${d.gasUrl||''}" placeholder="https://script.google.com/..." style="flex:1;padding:6px 8px;border:1.5px solid #ddd;border-radius:7px;font-size:11px"><button onclick="salvarGasFaz('${faz}','${k}')" style="padding:6px 10px;background:#1B5E20;color:#fff;border:none;border-radius:7px;font-size:11px;cursor:pointer">💾</button></div></div><div style="margin-bottom:6px"><div style="font-size:11px;color:#888;margin-bottom:3px">🚜 Link do Tratorista:</div><div style="display:flex;gap:6px"><input id="trat-${k}" type="text" value="${d.tratorUrl||''}" placeholder="Cole o link gerado no sistema de máquinas..." style="flex:1;padding:6px 8px;border:1.5px solid #ddd;border-radius:7px;font-size:11px"><button onclick="salvarTratoUrl('${faz}','${k}')" style="padding:6px 10px;background:#1B5E20;color:#fff;border:none;border-radius:7px;font-size:11px;cursor:pointer">💾</button></div></div><div><div style="font-size:11px;color:#888;margin-bottom:3px">Lotes/Cochos:</div><div id="chl-${k}">${(d.cochos||[]).map(c=>`<span class="chip">${c} <span class="cdel" onclick="delCo('${faz}','${c}')">×</span></span>`).join('')}</div><div class="addr"><input type="text" id="nc-${k}" placeholder="Novo cocho/lote" style="flex:1"><button class="savb" onclick="addCo('${faz}')">＋</button></div></div></div>`;}).join('');}
 function salvarGasFaz(faz,k){const url=(document.getElementById('gas-'+k)||{}).value?.trim();if(S.FAZ[faz]){S.FAZ[faz].gasUrl=url;salvar();alert('✅ URL salva para '+faz+'!');}}
+function salvarTratoUrl(faz,k){const url=(document.getElementById('trat-'+k)||{}).value?.trim();if(!url){alert('Cole o link antes de salvar.');return;}if(!S.FAZ[faz])S.FAZ[faz]={};S.FAZ[faz].tratorUrl=url;salvar();if(S.cfgGS)salvarNuvem(function(){});alert('✅ Link do tratorista salvo para '+faz+'!');}
 function addFaz(){const v=(document.getElementById('nf')||{}).value?.trim();if(!v){alert('Digite o nome.');return;}if(S.FAZ[v]){alert('Já existe!');return;}S.FAZ[v]={cochos:[],prods:Object.keys(S.EST).slice(0,2),gasUrl:''};salvar();rFazCfg();popAll();rLinksUsuarios();document.getElementById('nf').value='';alert('✅ Fazenda "'+v+'" adicionada!');}
 function editFaz(antiga){const nova=prompt('Novo nome:',antiga);if(!nova||!nova.trim()||nova===antiga)return;if(S.FAZ[nova]){alert('Já existe.');return;}S.FAZ[nova]=S.FAZ[antiga];delete S.FAZ[antiga];S.US.forEach(u=>{u.fs=u.fs.map(f=>f===antiga?nova:f);});salvar();rFazCfg();popAll();rUcfg();rLinksUsuarios();alert('✅ Renomeada!');}
 function delFaz(f){if(!confirm('Excluir "'+f+'"?'))return;delete S.FAZ[f];S.US.forEach(u=>{u.fs=u.fs.filter(x=>x!==f);});salvar();rFazCfg();popAll();rUcfg();rLinksUsuarios();alert('✅ Excluída!');}
@@ -6140,20 +6157,20 @@ function _consumoPerfis(){
 // Gráfico de consumo por lote (barra colorida) — tela e PDF
 function _consumoGrafico(perfis){
   if(!perfis.length) return '';
-  var maxKg=0; perfis.forEach(function(p){ if(p.kg>maxKg) maxKg=p.kg; });
-  if(maxKg<=0) maxKg=1;
+  var maxSc=0; perfis.forEach(function(p){ if(p.sacos>maxSc) maxSc=p.sacos; });
+  if(maxSc<=0) maxSc=1;
   var barras=perfis.map(function(p){
-    var pct=Math.round((p.kg/maxKg)*100); if(p.kg>0&&pct<2)pct=2;
+    var pct=Math.round((p.sacos/maxSc)*100); if(p.sacos>0&&pct<2)pct=2;
     return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">'
       +'<div style="width:90px;font-size:10px;color:#555;text-align:right;flex-shrink:0">'+p.lote+'</div>'
       +'<div style="flex:1;background:#F0F0F0;border-radius:4px;height:16px;overflow:hidden">'
       +  '<div style="width:'+pct+'%;background:#2E7D32;height:100%;border-radius:4px"></div>'
       +'</div>'
-      +'<div style="width:80px;font-size:10px;color:#333;font-weight:700;flex-shrink:0">'+p.kg.toFixed(0)+' kg</div>'
+      +'<div style="width:80px;font-size:10px;color:#333;font-weight:700;flex-shrink:0">'+p.sacos.toFixed(0)+' sacos</div>'
       +'</div>';
   }).join('');
   return '<div style="margin-bottom:6px">'
-    +'<div style="font-size:11px;font-weight:700;color:#1B5E20;margin-bottom:6px">📊 Consumo total por lote (kg)</div>'
+    +'<div style="font-size:11px;font-weight:700;color:#1B5E20;margin-bottom:6px">📊 Consumo total por lote (sacos)</div>'
     +barras+'</div>';
 }
 
