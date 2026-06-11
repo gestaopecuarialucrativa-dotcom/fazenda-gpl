@@ -992,11 +992,11 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <!-- PESAGEM ⚖️ -->
 <div id="pg-pesagem" class="pg" style="display:none">
   <div class="card" style="padding:16px">
-    <div style="font-size:13px;color:#666;margin-bottom:10px">Digite o número do brinco para ver de qual lote o animal é, o peso e a data da última pesagem.</div>
+    <div style="font-size:13px;color:#65766a;margin-bottom:10px">Digite o número do brinco. O sistema vai filtrando e mostra os brincos que batem — toque no que você quer.</div>
     <div style="display:flex;gap:8px">
-      <input id="pes-busca" type="text" inputmode="text" placeholder="Nº do brinco (ex: 152 ou 111x)" autocomplete="off" autocapitalize="none" spellcheck="false"
-        oninput="rPesagemBusca()" style="flex:1;padding:16px;border:2px solid #1B5E20;border-radius:12px;font-size:24px;font-weight:800;text-align:center;letter-spacing:1px">
-      <button onclick="document.getElementById('pes-busca').value='';rPesagemBusca();document.getElementById('pes-busca').focus()" style="padding:0 16px;background:#F1F8E9;color:#1B5E20;border:1px solid #A5D6A7;border-radius:12px;font-size:18px;cursor:pointer">✕</button>
+      <input id="pes-busca" type="text" inputmode="text" placeholder="Nº do brinco (ex: 05 ou 05x)" autocomplete="off" autocapitalize="none" spellcheck="false"
+        oninput="rPesagemBusca()" style="flex:1;padding:16px;border:1px solid #cdd6cd;border-radius:12px;font-size:24px;font-weight:800;text-align:center;letter-spacing:1px;color:#1b2c1b">
+      <button onclick="document.getElementById('pes-busca').value='';rPesagemBusca();document.getElementById('pes-busca').focus()" style="padding:0 18px;background:#eef2ec;color:#2E7D32;border:1px solid #cdd6cd;border-radius:12px;font-size:18px;cursor:pointer">×</button>
     </div>
     <div id="pes-resultado" style="margin-top:14px"></div>
   </div>
@@ -3045,7 +3045,7 @@ function rPesagem(){
   if(box){
     if(CU && CU.r==='Consultor'){
       box.innerHTML='<div class="card" style="padding:14px;margin-top:10px">'
-        +'<div style="font-size:13px;font-weight:800;color:#1B5E20;margin-bottom:4px">📥 Importar pesagem (planilha)</div>'
+        +'<div style="font-size:13px;font-weight:800;color:#1B5E20;margin-bottom:4px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> Importar pesagem (planilha)</div>'
         +'<div style="font-size:11px;color:#888;margin-bottom:8px">Selecione a planilha de pesagem (.xlsx). Os lotes que vierem na planilha <b>substituem</b> os mesmos lotes já salvos; os demais permanecem.</div>'
         +'<input id="pes-file" type="file" accept=".xlsx,.xls" onchange="pesagemArquivo(this)" style="width:100%;font-size:12px;padding:8px;border:1px dashed #A5D6A7;border-radius:8px;background:#F1F8E9">'
         +'<div id="pes-import-preview" style="margin-top:10px"></div>'
@@ -3056,26 +3056,59 @@ function rPesagem(){
 function _dataBR(d){ if(!d)return '—'; var p=String(d).substring(0,10).split('-'); return p.length===3?(p[2]+'/'+p[1]+'/'+p[0]):d; }
 
 // ── Busca em tempo real ──
+function _pesFiltrar(q){
+  q=(q==null?'':String(q)).trim().toLowerCase(); if(!q)return [];
+  var P=S.PESAGEM||{}, res=[];
+  Object.keys(P).forEach(function(lote){
+    var d=P[lote]||{}; (d.animais||[]).forEach(function(a){
+      var b=String(a.brinco==null?'':a.brinco).trim();
+      if(b.toLowerCase().indexOf(q)===0) res.push({brinco:b, lote:lote, peso:a.peso, data:d.data||'', obs:a.obs||''});
+    });
+  });
+  res.sort(function(x,y){
+    var xe=(x.brinco.toLowerCase()===q), ye=(y.brinco.toLowerCase()===q);
+    if(xe&&!ye)return -1; if(ye&&!xe)return 1;
+    return x.brinco.localeCompare(y.brinco,undefined,{numeric:true});
+  });
+  return res;
+}
+var _pesUlt=[];
+function _pesCard(a){
+  return '<div style="background:linear-gradient(135deg,#1B5E20,#2E7D32);border-radius:14px;padding:20px;color:#fff;text-align:center">'
+    +'<div style="font-size:13px;opacity:.85">BRINCO</div>'
+    +'<div style="font-size:40px;font-weight:900;line-height:1.1;margin:2px 0 10px">'+a.brinco+'</div>'
+    +'<div style="display:flex;justify-content:space-around;gap:8px">'
+    +'<div><div style="font-size:11px;opacity:.85">LOTE</div><div style="font-size:30px;font-weight:900">'+a.lote+'</div></div>'
+    +'<div><div style="font-size:11px;opacity:.85">PESO</div><div style="font-size:30px;font-weight:900">'+(a.peso!=null?a.peso:'\u2014')+'<span style="font-size:14px"> kg</span></div></div>'
+    +'</div>'
+    +'<div style="font-size:12px;opacity:.85;margin-top:10px">\u00daltima pesagem: '+_dataBR(a.data)+'</div>'
+    +(a.obs?('<div style="font-size:12px;opacity:.95;margin-top:8px;background:rgba(255,255,255,.15);border-radius:8px;padding:8px;text-align:left">Obs: '+a.obs+'</div>'):'')
+    +'</div>';
+}
+function pesShowCard(ix){
+  var a=_pesUlt[ix]; if(!a)return;
+  var div=document.getElementById('pes-resultado'); if(!div)return;
+  div.innerHTML='<div onclick="rPesagemBusca()" style="font-size:12px;color:#2E7D32;font-weight:700;cursor:pointer;margin-bottom:10px">\u2039 Voltar \u00e0 lista</div>'+_pesCard(a);
+}
 function rPesagemBusca(){
   var q=(document.getElementById('pes-busca')||{}).value||'';
   var div=document.getElementById('pes-resultado'); if(!div)return;
   if(!q.trim()){ div.innerHTML=''; return; }
-  var achados=_pesagemBuscar(q);
+  var achados=_pesFiltrar(q); _pesUlt=achados;
   if(!achados.length){
-    div.innerHTML='<div style="text-align:center;padding:24px;color:#C62828;font-size:16px;font-weight:700">🔍 Brinco "'+q+'" não encontrado</div>';
+    div.innerHTML='<div style="text-align:center;padding:24px;color:#C62828;font-size:16px;font-weight:700">Brinco "'+q+'" n\u00e3o encontrado</div>';
     return;
   }
-  div.innerHTML=achados.map(function(a){
-    return '<div style="background:linear-gradient(135deg,#1B5E20,#2E7D32);border-radius:16px;padding:20px;color:#fff;text-align:center;margin-bottom:10px">'
-      +'<div style="font-size:13px;opacity:.85">BRINCO</div>'
-      +'<div style="font-size:40px;font-weight:900;line-height:1.1;margin:2px 0 10px">'+q+'</div>'
-      +'<div style="display:flex;justify-content:space-around;gap:8px">'
-      +'<div><div style="font-size:11px;opacity:.85">LOTE</div><div style="font-size:30px;font-weight:900">'+a.lote+'</div></div>'
-      +'<div><div style="font-size:11px;opacity:.85">PESO</div><div style="font-size:30px;font-weight:900">'+(a.peso!=null?a.peso:'—')+'<span style="font-size:14px"> kg</span></div></div>'
-      +'</div>'
-      +'<div style="font-size:12px;opacity:.85;margin-top:10px">Última pesagem: '+_dataBR(a.data)+'</div>'
+  if(achados.length===1){ div.innerHTML=_pesCard(achados[0]); return; }
+  var lista=achados.map(function(a,ix){
+    return '<div onclick="pesShowCard('+ix+')" style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #e0e7e0;border-left:4px solid #2E7D32;border-radius:0 12px 12px 0;padding:12px 14px;margin-bottom:8px;cursor:pointer">'
+      +'<div style="font-size:22px;font-weight:900;color:#1b2c1b;min-width:54px">'+a.brinco+'</div>'
+      +'<div style="flex:1;font-size:12px;color:#65766a">Lote '+a.lote+'</div>'
+      +'<div style="font-size:16px;font-weight:800;color:#2E7D32">'+(a.peso!=null?a.peso+' kg':'\u2014')+'</div>'
+      +'<div style="color:#9bb39b;font-size:18px">\u203a</div>'
       +'</div>';
   }).join('');
+  div.innerHTML='<div style="font-size:11px;color:#65766a;margin-bottom:8px">'+achados.length+' brincos encontrados \u2014 toque pra ver:</div>'+lista;
 }
 
 // ── Importação (Consultor) ──
