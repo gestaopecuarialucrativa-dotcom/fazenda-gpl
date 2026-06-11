@@ -3866,9 +3866,9 @@ function salvarNuvem(cb){
       .then(function(){updCloudStatus('ok');if(cb)cb(true);})
       .catch(function(e){updCloudStatus('err');if(cb)cb(false);});
   } else {
-    fetch(S.cfgGS,{method:'POST',mode:'no-cors',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({acao:'salvar_config',data:JSON.stringify(cfgFull)})})
+    fetch(S.cfgGS+'?acao=salvar_config&t='+Date.now(),{method:'POST',mode:'no-cors',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(cfgFull)})
       .then(function(){updCloudStatus('ok');if(cb)cb(true);})
       .catch(function(){
         var cfgMini=Object.assign({},cfgBase);
