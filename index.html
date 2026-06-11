@@ -2985,7 +2985,7 @@ function _pesagemImportar(lista, data){
   lista.forEach(function(a){
     var lote=String(a.lote).trim(); if(!lote||a.brinco==null||a.peso==null)return;
     if(!grupos[lote])grupos[lote]=[];
-    grupos[lote].push({brinco:String(a.brinco).trim(), peso:a.peso});
+    grupos[lote].push({brinco:String(a.brinco).trim(), peso:a.peso, obs:a.obs||''});
   });
   var lotesAfetados=Object.keys(grupos);
   lotesAfetados.forEach(function(lote){ S.PESAGEM[lote]={data:data||'', animais:grupos[lote]}; });
@@ -3022,7 +3022,8 @@ function _pesagemParsePlanilha(workbook){
     if(row[0]==null||row[1]==null||row[2]==null)continue;
     var peso=parseFloat(row[1]); var lote=parseInt(row[2]);
     if(isNaN(peso)||isNaN(lote))continue;
-    animais.push({brinco:String(row[0]).trim(), peso:peso, lote:lote});
+    var obs=String(row[3]==null?'':row[3]).trim();
+    animais.push({brinco:String(row[0]).trim(), peso:peso, lote:lote, obs:obs});
   }
   return {data:data, animais:animais};
 }
