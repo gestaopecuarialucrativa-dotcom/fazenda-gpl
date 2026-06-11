@@ -3970,7 +3970,7 @@ function carregarNuvem(cb){
           }
           if(cfg.SERVS&&cfg.SERVS.length)S.SERVS=cfg.SERVS;
           if(cfg.PR)S.PR=cfg.PR;
-          if(cfg.LOTES&&cfg.LOTES.length)S.LOTES=cfg.LOTES;
+          if(cfg.LOTES&&cfg.LOTES.length){S.LOTES=cfg.LOTES; salvar();}
           else if(!S.LOTES||!S.LOTES.length)S.LOTES=DEFAULT.LOTES;
           if(cfg.AREAS)S.AREAS=cfg.AREAS;
           if(cfg.PROD_GEN)S.PROD_GEN=cfg.PROD_GEN;
