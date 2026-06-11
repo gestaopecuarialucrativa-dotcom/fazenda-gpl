@@ -1466,7 +1466,7 @@ function rHomeMapa(){
   }
 }
 
-function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',relatorio:'📈 Relatório & Dashboard',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda',feed:'📋 Conferir Lançamentos',pesagem:'⚖️ Consulta de Pesagem'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home'){setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);setTimeout(function(){try{rHomeMapa();}catch(e){}},600);setTimeout(function(){try{rHomeMapa();}catch(e){}},1500);}if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}try{var _fb=document.getElementById('btn-feed-acesso');if(_fb)_fb.style.display=(CU&&CU.r==='Consultor')?'block':'none';}catch(e){}if(_nuvemCarregando){setTimeout(()=>{try{rPan();}catch(e){}},3500);}},50);if(id==='feed')setTimeout(()=>{try{rFeedConsultor();}catch(e){}},50);if(id==='pesagem')setTimeout(()=>{try{rPesagem();}catch(e){console.error('rPesagem:',e);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _mt=0;var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');var img=document.getElementById('mapa-img-sat');var ok=wrap&&wrap.offsetWidth>0&&img&&(img.complete||img._loaded);if(!ok&&_mt++<30){setTimeout(_rmapa,300);return;}
+function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',relatorio:'📈 Relatório & Dashboard',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda',feed:'📋 Conferir Lançamentos',pesagem:'Identificar Animal'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home'){setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);setTimeout(function(){try{rHomeMapa();}catch(e){}},600);setTimeout(function(){try{rHomeMapa();}catch(e){}},1500);}if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}try{var _fb=document.getElementById('btn-feed-acesso');if(_fb)_fb.style.display=(CU&&CU.r==='Consultor')?'block':'none';}catch(e){}if(_nuvemCarregando){setTimeout(()=>{try{rPan();}catch(e){}},3500);}},50);if(id==='feed')setTimeout(()=>{try{rFeedConsultor();}catch(e){}},50);if(id==='pesagem')setTimeout(()=>{try{rPesagem();}catch(e){console.error('rPesagem:',e);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _mt=0;var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');var img=document.getElementById('mapa-img-sat');var ok=wrap&&wrap.offsetWidth>0&&img&&(img.complete||img._loaded);if(!ok&&_mt++<30){setTimeout(_rmapa,300);return;}
     // Se MAPA_COORDS vazio, carregar da nuvem primeiro
     if(S.cfgGS&&(!S.MAPA_COORDS||!Object.keys(S.MAPA_COORDS).length)){
       carregarNuvem(function(){try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}});
@@ -1497,36 +1497,32 @@ function buildActs(){
   // Contar quantos botões da segunda linha
   var segundaLinha = (temInsumo ? 1 : 0) + (temEscore ? 1 : 0);
   var btns = '';
-  // Lançar Diária - sempre ocupa linha inteira
+  // Lancar Diaria - sempre ocupa linha inteira
   if(temDiaria){
-    btns += '<div class="abtn gr" style="grid-column:1/-1;cursor:pointer" onclick="sp(\'diaria\',true,\'home\')">'
-      +'<span style="font-size:26px;display:block;margin-bottom:6px">👤</span>'
-      +'<div class="abtn-l">Lançar diária</div>'
-      +'<div class="abtn-s">Serviço do dia</div>'
+    btns += '<div class="abtn" style="grid-column:1/-1;background:#fff;border:1px solid #e0e7e0;border-left:4px solid #2E7D32;border-radius:0 13px 13px 0;display:flex;align-items:center;gap:13px;text-align:left;padding:13px 14px;cursor:pointer" onclick="sp(\'diaria\',true,\'home\')">'
+      +'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
+      +'<div style="min-width:0"><div style="font-size:14px;font-weight:800;color:#1b2c1b">Lançar diária</div><div style="font-size:11px;color:#65766a;margin-top:2px">Serviço do dia</div></div>'
       +'</div>';
   }
-  // Se só um botão de segunda linha → ocupa linha inteira também
+  // Se so um botao de segunda linha -> ocupa linha inteira tambem
   var colStyle = segundaLinha === 1 ? 'grid-column:1/-1;' : '';
   if(temInsumo){
-    btns += '<div class="abtn bl" style="'+colStyle+'cursor:pointer" onclick="sp(\'insumo\',true,\'home\')">'
-      +'<span style="font-size:26px;display:block;margin-bottom:6px">📦</span>'
-      +'<div class="abtn-l">Insumos</div>'
-      +'<div class="abtn-s">Depósito → campo</div>'
+    btns += '<div class="abtn" style="'+colStyle+'background:#fff;border:1px solid #e0e7e0;border-left:4px solid #2E7D32;border-radius:0 13px 13px 0;display:flex;align-items:center;gap:13px;text-align:left;padding:13px 14px;cursor:pointer" onclick="sp(\'insumo\',true,\'home\')">'
+      +'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>'
+      +'<div style="min-width:0"><div style="font-size:14px;font-weight:800;color:#1b2c1b">Insumos</div><div style="font-size:11px;color:#65766a;margin-top:2px">Depósito → campo</div></div>'
       +'</div>';
   }
   if(temEscore){
-    btns += '<div class="abtn pu" style="'+colStyle+'cursor:pointer" onclick="sp(\'escore\',true,\'home\')">'
-      +'<span style="font-size:26px;display:block;margin-bottom:6px">🔬</span>'
-      +'<div class="abtn-l">Escore de fezes</div>'
-      +'<div class="abtn-s">Avaliação do gado</div>'
+    btns += '<div class="abtn" style="'+colStyle+'background:#fff;border:1px solid #e0e7e0;border-left:4px solid #2E7D32;border-radius:0 13px 13px 0;display:flex;align-items:center;gap:13px;text-align:left;padding:13px 14px;cursor:pointer" onclick="sp(\'escore\',true,\'home\')">'
+      +'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M9 2v6l-4 7a3 3 0 0 0 3 4h8a3 3 0 0 0 3-4l-4-7V2"/><path d="M8 2h8"/><path d="M7 16h10"/></svg>'
+      +'<div style="min-width:0"><div style="font-size:14px;font-weight:800;color:#1b2c1b">Escore de fezes</div><div style="font-size:11px;color:#65766a;margin-top:2px">Avaliação do gado</div></div>'
       +'</div>';
   }
-  btns += '<div class="abtn gr" style="grid-column:1/-1;cursor:pointer" onclick="sp(\'pesagem\',true,\'home\')">'
-    +'<span style="font-size:26px;display:block;margin-bottom:6px">⚖️</span>'
-    +'<div class="abtn-l">Consulta de Pesagem</div>'
-    +'<div class="abtn-s">Digite o nº do brinco → lote, peso e data</div>'
-    +'</div>';
-  // Botão do trator — aparece para Vaqueiro/Consultor quando o link estiver configurado
+    btns += '<div class="abtn" style="grid-column:1/-1;background:#fff;border:1px solid #e0e7e0;border-left:4px solid #2E7D32;border-radius:0 13px 13px 0;display:flex;align-items:center;gap:13px;text-align:left;padding:13px 14px;cursor:pointer" onclick="sp(\'pesagem\',true,\'home\')">'
+      +'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>'
+      +'<div style="min-width:0"><div style="font-size:14px;font-weight:800;color:#1b2c1b">Identificar Animal</div><div style="font-size:11px;color:#65766a;margin-top:2px">Digite o nº do brinco → lote, peso e data</div></div>'
+      +'</div>';
+  // Botao do trator - aparece para Vaqueiro/Consultor quando o link estiver configurado
   var tratorUrl = '';
   if(CU && CU.fs && CU.fs.length){
     var faz1 = CU.fs[0];
@@ -1536,10 +1532,9 @@ function buildActs(){
     if(fazKeys.length) tratorUrl = (S.FAZ[fazKeys[0]] && S.FAZ[fazKeys[0]].tratorUrl) ? S.FAZ[fazKeys[0]].tratorUrl : '';
   }
   if(tratorUrl){
-    btns += '<div class="abtn" style="grid-column:1/-1;cursor:pointer;background:#E65100;color:#fff" onclick="window.open(\''+tratorUrl+'\',\'_blank\')">'
-      +'<span style="font-size:26px;display:block;margin-bottom:6px">🚜</span>'
-      +'<div class="abtn-l" style="color:#fff">Trator</div>'
-      +'<div class="abtn-s" style="color:rgba(255,255,255,.85)">Registrar início / fim de serviço</div>'
+    btns += '<div class="abtn" style="grid-column:1/-1;background:#fff;border:1px solid #e0e7e0;border-left:4px solid #2E7D32;border-radius:0 13px 13px 0;display:flex;align-items:center;gap:13px;text-align:left;padding:13px 14px;cursor:pointer" onclick="window.open(\''+tratorUrl+'\',\'_blank\')">'
+      +'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M3 4h9l1.5 7"/><path d="M4 11V4"/><path d="M8 11V4"/><circle cx="7" cy="16" r="4"/><circle cx="18" cy="17" r="3"/><path d="M11 16h4l1.5-4H20a2 2 0 0 1 2 2v2"/></svg>'
+      +'<div style="min-width:0"><div style="font-size:14px;font-weight:800;color:#1b2c1b">Trator</div><div style="font-size:11px;color:#65766a;margin-top:2px">Registrar início / fim de serviço</div></div>'
       +'</div>';
   }
   document.getElementById('vacts').innerHTML = btns;
@@ -4755,7 +4750,7 @@ function _loteNumero(nome){ var m=String(nome||'').match(/(\d+)/); return m?Stri
 function editLotePesagem(nome,faz){
   var num=_loteNumero(nome);
   var p=(S.PESAGEM||{})[num];
-  if(!p||!p.animais||!p.animais.length){ alert('Não há pesagem importada para o '+nome+'.\nImporte a planilha de pesagem primeiro (na Consulta de Pesagem).'); return; }
+  if(!p||!p.animais||!p.animais.length){ alert('Não há pesagem importada para o '+nome+'.\nImporte a planilha de pesagem primeiro (em Identificar Animal).'); return; }
   var qtd=p.animais.length;
   var soma=p.animais.reduce(function(s,a){return s+(parseFloat(a.peso)||0);},0);
   var peso=qtd?Math.round(soma/qtd):0;
