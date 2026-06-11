@@ -6096,6 +6096,8 @@ function _consumoPerfis(){
   var porLote={};
   tratos.forEach(function(t){
     var ln=t.lote||t.co||'?';
+    // Normaliza: remove "(X animais)" que pode ter ficado gravado no nome
+    ln=ln.replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
     if(!porLote[ln]) porLote[ln]={lote:ln, sacos:0, kg:0, datas:[], prods:{}, cabUlt:0};
     var sacos=parseFloat(t.q||t.qtd||0)||0;
     var kg=parseFloat(t.kg_fornecido||0)||0;
@@ -6162,7 +6164,7 @@ function _consumoGrafico(perfis){
   var barras=perfis.map(function(p){
     var pct=Math.round((p.sacos/maxSc)*100); if(p.sacos>0&&pct<2)pct=2;
     return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">'
-      +'<div style="width:90px;font-size:10px;color:#555;text-align:right;flex-shrink:0">'+p.lote+'</div>'
+      +'<div style="width:120px;font-size:10px;color:#555;text-align:right;flex-shrink:0">'+p.lote+(p.cab>0?' ('+p.cab+')':'')+'</div>'
       +'<div style="flex:1;background:#F0F0F0;border-radius:4px;height:16px;overflow:hidden">'
       +  '<div style="width:'+pct+'%;background:#2E7D32;height:100%;border-radius:4px"></div>'
       +'</div>'
@@ -6212,7 +6214,7 @@ function rHistConsumo(){
     }).join('');
 
     out+='<div class="card" style="margin-bottom:10px">'
-      +'<div class="stit" style="margin-bottom:6px">🐄 '+p.lote+'</div>'
+      +'<div class="stit" style="margin-bottom:6px">🐄 '+p.lote+(p.cab>0?' ('+p.cab+' animais)':'')+'</div>'
       +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">'
       +  '<div><div style="font-size:9px;color:#999">Total</div><div style="font-size:13px;font-weight:700;color:#2E7D32">'+p.sacos.toFixed(0)+' sacos</div></div>'
       +  '<div><div style="font-size:9px;color:#999">Em kg</div><div style="font-size:13px;font-weight:700;color:#2E7D32">'+p.kg.toFixed(0)+' kg</div></div>'
@@ -6243,7 +6245,7 @@ function gerarPDFConsumo(){
       return pr.nome+': '+pr.sacos.toFixed(0)+' sc / '+pr.kg.toFixed(0)+' kg, '+pr.dias+'d'+rec;
     }).join('<br>');
     return '<tr>'
-      +'<td>'+p.lote+'</td>'
+      +'<td>'+p.lote+(p.cab>0?' ('+p.cab+' animais)':'')+'</td>'
       +'<td style="text-align:center">'+p.sacos.toFixed(0)+'</td>'
       +'<td style="text-align:center">'+p.kg.toFixed(0)+'</td>'
       +'<td style="text-align:center">'+p.dias+'</td>'
