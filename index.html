@@ -6273,47 +6273,109 @@ function gerarPDFConsumo(){
   var perfis=window._consumoPerfis;
   if(!perfis||!perfis.length){ alert('Sem tratos para o relatório de consumo.'); return; }
   var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
+  var dtHoje=new Date().toLocaleDateString('pt-BR');
 
+  // ── Totais gerais ──
+  var totalSacos=0, totalKg=0, totalCusto=0, totalCab=0;
+  perfis.forEach(function(p){ totalSacos+=p.sacos; totalKg+=p.kg; totalCusto+=p.custoLote||0; totalCab+=p.cab||0; });
+  var temFinanceiro=perfis.some(function(p){return (p.custoLote||0)>0;});
+
+  // ── Linhas da tabela ──
   var linhas=perfis.map(function(p){
     var periodo=(p.ini&&p.fim)?(p.ini.split('-').reverse().join('/')+' a '+p.fim.split('-').reverse().join('/')):'—';
     var prodTxt=p.prods.map(function(pr){
-      var rec=pr.recKg>0?(' (rec ~'+pr.recKg.toFixed(0)+' kg)'):'';
+      var rec=pr.recKg>0?(' <span style="color:#E65100">(rec ~'+pr.recKg.toFixed(0)+' kg)</span>'):'';
       return pr.nome+': '+pr.sacos.toFixed(0)+' sc / '+pr.kg.toFixed(0)+' kg, '+pr.dias+'d'+rec;
     }).join('<br>');
+    var custoCell=temFinanceiro
+      ? '<td style="text-align:right;font-weight:700;color:'+(p.custoLote>0?'#C62828':'#aaa')+'">'+
+        (p.custoLote>0?'R$ '+p.custoLote.toFixed(2).replace('.',','):'—')+'</td>'+
+        '<td style="text-align:right;color:'+(p.custoCab>0?'#E65100':'#aaa')+'">'+
+        (p.custoCab>0?'R$ '+p.custoCab.toFixed(2).replace('.',','):'—')+'</td>'
+      : '';
     return '<tr>'
-      +'<td>'+p.lote+(p.cab>0?' ('+p.cab+' animais)':'')+'</td>'
-      +'<td style="text-align:center">'+p.sacos.toFixed(0)+'</td>'
+      +'<td style="font-weight:700">'+p.lote+(p.cab>0?'<br><span style="font-size:9px;color:#666;font-weight:400">'+p.cab+' animais</span>':'')+'</td>'
+      +'<td style="text-align:center;font-weight:700;color:#1B5E20">'+p.sacos.toFixed(0)+'</td>'
       +'<td style="text-align:center">'+p.kg.toFixed(0)+'</td>'
       +'<td style="text-align:center">'+p.dias+'</td>'
       +'<td style="text-align:center">'+p.kgDia.toFixed(1)+'</td>'
-      +'<td style="text-align:center">'+(p.kgCab>0?p.kgCab.toFixed(1):'—')+'</td>'
-      +'<td style="font-size:10px">'+periodo+'</td>'
-      +'<td style="font-size:10px">'+prodTxt+'</td>'
+      +'<td style="text-align:center">'+(p.kgCab>0?p.kgCab.toFixed(1)+'<br><span style="font-size:9px;color:#666">kg/cab</span>':'—')+'</td>'
+      +'<td style="font-size:10px;color:#555">'+periodo+'</td>'
+      +'<td style="font-size:9px">'+prodTxt+'</td>'
+      +custoCell
       +'</tr>';
   }).join('');
 
+  // ── Linha de totais ──
+  var linhaTotais='<tr style="background:#F1F8E9;font-weight:700">'
+    +'<td>TOTAL</td>'
+    +'<td style="text-align:center;color:#1B5E20">'+totalSacos.toFixed(0)+'</td>'
+    +'<td style="text-align:center">'+totalKg.toFixed(0)+'</td>'
+    +'<td colspan="3" style="text-align:center;color:#888;font-size:10px;font-weight:400">—</td>'
+    +'<td></td><td></td>'
+    +(temFinanceiro
+      ?'<td style="text-align:right;color:#C62828">R$ '+totalCusto.toFixed(2).replace('.',',')+'</td>'
+       +'<td style="text-align:right;color:#E65100">'+(totalCab>0?'R$ '+(totalCusto/totalCab).toFixed(2).replace('.',','):'—')+'</td>'
+      :'')
+    +'</tr>';
+
+  // ── Cards de resumo financeiro ──
+  var resumoFin='';
+  if(temFinanceiro){
+    resumoFin='<div style="display:flex;gap:12px;margin:12px 0;flex-wrap:wrap">'
+      +'<div style="flex:1;min-width:120px;background:#fff;border:1.5px solid #A5D6A7;border-radius:10px;padding:12px;text-align:center">'
+        +'<div style="font-size:10px;color:#666;font-weight:600;text-transform:uppercase">Custo total suplemento</div>'
+        +'<div style="font-size:22px;font-weight:900;color:#C62828">R$ '+totalCusto.toFixed(2).replace('.',',')+'</div>'
+      +'</div>'
+      +(totalCab>0?
+        '<div style="flex:1;min-width:120px;background:#fff;border:1.5px solid #FFCC80;border-radius:10px;padding:12px;text-align:center">'
+          +'<div style="font-size:10px;color:#666;font-weight:600;text-transform:uppercase">Custo médio / cabeça</div>'
+          +'<div style="font-size:22px;font-weight:900;color:#E65100">R$ '+(totalCusto/totalCab).toFixed(2).replace('.',',')+'</div>'
+        +'</div>':'')
+      +'<div style="flex:1;min-width:120px;background:#fff;border:1.5px solid #A5D6A7;border-radius:10px;padding:12px;text-align:center">'
+        +'<div style="font-size:10px;color:#666;font-weight:600;text-transform:uppercase">Total em sacos</div>'
+        +'<div style="font-size:22px;font-weight:900;color:#1B5E20">'+totalSacos.toFixed(0)+'</div>'
+      +'</div>'
+      +'</div>';
+  }
+
+  // ── Cabeçalho das colunas ──
+  var thCusto=temFinanceiro
+    ?'<th style="text-align:right">Custo total</th><th style="text-align:right">R$/cabeça</th>'
+    :'';
+
   var w=window.open('','_blank');
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Consumo por Lote — GPL</title>'
-    +'<style>body{font-family:Arial,sans-serif;padding:20px;color:#222}'
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8">'
+    +'<title>Consumo por Lote — GPL</title>'
+    +'<style>'
+    +'*{box-sizing:border-box}'
+    +'body{font-family:Arial,"Segoe UI",Roboto,system-ui,sans-serif;padding:20px;color:#222;background:#fff;max-width:900px;margin:0 auto}'
     +'table{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}'
-    +'th{background:#1B5E20;color:#fff;padding:6px;text-align:left;font-size:10px}'
-    +'td{padding:6px;border-bottom:1px solid #eee;vertical-align:top}'
-    +'.crit{font-size:10px;color:#666;margin-top:6px;line-height:1.5}'
+    +'th{background:#1B5E20;color:#fff;padding:7px 8px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}'
+    +'td{padding:7px 8px;border-bottom:1px solid #eee;vertical-align:top}'
+    +'tr:nth-child(even) td{background:#FAFAFA}'
+    +'.nota{font-size:10px;color:#666;margin-top:8px;line-height:1.5;padding:8px;background:#F9FBE7;border-radius:6px;border-left:3px solid #8BC34A}'
     +_pdfTimbreCss()
-    +'@media print{button{display:none}}'
+    +'@media print{button{display:none!important}.no-print{display:none!important}}'
     +'</style></head><body>'
-    +_pdfTimbre('🛒 Consumo por Lote', null, faz)
-    +'<div style="margin:14px 0">'+_consumoGrafico(perfis)+'</div>'
-    +'<table><tr><th>Lote</th><th>Sacos</th><th>Kg</th><th>Dias</th><th>Kg/dia</th><th>Kg/cab</th><th>Período</th><th>Produtos (sacos/kg, dias)</th></tr>'
+    +_pdfTimbre('🛒 Consumo por Lote', dtHoje, faz)
+    +'<div style="margin:14px 0 10px">'+_consumoGrafico(perfis)+'</div>'
+    +resumoFin
+    +'<table>'
+    +'<tr><th>Lote</th><th>Sacos</th><th>Kg</th><th>Dias</th><th>Kg/dia</th><th>Kg/cab</th><th>Período</th><th>Produtos</th>'+thCusto+'</tr>'
     +linhas
+    +linhaTotais
     +'</table>'
-    +'<p class="crit">Período = do primeiro ao último trato do lote. Recomendado calculado pelo % por cabeça/dia cadastrado, peso médio e nº de cabeças do lote. Sem custo em R$ nesta versão.</p>'
+    +'<p class="nota">Período = do primeiro ao último trato do lote.'
+    +(temFinanceiro?' Custo calculado pelo R$/saco cadastrado no estoque × sacos consumidos.':' Para exibir custos, cadastre o R$/saco em cada produto no Estoque (botão ✏️).')
+    +' Recomendado = peso médio × % PV/dia × nº animais × dias.</p>'
     +'<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:12px">🖨️ Imprimir / Salvar PDF</button>'
     +_pdfRodape()
     +'</body></html>');
   w.document.close();
   setTimeout(function(){ try{w.print();}catch(e){} },500);
 }
+
 
 // ── ABA REGISTROS ─────────────────────────────────────────
 function rHistReg(){
