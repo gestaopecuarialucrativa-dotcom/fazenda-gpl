@@ -6709,7 +6709,7 @@ function rVaqueiroPainel(){
     // Gauge: máx 21 dias (21d = cheio = critical)
     var maxDias = 21;
     var pct     = Math.min(dias/maxDias, 1);
-    var angStart = -135, angEnd = 135;
+    var angStart = -90, angEnd = 90;
     var ang     = angStart + pct*(angEnd - angStart);
 
     // Cor: 0-3 verde ideal, 4-7 ok, 8-14 atenção, 15+ crítico
@@ -6725,10 +6725,10 @@ function rVaqueiroPainel(){
     }
     // Arco de fundo
     var p1=polar(angStart-90, r), p2=polar(angEnd-90, r);
-    var arcBg='M '+p1.x+' '+p1.y+' A '+r+' '+r+' 0 1 1 '+p2.x+' '+p2.y;
+    var arcBg='M '+p1.x+' '+p1.y+' A '+r+' '+r+' 0 0 1 '+p2.x+' '+p2.y;
     // Arco preenchido
     var pFill=polar(ang-90, r);
-    var largeArc = pct>0.5?1:0;
+    var largeArc = 0;
     var arcFill='M '+p1.x+' '+p1.y+' A '+r+' '+r+' 0 '+largeArc+' 1 '+pFill.x+' '+pFill.y;
     // Agulha
     var needle=polar(ang-90, r-8);
@@ -6741,7 +6741,7 @@ function rVaqueiroPainel(){
     html += '<div id="'+_vaqId+'" style="background:#fff;border-radius:14px;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:pointer;border:2px solid '+(areaId?cor:'#eee')+'";'
       + 'style="background:#fff;border-radius:14px;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:pointer;border:2px solid '+(areaId?cor:'#eee')+';">'
       // SVG velocímetro
-      + '<svg viewBox="0 0 140 110" style="width:100%;display:block">'
+      + '<svg viewBox="0 0 140 125" style="width:100%;display:block">'
       +   '<path d="'+arcBg+'" fill="none" stroke="#eee" stroke-width="'+stroke+'" stroke-linecap="round"/>'
       +   (pct>0?'<path d="'+arcFill+'" fill="none" stroke="'+cor+'" stroke-width="'+stroke+'" stroke-linecap="round"/>'
               +'<line x1="'+cx+'" y1="'+cy+'" x2="'+needle.x+'" y2="'+needle.y+'" stroke="'+cor+'" stroke-width="3" stroke-linecap="round"/>'
