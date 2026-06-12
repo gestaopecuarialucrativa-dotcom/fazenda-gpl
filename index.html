@@ -715,6 +715,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <!-- PAINEL — irmão de pg-cantina ✅ -->
 <div id="pg-painel" class="pg" style="display:none">
 <button id="btn-feed-acesso" onclick="sp('feed','painel')" style="display:none;width:100%;background:#1B5E20;color:#fff;padding:11px;border:none;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:8px;cursor:pointer">📋 Conferir lançamentos da equipe</button>
+<button id="btn-consultoria-acesso" onclick="sp('consultoria','painel')" style="display:none;width:100%;background:#2E7D32;color:#fff;padding:11px;border:none;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:8px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M3 3v18h18"/><path d="M7 16l4-4 3 3 5-6"/></svg>Relatório de consultoria</button>
 <div id="diag-btn" style="background:#FF6F00;color:#fff;padding:8px;border-radius:8px;text-align:center;margin-bottom:8px;cursor:pointer;font-size:12px" onclick="var m='v:'+S.rD.length+' cfgGS:'+(S.cfgGS?'OK':'VAZIO')+' FAZ:'+Object.keys(S.FAZ).join(',');alert(m)">🔍 diagnóstico</div>
 
 <!-- FILTROS -->
@@ -1098,6 +1099,17 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <div id="feed-cont" style="font-size:11px;color:#888;margin:6px 2px 8px"></div>
   <div id="feed-lista"></div>
 </div>
+<div id="pg-consultoria" class="pg" style="display:none;padding:14px;padding-bottom:40px">
+  <div class="card" style="padding:14px">
+    <div style="font-size:13px;font-weight:800;color:#1b2c1b;margin-bottom:10px">Per\u00edodo do relat\u00f3rio</div>
+    <div style="display:flex;gap:8px">
+      <button onclick="rConsultoria(7)" id="cons-p7" class="cons-per" style="flex:1;padding:10px;border:1px solid #cdd6cd;border-radius:10px;background:#fff;font-weight:700;color:#2E7D32;cursor:pointer">7 dias</button>
+      <button onclick="rConsultoria(15)" id="cons-p15" class="cons-per" style="flex:1;padding:10px;border:1px solid #cdd6cd;border-radius:10px;background:#fff;font-weight:700;color:#2E7D32;cursor:pointer">15 dias</button>
+      <button onclick="rConsultoria(30)" id="cons-p30" class="cons-per" style="flex:1;padding:10px;border:1px solid #cdd6cd;border-radius:10px;background:#fff;font-weight:700;color:#2E7D32;cursor:pointer">30 dias</button>
+    </div>
+  </div>
+  <div id="cons-conteudo"></div>
+</div>
 <div id="pg-historico" class="pg" style="display:none;padding-bottom:20px">
 
 <div style="display:flex;gap:0;margin-bottom:12px;background:#f0f0f0;border-radius:10px;padding:3px">
@@ -1466,7 +1478,7 @@ function rHomeMapa(){
   }
 }
 
-function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',relatorio:'📈 Relatório & Dashboard',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda',feed:'📋 Conferir Lançamentos',pesagem:'Identificar Animal'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home'){setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);setTimeout(function(){try{rHomeMapa();}catch(e){}},600);setTimeout(function(){try{rHomeMapa();}catch(e){}},1500);}if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}try{var _fb=document.getElementById('btn-feed-acesso');if(_fb)_fb.style.display=(CU&&CU.r==='Consultor')?'block':'none';}catch(e){}if(_nuvemCarregando){setTimeout(()=>{try{rPan();}catch(e){}},3500);}},50);if(id==='feed')setTimeout(()=>{try{rFeedConsultor();}catch(e){}},50);if(id==='pesagem')setTimeout(()=>{try{rPesagem();}catch(e){console.error('rPesagem:',e);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _mt=0;var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');var img=document.getElementById('mapa-img-sat');var ok=wrap&&wrap.offsetWidth>0&&img&&(img.complete||img._loaded);if(!ok&&_mt++<30){setTimeout(_rmapa,300);return;}
+function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',relatorio:'📈 Relatório & Dashboard',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda',feed:'📋 Conferir Lançamentos',pesagem:'Identificar Animal'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home'){setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);setTimeout(function(){try{rHomeMapa();}catch(e){}},600);setTimeout(function(){try{rHomeMapa();}catch(e){}},1500);}if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}try{var _fb=document.getElementById('btn-feed-acesso');if(_fb)_fb.style.display=(CU&&CU.r==='Consultor')?'block':'none';var _cb=document.getElementById('btn-consultoria-acesso');if(_cb)_cb.style.display=(CU&&CU.r==='Consultor')?'block':'none';}catch(e){}if(_nuvemCarregando){setTimeout(()=>{try{rPan();}catch(e){}},3500);}},50);if(id==='feed')setTimeout(()=>{try{rFeedConsultor();}catch(e){}},50);if(id==='consultoria')setTimeout(()=>{try{rConsultoria(7);}catch(e){console.error('rConsultoria:',e);}},50);if(id==='pesagem')setTimeout(()=>{try{rPesagem();}catch(e){console.error('rPesagem:',e);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _mt=0;var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');var img=document.getElementById('mapa-img-sat');var ok=wrap&&wrap.offsetWidth>0&&img&&(img.complete||img._loaded);if(!ok&&_mt++<30){setTimeout(_rmapa,300);return;}
     // Se MAPA_COORDS vazio, carregar da nuvem primeiro
     if(S.cfgGS&&(!S.MAPA_COORDS||!Object.keys(S.MAPA_COORDS).length)){
       carregarNuvem(function(){try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}});
@@ -2060,6 +2072,147 @@ function feedEditarDiaria(idx){
   s.onerror=function(){ delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s); alert('⚠️ Erro de conexão. Nada foi alterado.'); };
   document.body.appendChild(s);
 }
+function rConsultoria(dias){
+  dias = dias || 7;
+  ['7','15','30'].forEach(function(p){
+    var b=document.getElementById('cons-p'+p);
+    if(b){ var on=(String(dias)===p); b.style.background=on?'#2E7D32':'#fff'; b.style.color=on?'#fff':'#2E7D32'; }
+  });
+  var el=document.getElementById('cons-conteudo'); if(!el)return;
+
+  var lotes = S.LOTES||[];
+  var aloc  = S.MAPA_ALOC||{};
+  var movs  = (S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
+  var hoje  = new Date(); hoje.setHours(12,0,0,0);
+  var ini   = new Date(hoje.getTime() - dias*864e5);
+
+  // tratos dentro do periodo
+  var tratosPer = (S.rT||[]).filter(function(r){
+    if(r.tipo!=='trato'||r._apagado) return false;
+    var d=(r.dt||'').substring(0,10); if(d.length!==10) return false;
+    var dd=new Date(d+'T12:00:00');
+    return dd>=ini && dd<=hoje;
+  });
+
+  // helpers de area/modulo
+  function areaDoLote(nm){ var id=null; Object.keys(aloc).forEach(function(k){if(aloc[k]===nm)id=k;}); return id; }
+  function haGrupo(areaObj){
+    if(!areaObj) return 0;
+    if(areaObj.tipo==='modulo'){
+      return MAPA_AREAS.filter(function(a){return a.tipo==='modulo'&&a.modulo===areaObj.modulo;})
+                       .reduce(function(s2,a){return s2+(a.ha||0);},0);
+    }
+    return areaObj.ha||0;
+  }
+
+  var totGasto=0, totAnim=0, totUA=0, totHaFaz=0, alertas=[], blocos='';
+
+  // soma ha de toda a fazenda (uma vez)
+  totHaFaz = MAPA_AREAS.reduce(function(s2,a){return s2+(a.ha||0);},0);
+
+  lotes.forEach(function(lote){
+    var nm=lote.nome, qtd=lote.qtd||0, peso=lote.peso||0;
+    var ua=qtd*peso/450;
+    totAnim+=qtd; totUA+=ua;
+
+    var areaId=areaDoLote(nm);
+    var areaObj=areaId?MAPA_AREAS.find(function(a){return a.id===areaId;}):null;
+    var areaNm=areaObj?areaObj.label:'\u2014';
+    var haInst=areaObj?(areaObj.ha||0):0;
+    var txInst=haInst>0?ua/haInst:0;
+    var haGr=haGrupo(areaObj);
+    var txGr=haGr>0?ua/haGr:0;
+    var grpLabel=areaObj&&areaObj.tipo==='modulo'?('M\u00f3dulo '+areaObj.modulo):'Pasto';
+
+    // dias no pasto
+    var movsLote=movs.filter(function(m){return m.lote===nm;});
+    var dtEnt=null;
+    for(var i=movsLote.length-1;i>=0;i--){ if(movsLote[i].destino===areaId){dtEnt=(movsLote[i].dt||'').substring(0,10);break;} }
+    if(!dtEnt&&movsLote.length) dtEnt=(movsLote[movsLote.length-1].dt||'').substring(0,10);
+    var diasPasto = (dtEnt&&dtEnt.length===10)?Math.max(0,Math.round((hoje-new Date(dtEnt+'T12:00:00'))/864e5)):null;
+
+    // consumo real (tratos do lote no periodo) + produto dominante
+    var tl=tratosPer.filter(function(r){return (r.lote||r.co)===nm;});
+    var realSacos=0, prodMap={};
+    tl.forEach(function(r){ var q=parseFloat(r.q||r.qtd||0)||0; realSacos+=q; var pr=r.pr||r.prod||''; if(pr) prodMap[pr]=(prodMap[pr]||0)+q; });
+    var prodNome=Object.keys(prodMap).sort(function(a,b){return prodMap[b]-prodMap[a];})[0]||'';
+    var est=(prodNome&&S.EST&&S.EST[prodNome])?S.EST[prodNome]:null;
+    var pct=est&&est.pct?est.pct:0;
+    var pSaco=est&&est.peso_saco?est.peso_saco:30;
+    var preco=est&&est.preco_saco?est.preco_saco:0;
+
+    // consumo previsto (mesma formula do app: (pct/100)*peso*qtd = kg/dia)
+    var kgDia = (pct/100)*peso*qtd;
+    var sacosDia = pSaco>0?kgDia/pSaco:0;
+    var prevSacos = sacosDia*dias;
+
+    var custo = realSacos*preco;
+    var custoCab = qtd>0?custo/qtd:0;
+    totGasto += custo;
+
+    // diferenca
+    var difTxt='', difCor='#65766a';
+    if(prevSacos>0){
+      var dif=realSacos-prevSacos;
+      if(realSacos===0){ difTxt='Sem trato no per\u00edodo'; difCor='#C62828';
+        alertas.push(nm+' tinha consumo previsto (~'+prevSacos.toFixed(1)+' sacos) mas n\u00e3o teve nenhum trato lan\u00e7ado \u2014 verificar com o vaqueiro.');
+      } else if(dif<0){ difTxt='D\u00e9ficit de '+Math.abs(dif).toFixed(1)+' sacos'; difCor='#E65100'; }
+      else if(dif>0){ difTxt='Acima '+dif.toFixed(1)+' sacos'; difCor='#E65100'; }
+      else { difTxt='No ponto'; difCor='#2E7D32'; }
+    } else {
+      difTxt = realSacos>0?('Sem % cadastrado'):('\u2014');
+    }
+
+    blocos += '<div class="card" style="padding:0;overflow:hidden;border-left:4px solid #2E7D32">'
+      + '<div style="background:#f5f8f4;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">'
+      +   '<div style="font-size:15px;font-weight:900;color:#1b2c1b">'+nm+'</div>'
+      +   '<div style="font-size:11px;color:#65766a">'+qtd+' animais \u00b7 '+peso+' kg \u00b7 '+ua.toFixed(1)+' UA</div>'
+      + '</div>'
+      + '<div style="padding:12px 14px">'
+      // consumo
+      +   '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#65766a">Consumo previsto ('+dias+'d)</span><span style="font-weight:700;color:#1b2c1b">'+(prevSacos>0?prevSacos.toFixed(1)+' sacos':'\u2014')+'</span></div>'
+      +   '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#65766a">Consumo real</span><span style="font-weight:700;color:#1b2c1b">'+realSacos.toFixed(1)+' sacos'+(prodNome?' \u00b7 '+prodNome:'')+'</span></div>'
+      +   '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px"><span style="color:#65766a">Situa\u00e7\u00e3o</span><span style="font-weight:800;color:'+difCor+'">'+difTxt+'</span></div>'
+      // custo
+      +   '<div style="display:flex;gap:8px;margin-bottom:8px">'
+      +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:900;color:#2E7D32">R$ '+custo.toFixed(2).replace(".",",")+'</div><div style="font-size:10px;color:#65766a">custo total</div></div>'
+      +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:900;color:#2E7D32">R$ '+custoCab.toFixed(2).replace(".",",")+'</div><div style="font-size:10px;color:#65766a">por cabe\u00e7a</div></div>'
+      +   '</div>'
+      // pasto + taxas
+      +   '<div style="display:flex;gap:8px">'
+      +     '<div style="flex:1;background:#fff;border:1px solid #e0e7e0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:15px;font-weight:900;color:#1b2c1b">'+(diasPasto!=null?diasPasto:'\u2014')+'</div><div style="font-size:10px;color:#65766a">dias no pasto</div></div>'
+      +     '<div style="flex:1;background:#fff;border:1px solid #e0e7e0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:15px;font-weight:900;color:'+(txInst>4?"#C62828":txInst>2?"#E65100":"#1B5E20")+'">'+(txInst>0?txInst.toFixed(2):"\u2014")+'</div><div style="font-size:10px;color:#65766a">UA/ha agora</div></div>'
+      +     '<div style="flex:1;background:#fff;border:1px solid #e0e7e0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:15px;font-weight:900;color:#1b2c1b">'+(txGr>0?txGr.toFixed(2):"\u2014")+'</div><div style="font-size:10px;color:#65766a">UA/ha '+grpLabel.toLowerCase()+'</div></div>'
+      +   '</div>'
+      +   '<div style="font-size:10px;color:#9bb39b;margin-top:6px">'+areaNm+(diasPasto!=null&&dtEnt?' \u00b7 entrada '+dtEnt.split("-").reverse().join("/"):'')+'</div>'
+      + '</div>'
+      + '</div>';
+  });
+
+  var txFaz = totHaFaz>0?totUA/totHaFaz:0;
+  var hoje_fmt = hoje.toLocaleDateString('pt-BR');
+  var ini_fmt = ini.toLocaleDateString('pt-BR');
+
+  var resumo = '<div class="card" style="padding:14px;background:linear-gradient(135deg,#1B5E20,#2E7D32);border:none">'
+    + '<div style="font-size:11px;color:rgba(255,255,255,.8)">RESUMO DO PER\u00cdODO \u00b7 '+ini_fmt+' a '+hoje_fmt+'</div>'
+    + '<div style="display:flex;gap:8px;margin-top:10px">'
+    +   '<div style="flex:1;text-align:center"><div style="font-size:22px;font-weight:900;color:#fff">'+totAnim+'</div><div style="font-size:10px;color:rgba(255,255,255,.8)">animais</div></div>'
+    +   '<div style="flex:1;text-align:center"><div style="font-size:22px;font-weight:900;color:#fff">R$ '+totGasto.toFixed(0)+'</div><div style="font-size:10px;color:rgba(255,255,255,.8)">suplemento</div></div>'
+    +   '<div style="flex:1;text-align:center"><div style="font-size:22px;font-weight:900;color:#fff">'+(totAnim>0?'R$ '+(totGasto/totAnim).toFixed(0):'\u2014')+'</div><div style="font-size:10px;color:rgba(255,255,255,.8)">por cabe\u00e7a</div></div>'
+    +   '<div style="flex:1;text-align:center"><div style="font-size:22px;font-weight:900;color:#fff">'+txFaz.toFixed(2)+'</div><div style="font-size:10px;color:rgba(255,255,255,.8)">UA/ha fazenda</div></div>'
+    + '</div></div>';
+
+  var alertasDiv='';
+  if(alertas.length){
+    alertasDiv = '<div class="card" style="padding:12px 14px;border-left:4px solid #C62828">'
+      + '<div style="font-size:13px;font-weight:800;color:#C62828;margin-bottom:6px">Pontos de aten\u00e7\u00e3o</div>'
+      + alertas.map(function(a){return '<div style="font-size:12px;color:#555;margin-bottom:5px">\u2022 '+a+'</div>';}).join('')
+      + '</div>';
+  }
+
+  el.innerHTML = resumo + alertasDiv + blocos;
+}
+
 function rFeedConsultor(){
   var us=document.getElementById('feed-user');
   if(us && us.options.length<=1){
