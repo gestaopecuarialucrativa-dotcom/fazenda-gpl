@@ -2150,6 +2150,9 @@ function rConsultoria(dias){
 
     var custo = realSacos*preco;
     var custoCab = qtd>0?custo/qtd:0;
+    var custoDia = dias>0?custo/dias:0;
+    var custoCabDia = (qtd>0&&dias>0)?custo/qtd/dias:0;
+    var cabHa = haInst>0?qtd/haInst:0;
     totGasto += custo;
 
     // diferenca
@@ -2175,16 +2178,21 @@ function rConsultoria(dias){
       +   '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#65766a">Consumo previsto ('+dias+'d)</span><span style="font-weight:700;color:#1b2c1b">'+(prevSacos>0?prevSacos.toFixed(1)+' sacos':'—')+'</span></div>'
       +   '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#65766a">Consumo real</span><span style="font-weight:700;color:#1b2c1b">'+realSacos.toFixed(1)+' sacos'+(prodNome?' · '+prodNome:'')+'</span></div>'
       +   '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px"><span style="color:#65766a">Situação</span><span style="font-weight:800;color:'+difCor+'">'+difTxt+'</span></div>'
-      // custo
-      +   '<div style="display:flex;gap:8px;margin-bottom:8px">'
-      +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:900;color:#2E7D32">R$ '+custo.toFixed(2).replace(".",",")+'</div><div style="font-size:10px;color:#65766a">custo total</div></div>'
-      +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:900;color:#2E7D32">R$ '+custoCab.toFixed(2).replace(".",",")+'</div><div style="font-size:10px;color:#65766a">por cabeça</div></div>'
+      // custo (periodo + por dia)
+      +   '<div style="display:flex;gap:6px;margin-bottom:6px">'
+      +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:7px;text-align:center"><div style="font-size:14px;font-weight:900;color:#2E7D32">R$ '+custo.toFixed(2).replace(".",",")+'</div><div style="font-size:9px;color:#65766a">custo total</div></div>'
+      +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:7px;text-align:center"><div style="font-size:14px;font-weight:900;color:#2E7D32">R$ '+custoDia.toFixed(2).replace(".",",")+'</div><div style="font-size:9px;color:#65766a">total / dia</div></div>'
+      +   '</div>'
+      +   '<div style="display:flex;gap:6px;margin-bottom:8px">'
+      +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:7px;text-align:center"><div style="font-size:14px;font-weight:900;color:#2E7D32">R$ '+custoCab.toFixed(2).replace(".",",")+'</div><div style="font-size:9px;color:#65766a">por cabeça</div></div>'
+      +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:7px;text-align:center"><div style="font-size:14px;font-weight:900;color:#2E7D32">R$ '+custoCabDia.toFixed(2).replace(".",",")+'</div><div style="font-size:9px;color:#65766a">cabeça / dia</div></div>'
       +   '</div>'
       // pasto + taxas
       +   '<div style="display:flex;gap:8px">'
       +     '<div style="flex:1;background:#fff;border:1px solid #e0e7e0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:15px;font-weight:900;color:#1b2c1b">'+(diasPasto!=null?diasPasto:'—')+'</div><div style="font-size:10px;color:#65766a">dias no pasto</div></div>'
       +     '<div style="flex:1;background:#fff;border:1px solid #e0e7e0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:15px;font-weight:900;color:'+(txInst>4?"#C62828":txInst>2?"#E65100":"#1B5E20")+'">'+(txInst>0?txInst.toFixed(2):"—")+'</div><div style="font-size:10px;color:#65766a">UA/ha agora</div></div>'
       +     '<div style="flex:1;background:#fff;border:1px solid #e0e7e0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:15px;font-weight:900;color:#1b2c1b">'+(txGr>0?txGr.toFixed(2):"—")+'</div><div style="font-size:10px;color:#65766a">UA/ha '+grpLabel.toLowerCase()+'</div></div>'
+      +     '<div style="flex:1;background:#fff;border:1px solid #e0e7e0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:15px;font-weight:900;color:#1b2c1b">'+(cabHa>0?cabHa.toFixed(1):"—")+'</div><div style="font-size:10px;color:#65766a">cab/ha agora</div></div>'
       +   '</div>'
       +   '<div style="font-size:10px;color:#9bb39b;margin-top:6px">'+areaNm+(diasPasto!=null&&dtEnt?' · entrada '+dtEnt.split("-").reverse().join("/"):'')+'</div>'
       + '</div>'
@@ -2192,6 +2200,8 @@ function rConsultoria(dias){
   });
 
   var txFaz = totHaFaz>0?totUA/totHaFaz:0;
+  var cabHaFaz = totHaFaz>0?totAnim/totHaFaz:0;
+  var quadroLot = '<div class="card" style="padding:14px">'+'<div style="font-size:13px;font-weight:800;color:#1b2c1b;margin-bottom:10px">Lotação geral da fazenda</div>'+'<div style="display:flex;gap:8px">'+'<div style="flex:1;background:#eef2ec;border-radius:8px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:900;color:#1B5E20">'+totUA.toFixed(1)+'</div><div style="font-size:10px;color:#65766a">UA total</div></div>'+'<div style="flex:1;background:#eef2ec;border-radius:8px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:900;color:#1B5E20">'+totHaFaz.toFixed(1)+'</div><div style="font-size:10px;color:#65766a">ha total</div></div>'+'<div style="flex:1;background:#eef2ec;border-radius:8px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:900;color:#1B5E20">'+txFaz.toFixed(2)+'</div><div style="font-size:10px;color:#65766a">UA/ha média</div></div>'+'<div style="flex:1;background:#eef2ec;border-radius:8px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:900;color:#1B5E20">'+cabHaFaz.toFixed(2)+'</div><div style="font-size:10px;color:#65766a">cab/ha média</div></div>'+'</div></div>';
   var hoje_fmt = hoje.toLocaleDateString('pt-BR');
   var ini_fmt = ini.toLocaleDateString('pt-BR');
 
@@ -2212,9 +2222,9 @@ function rConsultoria(dias){
       + '</div>';
   }
 
-  window._consData = {dias:dias, ini_fmt:ini_fmt, hoje_fmt:hoje_fmt, totAnim:totAnim, totGasto:totGasto, txFaz:txFaz, resumo:resumo, alertasDiv:alertasDiv, blocos:blocos};
+  window._consData = {dias:dias, ini_fmt:ini_fmt, hoje_fmt:hoje_fmt, totAnim:totAnim, totGasto:totGasto, txFaz:txFaz, resumo:resumo, alertasDiv:alertasDiv, blocos:blocos, quadroLot:quadroLot};
   var btnPdf = '<button onclick="gerarPDFConsultoria()" style="width:100%;background:#2E7D32;color:#fff;padding:13px;border:none;border-radius:12px;font-size:14px;font-weight:800;margin-top:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M9 18h6"/></svg>Gerar PDF para o cliente</button>';
-  el.innerHTML = resumo + alertasDiv + blocos + btnPdf;
+  el.innerHTML = resumo + alertasDiv + blocos + quadroLot + btnPdf;
 }
 
 function gerarPDFConsultoria(){
@@ -2223,7 +2233,7 @@ function gerarPDFConsultoria(){
   var faz = (CU && CU.fs && CU.fs[0]) ? CU.fs[0] : (Object.keys(S.FAZ||{})[0]||'');
   // O conteudo na tela ja esta no padrao; reusa resumo/alertas/blocos.
   // Ajusta cores que dependem de fundo escuro para impressao.
-  var corpo = d.resumo + d.alertasDiv + d.blocos;
+  var corpo = d.resumo + d.alertasDiv + d.blocos + (d.quadroLot||'');
   var html = '<!doctype html><html><head><meta charset="utf-8"><style>'
     + _pdfTimbreCss()
     + 'body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:22px;color:#222}'
