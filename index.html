@@ -2089,8 +2089,9 @@ function rConsultoria(dias){
   // tratos dentro do periodo
   var tratosPer = (S.rT||[]).filter(function(r){
     if(r.tipo!=='trato'||r._apagado) return false;
-    var d=(r.dt||'').substring(0,10); if(d.length!==10) return false;
-    var dd=new Date(d+'T12:00:00');
+    var d=(r.dt||'').substring(0,10); if(d.length<8) return false;
+    var dd; if(d.indexOf('/')>0){var pp=d.split('/');dd=new Date(pp[2]+'-'+pp[1]+'-'+pp[0]+'T12:00:00');} else {dd=new Date(d+'T12:00:00');}
+    if(isNaN(dd.getTime())) return false;
     return dd>=ini && dd<=hoje;
   });
 
@@ -2132,7 +2133,8 @@ function rConsultoria(dias){
     var diasPasto = (dtEnt&&dtEnt.length===10)?Math.max(0,Math.round((hoje-new Date(dtEnt+'T12:00:00'))/864e5)):null;
 
     // consumo real (tratos do lote no periodo) + produto dominante
-    var tl=tratosPer.filter(function(r){return (r.lote||r.co)===nm;});
+    function _baseLote(x){return String(x||'').split('(')[0].trim();}
+    var tl=tratosPer.filter(function(r){return _baseLote(r.lote||r.co)===nm;});
     var realSacos=0, prodMap={};
     tl.forEach(function(r){ var q=parseFloat(r.q||r.qtd||0)||0; realSacos+=q; var pr=r.pr||r.prod||''; if(pr) prodMap[pr]=(prodMap[pr]||0)+q; });
     var prodNome=Object.keys(prodMap).sort(function(a,b){return prodMap[b]-prodMap[a];})[0]||'';
