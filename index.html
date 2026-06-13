@@ -1101,7 +1101,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 </div>
 <div id="pg-consultoria" class="pg" style="display:none;padding:14px;padding-bottom:40px">
   <div class="card" style="padding:14px">
-    <div style="font-size:13px;font-weight:800;color:#1b2c1b;margin-bottom:10px">Per\u00edodo do relat\u00f3rio</div>
+    <div style="font-size:13px;font-weight:800;color:#1b2c1b;margin-bottom:10px">Período do relatório</div>
     <div style="display:flex;gap:8px">
       <button onclick="rConsultoria(7)" id="cons-p7" class="cons-per" style="flex:1;padding:10px;border:1px solid #cdd6cd;border-radius:10px;background:#fff;font-weight:700;color:#2E7D32;cursor:pointer">7 dias</button>
       <button onclick="rConsultoria(15)" id="cons-p15" class="cons-per" style="flex:1;padding:10px;border:1px solid #cdd6cd;border-radius:10px;background:#fff;font-weight:700;color:#2E7D32;cursor:pointer">15 dias</button>
@@ -2117,12 +2117,12 @@ function rConsultoria(dias){
 
     var areaId=areaDoLote(nm);
     var areaObj=areaId?MAPA_AREAS.find(function(a){return a.id===areaId;}):null;
-    var areaNm=areaObj?areaObj.label:'\u2014';
+    var areaNm=areaObj?areaObj.label:'—';
     var haInst=areaObj?(areaObj.ha||0):0;
     var txInst=haInst>0?ua/haInst:0;
     var haGr=haGrupo(areaObj);
     var txGr=haGr>0?ua/haGr:0;
-    var grpLabel=areaObj&&areaObj.tipo==='modulo'?('M\u00f3dulo '+areaObj.modulo):'Pasto';
+    var grpLabel=areaObj&&areaObj.tipo==='modulo'?('Módulo '+areaObj.modulo):'Pasto';
 
     // dias no pasto
     var movsLote=movs.filter(function(m){return m.lote===nm;});
@@ -2154,37 +2154,37 @@ function rConsultoria(dias){
     var difTxt='', difCor='#65766a';
     if(prevSacos>0){
       var dif=realSacos-prevSacos;
-      if(realSacos===0){ difTxt='Sem trato no per\u00edodo'; difCor='#C62828';
-        alertas.push(nm+' tinha consumo previsto (~'+prevSacos.toFixed(1)+' sacos) mas n\u00e3o teve nenhum trato lan\u00e7ado \u2014 verificar com o vaqueiro.');
-      } else if(dif<0){ difTxt='D\u00e9ficit de '+Math.abs(dif).toFixed(1)+' sacos'; difCor='#E65100'; }
+      if(realSacos===0){ difTxt='Sem trato no período'; difCor='#C62828';
+        alertas.push(nm+' tinha consumo previsto (~'+prevSacos.toFixed(1)+' sacos) mas não teve nenhum trato lançado — verificar com o vaqueiro.');
+      } else if(dif<0){ difTxt='Déficit de '+Math.abs(dif).toFixed(1)+' sacos'; difCor='#E65100'; }
       else if(dif>0){ difTxt='Acima '+dif.toFixed(1)+' sacos'; difCor='#E65100'; }
       else { difTxt='No ponto'; difCor='#2E7D32'; }
     } else {
-      difTxt = realSacos>0?('Sem % cadastrado'):('\u2014');
+      difTxt = realSacos>0?('Sem % cadastrado'):('—');
     }
 
     blocos += '<div class="card" style="padding:0;overflow:hidden;border-left:4px solid #2E7D32">'
       + '<div style="background:#f5f8f4;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">'
       +   '<div style="font-size:15px;font-weight:900;color:#1b2c1b">'+nm+'</div>'
-      +   '<div style="font-size:11px;color:#65766a">'+qtd+' animais \u00b7 '+peso+' kg \u00b7 '+ua.toFixed(1)+' UA</div>'
+      +   '<div style="font-size:11px;color:#65766a">'+qtd+' animais · '+peso+' kg · '+ua.toFixed(1)+' UA</div>'
       + '</div>'
       + '<div style="padding:12px 14px">'
       // consumo
-      +   '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#65766a">Consumo previsto ('+dias+'d)</span><span style="font-weight:700;color:#1b2c1b">'+(prevSacos>0?prevSacos.toFixed(1)+' sacos':'\u2014')+'</span></div>'
-      +   '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#65766a">Consumo real</span><span style="font-weight:700;color:#1b2c1b">'+realSacos.toFixed(1)+' sacos'+(prodNome?' \u00b7 '+prodNome:'')+'</span></div>'
-      +   '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px"><span style="color:#65766a">Situa\u00e7\u00e3o</span><span style="font-weight:800;color:'+difCor+'">'+difTxt+'</span></div>'
+      +   '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#65766a">Consumo previsto ('+dias+'d)</span><span style="font-weight:700;color:#1b2c1b">'+(prevSacos>0?prevSacos.toFixed(1)+' sacos':'—')+'</span></div>'
+      +   '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#65766a">Consumo real</span><span style="font-weight:700;color:#1b2c1b">'+realSacos.toFixed(1)+' sacos'+(prodNome?' · '+prodNome:'')+'</span></div>'
+      +   '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px"><span style="color:#65766a">Situação</span><span style="font-weight:800;color:'+difCor+'">'+difTxt+'</span></div>'
       // custo
       +   '<div style="display:flex;gap:8px;margin-bottom:8px">'
       +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:900;color:#2E7D32">R$ '+custo.toFixed(2).replace(".",",")+'</div><div style="font-size:10px;color:#65766a">custo total</div></div>'
-      +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:900;color:#2E7D32">R$ '+custoCab.toFixed(2).replace(".",",")+'</div><div style="font-size:10px;color:#65766a">por cabe\u00e7a</div></div>'
+      +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:900;color:#2E7D32">R$ '+custoCab.toFixed(2).replace(".",",")+'</div><div style="font-size:10px;color:#65766a">por cabeça</div></div>'
       +   '</div>'
       // pasto + taxas
       +   '<div style="display:flex;gap:8px">'
-      +     '<div style="flex:1;background:#fff;border:1px solid #e0e7e0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:15px;font-weight:900;color:#1b2c1b">'+(diasPasto!=null?diasPasto:'\u2014')+'</div><div style="font-size:10px;color:#65766a">dias no pasto</div></div>'
-      +     '<div style="flex:1;background:#fff;border:1px solid #e0e7e0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:15px;font-weight:900;color:'+(txInst>4?"#C62828":txInst>2?"#E65100":"#1B5E20")+'">'+(txInst>0?txInst.toFixed(2):"\u2014")+'</div><div style="font-size:10px;color:#65766a">UA/ha agora</div></div>'
-      +     '<div style="flex:1;background:#fff;border:1px solid #e0e7e0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:15px;font-weight:900;color:#1b2c1b">'+(txGr>0?txGr.toFixed(2):"\u2014")+'</div><div style="font-size:10px;color:#65766a">UA/ha '+grpLabel.toLowerCase()+'</div></div>'
+      +     '<div style="flex:1;background:#fff;border:1px solid #e0e7e0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:15px;font-weight:900;color:#1b2c1b">'+(diasPasto!=null?diasPasto:'—')+'</div><div style="font-size:10px;color:#65766a">dias no pasto</div></div>'
+      +     '<div style="flex:1;background:#fff;border:1px solid #e0e7e0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:15px;font-weight:900;color:'+(txInst>4?"#C62828":txInst>2?"#E65100":"#1B5E20")+'">'+(txInst>0?txInst.toFixed(2):"—")+'</div><div style="font-size:10px;color:#65766a">UA/ha agora</div></div>'
+      +     '<div style="flex:1;background:#fff;border:1px solid #e0e7e0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:15px;font-weight:900;color:#1b2c1b">'+(txGr>0?txGr.toFixed(2):"—")+'</div><div style="font-size:10px;color:#65766a">UA/ha '+grpLabel.toLowerCase()+'</div></div>'
       +   '</div>'
-      +   '<div style="font-size:10px;color:#9bb39b;margin-top:6px">'+areaNm+(diasPasto!=null&&dtEnt?' \u00b7 entrada '+dtEnt.split("-").reverse().join("/"):'')+'</div>'
+      +   '<div style="font-size:10px;color:#9bb39b;margin-top:6px">'+areaNm+(diasPasto!=null&&dtEnt?' · entrada '+dtEnt.split("-").reverse().join("/"):'')+'</div>'
       + '</div>'
       + '</div>';
   });
@@ -2194,23 +2194,46 @@ function rConsultoria(dias){
   var ini_fmt = ini.toLocaleDateString('pt-BR');
 
   var resumo = '<div class="card" style="padding:14px;background:linear-gradient(135deg,#1B5E20,#2E7D32);border:none">'
-    + '<div style="font-size:11px;color:rgba(255,255,255,.8)">RESUMO DO PER\u00cdODO \u00b7 '+ini_fmt+' a '+hoje_fmt+'</div>'
+    + '<div style="font-size:11px;color:rgba(255,255,255,.8)">RESUMO DO PERÍODO · '+ini_fmt+' a '+hoje_fmt+'</div>'
     + '<div style="display:flex;gap:8px;margin-top:10px">'
     +   '<div style="flex:1;text-align:center"><div style="font-size:22px;font-weight:900;color:#fff">'+totAnim+'</div><div style="font-size:10px;color:rgba(255,255,255,.8)">animais</div></div>'
     +   '<div style="flex:1;text-align:center"><div style="font-size:22px;font-weight:900;color:#fff">R$ '+totGasto.toFixed(0)+'</div><div style="font-size:10px;color:rgba(255,255,255,.8)">suplemento</div></div>'
-    +   '<div style="flex:1;text-align:center"><div style="font-size:22px;font-weight:900;color:#fff">'+(totAnim>0?'R$ '+(totGasto/totAnim).toFixed(0):'\u2014')+'</div><div style="font-size:10px;color:rgba(255,255,255,.8)">por cabe\u00e7a</div></div>'
+    +   '<div style="flex:1;text-align:center"><div style="font-size:22px;font-weight:900;color:#fff">'+(totAnim>0?'R$ '+(totGasto/totAnim).toFixed(0):'—')+'</div><div style="font-size:10px;color:rgba(255,255,255,.8)">por cabeça</div></div>'
     +   '<div style="flex:1;text-align:center"><div style="font-size:22px;font-weight:900;color:#fff">'+txFaz.toFixed(2)+'</div><div style="font-size:10px;color:rgba(255,255,255,.8)">UA/ha fazenda</div></div>'
     + '</div></div>';
 
   var alertasDiv='';
   if(alertas.length){
     alertasDiv = '<div class="card" style="padding:12px 14px;border-left:4px solid #C62828">'
-      + '<div style="font-size:13px;font-weight:800;color:#C62828;margin-bottom:6px">Pontos de aten\u00e7\u00e3o</div>'
-      + alertas.map(function(a){return '<div style="font-size:12px;color:#555;margin-bottom:5px">\u2022 '+a+'</div>';}).join('')
+      + '<div style="font-size:13px;font-weight:800;color:#C62828;margin-bottom:6px">Pontos de atenção</div>'
+      + alertas.map(function(a){return '<div style="font-size:12px;color:#555;margin-bottom:5px">• '+a+'</div>';}).join('')
       + '</div>';
   }
 
-  el.innerHTML = resumo + alertasDiv + blocos;
+  window._consData = {dias:dias, ini_fmt:ini_fmt, hoje_fmt:hoje_fmt, totAnim:totAnim, totGasto:totGasto, txFaz:txFaz, resumo:resumo, alertasDiv:alertasDiv, blocos:blocos};
+  var btnPdf = '<button onclick="gerarPDFConsultoria()" style="width:100%;background:#2E7D32;color:#fff;padding:13px;border:none;border-radius:12px;font-size:14px;font-weight:800;margin-top:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M9 18h6"/></svg>Gerar PDF para o cliente</button>';
+  el.innerHTML = resumo + alertasDiv + blocos + btnPdf;
+}
+
+function gerarPDFConsultoria(){
+  var d = window._consData;
+  if(!d){ alert('Abra o relatório primeiro.'); return; }
+  var faz = (CU && CU.fs && CU.fs[0]) ? CU.fs[0] : (Object.keys(S.FAZ||{})[0]||'');
+  // O conteudo na tela ja esta no padrao; reusa resumo/alertas/blocos.
+  // Ajusta cores que dependem de fundo escuro para impressao.
+  var corpo = d.resumo + d.alertasDiv + d.blocos;
+  var html = '<!doctype html><html><head><meta charset="utf-8"><style>'
+    + _pdfTimbreCss()
+    + 'body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:22px;color:#222}'
+    + '.card{background:#fff;border:1px solid #e0e7e0;border-radius:10px;padding:12px;margin-bottom:10px}'
+    + '@media print{.card{break-inside:avoid}}'
+    + '</style></head><body>'
+    + _pdfTimbre('Relatório de Consultoria', 'Consumo, custo e lotação · período de '+d.dias+' dias', faz)
+    + '<div style="font-size:11px;color:#555;margin-bottom:12px">Período analisado: '+d.ini_fmt+' a '+d.hoje_fmt+'</div>'
+    + corpo
+    + _pdfRodape()
+    + '</body></html>';
+  pdfModalAbrir('Relatório de Consultoria', html);
 }
 
 function rFeedConsultor(){
