@@ -6852,6 +6852,75 @@ function salvarWppAdmin(){
   showOk('ok-wpp');
 }
 // ═══ PAINEL VAQUEIRO — GAUGES DE DIAS NO PASTO ═══
+// ═══ AVISO DE RAÇÃO (vaqueiro) ═══
+// Para cada lote: calcula quantos dias a ração lançada deveria durar
+// (sacos lançados ÷ sacos/dia). Se já passou do prazo E não veio trato novo,
+// retorna o lote para mostrar a pergunta. Mesma fórmula validada do consultor.
+function _calcAvisosRacao(){
+  var avisos = [];
+  if(!CU || CU.r!=='Vaqueiro') return avisos;
+  var lotes = S.LOTES || [];
+  function _baseLote(x){return String(x||'').split('(')[0].trim();}
+  var hoje = new Date(); hoje.setHours(12,0,0,0);
+  // respostas já dadas (para não repetir o aviso do mesmo trato)
+  var respostas = (S.rT||[]).filter(function(r){return r.tipo==='resp_racao'&&!r._apagado;});
+
+  lotes.forEach(function(lote){
+    var nm = lote.nome;
+    var peso = lote.peso||0, qtd = lote.qtd||0;
+    if(!peso || !qtd) return;
+    // tratos reais do lote
+    var tl = (S.rT||[]).filter(function(r){return r.tipo==='trato' && !r._apagado && _baseLote(r.lote||r.co)===nm;});
+    if(!tl.length) return; // nunca teve trato → não dá pra calcular "acabou"
+    // último trato (data) e produto dominante
+    var totalSacos=0, prodMap={}, ultDt='';
+    tl.forEach(function(r){
+      var q=parseFloat(r.q||r.qtd||0)||0; totalSacos+=q;
+      var pr=r.pr||r.prod||''; if(pr) prodMap[pr]=(prodMap[pr]||0)+q;
+      var d=(r.dt||'').substring(0,10); if(d>ultDt) ultDt=d;
+    });
+    if(totalSacos<=0) return;
+    var prodNome=Object.keys(prodMap).sort(function(a,b){return prodMap[b]-prodMap[a];})[0]||'';
+    var est=(prodNome && S.EST && S.EST[prodNome])?S.EST[prodNome]:null;
+    var pct=est&&est.pct?est.pct:0;
+    var pSaco=est&&est.peso_saco?est.peso_saco:30;
+    if(pct<=0 || pSaco<=0) return; // sem %PV cadastrado → não calcula
+    // fórmula validada: kg/dia = (pct/100)*peso*qtd ; sacos/dia = kg/dia / peso_saco
+    var kgDia=(pct/100)*peso*qtd;
+    var sacosDia=pSaco>0?kgDia/pSaco:0;
+    if(sacosDia<=0) return;
+    var diasDura=totalSacos/sacosDia; // quantos dias a ração lançada deveria durar
+    if(!ultDt || ultDt.length!==10) return;
+    var diasSemTrato=Math.max(0,Math.round((hoje-new Date(ultDt+'T12:00:00'))/864e5));
+    // avisa quando já passou QUALQUER tempo do prazo
+    if(diasSemTrato>diasDura){
+      // já respondeu para esse mesmo último trato? então não mostra de novo
+      var jaResp=respostas.some(function(r){return _baseLote(r.lote)===nm && (r.refDt||'')===ultDt;});
+      if(jaResp) return;
+      avisos.push({lote:nm, diasSemTrato:diasSemTrato, diasDura:diasDura, ultDt:ultDt});
+    }
+  });
+  return avisos;
+}
+
+// Vaqueiro respondeu o aviso: grava registro de trato com observação (q:0) e marca para o consultor ver.
+function responderRacao(loteNome, refDt, resposta){
+  var obs = resposta==='esqueci'
+    ? 'Vaqueiro confirmou que ESQUECEU de lançar o trato.'
+    : 'Vaqueiro confirmou que AINDA HÁ ração no cocho.';
+  var faz = (CU&&CU.fs&&CU.fs.length===1)?CU.fs[0]:'';
+  var r = {
+    tipo:'resp_racao', faz:faz, n:CU.n, dt:TD,
+    lote:loteNome, co:loteNome, refDt:refDt,
+    resposta:resposta, q:0, qtd:0, unid:'saco',
+    obs:'[Aviso de ração] '+obs
+  };
+  S.rT.push(r);
+  try{ enviarDado(r); }catch(e){}
+  try{ rVaqueiroPainel(); }catch(e){}
+  alert('✅ Obrigado! Sua resposta foi registrada e o consultor será avisado.');
+}
+
 function rVaqueiroPainel(){
   var panel = document.getElementById('home-vaqueiro-panel');
   var grid  = document.getElementById('vaq-gauge-grid');
@@ -6988,7 +7057,28 @@ function rVaqueiroPainel(){
     ? '<div style="margin-top:10px"><div style="font-size:13px;font-weight:800;color:#1B5E20;margin-bottom:6px">🔍 Pontos de atenção</div>'+alertasHtml+'</div>'
     : '<div style="margin-top:8px;background:#E8F5E9;border-radius:8px;padding:8px 12px;font-size:12px;color:#1B5E20;font-weight:700">✅ Todos os lotes dentro do prazo ideal.</div>';
 
-  grid.innerHTML = html + alertasDiv;
+  // ═══ Cartão(ões) de aviso de ração no TOPO ═══
+  var avisosRacao = [];
+  try{ avisosRacao = _calcAvisosRacao(); }catch(e){ avisosRacao=[]; }
+  var avisoHtml = '';
+  avisosRacao.forEach(function(av){
+    var refDtJs = (av.ultDt||'').replace(/'/g,'');
+    avisoHtml += '<div style="background:#FFF3E0;border-left:4px solid #FF6F00;border-radius:0;padding:12px 14px;margin-bottom:12px">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+      +   '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E65100" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+      +   '<span style="font-size:13px;font-weight:800;color:#E65100">'+av.lote+' — verificar ração</span>'
+      + '</div>'
+      + '<div style="font-size:13px;color:#7D4A00;line-height:1.5;margin-bottom:12px">'
+      +   'Faz '+av.diasSemTrato+' dias sem trato e a ração lançada já era pra ter acabado. Esqueceu de lançar ou ainda tem no cocho?'
+      + '</div>'
+      + '<div style="display:flex;gap:8px">'
+      +   '<button onclick="responderRacao(\''+av.lote.replace(/'/g,"\\'")+'\',\''+refDtJs+'\',\'esqueci\')" style="flex:1;font-size:13px;padding:9px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer">Já lancei / esqueci</button>'
+      +   '<button onclick="responderRacao(\''+av.lote.replace(/'/g,"\\'")+'\',\''+refDtJs+'\',\'tem_cocho\')" style="flex:1;font-size:13px;padding:9px;background:#fff;color:#2E7D32;border:1px solid #2E7D32;border-radius:8px;font-weight:700;cursor:pointer">Ainda tem no cocho</button>'
+      + '</div>'
+      + '</div>';
+  });
+
+  grid.innerHTML = avisoHtml + html + alertasDiv;
 
   // Gráfico dos pastos no painel do vaqueiro (só-leitura).
   // Reusa o cálculo de rHistRankingPastos via window._rkpPerfis.
