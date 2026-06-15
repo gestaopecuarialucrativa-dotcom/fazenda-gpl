@@ -2084,7 +2084,7 @@ function rConsultoria(dias){
   var aloc  = S.MAPA_ALOC||{};
   var movs  = (S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
   var hoje  = new Date(); hoje.setHours(12,0,0,0);
-  var ini   = new Date(hoje.getTime() - dias*864e5);
+  var ini   = new Date(hoje.getTime() - (dias-1)*864e5);
 
   // tratos dentro do periodo
   var tratosPer = (S.rT||[]).filter(function(r){
