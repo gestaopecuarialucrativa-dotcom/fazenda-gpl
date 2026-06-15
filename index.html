@@ -2097,20 +2097,21 @@ function _calcGMD(loteNome){
   var dias=Math.max(1,Math.round((dB-dA)/864e5));
   // mapa de pesos por brinco em cada data
   var mAnt={}; (ant.animais||[]).forEach(function(a){ mAnt[String(a.brinco).trim()]=parseFloat(a.peso)||0; });
-  var porAnimal=[], somaGanho=0, n=0;
+  var porAnimal=[], somaGanho=0, n=0, nSuspeitos=0;
   (atu.animais||[]).forEach(function(a){
     var br=String(a.brinco).trim(), pNovo=parseFloat(a.peso)||0;
     if(mAnt[br]!=null && pNovo>0 && mAnt[br]>0){
       var ganho=pNovo-mAnt[br], gmd=ganho/dias;
       porAnimal.push({brinco:br, pAnt:mAnt[br], pNovo:pNovo, ganho:ganho, gmd:gmd});
       somaGanho+=ganho; n++;
+      if(gmd>2.0) nSuspeitos++; // ganho acima de 2 kg/dia = provável erro de pesagem
     }
   });
   if(!n) return null; // nenhum animal coincide nas duas datas
   var ganhoMedio=somaGanho/n, gmdMedio=ganhoMedio/dias;
   return {
     dias:dias, dtAnt:ant.data, dtAtu:atu.data,
-    nAnimais:n, ganhoMedio:ganhoMedio, gmdMedio:gmdMedio,
+    nAnimais:n, nSuspeitos:nSuspeitos, ganhoMedio:ganhoMedio, gmdMedio:gmdMedio,
     pesoMedioAnt:porAnimal.reduce(function(s,x){return s+x.pAnt;},0)/n,
     pesoMedioAtu:porAnimal.reduce(function(s,x){return s+x.pNovo;},0)/n,
     porAnimal:porAnimal
@@ -2274,7 +2275,8 @@ function rConsultoria(dias){
         +   '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px 6px;text-align:center"><div style="font-size:17px;font-weight:900;color:#1b2c1b">'+(gmd.ganhoMedio>=0?'+':'')+gmd.ganhoMedio.toFixed(1).replace(".",",")+' <span style="font-size:11px;font-weight:700">kg</span></div><div style="font-size:9px;color:#9bb39b;margin-top:1px">ganho no período</div></div>'
         +   '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px 6px;text-align:center"><div style="font-size:17px;font-weight:900;color:#1b2c1b">'+gmd.dias+' <span style="font-size:11px;font-weight:700">dias</span></div><div style="font-size:9px;color:#9bb39b;margin-top:1px">entre pesagens</div></div>'
         + '</div>'
-        + '<div style="font-size:9px;color:#9bb39b;margin:-4px 0 8px">'+dtAntBR+' ('+gmd.pesoMedioAnt.toFixed(0)+' kg) → '+dtAtuBR+' ('+gmd.pesoMedioAtu.toFixed(0)+' kg) · '+gmd.nAnimais+' animais comparados</div>';
+        + '<div style="font-size:9px;color:#9bb39b;margin:-4px 0 8px">'+dtAntBR+' ('+gmd.pesoMedioAnt.toFixed(0)+' kg) → '+dtAtuBR+' ('+gmd.pesoMedioAtu.toFixed(0)+' kg) · '+gmd.nAnimais+' animais comparados</div>'
+        + (gmd.nSuspeitos>0?'<div style="font-size:10px;color:#E65100;background:#FFF3E0;border-radius:6px;padding:6px 8px;margin:-2px 0 8px">⚠ '+gmd.nSuspeitos+' animal(is) com ganho acima de 2 kg/dia — verificar pesagem (podem ser erro de digitação ou brinco repetido).</div>':'');
     }
 
     var _blocoLote = '<div class="card" style="padding:0;overflow:hidden;border-left:4px solid #2E7D32">'
