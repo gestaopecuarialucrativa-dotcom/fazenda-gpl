@@ -2156,6 +2156,13 @@ function rConsultoria(dias){
     var cabHa = haInst>0?qtd/haInst:0;
     totGasto += custo;
 
+    // %PV real do cocho: kg real colocado = realSacos * pSaco
+    var kgRealTotal = realSacos*pSaco;
+    var kgCabDiaReal = (qtd>0&&dias>0)?kgRealTotal/qtd/dias:0;
+    var pvReal = (peso>0)?(kgCabDiaReal/peso)*100:0;  // % do peso vivo realmente no cocho
+    var pvPrev = pct;                                 // % cadastrado no estoque (previsto)
+    var pvCor = (pvPrev>0 && pvReal>pvPrev*1.001)?'#E65100':'#2E7D32'; // laranja se acima do previsto
+
     // diferenca
     var difTxt='', difCor='#65766a';
     if(prevSacos>0){
@@ -2178,6 +2185,12 @@ function rConsultoria(dias){
       // consumo
       +   '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#65766a">Consumo previsto ('+dias+'d)</span><span style="font-weight:700;color:#1b2c1b">'+(prevSacos>0?prevSacos.toFixed(1)+' sacos':'—')+'</span></div>'
       +   '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#65766a">Consumo real</span><span style="font-weight:700;color:#1b2c1b">'+realSacos.toFixed(1)+' sacos'+(prodNome?' · '+prodNome:'')+'</span></div>'
+      // %PV previsto vs real no cocho
+      +   '<div style="display:flex;gap:6px;margin:8px 0">'
+      +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:7px;text-align:center"><div style="font-size:15px;font-weight:900;color:#1b2c1b">'+(pvPrev>0?pvPrev.toFixed(2).replace(".",",")+"%":"—")+'</div><div style="font-size:9px;color:#65766a">%PV previsto</div></div>'
+      +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:7px;text-align:center"><div style="font-size:15px;font-weight:900;color:'+pvCor+'">'+(pvReal>0?pvReal.toFixed(2).replace(".",",")+"%":"—")+'</div><div style="font-size:9px;color:#65766a">%PV no cocho</div></div>'
+      +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:7px;text-align:center"><div style="font-size:15px;font-weight:900;color:#1b2c1b">'+(kgCabDiaReal>0?kgCabDiaReal.toFixed(2).replace(".",",")+" kg":"—")+'</div><div style="font-size:9px;color:#65766a">kg/cab/dia</div></div>'
+      +   '</div>'
       +   '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#65766a">Frequência</span><span style="font-weight:600;color:#65766a">tratou em '+diasComTrato+' de '+dias+' dias</span></div>'
       +   '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px"><span style="color:#65766a">Situação</span><span style="font-weight:800;color:'+difCor+'">'+difTxt+'</span></div>'
       // custo (periodo + por dia)
