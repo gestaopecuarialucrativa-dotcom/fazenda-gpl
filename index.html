@@ -2156,6 +2156,37 @@ function rConsultoria(dias){
     var pSaco=est&&est.peso_saco?est.peso_saco:30;
     var preco=est&&est.preco_saco?est.preco_saco:0;
 
+    // ═══ ÚLTIMO TRATO + TRATO ANTERIOR DO MESMO PRODUTO (Forma A) ═══
+    var todosTratosLote=(S.rT||[]).filter(function(r){return r.tipo==='trato' && !r._apagado && _baseLote(r.lote||r.co)===nm;});
+    function _dtTrato(r){return (r.dt||'').substring(0,10);}
+    function _prodTrato(r){return r.pr||r.prod||'';}
+    function _toDate(d){ if(!d||d.length<8)return null; var x; if(d.indexOf('/')>0){var p=d.split('/');x=new Date(p[2]+'-'+p[1]+'-'+p[0]+'T12:00:00');}else{x=new Date(d+'T12:00:00');} return isNaN(x.getTime())?null:x; }
+    // ordena por data crescente
+    todosTratosLote.sort(function(a,b){return _dtTrato(a)<_dtTrato(b)?-1:(_dtTrato(a)>_dtTrato(b)?1:0);});
+    var ultTratoSac=0, ultTratoDt='', ultTratoProd='', ultTratoDias=null;
+    if(todosTratosLote.length){
+      // último trato (data mais recente)
+      ultTratoDt=_dtTrato(todosTratosLote[todosTratosLote.length-1]);
+      ultTratoProd=_prodTrato(todosTratosLote[todosTratosLote.length-1]);
+      // soma sacos lançados nessa data (mesmo produto, pode ter mais de um no dia)
+      todosTratosLote.forEach(function(r){ if(_dtTrato(r)===ultTratoDt && _prodTrato(r)===ultTratoProd){ ultTratoSac+=parseFloat(r.q||r.qtd||0)||0; } });
+      var _du=_toDate(ultTratoDt);
+      if(_du) ultTratoDias=Math.max(0,Math.round((hoje-_du)/864e5));
+    }
+    var ultTratoDtBR = ultTratoDt? ultTratoDt.split('-').reverse().join('/') : '—';
+    // trato anterior do MESMO produto (data diferente, anterior ao último)
+    var antDt='';
+    for(var ia=todosTratosLote.length-1; ia>=0; ia--){
+      var rr=todosTratosLote[ia];
+      if(_dtTrato(rr)<ultTratoDt && _prodTrato(rr)===ultTratoProd){ antDt=_dtTrato(rr); break; }
+    }
+    // consumo/dia real (Forma A): sacos do último trato ÷ dias entre os dois tratos do mesmo produto
+    var consumoSacDia=null, temAnterior=false;
+    if(antDt){
+      var dU=_toDate(ultTratoDt), dA=_toDate(antDt);
+      if(dU&&dA){ var diasEntre=Math.max(1,Math.round((dU-dA)/864e5)); consumoSacDia=ultTratoSac/diasEntre; temAnterior=true; }
+    }
+
     // consumo previsto (mesma formula do app: (pct/100)*peso*qtd = kg/dia)
     var kgDia = (pct/100)*peso*qtd;
     var sacosDia = pSaco>0?kgDia/pSaco:0;
@@ -2168,10 +2199,9 @@ function rConsultoria(dias){
     var cabHa = haInst>0?qtd/haInst:0;
     totGasto += custo;
 
-    // %PV real do cocho: kg real colocado = realSacos * pSaco
-    var kgRealTotal = realSacos*pSaco;
-    var kgCabDiaReal = (qtd>0&&dias>0)?kgRealTotal/qtd/dias:0;
-    var pvReal = (peso>0)?(kgCabDiaReal/peso)*100:0;  // % do peso vivo realmente no cocho
+    // %PV real do cocho: agora usa o consumo/dia da Forma A (entre tratos do mesmo produto)
+    var kgCabDiaReal = (consumoSacDia!=null&&qtd>0)?(consumoSacDia*pSaco)/qtd:0;
+    var pvReal = (peso>0&&consumoSacDia!=null)?(kgCabDiaReal/peso)*100:0;
     var pvPrev = pct;                                 // % cadastrado no estoque (previsto)
     var pvCor = (pvPrev>0 && pvReal>pvPrev*1.001)?'#E65100':'#2E7D32'; // laranja se acima do previsto
 
@@ -2183,21 +2213,6 @@ function rConsultoria(dias){
     var difKgDia   = difSacDia*pSaco;                   // diferença em kg
     var difDiaCor  = Math.abs(difSacDia)<0.05?'#2E7D32':'#E65100';
     var difSinal   = difSacDia>0?'+':'';
-
-    // ÚLTIMO TRATO do lote (busca em TODOS os tratos, mesmo fora do período)
-    var ultTratoSac=0, ultTratoDt='', ultTratoDias=null;
-    var todosTratosLote=(S.rT||[]).filter(function(r){return r.tipo==='trato' && !r._apagado && _baseLote(r.lote||r.co)===nm;});
-    if(todosTratosLote.length){
-      // acha a data mais recente
-      todosTratosLote.forEach(function(r){ var d=(r.dt||'').substring(0,10); if(d && d>ultTratoDt) ultTratoDt=d; });
-      // soma os sacos lançados nessa data (pode ter mais de um trato no mesmo dia)
-      todosTratosLote.forEach(function(r){ if((r.dt||'').substring(0,10)===ultTratoDt){ ultTratoSac += parseFloat(r.q||r.qtd||0)||0; } });
-      if(ultTratoDt && ultTratoDt.length===10){
-        var _du; if(ultTratoDt.indexOf('/')>0){var _pp=ultTratoDt.split('/');_du=new Date(_pp[2]+'-'+_pp[1]+'-'+_pp[0]+'T12:00:00');}else{_du=new Date(ultTratoDt+'T12:00:00');}
-        if(!isNaN(_du.getTime())) ultTratoDias=Math.max(0,Math.round((hoje-_du)/864e5));
-      }
-    }
-    var ultTratoDtBR = ultTratoDt? ultTratoDt.split('-').reverse().join('/') : '—';
 
     // diferenca
     var difTxt='', difCor='#65766a';
@@ -2224,8 +2239,8 @@ function rConsultoria(dias){
       // %PV previsto vs real no cocho
       +   '<div style="display:flex;gap:6px;margin:8px 0">'
       +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:7px;text-align:center"><div style="font-size:15px;font-weight:900;color:#1b2c1b">'+(pvPrev>0?pvPrev.toFixed(2).replace(".",",")+"%":"—")+'</div><div style="font-size:9px;color:#65766a">%PV previsto</div></div>'
-      +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:7px;text-align:center"><div style="font-size:15px;font-weight:900;color:'+pvCor+'">'+(pvReal>0?pvReal.toFixed(2).replace(".",",")+"%":"—")+'</div><div style="font-size:9px;color:#65766a">%PV no cocho</div></div>'
-      +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:7px;text-align:center"><div style="font-size:15px;font-weight:900;color:#1b2c1b">'+(kgCabDiaReal>0?kgCabDiaReal.toFixed(2).replace(".",",")+" kg":"—")+'</div><div style="font-size:9px;color:#65766a">kg/cab/dia</div></div>'
+      +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:7px;text-align:center">'+(temAnterior?'<div style="font-size:15px;font-weight:900;color:'+pvCor+'">'+pvReal.toFixed(2).replace(".",",")+'%</div><div style="font-size:9px;color:#65766a">%PV no cocho</div>':'<div style="font-size:10px;font-weight:700;color:#9bb39b;line-height:1.3;padding:4px 0">aguardando<br>2º trato</div>')+'</div>'
+      +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:7px;text-align:center"><div style="font-size:15px;font-weight:900;color:#1b2c1b">'+(temAnterior&&kgCabDiaReal>0?kgCabDiaReal.toFixed(2).replace(".",",")+" kg":"—")+'</div><div style="font-size:9px;color:#65766a">kg/cab/dia</div></div>'
       +   '</div>'
       // por dia: previsto, real, diferença (saco grande, kg embaixo)
       +   '<div style="font-size:10px;color:#9bb39b;margin:8px 0 4px;text-transform:uppercase;letter-spacing:.3px">Por dia</div>'
