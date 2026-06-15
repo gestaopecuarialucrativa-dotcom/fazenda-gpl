@@ -1661,8 +1661,11 @@ function addQ(r,d){QT[r]=Math.max(0,QT[r]+d);const m={cafe:'c',almoco:'a',janta:
 // [cantina legacy removida: calcCt]
 // ═══ ENVIOS ═══
 function getFazGasUrl(faz){if(faz&&S.FAZ[faz]&&S.FAZ[faz].gasUrl)return S.FAZ[faz].gasUrl;return S.cfgGS||'';}
+function _uid(){return 'u'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
 function enviarDado(d){
   if(!d||!d.tipo)return;
+  // uid único para o backend recusar duplicados (proteção contra reenvio por oscilação de internet)
+  if(!d.uid){ d.uid=_uid(); }
   var r=Object.assign({},d,{timestamp:new Date().toISOString()});
   if(navigator.onLine&&S.cfgGS){
     var url=getFazGasUrl(d.faz||'');
