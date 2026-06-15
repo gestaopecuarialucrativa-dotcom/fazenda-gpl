@@ -2087,7 +2087,19 @@ function feedEditarDiaria(idx){
 // Calcula o GMD (ganho médio diário) de um lote usando as 2 pesagens mais recentes do histórico.
 // Retorna média do lote e detalhe por animal. Compara só animais (brincos) presentes nas duas datas.
 function _calcGMD(loteNome){
-  var P=(S.PESAGEM||{})[loteNome];
+  var PES=(S.PESAGEM||{});
+  // a pesagem pode estar salva por número ("1") ou nome ("Lote 01"). Tenta casar os dois.
+  var P=PES[loteNome];
+  if(!P){
+    // extrai o número do nome ("Lote 01" -> "1") e tenta achar
+    var num=String(loteNome).replace(/[^0-9]/g,'').replace(/^0+/,'')||String(loteNome).replace(/[^0-9]/g,'');
+    var chaves=Object.keys(PES);
+    for(var ic=0;ic<chaves.length;ic++){
+      var k=chaves[ic];
+      var kNum=String(k).replace(/[^0-9]/g,'').replace(/^0+/,'')||String(k).replace(/[^0-9]/g,'');
+      if(kNum && kNum===num){ P=PES[k]; break; }
+    }
+  }
   if(!P||!P.historico||P.historico.length<2) return null; // precisa de 2 pesagens
   var hist=P.historico.slice().sort(function(a,b){return (a.data||'')<(b.data||'')?-1:1;});
   var ant=hist[hist.length-2], atu=hist[hist.length-1];
