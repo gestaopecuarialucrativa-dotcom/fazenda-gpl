@@ -2185,6 +2185,21 @@ function rConsultoria(dias){
     var difDiaCor  = Math.abs(difSacDia)<0.05?'#2E7D32':'#E65100';
     var difSinal   = difSacDia>0?'+':'';
 
+    // ÚLTIMO TRATO do lote (busca em TODOS os tratos, mesmo fora do período)
+    var ultTratoSac=0, ultTratoDt='', ultTratoDias=null;
+    var todosTratosLote=(S.rT||[]).filter(function(r){return r.tipo==='trato' && !r._apagado && _baseLote(r.lote||r.co)===nm;});
+    if(todosTratosLote.length){
+      // acha a data mais recente
+      todosTratosLote.forEach(function(r){ var d=(r.dt||'').substring(0,10); if(d && d>ultTratoDt) ultTratoDt=d; });
+      // soma os sacos lançados nessa data (pode ter mais de um trato no mesmo dia)
+      todosTratosLote.forEach(function(r){ if((r.dt||'').substring(0,10)===ultTratoDt){ ultTratoSac += parseFloat(r.q||r.qtd||0)||0; } });
+      if(ultTratoDt && ultTratoDt.length===10){
+        var _du; if(ultTratoDt.indexOf('/')>0){var _pp=ultTratoDt.split('/');_du=new Date(_pp[2]+'-'+_pp[1]+'-'+_pp[0]+'T12:00:00');}else{_du=new Date(ultTratoDt+'T12:00:00');}
+        if(!isNaN(_du.getTime())) ultTratoDias=Math.max(0,Math.round((hoje-_du)/864e5));
+      }
+    }
+    var ultTratoDtBR = ultTratoDt? ultTratoDt.split('-').reverse().join('/') : '—';
+
     // diferenca
     var difTxt='', difCor='#65766a';
     if(prevSacos>0){
@@ -2217,7 +2232,7 @@ function rConsultoria(dias){
       +   '<div style="font-size:10px;color:#9bb39b;margin:8px 0 4px;text-transform:uppercase;letter-spacing:.3px">Por dia</div>'
       +   '<div style="display:flex;gap:6px;margin-bottom:8px">'
       +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px 6px;text-align:center"><div style="font-size:17px;font-weight:900;color:#1b2c1b">'+prevSacDia.toFixed(1).replace(".",",")+' <span style="font-size:11px;font-weight:700">sacos</span></div><div style="font-size:10px;color:#65766a;margin-top:2px">'+prevKgDia.toFixed(0)+' kg/dia</div><div style="font-size:9px;color:#9bb39b;margin-top:1px">previsto</div></div>'
-      +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px 6px;text-align:center"><div style="font-size:17px;font-weight:900;color:#1b2c1b">'+realSacDia.toFixed(1).replace(".",",")+' <span style="font-size:11px;font-weight:700">sacos</span></div><div style="font-size:10px;color:#65766a;margin-top:2px">'+realKgDia.toFixed(0)+' kg/dia</div><div style="font-size:9px;color:#9bb39b;margin-top:1px">real</div></div>'
+      +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px 6px;text-align:center"><div style="font-size:17px;font-weight:900;color:#1b2c1b">'+(ultTratoSac>0?ultTratoSac.toFixed(0):'—')+' <span style="font-size:11px;font-weight:700">sacos</span></div><div style="font-size:10px;color:#65766a;margin-top:2px">'+ultTratoDtBR+'</div><div style="font-size:9px;color:#9bb39b;margin-top:1px">último trato</div></div>'
       +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px 6px;text-align:center"><div style="font-size:17px;font-weight:900;color:'+difDiaCor+'">'+difSinal+difSacDia.toFixed(1).replace(".",",")+' <span style="font-size:11px;font-weight:700">saco</span></div><div style="font-size:10px;color:#65766a;margin-top:2px">'+difSinal+difKgDia.toFixed(0)+' kg/dia</div><div style="font-size:9px;color:#9bb39b;margin-top:1px">diferença</div></div>'
       +   '</div>'
       +   '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#65766a">Frequência</span><span style="font-weight:600;color:#65766a">tratou em '+diasComTrato+' de '+dias+' dias</span></div>'
@@ -2238,7 +2253,7 @@ function rConsultoria(dias){
       +     '<div style="flex:1;background:#fff;border:1px solid #e0e7e0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:15px;font-weight:900;color:#1b2c1b">'+(txGr>0?txGr.toFixed(2):"—")+'</div><div style="font-size:10px;color:#65766a">UA/ha '+grpLabel.toLowerCase()+'</div></div>'
       +     '<div style="flex:1;background:#fff;border:1px solid #e0e7e0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:15px;font-weight:900;color:#1b2c1b">'+(cabHa>0?cabHa.toFixed(1):"—")+'</div><div style="font-size:10px;color:#65766a">cab/ha agora</div></div>'
       +   '</div>'
-      +   '<div style="font-size:10px;color:#9bb39b;margin-top:6px">'+areaNm+(diasPasto!=null&&dtEnt?' · entrada '+dtEnt.split("-").reverse().join("/"):'')+'</div>'
+      +   '<div style="font-size:10px;color:#9bb39b;margin-top:6px">'+areaNm+(diasPasto!=null&&dtEnt?' · entrada '+dtEnt.split("-").reverse().join("/"):'')+(ultTratoDias!=null?' · último trato há '+ultTratoDias+(ultTratoDias===1?' dia':' dias'):'')+'</div>'
       + '</div>'
       + '</div>';
   });
