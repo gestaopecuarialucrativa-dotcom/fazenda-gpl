@@ -2364,9 +2364,24 @@ function rConsultoria(dias){
 
   window._consData = {dias:dias, ini_fmt:ini_fmt, hoje_fmt:hoje_fmt, totAnim:totAnim, totGasto:totGasto, txFaz:txFaz, resumo:resumo, alertasDiv:alertasDiv, blocos:blocos, blocosArr:blocosArr, quadroLot:quadroLot};
   var btnPdf = '<button onclick="gerarPDFConsultoria()" style="width:100%;background:#2E7D32;color:#fff;padding:13px;border:none;border-radius:12px;font-size:14px;font-weight:800;margin-top:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M9 18h6"/></svg>Gerar PDF para o cliente</button>';
-  el.innerHTML = resumo + alertasDiv + blocos + btnPdf;
+  var btnDiag = '<button onclick="_diagPesagem()" style="width:100%;background:#fff;color:#E65100;padding:10px;border:1px solid #E65100;border-radius:10px;font-size:12px;font-weight:700;margin-top:8px;cursor:pointer">🔍 Diagnóstico da pesagem (temporário)</button>';
+  el.innerHTML = resumo + alertasDiv + blocos + btnPdf + btnDiag;
 }
 
+function _diagPesagem(){
+  var P=S.PESAGEM||{};
+  var msg='DIAGNÓSTICO PESAGEM\n\n';
+  var chaves=Object.keys(P);
+  msg+='Lotes salvos: '+(chaves.length?chaves.join(', '):'NENHUM')+'\n\n';
+  chaves.forEach(function(k){
+    var d=P[k]||{};
+    var nHist=(d.historico||[]).length;
+    var datas=(d.historico||[]).map(function(h){return h.data+' ('+(h.animais||[]).length+' an)';});
+    msg+='['+k+'] última data: '+(d.data||'?')+' | animais: '+(d.animais||[]).length+'\n';
+    msg+='   histórico: '+(nHist?nHist+' datas → '+datas.join(', '):'VAZIO (sem histórico!)')+'\n';
+  });
+  alert(msg);
+}
 function gerarPDFConsultoria(){
   var d = window._consData;
   if(!d){ alert('Abra o relatório primeiro.'); return; }
