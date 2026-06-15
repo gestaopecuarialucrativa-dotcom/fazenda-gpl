@@ -2084,6 +2084,39 @@ function feedEditarDiaria(idx){
   s.onerror=function(){ delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s); alert('⚠️ Erro de conexão. Nada foi alterado.'); };
   document.body.appendChild(s);
 }
+// Calcula o GMD (ganho médio diário) de um lote usando as 2 pesagens mais recentes do histórico.
+// Retorna média do lote e detalhe por animal. Compara só animais (brincos) presentes nas duas datas.
+function _calcGMD(loteNome){
+  var P=(S.PESAGEM||{})[loteNome];
+  if(!P||!P.historico||P.historico.length<2) return null; // precisa de 2 pesagens
+  var hist=P.historico.slice().sort(function(a,b){return (a.data||'')<(b.data||'')?-1:1;});
+  var ant=hist[hist.length-2], atu=hist[hist.length-1];
+  if(!ant.data||!atu.data) return null;
+  var dA=new Date(ant.data+'T12:00:00'), dB=new Date(atu.data+'T12:00:00');
+  if(isNaN(dA.getTime())||isNaN(dB.getTime())) return null;
+  var dias=Math.max(1,Math.round((dB-dA)/864e5));
+  // mapa de pesos por brinco em cada data
+  var mAnt={}; (ant.animais||[]).forEach(function(a){ mAnt[String(a.brinco).trim()]=parseFloat(a.peso)||0; });
+  var porAnimal=[], somaGanho=0, n=0;
+  (atu.animais||[]).forEach(function(a){
+    var br=String(a.brinco).trim(), pNovo=parseFloat(a.peso)||0;
+    if(mAnt[br]!=null && pNovo>0 && mAnt[br]>0){
+      var ganho=pNovo-mAnt[br], gmd=ganho/dias;
+      porAnimal.push({brinco:br, pAnt:mAnt[br], pNovo:pNovo, ganho:ganho, gmd:gmd});
+      somaGanho+=ganho; n++;
+    }
+  });
+  if(!n) return null; // nenhum animal coincide nas duas datas
+  var ganhoMedio=somaGanho/n, gmdMedio=ganhoMedio/dias;
+  return {
+    dias:dias, dtAnt:ant.data, dtAtu:atu.data,
+    nAnimais:n, ganhoMedio:ganhoMedio, gmdMedio:gmdMedio,
+    pesoMedioAnt:porAnimal.reduce(function(s,x){return s+x.pAnt;},0)/n,
+    pesoMedioAtu:porAnimal.reduce(function(s,x){return s+x.pNovo;},0)/n,
+    porAnimal:porAnimal
+  };
+}
+
 function rConsultoria(dias){
   dias = dias || 7;
   ['7','15','30'].forEach(function(p){
@@ -2228,6 +2261,22 @@ function rConsultoria(dias){
       difTxt = realSacos>0?('Sem % cadastrado'):('—');
     }
 
+    // GMD do lote (ganho médio diário entre as 2 últimas pesagens)
+    var gmd = _calcGMD(nm);
+    var gmdHtml = '';
+    if(gmd){
+      var dtAntBR=gmd.dtAnt.split('-').reverse().join('/');
+      var dtAtuBR=gmd.dtAtu.split('-').reverse().join('/');
+      var gmdCor = gmd.gmdMedio>0?'#2E7D32':(gmd.gmdMedio<0?'#C62828':'#65766a');
+      gmdHtml = '<div style="font-size:10px;color:#9bb39b;margin:8px 0 4px;text-transform:uppercase;letter-spacing:.3px">Ganho de peso (GMD)</div>'
+        + '<div style="display:flex;gap:6px;margin-bottom:8px">'
+        +   '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px 6px;text-align:center"><div style="font-size:17px;font-weight:900;color:'+gmdCor+'">'+gmd.gmdMedio.toFixed(3).replace(".",",")+' <span style="font-size:11px;font-weight:700">kg/dia</span></div><div style="font-size:9px;color:#9bb39b;margin-top:1px">GMD médio</div></div>'
+        +   '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px 6px;text-align:center"><div style="font-size:17px;font-weight:900;color:#1b2c1b">'+(gmd.ganhoMedio>=0?'+':'')+gmd.ganhoMedio.toFixed(1).replace(".",",")+' <span style="font-size:11px;font-weight:700">kg</span></div><div style="font-size:9px;color:#9bb39b;margin-top:1px">ganho no período</div></div>'
+        +   '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px 6px;text-align:center"><div style="font-size:17px;font-weight:900;color:#1b2c1b">'+gmd.dias+' <span style="font-size:11px;font-weight:700">dias</span></div><div style="font-size:9px;color:#9bb39b;margin-top:1px">entre pesagens</div></div>'
+        + '</div>'
+        + '<div style="font-size:9px;color:#9bb39b;margin:-4px 0 8px">'+dtAntBR+' ('+gmd.pesoMedioAnt.toFixed(0)+' kg) → '+dtAtuBR+' ('+gmd.pesoMedioAtu.toFixed(0)+' kg) · '+gmd.nAnimais+' animais comparados</div>';
+    }
+
     var _blocoLote = '<div class="card" style="padding:0;overflow:hidden;border-left:4px solid #2E7D32">'
       + '<div style="background:#f5f8f4;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">'
       +   '<div style="font-size:15px;font-weight:900;color:#1b2c1b">'+nm+'</div>'
@@ -2250,6 +2299,7 @@ function rConsultoria(dias){
       +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px 6px;text-align:center"><div style="font-size:17px;font-weight:900;color:#1b2c1b">'+(ultTratoSac>0?ultTratoSac.toFixed(0):'—')+' <span style="font-size:11px;font-weight:700">saco'+(ultTratoSac!=1?'s':'')+'</span></div><div style="font-size:10px;color:#65766a;margin-top:2px">'+(ultTratoDt?ultTratoDtBR:'sem trato')+'</div><div style="font-size:9px;color:#9bb39b;margin-top:1px">último trato</div></div>'
       +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px 6px;text-align:center">'+(temAnterior?'<div style="font-size:17px;font-weight:900;color:'+difDiaCor+'">'+difSinal+difSacDia.toFixed(1).replace(".",",")+' <span style="font-size:11px;font-weight:700">saco</span></div><div style="font-size:10px;color:#65766a;margin-top:2px">'+difSinal+difKgDia.toFixed(0)+' kg</div><div style="font-size:9px;color:#9bb39b;margin-top:1px">diferença/dia</div>':'<div style="font-size:17px;font-weight:900;color:#9bb39b">—</div><div style="font-size:9px;color:#9bb39b;margin-top:1px">diferença/dia</div>')+'</div>'
       +   '</div>'
+      +   gmdHtml
       +   '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#65766a">Frequência</span><span style="font-weight:600;color:#65766a">tratou em '+diasComTrato+' de '+dias+' dias</span></div>'
       +   '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px"><span style="color:#65766a">Situação</span><span style="font-weight:800;color:'+difCor+'">'+difTxt+'</span></div>'
       // custo (periodo + por dia)
@@ -3280,7 +3330,8 @@ function _pesagemBuscar(q){
   });
   return res;
 }
-// Importa uma lista [{brinco,peso,lote}] com uma data; SUBSTITUI só os lotes presentes.
+// Importa uma lista [{brinco,peso,lote}] com uma data; guarda HISTÓRICO (não apaga datas anteriores).
+// Mantém data/animais (última pesagem) para a busca do vaqueiro e o backend continuarem iguais.
 function _pesagemImportar(lista, data){
   if(!S.PESAGEM)S.PESAGEM={};
   var grupos={};
@@ -3290,8 +3341,34 @@ function _pesagemImportar(lista, data){
     grupos[lote].push({brinco:String(a.brinco).trim(), peso:a.peso, obs:a.obs||''});
   });
   var lotesAfetados=Object.keys(grupos);
-  lotesAfetados.forEach(function(lote){ S.PESAGEM[lote]={data:data||'', animais:grupos[lote]}; });
+  lotesAfetados.forEach(function(lote){
+    var atual=S.PESAGEM[lote]||{};
+    var hist=atual.historico||[];
+    // se a última pesagem salva (data/animais) ainda não está no histórico, leva ela pra lá
+    if(atual.data && !hist.some(function(h){return h.data===atual.data;})){
+      hist.push({data:atual.data, animais:atual.animais||[]});
+    }
+    // remove do histórico uma entrada com a MESMA data que está importando (substitui)
+    hist=hist.filter(function(h){return h.data!==(data||'');});
+    // adiciona a nova data ao histórico
+    hist.push({data:data||'', animais:grupos[lote]});
+    // ordena histórico por data crescente
+    hist.sort(function(a,b){return (a.data||'')<(b.data||'')?-1:((a.data||'')>(b.data||'')?1:0);});
+    // a "última pesagem" (data/animais) = a mais recente do histórico
+    var maisRecente=hist[hist.length-1];
+    S.PESAGEM[lote]={data:maisRecente.data, animais:maisRecente.animais, historico:hist};
+  });
   return {lotes:lotesAfetados, total:lista.length};
+}
+// Verifica se uma data já existe no histórico de algum lote da lista importada
+function _pesagemDataExiste(lista, data){
+  if(!data||!S.PESAGEM)return false;
+  var lotes={}; lista.forEach(function(a){var l=String(a.lote).trim(); if(l)lotes[l]=1;});
+  return Object.keys(lotes).some(function(lote){
+    var d=S.PESAGEM[lote]; if(!d)return false;
+    if(d.data===data)return true;
+    return (d.historico||[]).some(function(h){return h.data===data;});
+  });
 }
 // Carrega a biblioteca de leitura de Excel só quando precisar (no PC, ao importar).
 function _carregarXLSX(cb){
@@ -3447,6 +3524,11 @@ function pesagemArquivo(input){
 }
 function pesagemConfirmarImport(){
   if(!_pesImport){ alert('Selecione uma planilha primeiro.'); return; }
+  // avisa se a data já existe no histórico
+  if(_pesagemDataExiste(_pesImport.animais, _pesImport.data)){
+    var dBR=(_pesImport.data||'').split('-').reverse().join('/')||'(sem data)';
+    if(!confirm('Já existe pesagem salva na data '+dBR+'.\n\nSe continuar, ela será SUBSTITUÍDA por esta nova.\n\nDeseja continuar?')) return;
+  }
   var r=_pesagemImportar(_pesImport.animais, _pesImport.data);
   salvar();
   salvarPesagemNuvem(function(ok){
