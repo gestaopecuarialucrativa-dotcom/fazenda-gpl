@@ -6628,8 +6628,13 @@ function _consumoPerfis(){
     }).sort(function(a,b){return b.kg-a.kg;});
     var custoLote=prods.reduce(function(s,p){return s+p.custoTotal;},0);
     var custoCab=cab>0&&custoLote>0?custoLote/cab:0;
+    var pesoMed=(loteObj&&loteObj.peso)?parseFloat(loteObj.peso):0;
+    var gCabDia=cab>0?(o.kg/cab/diasCorr)*1000:0;
+    var pvDia=(pesoMed>0&&cab>0)?((o.kg/cab/diasCorr)/pesoMed)*100:0;
+    var custoCabDia=(cab>0&&custoLote>0)?custoLote/(cab*diasCorr):0;
     return {lote:ln, sacos:o.sacos, kg:o.kg, ini:ini, fim:fim, dias:dias,
-      cab:cab, kgDia:kgDia, kgCab:kgCab, custoLote:custoLote, custoCab:custoCab, prods:prods};
+      cab:cab, kgDia:kgDia, kgCab:kgCab, custoLote:custoLote, custoCab:custoCab,
+      pesoMed:pesoMed, gCabDia:gCabDia, pvDia:pvDia, custoCabDia:custoCabDia, prods:prods};
   }).sort(function(a,b){return b.kg-a.kg;});
 
   return perfis;
@@ -6686,24 +6691,23 @@ function rHistConsumo(){
         recTxt='<div style="font-size:10px;color:'+cor+'">Recomendado ~'+pr.recKg.toFixed(0)+' kg · '+(Math.abs(dif)<1?'no ponto':(Math.abs(dif).toFixed(0)+' kg '+sinal))+'</div>';
       }
       return '<div style="padding:6px 0;border-bottom:1px solid #f5f5f5">'
-        +'<div style="font-size:12px;font-weight:600;color:#1B5E20">'+pr.nome+'</div>'
-        +'<div style="font-size:10px;color:#666">'+pr.sacos.toFixed(0)+' sacos · '+pr.kg.toFixed(0)+' kg · usado de '+per+' ('+pr.dias+' dias)</div>'
+        +'<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:12px;font-weight:600;color:#1B5E20">'+pr.nome+'</span>'+(pr.custoTotal>0?'<span style="font-size:11px;font-weight:700;color:#1B5E20">R$ '+pr.custoTotal.toFixed(2).replace('.',',')+'</span>':'')+'</div>'
+        +'<div style="font-size:10px;color:#666">'+pr.kg.toFixed(0)+' kg · '+pr.sacos.toFixed(1).replace('.',',')+' sc · '+per+' ('+pr.dias+' dias)</div>'
         +recTxt
         +'</div>';
     }).join('');
 
+    var _qG='<div style="flex:1;background:#E8F5E9;border-radius:10px;padding:9px 6px;text-align:center"><div style="font-size:18px;font-weight:900;color:#1B5E20;line-height:1.1">'+(p.cab>0?p.gCabDia.toFixed(0):'—')+'<span style="font-size:10px;font-weight:600"> g</span></div><div style="font-size:8px;color:#555;font-weight:700;margin-top:2px">CONSUMO /CAB/DIA</div></div>';
+    var _qP='<div style="flex:1;background:#E8F5E9;border-radius:10px;padding:9px 6px;text-align:center"><div style="font-size:18px;font-weight:900;color:#1B5E20;line-height:1.1">'+(p.pesoMed>0?p.pvDia.toFixed(2).replace('.',','):'—')+'<span style="font-size:10px;font-weight:600">%</span></div><div style="font-size:8px;color:#555;font-weight:700;margin-top:2px">DO PESO VIVO/DIA</div></div>';
+    var _qC='<div style="flex:1;background:#E8F5E9;border-radius:10px;padding:9px 6px;text-align:center"><div style="font-size:18px;font-weight:900;color:#1B5E20;line-height:1.1">'+(p.custoLote>0?'R$ '+p.custoLote.toFixed(0):'—')+'</div><div style="font-size:8px;color:#555;font-weight:700;margin-top:2px">CUSTO TOTAL</div></div>';
     out+='<div class="card" style="margin-bottom:10px">'
-      +'<div class="stit" style="margin-bottom:6px">🐄 '+p.lote+(p.cab>0?' ('+p.cab+' animais)':'')+'</div>'
-      +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">'
-      +  '<div><div style="font-size:9px;color:#999">Total</div><div style="font-size:13px;font-weight:700;color:#2E7D32">'+p.sacos.toFixed(0)+' sacos</div></div>'
-      +  '<div><div style="font-size:9px;color:#999">Em kg</div><div style="font-size:13px;font-weight:700;color:#2E7D32">'+p.kg.toFixed(0)+' kg</div></div>'
-      +  '<div><div style="font-size:9px;color:#999">Período</div><div style="font-size:13px;font-weight:700;color:#2E7D32">'+p.dias+' dias</div></div>'
-      +  '<div><div style="font-size:9px;color:#999">Por dia</div><div style="font-size:13px;font-weight:700;color:#2E7D32">'+p.kgDia.toFixed(1)+' kg</div></div>'
-      +  '<div><div style="font-size:9px;color:#999">R$/cabeça</div><div style="font-size:13px;font-weight:700;color:'+(p.custoCab>0?'#E65100':'#aaa')+'">'+( p.custoCab>0?'R$ '+p.custoCab.toFixed(2).replace('.',','):'—')+'</div></div>'
-      +(p.custoLote>0?'<div><div style="font-size:9px;color:#999">Custo total</div><div style="font-size:13px;font-weight:700;color:#E65100">R$ '+p.custoLote.toFixed(2).replace('.',',')+'</div></div>':'')
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+      +  '<div style="font-size:14px;font-weight:800;color:#1B5E20">'+p.lote+'</div>'
+      +  '<div style="font-size:11px;color:#666">'+(p.cab>0?p.cab+' animais':'')+(p.pesoMed>0?' · '+p.pesoMed+' kg':'')+' · '+p.dias+' dias</div>'
       +'</div>'
-      +'<div style="font-size:10px;color:#888;margin-bottom:4px">Consumiu de '+periodo+'</div>'
-      +'<div style="font-size:11px;font-weight:700;color:#555;margin-top:6px">Produtos usados:</div>'
+      +'<div style="display:flex;gap:6px;margin-bottom:8px">'+_qG+_qP+_qC+'</div>'
+      +'<div style="font-size:11px;color:#666;text-align:center;background:#f5f7f4;border-radius:8px;padding:7px;margin-bottom:8px">total: <b style="color:#1B5E20">'+p.kg.toFixed(0)+' kg</b> · <b style="color:#1B5E20">≈ '+p.sacos.toFixed(0)+' sacos</b>'+(p.custoCabDia>0?' &nbsp;|&nbsp; custo /cab/dia: <b style="color:#1B5E20">R$ '+p.custoCabDia.toFixed(2).replace('.',',')+'</b>':'')+'</div>'
+      +'<div style="font-size:10px;font-weight:700;color:#555;margin-bottom:2px">POR PRODUTO</div>'
       +prodHtml
       +'</div>';
   });
