@@ -6445,7 +6445,7 @@ function gerarPDFPastos(){
   var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
   var notaTxt={verde:'🟢 Produtivo',amarelo:'🟡 Atenção',vermelho:'🔴 Avaliar',cinza:'⚪ —'};
 
-  var linhas=dados.comHist.map(function(p,idx){
+  var linhas=dados.comHist.slice().sort(function(a,b){var ma=(a.tipo==='modulo'&&a.modulo!=null)?a.modulo:9999;var mb=(b.tipo==='modulo'&&b.modulo!=null)?b.modulo:9999;if(ma!==mb)return ma-mb;return b.score-a.score;}).map(function(p,idx){
     var uaHaTxt=p.uaHa>0?p.uaHa.toFixed(2):'—';
     var uaMaxTxt=p.uaMax>0?p.uaMax.toFixed(1):'—';
     var descTxt=p.descMedio!==null?p.descMedio+' d':'—';
@@ -6454,7 +6454,7 @@ function gerarPDFPastos(){
       : (p.diasVazio!==null?('Vazio há '+p.diasVazio+' d'):'—');
     return '<tr>'
       +'<td style="text-align:center">'+(idx+1)+'</td>'
-      +'<td>'+p.label+'<br><span style="color:#999;font-size:10px">'+(p.ha?p.ha.toFixed(2)+' ha':'')+'</span></td>'
+      +'<td>'+p.label+(p.tipo==='modulo'&&p.modulo!=null?' <span style="color:#2E7D32;font-size:9px">Mód '+p.modulo+'</span>':'')+'<br><span style="color:#999;font-size:10px">'+(p.ha?p.ha.toFixed(2)+' ha':'')+'</span></td>'
       +'<td>'+notaTxt[p.nota]+'</td>'
       +'<td>'+p.motivo+'</td>'
       +'<td style="text-align:center">'+statusAtual+'</td>'
