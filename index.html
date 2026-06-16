@@ -1123,7 +1123,6 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div style="display:flex;gap:0;margin-bottom:12px;background:#f0f0f0;border-radius:10px;padding:3px">
   <div class="tgo on" id="htab-lotes"   onclick="sHistTab('lotes')"   style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px">🐄 Lotes</div>
   <div class="tgo"    id="htab-rotacao" onclick="sHistTab('rotacao')" style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px">🔄 Rotação</div>
-  <div class="tgo"    id="htab-reg"     onclick="sHistTab('reg')"     style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px">📋 Registros</div>
   <div class="tgo"    id="htab-pastos"  onclick="sHistTab('pastos')"  style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px">🌱 Pastos</div>
   <div class="tgo"    id="htab-consumo" onclick="sHistTab('consumo')" style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px">🛒 Consumo</div>
 </div>
@@ -1160,31 +1159,6 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   </div>
 </div>
 
-<div id="htab-reg-content" style="display:none">
-  <div class="card" style="margin-bottom:10px">
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-      <select id="hist-tipo" style="flex:1;min-width:110px;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px">
-        <option value="">Todos os tipos</option>
-        <option value="mudanca_pasto">🔄 Movimentações</option>
-        <option value="trato">🌾 Tratos</option>
-      </select>
-      <select id="hist-lote-fil" style="flex:1;min-width:110px;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px">
-        <option value="">Todos os lotes</option>
-      </select>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-      <select id="hist-area-fil" style="flex:1;min-width:110px;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px">
-        <option value="">Todas as áreas</option>
-      </select>
-      <input type="date" id="hist-de"  placeholder="De" style="flex:1;min-width:100px;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px">
-      <input type="date" id="hist-ate" placeholder="Até" style="flex:1;min-width:100px;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px">
-    </div>
-    <button onclick="executarPesquisaHist()" style="width:100%;padding:9px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">🔍 Pesquisar</button>
-  </div>
-  <div class="card">
-    <div id="hist-lista"></div>
-  </div>
-</div>
 
 <div id="htab-pastos-content" style="display:none">
   <div class="card" style="margin-bottom:10px">
@@ -5311,7 +5285,7 @@ function salvarNota(faz,k){if(!S.NOTAS)S.NOTAS={};const ta=document.getElementBy
 
 // ═══ HISTÓRICO ═══
 function sHistTab(tab){
-  ['lotes','rotacao','reg','pastos','consumo'].forEach(function(t){
+  ['lotes','rotacao','pastos','consumo'].forEach(function(t){
     var b=document.getElementById('htab-'+t);
     var c=document.getElementById('htab-'+t+'-content');
     if(b) b.classList.toggle('on', t===tab);
@@ -5321,7 +5295,6 @@ function sHistTab(tab){
   else if(tab==='rotacao') rHistRotacao();
   else if(tab==='pastos') rHistRankingPastos();
   else if(tab==='consumo') rHistConsumo();
-  else rHistReg();
 }
 
 function rHistorico(){
@@ -5390,40 +5363,37 @@ function rHistLotes(){
     var eD=!temDt?'⚪':dias<=3?'🟢':dias<=7?'🟡':dias<=14?'🟠':'🔴';
     var diasTxt=temDt?String(dias):'?';
 
-    html+='<div style="background:#fff;border:1px solid #e0e0e0;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06)">'
+    html+='<div style="background:#fff;border:1px solid #e0e7e0;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06)">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
-      +  '<div style="font-size:15px;font-weight:800;color:#1B5E20">🐄 '+nm+'</div>'
-      +  '<div style="font-size:12px;background:#E8F5E9;color:#1B5E20;padding:3px 10px;border-radius:20px;font-weight:700">'+qtd+' animais</div>'
+      +  '<div style="font-size:15px;font-weight:800;color:#1B5E20">'+nm+'</div>'
+      +  '<div onclick="editarQtdHistLote(this)" data-lote-nm="'+encodeURIComponent(nm)+'" title="Editar quantidade" style="font-size:12px;background:#E8F5E9;color:#1B5E20;padding:3px 10px;border-radius:20px;font-weight:700;cursor:pointer">'+qtd+' animais</div>'
       +'</div>'
-      +'<div style="background:#f5f5f5;border-radius:10px;padding:10px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">'
+      +'<div style="background:#f5f7f4;border-radius:10px;padding:10px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">'
       +  '<div>'
       +    '<div style="font-size:11px;color:#888;font-weight:600">ÁREA ATUAL</div>'
       +    '<div style="font-size:14px;font-weight:700;color:#333">'+areaNm+(ha>0?' · '+ha+' ha':'')+'</div>'
       +    (temDt
-          ?'<div style="display:flex;align-items:center;gap:6px;margin-top:2px"><span style="font-size:11px;color:#888">Entrada: '+dtEnt.split('-').reverse().join('/')+'</span><button onclick="editarDataEntrada(\''+nm+'\',\''+areaId+'\',\''+dtEnt+'\')" style="font-size:10px;background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;border-radius:5px;padding:1px 6px;cursor:pointer">✏️ Editar</button></div>'
-          :'<div style="display:flex;align-items:center;gap:6px;margin-top:2px"><span style="font-size:11px;color:#E65100;font-weight:600">⚠️ Sem data de entrada</span><button onclick="editarDataEntrada(\''+nm+'\',\''+areaId+'\',\'\')" style="font-size:10px;background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;border-radius:5px;padding:1px 6px;cursor:pointer">📅 Registrar</button></div>')
+          ?'<div style="display:flex;align-items:center;gap:6px;margin-top:2px"><span style="font-size:11px;color:#888">Entrada: '+dtEnt.split('-').reverse().join('/')+'</span><button onclick="editarDataEntrada(\''+nm+'\',\''+areaId+'\',\''+dtEnt+'\')" style="font-size:10px;background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;border-radius:5px;padding:1px 7px;cursor:pointer">Editar</button></div>'
+          :'<div style="display:flex;align-items:center;gap:6px;margin-top:2px"><span style="font-size:11px;color:#E65100;font-weight:600">Sem data de entrada</span><button onclick="editarDataEntrada(\''+nm+'\',\''+areaId+'\',\'\')" style="font-size:10px;background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;border-radius:5px;padding:1px 7px;cursor:pointer">Registrar</button></div>')
       +  '</div>'
       +  '<div style="text-align:center;min-width:52px">'
       +    '<div style="font-size:32px;font-weight:900;line-height:1;color:'+cD+'">'+diasTxt+'</div>'
       +    '<div style="font-size:10px;color:#888;font-weight:600;margin-top:2px">DIAS</div>'
-      +    '<div style="font-size:14px;margin-top:1px">'+eD+'</div>'
+      +    '<div style="margin-top:4px"><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:'+cD+'"></span></div>'
       +  '</div>'
       +'</div>'
-      +'<div style="display:flex;gap:8px;margin:10px 0">'
-      +'<div style="flex:1;background:#E8F5E9;border-radius:10px;padding:10px;text-align:center">'
-      +'<div style="font-size:9px;font-weight:700;color:#555;margin-bottom:3px">ANIMAIS</div>'
-      +'<div style="font-size:22px;font-weight:900;color:#1B5E20;line-height:1.1">'+qtd+'</div>'
-      +'<button onclick="editarQtdHistLote(this)" data-lote-nm="'+encodeURIComponent(nm)+'" style="margin-top:5px;font-size:10px;background:#fff;border:1px solid #A5D6A7;color:#1B5E20;border-radius:6px;padding:3px 10px;cursor:pointer">✏️ Editar</button>'
-      +'</div>'
+      +'<div style="display:flex;gap:8px">'
       +'<div style="flex:1;background:#E8F5E9;border-radius:10px;padding:10px;text-align:center">'
       +'<div style="font-size:9px;font-weight:700;color:#555;margin-bottom:3px">PESO MÉDIO</div>'
-      +'<div style="font-size:22px;font-weight:900;color:#1B5E20;line-height:1.1">'+(peso>0?peso+' kg':'—')+'</div>'
-      +'<button onclick="editarPesoHistLote(this)" data-lote-nm="'+encodeURIComponent(nm)+'" style="margin-top:5px;font-size:10px;background:#fff;border:1px solid #A5D6A7;color:#1B5E20;border-radius:6px;padding:3px 10px;cursor:pointer">✏️ Editar</button>'
+      +'<div style="font-size:22px;font-weight:900;color:#1B5E20;line-height:1.1">'+(peso>0?peso+'<span style="font-size:11px"> kg</span>':'—')+'</div>'
+      +'<button onclick="editarPesoHistLote(this)" data-lote-nm="'+encodeURIComponent(nm)+'" style="margin-top:5px;font-size:10px;background:#fff;border:1px solid #A5D6A7;color:#1B5E20;border-radius:6px;padding:3px 10px;cursor:pointer">Editar</button>'
+      +'</div>'
+      +'<div style="flex:1;background:#E8F5E9;border-radius:10px;padding:10px;text-align:center">'
+      +'<div style="font-size:9px;font-weight:700;color:#555;margin-bottom:3px">LOTAÇÃO</div>'
+      +'<div style="font-size:22px;font-weight:900;color:#1B5E20;line-height:1.1">'+txLot+(txLot!=='—'?'<span style="font-size:11px"> UA/ha</span>':'')+'</div>'
+      +'<div style="font-size:9px;color:#999;margin-top:6px">animais ÷ hectare</div>'
       +'</div>'
       +'</div>'
-      +'</div>'
-      +_hConsumoLote(nm, qtd)
-      +(movsLote.length?_hTimeline(movsLote):'')
       +'</div>';
   });
 
