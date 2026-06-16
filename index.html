@@ -5822,25 +5822,41 @@ function rHistRotacao(){
   });
 
   var out='';
+  var hojeR=new Date();
   Object.keys(mapa).forEach(function(lt){
-    out+='<div style="margin-bottom:14px">'
-      +'<div style="font-weight:800;font-size:13px;color:#1B5E20;padding:6px 10px;background:#E8F5E9;border-radius:8px;margin-bottom:6px">🐄 '+lt+'</div>';
-    mapa[lt].forEach(function(p){
-      var oA=(MAPA_AREAS.find(function(a){return a.id===p.origem;})||{}).label||p.origem||'—';
-      var dA=(MAPA_AREAS.find(function(a){return a.id===p.destino;})||{}).label||p.destino||'—';
-      var cor=p.dias<=7?'#E8F5E9':p.dias<=21?'#FFF8E1':'#FFEBEE';
-      var bd =p.dias<=7?'#A5D6A7':p.dias<=21?'#FFE082':'#EF9A9A';
-      var em =p.dias<=7?'🟢':p.dias<=21?'🟡':'🔴';
-      var dtFmt=p.saida?p.saida.split('-').reverse().join('/'):'—';
-      out+='<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:'+cor+';border:1px solid '+bd+';border-radius:8px;margin-bottom:4px;font-size:12px">'
-        +'<span style="font-size:16px">'+em+'</span>'
-        +'<div style="flex:1">'
-        +  '<div style="font-weight:700">'+oA+' → '+dA+'</div>'
-        +  '<div style="color:#888;font-size:10px">saiu em '+dtFmt+' · '+p.n+'</div>'
+    var arr=mapa[lt];
+    // monta a trilha de piquetes (ordem cronológica) a partir das movimentações
+    var trilha=[];
+    if(arr.length){
+      trilha.push({piq:arr[0].origem, dias:arr[0].dias, atual:false});
+      for(var k=0;k<arr.length-1;k++){ trilha.push({piq:arr[k].destino, dias:arr[k+1].dias, atual:false}); }
+      var ult=arr[arr.length-1];
+      var diasAt=ult.saida?Math.max(0,Math.round((hojeR-new Date(ult.saida+'T12:00:00'))/864e5)):0;
+      trilha.push({piq:ult.destino, dias:diasAt, entrada:ult.saida, atual:true});
+    }
+    var enc=trilha.filter(function(t){return !t.atual;});
+    var med=enc.length?Math.round(enc.reduce(function(s,t){return s+t.dias;},0)/enc.length):0;
+    out+='<div style="margin-bottom:16px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#E8F5E9;border-radius:8px;margin-bottom:8px">'
+      +  '<span style="font-weight:800;font-size:13px;color:#1B5E20">'+lt+'</span>'
+      +  (med>0?'<span style="font-size:11px;color:#1B5E20">média '+med+' d/piquete</span>':'')
+      +'</div>';
+    trilha.forEach(function(t,idx){
+      var nome=(MAPA_AREAS.find(function(a){return a.id===t.piq;})||{}).label||t.piq||'—';
+      var ultimo=idx===trilha.length-1;
+      var corDot=t.atual?'#2E7D32':(t.dias<=7?'#A5D6A7':t.dias<=21?'#FFE082':'#EF9A9A');
+      var corNum=t.atual?'#1B5E20':(t.dias<=7?'#1B5E20':t.dias<=21?'#E65100':'#B71C1C');
+      out+='<div style="display:flex;gap:10px">'
+        +'<div style="display:flex;flex-direction:column;align-items:center">'
+        +  '<div style="width:'+(t.atual?15:11)+'px;height:'+(t.atual?15:11)+'px;border-radius:50%;background:'+corDot+';border:2px solid #fff;box-shadow:0 0 0 2px '+corDot+'"></div>'
+        +  (ultimo?'':'<div style="width:2px;flex:1;background:#d6e0d6;min-height:16px"></div>')
         +'</div>'
-        +'<div style="text-align:right">'
-        +  '<div style="font-size:22px;font-weight:900;color:'+(p.dias<=7?'#1B5E20':p.dias<=21?'#E65100':'#B71C1C')+'">'+p.dias+'</div>'
-        +  '<div style="font-size:9px;color:#888">dias</div>'
+        +'<div style="flex:1;padding-bottom:'+(ultimo?0:14)+'px">'
+        +  '<div style="display:flex;justify-content:space-between;align-items:center">'
+        +    '<span style="font-size:13px;font-weight:700;color:#1B5E20">'+nome+(t.atual?' <span style="font-size:9px;background:#2E7D32;color:#fff;padding:1px 7px;border-radius:8px">ATUAL</span>':'')+'</span>'
+        +    '<span style="font-size:15px;font-weight:800;color:'+corNum+'">'+t.dias+' <span style="font-size:9px;color:#888;font-weight:600">dias</span></span>'
+        +  '</div>'
+        +  (t.atual&&t.entrada?'<div style="font-size:10px;color:#aaa;margin-top:1px">desde '+t.entrada.split('-').reverse().join('/')+'</div>':'')
         +'</div></div>';
     });
     out+='</div>';
@@ -6142,6 +6158,17 @@ function rHistRankingPastos(){
     var diasVazio = ocupadoAgora ? 0 : (ultima ? _rkpDiasEntre(ultima.saida, TD) : null);
     var diasOcupadoAgora = ocupadoAgora ? (oc.length?oc[oc.length-1].dias:0) : 0;
 
+    // segmentos para a barrinha de ritmo (verde=ocupado, cinza=descanso)
+    var segs=[];
+    oc.forEach(function(o,oi){
+      if(o.dias>0) segs.push({o:1,d:o.dias});
+      if(oi<oc.length-1 && o.saida && oc[oi+1].entrada){
+        var dd=_rkpDiasEntre(o.saida, oc[oi+1].entrada);
+        if(dd>0) segs.push({o:0,d:dd});
+      }
+    });
+    if(!ocupadoAgora && diasVazio && diasVazio>0) segs.push({o:0,d:diasVazio});
+
     // Resposta de capim mais recente + tendência
     var resp=_rkpUltimaResposta(a.id);
     var respCod = resp?resp.cod:'';
@@ -6153,6 +6180,7 @@ function rHistRankingPastos(){
 
     return {
       id:a.id, label:a.label, ha:a.ha,
+      modulo:a.modulo, tipo:a.tipo, segs:segs,
       ocupadoAgora:ocupadoAgora, loteAtual:alocLote||'',
       ciclos:ciclos, totalOcup:totalOcup,
       descMedio:descMedio, uaMax:uaMax, uaHa:uaHa,
@@ -6279,37 +6307,58 @@ function rHistRankingPastos(){
     out+='<div class="card" style="margin-bottom:10px">'+graf+'</div>';
   }
 
-  // Ranking
+  // Pastos por módulo (cada módulo com seus piquetes)
   out+='<div class="card" style="margin-bottom:10px">'
-    +'<div class="stit" style="margin-bottom:4px">🏆 Ranking dos pastos</div>'
-    +'<div style="font-size:10px;color:#888;margin-bottom:10px">Do mais produtivo (rebrota rápido e aguenta carga) ao que pede avaliação. Sem achismo: cada área é avaliada pelos dados lançados.</div>';
+    +'<div class="stit" style="margin-bottom:4px">Pastos por módulo</div>'
+    +'<div style="font-size:10px;color:#888;margin-bottom:10px">Cada módulo com seus piquetes: onde está o gado, há quanto tempo, e quais já descansaram o suficiente.</div>';
 
   if(!comHist.length){
     out+='<div style="color:#888;font-size:12px;text-align:center;padding:16px">Ainda não há movimentações para avaliar os pastos.</div>';
   } else {
-    var emoji={verde:'🟢',amarelo:'🟡',vermelho:'🔴',cinza:'⚪'};
-    var corBorda={verde:'#A5D6A7',amarelo:'#FFE082',vermelho:'#EF9A9A',cinza:'#E0E0E0'};
-    var corBg={verde:'#E8F5E9',amarelo:'#FFF8E1',vermelho:'#FFEBEE',cinza:'#FAFAFA'};
-    comHist.forEach(function(p,idx){
-      var uaHaTxt = p.uaHa>0 ? p.uaHa.toFixed(2)+' UA/ha' : '—';
-      var uaMaxTxt = p.uaMax>0 ? p.uaMax.toFixed(1)+' UA' : '—';
-      var descTxt = p.descMedio!==null ? p.descMedio+' d' : '—';
-      var statusAtual = p.ocupadoAgora
-        ? ('🐄 ocupado ('+p.loteAtual+') há '+p.diasOcupadoAgora+' d')
-        : (p.diasVazio!==null ? ('💤 vazio há '+p.diasVazio+' d') : '—');
-      out+='<div style="display:flex;gap:10px;align-items:flex-start;padding:10px;background:'+corBg[p.nota]+';border:1px solid '+corBorda[p.nota]+';border-radius:8px;margin-bottom:6px">'
-        +'<div style="font-size:18px;font-weight:900;color:#999;min-width:22px;text-align:center">'+(idx+1)+'</div>'
-        +'<div style="flex:1">'
-        +  '<div style="font-weight:800;font-size:13px;color:#1B5E20">'+emoji[p.nota]+' '+p.label+'<span style="font-weight:600;color:#999;font-size:10px"> · '+(p.ha?p.ha.toFixed(2)+' ha':'')+'</span></div>'
-        +  '<div style="font-size:11px;color:#555;margin:3px 0">'+p.motivo+'</div>'
-        +  '<div style="font-size:10px;color:#777">'+statusAtual+'</div>'
-        +  '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">'
-        +    '<div><div style="font-size:9px;color:#999">Descanso médio</div><div style="font-size:12px;font-weight:700;color:#2E7D32">'+descTxt+'</div></div>'
-        +    '<div><div style="font-size:9px;color:#999">Ciclos</div><div style="font-size:12px;font-weight:700;color:#2E7D32">'+p.ciclos+'</div></div>'
-        +    '<div><div style="font-size:9px;color:#999">Carga máx.</div><div style="font-size:12px;font-weight:700;color:#2E7D32">'+uaMaxTxt+'</div></div>'
-        +    '<div><div style="font-size:9px;color:#999">Por hectare</div><div style="font-size:12px;font-weight:700;color:#2E7D32">'+uaHaTxt+'</div></div>'
-        +  '</div>'
-        +'</div></div>';
+    var grupos={}, ordem=[];
+    comHist.forEach(function(p){
+      var chave=(p.tipo==='modulo' && p.modulo!=null && p.modulo!=='') ? ('Módulo '+String(p.modulo).padStart(2,'0')) : 'Pastos avulsos';
+      if(!grupos[chave]){ grupos[chave]=[]; ordem.push(chave); }
+      grupos[chave].push(p);
+    });
+    ordem.sort(function(a,b){ if(a==='Pastos avulsos') return 1; if(b==='Pastos avulsos') return -1; return a.localeCompare(b); });
+
+    function barraSeg(segs){
+      var tot=(segs||[]).reduce(function(s,x){return s+x.d;},0);
+      if(!tot) return '';
+      return '<div style="display:flex;height:7px;border-radius:4px;overflow:hidden;margin-top:7px">'+segs.map(function(x){return '<div style="width:'+(x.d/tot*100)+'%;background:'+(x.o?'#2E7D32':'#cfd8cf')+'"></div>';}).join('')+'</div>';
+    }
+    function mtr(v,l){ return '<div style="flex:1;text-align:center"><div style="font-size:15px;font-weight:800;color:#1B5E20;line-height:1">'+v+'</div><div style="font-size:8px;color:#888;font-weight:700;margin-top:1px">'+l+'</div></div>'; }
+
+    ordem.forEach(function(chave){
+      var grp=grupos[chave];
+      var ocup=grp.filter(function(p){return p.ocupadoAgora;});
+      var emDesc=grp.length-ocup.length;
+      var resumoLote=ocup.length ? ocup.map(function(p){return p.loteAtual+' no '+p.label;}).join(', ') : 'nenhum lote rodando';
+      var resumo=grp.length+' piquete'+(grp.length>1?'s':'')+' · '+resumoLote+' · '+emDesc+' em descanso';
+      out+='<div style="background:linear-gradient(135deg,#1B5E20,#2E7D32);color:#fff;border-radius:10px 10px 0 0;padding:9px 12px;margin-top:12px">'
+        +'<div style="font-size:14px;font-weight:800">'+chave+'</div>'
+        +'<div style="font-size:10.5px;opacity:.92;margin-top:1px">'+resumo+'</div>'
+        +'</div>'
+        +'<div style="background:#eef2ec;border-radius:0 0 10px 10px;padding:4px 8px 8px">';
+      grp.slice().sort(function(a,b){
+        if(a.ocupadoAgora!==b.ocupadoAgora) return a.ocupadoAgora?-1:1;
+        return (b.diasVazio||0)-(a.diasVazio||0);
+      }).forEach(function(p){
+        var st,cor,sub;
+        if(p.ocupadoAgora){ st='COM ANIMAIS'; cor='#2E7D32'; sub=p.loteAtual+' entrou há <b>'+p.diasOcupadoAgora+' dias</b>'; }
+        else if(p.alerta==='parado' || (p.diasVazio!==null && p.diasVazio>=cfg.parado)){ st='PARADO'; cor='#B71C1C'; sub='Vazio há <b>'+p.diasVazio+' dias</b> '+'—'+' acima do limite ('+cfg.parado+')'; }
+        else { st='EM DESCANSO'; cor='#E65100'; sub='Sem animais há <b>'+(p.diasVazio!==null?p.diasVazio:'?')+' dias</b>'; }
+        var descTxt=p.descMedio!==null?p.descMedio+' d':'—';
+        out+='<div style="background:#fff;border:1px solid #e0e7e0;border-left:3px solid '+cor+';border-radius:10px;padding:9px 10px;margin:7px 0 0">'
+          +'<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:13px;color:#1B5E20">'+p.label+'<span style="font-weight:600;color:#999;font-size:9px"> · '+(p.ha?p.ha.toFixed(2)+' ha':'')+'</span></b>'
+          +'<span style="font-size:9px;font-weight:700;color:'+cor+';background:'+cor+'18;padding:2px 8px;border-radius:9px">'+st+'</span></div>'
+          +'<div style="font-size:11px;color:#666;margin-top:2px">'+sub+'</div>'
+          +'<div style="display:flex;margin-top:7px;gap:3px">'+mtr(p.ciclos,'CICLOS')+mtr(p.totalOcup,'DIAS C/ ANIMAIS')+mtr(descTxt,'DESC. MÉDIO')+'</div>'
+          +barraSeg(p.segs)
+          +'</div>';
+      });
+      out+='</div>';
     });
   }
   out+='</div>';
