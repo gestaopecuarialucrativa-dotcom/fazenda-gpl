@@ -725,7 +725,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div id="pg-painel" class="pg" style="display:none">
 <button id="btn-feed-acesso" onclick="sp('feed','painel')" style="display:none;width:100%;background:#1B5E20;color:#fff;padding:11px;border:none;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:8px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><rect x="9" y="3" width="6" height="3.5" rx="1"/><path d="M9 4.5H7a1.5 1.5 0 00-1.5 1.5V19A1.5 1.5 0 007 20.5h10A1.5 1.5 0 0018.5 19V6A1.5 1.5 0 0017 4.5h-2"/><path d="M8.5 11h7M8.5 15h5"/></svg>Conferir lançamentos da equipe</button>
 <button id="btn-consultoria-acesso" onclick="sp('consultoria','painel')" style="display:none;width:100%;background:#2E7D32;color:#fff;padding:11px;border:none;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:8px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M3 3v18h18"/><path d="M7 16l4-4 3 3 5-6"/></svg>Relatório de consultoria</button>
-<div id="diag-btn" style="background:#FF6F00;color:#fff;padding:8px;border-radius:8px;text-align:center;margin-bottom:8px;cursor:pointer;font-size:12px" onclick="var m='v:'+S.rD.length+' cfgGS:'+(S.cfgGS?'OK':'VAZIO')+' FAZ:'+Object.keys(S.FAZ).join(',');alert(m)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg>diagnóstico</div>
+<div id="diag-btn" style="display:none;background:#fff;border:1px solid #e0e7e0;color:#999;padding:8px;border-radius:10px;text-align:center;margin-bottom:8px;cursor:pointer;font-size:11px" onclick="var m='v:'+S.rD.length+' cfgGS:'+(S.cfgGS?'OK':'VAZIO')+' FAZ:'+Object.keys(S.FAZ).join(',');alert(m)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg>diagnóstico</div>
 
 <!-- FILTROS -->
 <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
@@ -778,9 +778,9 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     <div style="font-size:20px;font-weight:800;color:#1B5E20" id="ps-c">R$ 0</div>
     <div style="font-size:11px;color:#aaa" id="ps-cn">0 reg.</div>
   </div>
-  <div style="background:#FFEBEE;border-radius:12px;padding:12px;border:1px solid #FFCDD2">
+  <div style="background:#FFF8E1;border-radius:12px;padding:12px;border:1px solid #FFE082">
     <div style="font-size:11px;color:#888"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></svg>A validar</div>
-    <div style="font-size:20px;font-weight:800;color:#C62828" id="ps-av">0</div>
+    <div style="font-size:20px;font-weight:800;color:#F57F17" id="ps-av">0</div>
     <div style="font-size:11px;color:#aaa">pendentes</div>
   </div>
   <div style="background:#E8F5E9;border-radius:12px;padding:12px;border:1px solid #C8E6C9">
@@ -801,7 +801,6 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
 <!-- BOTÃO FECHAR CONTA -->
 <button onclick="abrirFecharConta()" style="width:100%;padding:12px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18"/><circle cx="16.5" cy="14.5" r="1.3"/></svg>Fechar Conta / WhatsApp</button>
-<button onclick="gerarRelPDF()" style="width:100%;padding:10px;background:#2E7D32;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;margin-top:6px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M4 20h16"/><path d="M6.5 20v-6"/><path d="M11 20v-11"/><path d="M15.5 20v-8"/><path d="M20 20v-13"/></svg>Relatório PDF</button>
 
 <!-- DESPESAS -->
 <div style="margin-top:14px">
@@ -1487,7 +1486,7 @@ function rHomeMapa(){
   }
 }
 
-function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',relatorio:'📈 Relatório & Dashboard',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda',feed:'📋 Conferir Lançamentos',pesagem:'Identificar Animal'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home'){setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);setTimeout(function(){try{rHomeMapa();}catch(e){}},600);setTimeout(function(){try{rHomeMapa();}catch(e){}},1500);}if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}try{var _fb=document.getElementById('btn-feed-acesso');if(_fb)_fb.style.display=(CU&&CU.r==='Consultor')?'block':'none';var _cb=document.getElementById('btn-consultoria-acesso');if(_cb)_cb.style.display=(CU&&CU.r==='Consultor')?'block':'none';}catch(e){}if(_nuvemCarregando){setTimeout(()=>{try{rPan();}catch(e){}},3500);}},50);if(id==='feed')setTimeout(()=>{try{rFeedConsultor();}catch(e){}},50);if(id==='consultoria')setTimeout(()=>{try{rConsultoria(7);}catch(e){console.error('rConsultoria:',e);}},50);if(id==='pesagem')setTimeout(()=>{try{rPesagem();}catch(e){console.error('rPesagem:',e);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _mt=0;var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');var img=document.getElementById('mapa-img-sat');var ok=wrap&&wrap.offsetWidth>0&&img&&(img.complete||img._loaded);if(!ok&&_mt++<30){setTimeout(_rmapa,300);return;}
+function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',relatorio:'📈 Relatório & Dashboard',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda',feed:'📋 Conferir Lançamentos',pesagem:'Identificar Animal'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home'){setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);setTimeout(function(){try{rHomeMapa();}catch(e){}},600);setTimeout(function(){try{rHomeMapa();}catch(e){}},1500);}if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}try{var _fb=document.getElementById('btn-feed-acesso');if(_fb)_fb.style.display=(CU&&CU.r==='Consultor')?'block':'none';var _cb=document.getElementById('btn-consultoria-acesso');if(_cb)_cb.style.display=(CU&&CU.r==='Consultor')?'block':'none';var _db=document.getElementById('diag-btn');if(_db)_db.style.display=(CU&&CU.r==='Consultor')?'block':'none';}catch(e){}if(_nuvemCarregando){setTimeout(()=>{try{rPan();}catch(e){}},3500);}},50);if(id==='feed')setTimeout(()=>{try{rFeedConsultor();}catch(e){}},50);if(id==='consultoria')setTimeout(()=>{try{rConsultoria(7);}catch(e){console.error('rConsultoria:',e);}},50);if(id==='pesagem')setTimeout(()=>{try{rPesagem();}catch(e){console.error('rPesagem:',e);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _mt=0;var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');var img=document.getElementById('mapa-img-sat');var ok=wrap&&wrap.offsetWidth>0&&img&&(img.complete||img._loaded);if(!ok&&_mt++<30){setTimeout(_rmapa,300);return;}
     // Se MAPA_COORDS vazio, carregar da nuvem primeiro
     if(S.cfgGS&&(!S.MAPA_COORDS||!Object.keys(S.MAPA_COORDS).length)){
       carregarNuvem(function(){try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}});
@@ -8424,18 +8423,16 @@ function rPanLista(){
         : '<span style="background:#FFF3E0;color:#E65100;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700">⏳ A pagar</span>';
       
       var btnVal = (podeValidar && !todoVal)
-        ? '<button onclick="event.stopPropagation();validarCantinaDia(\''+dia.dt+'\',\''+(dia.faz||'').replace(/'/g,"\\'")+'\')" style="margin-top:8px;width:100%;padding:9px;background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">✅ Marcar como pago</button>'
+        ? '<button onclick="event.stopPropagation();validarCantinaDia(\''+dia.dt+'\',\''+(dia.faz||'').replace(/'/g,"\\'")+'\')" style="padding:6px 14px;background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">✅ Marcar como pago</button>'
         : '';
-      return '<div data-dt="'+dia.dt+'" data-faz="'+dia.faz+'" onclick="_abrirCtDia(this)" style="background:#fff;border-radius:12px;padding:13px;margin-bottom:8px;border:1px solid #e0e0e0;cursor:pointer;border-left:4px solid '+(todoVal?'#2E7D32':algRep?'#C62828':'#FFB300')+';">'
-        +'<div style="display:flex;justify-content:space-between;align-items:flex-start">'
-        +'<div><div style="font-size:14px;font-weight:700">'+resp+'</div>'
-        +'<div style="font-size:12px;color:#666;margin-top:2px">'+dia.regs.length+' refeições</div>'
-        +'<div style="font-size:11px;color:#aaa;margin-top:3px">'+dtFmt+' · '+dia.faz+'</div>'
-        +'<div style="margin-top:5px">'+status+'</div>'
+      return '<div data-dt="'+dia.dt+'" data-faz="'+dia.faz+'" onclick="_abrirCtDia(this)" style="background:#fff;border-radius:12px;padding:11px 12px;margin-bottom:7px;border:1px solid #e0e7e0;cursor:pointer;border-left:4px solid '+(todoVal?'#2E7D32':algRep?'#C62828':'#FFB300')+';">'
+        +'<div style="display:flex;justify-content:space-between;align-items:baseline">'
+        +'<div style="font-size:14px;font-weight:700">'+resp+'</div>'
+        +'<div style="font-size:18px;font-weight:800;color:#1B5E20">R$ '+dia.total.toFixed(2).replace('.',',')+'</div>'
         +'</div>'
-        +'<div style="text-align:right"><div style="font-size:18px;font-weight:800;color:#1B5E20">R$ '+dia.total.toFixed(2).replace('.',',')+'</div>'
-        +'<div style="font-size:11px;color:#aaa;margin-top:2px">toque para ver</div>'
-        +'</div></div>'+btnVal+'</div>';
+        +'<div style="font-size:11px;color:#999;margin-top:2px">'+dia.regs.length+' refeições · '+dtFmt+' · '+dia.faz+'</div>'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:7px;gap:8px">'+status+btnVal+'</div>'
+        +'</div>';
     }).join('');
   }
 }
