@@ -6440,63 +6440,77 @@ function _pdfRodape(){
 function gerarPDFPastos(){
   try{ rHistRankingPastos(); }catch(e){}
   var dados=window._rkpPerfis;
-  if(!dados||!dados.comHist){ alert('Sem dados de pastos para o relatório.'); return; }
+  if(!dados||!dados.comHist){ alert('Sem dados de pastos para o relat\u00f3rio.'); return; }
   var cfg=dados.cfg||{ideal:30,parado:60,intenso:5};
   var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
-  var notaTxt={verde:'🟢 Produtivo',amarelo:'🟡 Atenção',vermelho:'🔴 Avaliar',cinza:'⚪ —'};
-
-  var linhas=dados.comHist.slice().sort(function(a,b){var ma=(a.tipo==='modulo'&&a.modulo!=null)?a.modulo:9999;var mb=(b.tipo==='modulo'&&b.modulo!=null)?b.modulo:9999;if(ma!==mb)return ma-mb;return b.score-a.score;}).map(function(p,idx){
-    var uaHaTxt=p.uaHa>0?p.uaHa.toFixed(2):'—';
-    var uaMaxTxt=p.uaMax>0?p.uaMax.toFixed(1):'—';
-    var descTxt=p.descMedio!==null?p.descMedio+' d':'—';
-    var statusAtual=p.ocupadoAgora
-      ? ('Ocupado ('+p.loteAtual+') há '+p.diasOcupadoAgora+' d')
-      : (p.diasVazio!==null?('Vazio há '+p.diasVazio+' d'):'—');
-    return '<tr>'
-      +'<td style="text-align:center">'+(idx+1)+'</td>'
-      +'<td>'+p.label+(p.tipo==='modulo'&&p.modulo!=null?' <span style="color:#2E7D32;font-size:9px">Mód '+p.modulo+'</span>':'')+'<br><span style="color:#999;font-size:10px">'+(p.ha?p.ha.toFixed(2)+' ha':'')+'</span></td>'
-      +'<td>'+notaTxt[p.nota]+'</td>'
-      +'<td>'+p.motivo+'</td>'
-      +'<td style="text-align:center">'+statusAtual+'</td>'
-      +'<td style="text-align:center">'+descTxt+'</td>'
-      +'<td style="text-align:center">'+p.ciclos+'</td>'
-      +'<td style="text-align:center">'+uaMaxTxt+'</td>'
-      +'<td style="text-align:center">'+uaHaTxt+'</td>'
-      +'</tr>';
-  }).join('');
-
-  var semTxt=dados.semHist.length
-    ? dados.semHist.map(function(p){return p.label;}).join(', ')
-    : '';
 
   var resumo={verde:0,amarelo:0,vermelho:0,cinza:0};
   dados.comHist.forEach(function(p){ if(resumo[p.nota]!==undefined) resumo[p.nota]++; });
 
+  // agrupa por m\u00f3dulo (igual \u00e0 tela)
+  var grupos={}, ordem=[];
+  dados.comHist.forEach(function(p){
+    var chave=(p.tipo==='modulo'&&p.modulo!=null&&p.modulo!=='')?('M\u00f3dulo '+String(p.modulo).padStart(2,'0')):'Pastos avulsos';
+    if(!grupos[chave]){ grupos[chave]=[]; ordem.push(chave); }
+    grupos[chave].push(p);
+  });
+  ordem.sort(function(a,b){ if(a==='Pastos avulsos')return 1; if(b==='Pastos avulsos')return -1; return a.localeCompare(b); });
+
+  function barraSeg(segs){
+    var tot=(segs||[]).reduce(function(s,x){return s+x.d;},0);
+    if(!tot) return '';
+    return '<div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-top:6px">'+segs.map(function(x){return '<div style="width:'+(x.d/tot*100)+'%;background:'+(x.o?'#2E7D32':'#cfd8cf')+'"></div>';}).join('')+'</div>';
+  }
+  function mtr(v,l){ return '<td style="text-align:center;padding:3px 8px"><div style="font-size:15px;font-weight:800;color:#1B5E20">'+v+'</div><div style="font-size:8px;color:#888;font-weight:700">'+l+'</div></td>'; }
+
+  var blocos=ordem.map(function(chave){
+    var grp=grupos[chave];
+    var ocup=grp.filter(function(p){return p.ocupadoAgora;});
+    var emDesc=grp.length-ocup.length;
+    var resumoLote=ocup.length?ocup.map(function(p){return p.loteAtual+' no '+p.label;}).join(', '):'nenhum lote rodando';
+    var resumoMod=grp.length+' piquete'+(grp.length>1?'s':'')+' \u00b7 '+resumoLote+' \u00b7 '+emDesc+' em descanso';
+    var piqs=grp.slice().sort(function(a,b){
+      if(a.ocupadoAgora!==b.ocupadoAgora) return a.ocupadoAgora?-1:1;
+      return (b.diasVazio||0)-(a.diasVazio||0);
+    }).map(function(p){
+      var st,cor,sub;
+      if(p.ocupadoAgora){ st='COM ANIMAIS'; cor='#2E7D32'; sub=p.loteAtual+' entrou h\u00e1 '+p.diasOcupadoAgora+' dias'; }
+      else if(p.alerta==='parado'||(p.diasVazio!==null&&p.diasVazio>=cfg.parado)){ st='PARADO'; cor='#B71C1C'; sub='Vazio h\u00e1 '+p.diasVazio+' dias \u2014 acima do limite ('+cfg.parado+')'; }
+      else { st='EM DESCANSO'; cor='#E65100'; sub='Sem animais h\u00e1 '+(p.diasVazio!==null?p.diasVazio:'?')+' dias'; }
+      var descTxt=p.descMedio!==null?p.descMedio+' d':'\u2014';
+      return '<div style="border:1px solid #e0e7e0;border-left:3px solid '+cor+';border-radius:8px;padding:8px 10px;margin:6px 0;break-inside:avoid">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:12px;color:#1B5E20">'+p.label+'<span style="font-weight:400;color:#999;font-size:9px"> \u00b7 '+(p.ha?p.ha.toFixed(2)+' ha':'')+'</span></b>'
+        +'<span style="font-size:9px;font-weight:700;color:'+cor+';background:'+cor+'18;padding:2px 8px;border-radius:9px">'+st+'</span></div>'
+        +'<div style="font-size:10px;color:#666;margin-top:2px">'+sub+'</div>'
+        +'<table style="width:100%;border-collapse:collapse;margin-top:4px"><tr>'+mtr(p.ciclos,'CICLOS')+mtr(p.totalOcup,'DIAS C/ ANIMAIS')+mtr(descTxt,'DESC. M\u00c9DIO')+'</tr></table>'
+        +barraSeg(p.segs)
+        +'</div>';
+    }).join('');
+    return '<div style="margin-top:14px;break-inside:avoid">'
+      +'<div style="background:#1B5E20;color:#fff;border-radius:8px 8px 0 0;padding:8px 12px"><div style="font-size:14px;font-weight:800">'+chave+'</div><div style="font-size:10px;opacity:.9">'+resumoMod+'</div></div>'
+      +'<div style="background:#f5f7f4;border-radius:0 0 8px 8px;padding:4px 10px 8px">'+piqs+'</div>'
+      +'</div>';
+  }).join('');
+
+  var semTxt=dados.semHist.length?dados.semHist.map(function(p){return p.label;}).join(', '):'';
+
   var w=window.open('','_blank');
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Diagnóstico de Pastos — GPL</title>'
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Diagn\u00f3stico de Pastos \u2014 GPL</title>'
     +'<style>body{font-family:Arial,sans-serif;padding:20px;color:#222}'
-    +'h1{color:#1B5E20;font-size:18px;margin-bottom:2px}'
-    +'.sub{color:#666;font-size:11px;margin-bottom:14px}'
-    +'table{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}'
-    +'th{background:#1B5E20;color:#fff;padding:6px;text-align:left;font-size:10px}'
-    +'td{padding:6px;border-bottom:1px solid #eee;vertical-align:top}'
     +'.resumo{display:flex;gap:14px;margin:10px 0;font-size:12px;font-weight:700}'
-    +'.crit{font-size:10px;color:#666;margin-top:6px;line-height:1.5}'
-    +'.footer{margin-top:26px;font-size:10px;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:8px}'
+    +'.crit{font-size:10px;color:#666;margin-top:10px;line-height:1.5}'
     +_pdfTimbreCss()
     +'@media print{button{display:none}}'
     +'</style></head><body>'
-    +_pdfTimbre('🌱 Diagnóstico de Pastos', null, faz)
-    +'<div class="resumo"><span style="color:#1B5E20">🟢 '+resumo.verde+' produtivos</span>'
-    +'<span style="color:#E65100">🟡 '+resumo.amarelo+' atenção</span>'
-    +'<span style="color:#B71C1C">🔴 '+resumo.vermelho+' avaliar</span></div>'
-    +'<div style="margin:14px 0">'+_rkpGraficos(dados.comHist)+'</div>'
-    +'<table><tr><th>#</th><th>Pasto</th><th>Nota</th><th>Diagnóstico</th><th>Situação</th><th>Descanso médio</th><th>Ciclos</th><th>Carga máx (UA)</th><th>UA/ha</th></tr>'
-    +(linhas||'<tr><td colspan="9" style="text-align:center;color:#999">Sem movimentações para avaliar.</td></tr>')
-    +'</table>'
-    +(semTxt?'<p class="crit"><b>Sem histórico ainda:</b> '+semTxt+'</p>':'')
-    +'<p class="crit">Critérios: descanso ideal '+cfg.ideal+' dias · parado demais a partir de '+cfg.parado+' dias · uso intenso abaixo de '+cfg.intenso+' dias de descanso. Carga em UA (unidade animal = 450 kg). Avaliação baseada nos dados lançados e nas suas respostas sobre o capim.</p>'
-    +'<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:12px">🖨️ Imprimir / Salvar PDF</button>'
+    +_pdfTimbre('Diagn\u00f3stico de Pastos', null, faz)
+    +'<div class="resumo"><span style="color:#1B5E20">'+resumo.verde+' produtivos</span>'
+    +'<span style="color:#E65100">'+resumo.amarelo+' aten\u00e7\u00e3o</span>'
+    +'<span style="color:#B71C1C">'+resumo.vermelho+' avaliar</span></div>'
+    +'<div style="margin:10px 0">'+_rkpGraficos(dados.comHist)+'</div>'
+    +(blocos||'<p style="text-align:center;color:#999">Sem movimenta\u00e7\u00f5es para avaliar.</p>')
+    +(semTxt?'<p class="crit"><b>Sem hist\u00f3rico ainda:</b> '+semTxt+'</p>':'')
+    +'<p class="crit">Descanso ideal '+cfg.ideal+' dias \u00b7 parado a partir de '+cfg.parado+' dias \u00b7 uso intenso abaixo de '+cfg.intenso+' dias de descanso. Barra: verde = com animais, cinza = descanso.</p>'
+    +'<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:12px">Imprimir / Salvar PDF</button>'
     +_pdfRodape()
     +'</body></html>');
   w.document.close();
