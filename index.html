@@ -6437,6 +6437,41 @@ function _pdfRodape(){
 // Gera o PDF do diagnóstico dos pastos. Reaproveita os perfis já
 // calculados por rHistRankingPastos (window._rkpPerfis). Mesmo motor
 // de PDF do resto do app: window.open + print, sem biblioteca externa.
+function _rkpGraficoModulosPDF(comHist){
+  function totOcup(p){ return (p.segs||[]).filter(function(s){return s.o;}).reduce(function(a,s){return a+s.d;},0); }
+  function totDesc(p){ return (p.segs||[]).filter(function(s){return !s.o;}).reduce(function(a,s){return a+s.d;},0); }
+  var grupos={}, ordem=[];
+  comHist.forEach(function(p){
+    var chave=(p.tipo==='modulo'&&p.modulo!=null&&p.modulo!=='')?('M\u00f3dulo '+String(p.modulo).padStart(2,'0')):'Pastos avulsos';
+    if(!grupos[chave]){ grupos[chave]=[]; ordem.push(chave); }
+    grupos[chave].push(p);
+  });
+  ordem.sort(function(a,b){ if(a==='Pastos avulsos')return 1; if(b==='Pastos avulsos')return -1; return a.localeCompare(b); });
+  var maxV=1;
+  comHist.forEach(function(p){ maxV=Math.max(maxV, totOcup(p), totDesc(p)); });
+  var blocos=ordem.map(function(chave){
+    var grp=grupos[chave];
+    var linhas=grp.map(function(p){
+      var oc=totOcup(p), dc=totDesc(p);
+      var wOc=oc>0?Math.max(3,Math.round(oc/maxV*100)):0;
+      var wDc=dc>0?Math.max(3,Math.round(dc/maxV*100)):0;
+      return '<div style="display:flex;align-items:center;gap:8px;margin:5px 0">'
+        +'<div style="width:48px;font-size:10px;color:#555;text-align:right;font-weight:700;flex-shrink:0">'+p.label+'</div>'
+        +'<div style="flex:1">'
+        +  '<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px"><div style="flex:1;background:#eef0ec;border-radius:3px;height:11px;overflow:hidden"><div style="width:'+wOc+'%;background:#2E7D32;height:100%"></div></div><div style="width:62px;font-size:9px;color:#2E7D32;font-weight:700;flex-shrink:0">'+oc+'d animais</div></div>'
+        +  '<div style="display:flex;align-items:center;gap:5px"><div style="flex:1;background:#eef0ec;border-radius:3px;height:11px;overflow:hidden"><div style="width:'+wDc+'%;background:#E65100;height:100%"></div></div><div style="width:62px;font-size:9px;color:#E65100;font-weight:700;flex-shrink:0">'+dc+'d descanso</div></div>'
+        +'</div>'
+        +'</div>';
+    }).join('');
+    return '<div style="margin-bottom:12px;break-inside:avoid"><div style="font-size:11px;font-weight:800;color:#1B5E20;margin-bottom:4px;padding:3px 8px;background:#E8F5E9;border-radius:6px">'+chave+'</div>'+linhas+'</div>';
+  }).join('');
+  return '<div style="background:#fff;border-radius:14px;padding:16px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,.07)">'
+    +'<div style="font-size:10px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Ocupa\u00e7\u00e3o x descanso por piquete</div>'
+    +'<div style="font-size:9px;color:#888;margin-bottom:10px"><span style="color:#2E7D32;font-weight:900">\u25a0</span> com animais &nbsp;&nbsp; <span style="color:#E65100;font-weight:900">\u25a0</span> descanso</div>'
+    +(blocos||'<div style="font-size:11px;color:#999;text-align:center">Sem dados.</div>')
+    +'</div>';
+}
+
 function gerarPDFPastos(){
   try{ rHistRankingPastos(); }catch(e){}
   var dados=window._rkpPerfis;
@@ -6506,7 +6541,7 @@ function gerarPDFPastos(){
     +'<div class="resumo"><span style="color:#1B5E20">'+resumo.verde+' produtivos</span>'
     +'<span style="color:#E65100">'+resumo.amarelo+' aten\u00e7\u00e3o</span>'
     +'<span style="color:#B71C1C">'+resumo.vermelho+' avaliar</span></div>'
-    +'<div style="margin:10px 0">'+_rkpGraficos(dados.comHist)+'</div>'
+    +'<div style="margin:10px 0">'+_rkpGraficoModulosPDF(dados.comHist)+'</div>'
     +(blocos||'<p style="text-align:center;color:#999">Sem movimenta\u00e7\u00f5es para avaliar.</p>')
     +(semTxt?'<p class="crit"><b>Sem hist\u00f3rico ainda:</b> '+semTxt+'</p>':'')
     +'<p class="crit">Descanso ideal '+cfg.ideal+' dias \u00b7 parado a partir de '+cfg.parado+' dias \u00b7 uso intenso abaixo de '+cfg.intenso+' dias de descanso. Barra: verde = com animais, cinza = descanso.</p>'
