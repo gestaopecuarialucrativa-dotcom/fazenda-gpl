@@ -6458,17 +6458,17 @@ function _rkpGraficoModulosPDF(comHist){
       return '<div style="display:flex;align-items:center;gap:8px;margin:5px 0">'
         +'<div style="width:48px;font-size:10px;color:#555;text-align:right;font-weight:700;flex-shrink:0">'+p.label+'</div>'
         +'<div style="flex:1">'
-        +  '<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px"><div style="flex:1;background:#eef0ec;border-radius:3px;height:11px;overflow:hidden"><div style="width:'+wOc+'%;background:#2E7D32;height:100%"></div></div><div style="width:62px;font-size:9px;color:#2E7D32;font-weight:700;flex-shrink:0">'+oc+'d animais</div></div>'
-        +  '<div style="display:flex;align-items:center;gap:5px"><div style="flex:1;background:#eef0ec;border-radius:3px;height:11px;overflow:hidden"><div style="width:'+wDc+'%;background:#E65100;height:100%"></div></div><div style="width:62px;font-size:9px;color:#E65100;font-weight:700;flex-shrink:0">'+dc+'d descanso</div></div>'
+        +  '<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px"><div style="flex:1;background:#eef0ec;border-radius:3px;height:11px;overflow:hidden"><div style="width:'+wOc+'%;background:#7CB342;height:100%"></div></div><div style="width:62px;font-size:9px;color:#558B2F;font-weight:700;flex-shrink:0">'+oc+'d animais</div></div>'
+        +  '<div style="display:flex;align-items:center;gap:5px"><div style="flex:1;background:#eef0ec;border-radius:3px;height:11px;overflow:hidden"><div style="width:'+wDc+'%;background:#C7BCA6;height:100%"></div></div><div style="width:62px;font-size:9px;color:#8A7F66;font-weight:700;flex-shrink:0">'+dc+'d descanso</div></div>'
         +'</div>'
         +'</div>';
     }).join('');
-    return '<div style="margin-bottom:12px;break-inside:avoid"><div style="font-size:11px;font-weight:800;color:#1B5E20;margin-bottom:4px;padding:3px 8px;background:#E8F5E9;border-radius:6px">'+chave+'</div>'+linhas+'</div>';
+    return '<div style="margin-bottom:0;break-inside:avoid"><div style="font-size:11px;font-weight:800;color:#1B5E20;margin-bottom:4px;padding:3px 8px;background:#E8F5E9;border-radius:6px">'+chave+'</div>'+linhas+'</div>';
   }).join('');
   return '<div style="background:#fff;border-radius:14px;padding:16px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,.07)">'
     +'<div style="font-size:10px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Ocupa\u00e7\u00e3o x descanso por piquete</div>'
-    +'<div style="font-size:9px;color:#888;margin-bottom:10px"><span style="color:#2E7D32;font-weight:900">\u25a0</span> com animais &nbsp;&nbsp; <span style="color:#E65100;font-weight:900">\u25a0</span> descanso</div>'
-    +(blocos||'<div style="font-size:11px;color:#999;text-align:center">Sem dados.</div>')
+    +'<div style="font-size:9px;color:#888;margin-bottom:10px"><span style="color:#7CB342;font-weight:900">\u25a0</span> com animais &nbsp;&nbsp; <span style="color:#A99F88;font-weight:900">\u25a0</span> descanso</div>'
+    +'<div class="grid2">'+(blocos||'<div style="font-size:11px;color:#999;text-align:center">Sem dados.</div>')+'</div>'
     +'</div>';
 }
 
@@ -6513,7 +6513,7 @@ function gerarPDFPastos(){
       else if(p.alerta==='parado'||(p.diasVazio!==null&&p.diasVazio>=cfg.parado)){ st='PARADO'; cor='#B71C1C'; sub='Vazio h\u00e1 '+p.diasVazio+' dias \u2014 acima do limite ('+cfg.parado+')'; }
       else { st='EM DESCANSO'; cor='#E65100'; sub='Sem animais h\u00e1 '+(p.diasVazio!==null?p.diasVazio:'?')+' dias'; }
       var descTxt=p.descMedio!==null?p.descMedio+' d':'\u2014';
-      return '<div style="border:1px solid #e0e7e0;border-left:3px solid '+cor+';border-radius:8px;padding:8px 10px;margin:6px 0;break-inside:avoid">'
+      return '<div style="border:1px solid #e0e7e0;border-left:3px solid '+cor+';border-radius:8px;padding:8px 10px;margin:0;break-inside:avoid">'
         +'<div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:12px;color:#1B5E20">'+p.label+'<span style="font-weight:400;color:#999;font-size:9px"> \u00b7 '+(p.ha?p.ha.toFixed(2)+' ha':'')+'</span></b>'
         +'<span style="font-size:9px;font-weight:700;color:'+cor+';background:'+cor+'18;padding:2px 8px;border-radius:9px">'+st+'</span></div>'
         +'<div style="font-size:10px;color:#666;margin-top:2px">'+sub+'</div>'
@@ -6523,7 +6523,7 @@ function gerarPDFPastos(){
     }).join('');
     return '<div style="margin-top:14px;break-inside:avoid">'
       +'<div style="background:#1B5E20;color:#fff;border-radius:8px 8px 0 0;padding:8px 12px"><div style="font-size:14px;font-weight:800">'+chave+'</div><div style="font-size:10px;opacity:.9">'+resumoMod+'</div></div>'
-      +'<div style="background:#f5f7f4;border-radius:0 0 8px 8px;padding:4px 10px 8px">'+piqs+'</div>'
+      +'<div style="background:#f5f7f4;border-radius:0 0 8px 8px;padding:4px 10px 8px"><div class="grid2">'+piqs+'</div></div>'
       +'</div>';
   }).join('');
 
@@ -6534,6 +6534,7 @@ function gerarPDFPastos(){
     +'<style>body{font-family:Arial,sans-serif;padding:20px;color:#222}'
     +'.resumo{display:flex;gap:14px;margin:10px 0;font-size:12px;font-weight:700}'
     +'.crit{font-size:10px;color:#666;margin-top:10px;line-height:1.5}'
+    +'.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:620px){.grid2{grid-template-columns:1fr}}'
     +_pdfTimbreCss()
     +'@media print{button{display:none}}'
     +'</style></head><body>'
@@ -6812,8 +6813,8 @@ function gerarPDFConsumo(){
 
   var topo='<div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0">';
   if(temFinanceiro){
-    topo+=bn('R$ '+totalCusto.toFixed(0),'Custo total','#C62828');
-    if(totalCab>0) topo+=bn('R$ '+(totalCusto/totalCab).toFixed(2).replace('.',','),'Custo m\u00e9dio/cabe\u00e7a','#E65100');
+    topo+=bn('R$ '+totalCusto.toFixed(0),'Custo total','#1B5E20');
+    if(totalCab>0) topo+=bn('R$ '+(totalCusto/totalCab).toFixed(2).replace('.',','),'Custo m\u00e9dio/cabe\u00e7a','#2E7D32');
   }
   topo+=bn(totalSacos.toFixed(0),'Total em sacos','#1B5E20');
   topo+=bn(totalKg.toFixed(0)+' kg','Total consumido','#2E7D32');
@@ -6827,7 +6828,7 @@ function gerarPDFConsumo(){
       barrasCusto='<div style="background:#fff;border-radius:14px;padding:16px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,.07)"><div style="font-size:10px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Custo por lote</div>'
         +arr.map(function(p){
           var w=Math.max(5,Math.round(p.custoLote/max*100));
-          return '<div style="display:flex;align-items:center;gap:8px;margin:6px 0"><div style="width:64px;font-size:11px;font-weight:700;color:#1B5E20">'+p.lote+'</div><div style="flex:1;background:#eef2ec;border-radius:6px;overflow:hidden"><div style="width:'+w+'%;background:linear-gradient(90deg,#2E7D32,#C62828);height:18px"></div></div><div style="width:72px;text-align:right;font-size:11px;font-weight:800;color:#C62828">R$ '+p.custoLote.toFixed(0)+'</div></div>';
+          return '<div style="display:flex;align-items:center;gap:8px;margin:6px 0"><div style="width:64px;font-size:11px;font-weight:700;color:#1B5E20">'+p.lote+'</div><div style="flex:1;background:#eef2ec;border-radius:6px;overflow:hidden"><div style="width:'+w+'%;background:linear-gradient(90deg,#8BC34A,#2E7D32);height:18px"></div></div><div style="width:72px;text-align:right;font-size:11px;font-weight:800;color:#1B5E20">R$ '+p.custoLote.toFixed(0)+'</div></div>';
         }).join('')
         +'</div>';
     }
@@ -6835,8 +6836,8 @@ function gerarPDFConsumo(){
 
   var cards=perfis.map(function(p){
     var lbn='<div style="display:flex;gap:7px;flex-wrap:wrap;margin:10px 0">';
-    if(p.custoLote>0) lbn+=mini('R$ '+p.custoLote.toFixed(0),'CUSTO TOTAL','#C62828');
-    if(p.custoCab>0) lbn+=mini('R$ '+p.custoCab.toFixed(2).replace('.',','),'CUSTO/CABE\u00c7A','#E65100');
+    if(p.custoLote>0) lbn+=mini('R$ '+p.custoLote.toFixed(0),'CUSTO TOTAL','#1B5E20');
+    if(p.custoCab>0) lbn+=mini('R$ '+p.custoCab.toFixed(2).replace('.',','),'CUSTO/CABE\u00c7A','#2E7D32');
     lbn+=mini(p.sacos.toFixed(0)+' sc','SACOS','#1B5E20');
     lbn+=mini(p.kg.toFixed(0)+' kg','TOTAL KG','#2E7D32');
     lbn+='</div>';
@@ -6844,9 +6845,9 @@ function gerarPDFConsumo(){
       var consumo = pr.temPar
         ? '<span style="font-size:13px;font-weight:800;color:#1B5E20">'+pr.gCabDia.toFixed(0)+' g</span><span style="font-size:9px;color:#888"> /cab/dia</span>'+(pr.pvReal>0?' \u00b7 <span style="font-weight:700;color:#1B5E20">'+pr.pvReal.toFixed(2).replace('.',',')+'%</span><span style="font-size:9px;color:#888"> PV</span>':'')
         : '<span style="font-size:10px;color:#FF8F00">aguardando pr\u00f3ximo lan\u00e7amento</span>';
-      return '<div style="border-bottom:1px solid #f0f0f0;padding:7px 0"><div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:12px;color:#1B5E20">'+pr.nome+'</b>'+(pr.custoTotal>0?'<b style="font-size:12px;color:#C62828">R$ '+pr.custoTotal.toFixed(0)+'</b>':'')+'</div><div style="font-size:10px;color:#666">'+pr.kg.toFixed(0)+' kg \u00b7 '+pr.sacos.toFixed(1).replace('.',',')+' sc</div><div style="margin-top:3px">'+consumo+'</div></div>';
+      return '<div style="border-bottom:1px solid #f0f0f0;padding:7px 0"><div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:12px;color:#1B5E20">'+pr.nome+'</b>'+(pr.custoTotal>0?'<b style="font-size:12px;color:#1B5E20">R$ '+pr.custoTotal.toFixed(0)+'</b>':'')+'</div><div style="font-size:10px;color:#666">'+pr.kg.toFixed(0)+' kg \u00b7 '+pr.sacos.toFixed(1).replace('.',',')+' sc</div><div style="margin-top:3px">'+consumo+'</div></div>';
     }).join('');
-    return '<div style="background:#fff;border-radius:14px;padding:14px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,.07);border-left:4px solid #2E7D32;break-inside:avoid">'
+    return '<div style="background:#fff;border-radius:14px;padding:14px;margin:0;box-shadow:0 2px 8px rgba(0,0,0,.07);border-left:4px solid #2E7D32;break-inside:avoid">'
       +'<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:16px;font-weight:900;color:#1B5E20">'+p.lote+'</div><div style="font-size:11px;color:#666">'+(p.cab>0?p.cab+' animais':'')+(p.pesoMed>0?' \u00b7 '+p.pesoMed+' kg':'')+'</div></div>'
       +lbn
       +'<div style="font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 2px">Consumo por produto</div>'
@@ -6859,13 +6860,14 @@ function gerarPDFConsumo(){
     +'<style>*{box-sizing:border-box}'
     +'body{font-family:Arial,"Segoe UI",Roboto,system-ui,sans-serif;padding:20px;color:#222;background:#eef1ec;max-width:900px;margin:0 auto}'
     +'.nota{font-size:10px;color:#666;margin-top:12px;line-height:1.5;padding:10px;background:#fff;border-radius:10px;border-left:3px solid #8BC34A}'
+    +'.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:620px){.grid2{grid-template-columns:1fr}}'
     +_pdfTimbreCss()
     +'@media print{button{display:none!important}body{background:#fff}}'
     +'</style></head><body>'
     +_pdfTimbre('Consumo por Lote', dtHoje, faz)
     +topo
     +barrasCusto
-    +cards
+    +'<div class="grid2">'+cards+'</div>'
     +'<p class="nota">Consumo /cab/dia: sacos do \u00faltimo trato \u00f7 dias at\u00e9 o trato anterior do mesmo produto (limite 30 dias). %PV = consumo /cab/dia \u00f7 peso vivo. Custo = sacos \u00d7 R$/saco cadastrado no estoque.</p>'
     +'<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:12px">Imprimir / Salvar PDF</button>'
     +_pdfRodape()
