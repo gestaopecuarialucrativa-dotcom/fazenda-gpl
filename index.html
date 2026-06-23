@@ -1143,6 +1143,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
       <div id="taxa-piq-content"></div>
     </div>
   </div>
+  <button onclick="gerarPDFLotes()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px">📄 Gerar Relatório PDF</button>
   <div id="hist-lotes-cards"></div>
 </div>
 
@@ -5318,7 +5319,7 @@ function rHistLotes(){
   // rT pode vir da nuvem com campo 'dt' = '2026-05-25'
   var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
   movs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
-  var lotes=S.LOTES||[], aloc=S.MAPA_ALOC||{}, html='';
+  var lotes=S.LOTES||[], aloc=S.MAPA_ALOC||{}, html='', _lp=[];
 
   lotes.forEach(function(lote){
     var nm=lote.nome, qtd=parseInt(lote.qtd)||0, peso=parseFloat(lote.peso)||0;
@@ -5363,6 +5364,7 @@ function rHistLotes(){
     var eD=!temDt?'⚪':dias<=3?'🟢':dias<=7?'🟡':dias<=14?'🟠':'🔴';
     var diasTxt=temDt?String(dias):'?';
 
+    _lp.push({nm:nm,qtd:qtd,peso:peso,areaNm:areaNm,ha:ha,dtEnt:dtEnt,dias:dias,temDt:temDt,txLot:txLot,cD:cD,diasTxt:diasTxt});
     html+='<div style="background:#fff;border:1px solid #e0e7e0;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06)">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
       +  '<div style="font-size:15px;font-weight:800;color:#1B5E20">'+nm+'</div>'
@@ -5398,6 +5400,7 @@ function rHistLotes(){
   });
 
   cont.innerHTML=html||'<div style="color:#888;font-size:13px;text-align:center;padding:30px">Nenhum lote cadastrado.</div>';
+  window._lotesPerfis=_lp;
 
   // ── Taxa de lotação por piquete ────────────────────
   _rTaxaLotacaoPiquetes();
@@ -6437,6 +6440,65 @@ function _pdfRodape(){
 // Gera o PDF do diagnóstico dos pastos. Reaproveita os perfis já
 // calculados por rHistRankingPastos (window._rkpPerfis). Mesmo motor
 // de PDF do resto do app: window.open + print, sem biblioteca externa.
+function gerarPDFLotes(){
+  try{ rHistLotes(); }catch(e){}
+  var perfis=window._lotesPerfis;
+  if(!perfis||!perfis.length){ alert('Nenhum lote para o relat\u00f3rio.'); return; }
+  var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
+  var dtHoje=new Date().toLocaleDateString('pt-BR');
+
+  var totalAnimais=0, somaPesoXqtd=0, qtdComPeso=0, somaUA=0, somaHa=0;
+  perfis.forEach(function(p){
+    totalAnimais+=p.qtd;
+    if(p.peso>0){ somaPesoXqtd+=p.peso*p.qtd; qtdComPeso+=p.qtd; }
+    if(p.txLot!=='\u2014'){ somaUA+=p.qtd*(p.peso/450); somaHa+=p.ha; }
+  });
+  var pesoMedGeral=qtdComPeso>0?Math.round(somaPesoXqtd/qtdComPeso):0;
+  var lotacaoMedia=somaHa>0?(somaUA/somaHa).toFixed(2):'\u2014';
+
+  function bn(v,l){ return '<div style="flex:1;min-width:120px;background:#fff;border-radius:14px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:3px solid #2E7D32"><div style="font-size:26px;font-weight:900;color:#1B5E20;line-height:1">'+v+'</div><div style="font-size:9px;color:#666;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:5px">'+l+'</div></div>'; }
+  function mini(v,l,c){ return '<div style="flex:1;min-width:70px;background:#E8F5E9;border-radius:10px;padding:9px 6px;text-align:center"><div style="font-size:18px;font-weight:900;color:'+(c||'#1B5E20')+';line-height:1">'+v+'</div><div style="font-size:8px;color:#555;font-weight:700;margin-top:2px">'+l+'</div></div>'; }
+
+  var topo='<div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0">'
+    +bn(perfis.length,'Lotes')
+    +bn(totalAnimais,'Total de animais')
+    +bn(pesoMedGeral>0?pesoMedGeral+' kg':'\u2014','Peso m\u00e9dio')
+    +bn(lotacaoMedia+(lotacaoMedia!=='\u2014'?' UA/ha':''),'Lota\u00e7\u00e3o m\u00e9dia')
+    +'</div>';
+
+  var cards=perfis.map(function(p){
+    var diasCor=p.temDt?p.cD:'#bbb';
+    var entrada=p.temDt?('Entrada '+p.dtEnt.split('-').reverse().join('/')):'sem data de entrada';
+    return '<div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-left:4px solid #2E7D32;break-inside:avoid">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:16px;font-weight:900;color:#1B5E20">'+p.nm+'</div><div style="font-size:11px;background:#E8F5E9;color:#1B5E20;padding:2px 10px;border-radius:14px;font-weight:700">'+p.qtd+' animais</div></div>'
+      +'<div style="font-size:12px;color:#333;font-weight:700">'+p.areaNm+(p.ha>0?' \u00b7 '+p.ha+' ha':'')+'</div>'
+      +'<div style="font-size:10px;color:#888;margin-bottom:8px">'+entrada+'</div>'
+      +'<div style="display:flex;gap:6px">'
+      +  mini(p.diasTxt+(p.temDt?'d':''),'NO PASTO',diasCor)
+      +  mini(p.peso>0?p.peso+' kg':'\u2014','PESO M\u00c9DIO')
+      +  mini(p.txLot,'UA/HA')
+      +'</div>'
+      +'</div>';
+  }).join('');
+
+  var w=window.open('','_blank');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Lotes \u2014 GPL</title>'
+    +'<style>*{box-sizing:border-box}'
+    +'body{font-family:Arial,"Segoe UI",Roboto,system-ui,sans-serif;padding:20px;color:#222;background:#eef1ec;max-width:900px;margin:0 auto}'
+    +'.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:620px){.grid2{grid-template-columns:1fr}}'
+    +_pdfTimbreCss()
+    +'@media print{button{display:none!important}body{background:#fff}}'
+    +'</style></head><body>'
+    +_pdfTimbre('Situa\u00e7\u00e3o dos Lotes', dtHoje, faz)
+    +topo
+    +'<div class="grid2">'+cards+'</div>'
+    +'<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:14px">Imprimir / Salvar PDF</button>'
+    +_pdfRodape()
+    +'</body></html>');
+  w.document.close();
+  setTimeout(function(){ try{w.print();}catch(e){} },500);
+}
+
 function _rkpGraficoModulosPDF(comHist){
   function totOcup(p){ return (p.segs||[]).filter(function(s){return s.o;}).reduce(function(a,s){return a+s.d;},0); }
   function totDesc(p){ return (p.segs||[]).filter(function(s){return !s.o;}).reduce(function(a,s){return a+s.d;},0); }
