@@ -1126,6 +1126,10 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <div class="tgo"    id="htab-pastos"  onclick="sHistTab('pastos')"  style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px">🌱 Pastos</div>
   <div class="tgo"    id="htab-consumo" onclick="sHistTab('consumo')" style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px">🛒 Consumo</div>
 </div>
+<div id="hist-filtros" style="display:flex;gap:8px;margin:8px 0 4px;flex-wrap:wrap">
+  <select id="hf-safra" onchange="hFiltroMuda()" style="flex:1;min-width:130px;padding:8px 10px;border:1px solid #c8d8c8;border-radius:10px;font-size:13px;font-weight:700;color:#1B5E20;background:#fff;cursor:pointer"></select>
+  <select id="hf-mes" onchange="hFiltroMuda()" style="flex:1;min-width:130px;padding:8px 10px;border:1px solid #c8d8c8;border-radius:10px;font-size:13px;font-weight:700;color:#1B5E20;background:#fff;cursor:pointer"></select>
+</div>
 
 <div id="htab-lotes-content">
   <!-- Gráfico de dias por pasto -->
@@ -5286,6 +5290,7 @@ function salvarNota(faz,k){if(!S.NOTAS)S.NOTAS={};const ta=document.getElementBy
 
 // ═══ HISTÓRICO ═══
 function sHistTab(tab){
+  window._sHistTabAtual=tab;
   ['lotes','rotacao','pastos','consumo'].forEach(function(t){
     var b=document.getElementById('htab-'+t);
     var c=document.getElementById('htab-'+t+'-content');
@@ -5299,6 +5304,8 @@ function sHistTab(tab){
 }
 
 function rHistorico(){
+  var sf=document.getElementById('hf-safra');
+  if(!sf||!sf.options.length) hFiltroInit();
   var ativa=document.querySelector('[id^="htab-"].on');
   sHistTab(ativa?ativa.id.replace('htab-',''):'lotes');
 }
@@ -5309,6 +5316,58 @@ function _getHa(areaObj){
   if(!areaObj) return 0;
   return areaObj.ha || 0;
 }
+
+// ============ FILTROS SAFRA/MÊS DO HISTÓRICO ============
+function _hSafraLista(){
+  var hojeA=new Date().getFullYear(), hojeM=new Date().getMonth()+1;
+  var sfAtual=hojeM>=7?hojeA:hojeA-1;
+  var lista=[{label:'Todos os períodos',de:'',ate:''}];
+  for(var y=2024;y<=sfAtual+1;y++){
+    lista.push({label:'Safra '+y+'/'+(y+1),de:y+'-07-01',ate:(y+1)+'-06-30'});
+  }
+  return lista;
+}
+function _hMesLista(){
+  var meses=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  var lista=[{label:'Todos os meses',v:''}];
+  for(var i=0;i<12;i++) lista.push({label:meses[i],v:String(i+1).padStart(2,'0')});
+  return lista;
+}
+function hFiltroInit(){
+  var sf=document.getElementById('hf-safra'), ms=document.getElementById('hf-mes');
+  if(!sf||!ms) return;
+  var safras=_hSafraLista();
+  var hojeA=new Date().getFullYear(), hojeM=new Date().getMonth()+1;
+  var sfAtual=hojeM>=7?hojeA:hojeA-1;
+  sf.innerHTML=safras.map(function(s,i){
+    var sel=(s.de===sfAtual+'-07-01')?' selected':'';
+    return '<option value="'+i+'"'+sel+'>'+s.label+'</option>';
+  }).join('');
+  ms.innerHTML=_hMesLista().map(function(m,i){ return '<option value="'+m.v+'">'+m.label+'</option>'; }).join('');
+  hFiltroMuda();
+}
+function hFiltroMuda(){
+  var sf=document.getElementById('hf-safra'), ms=document.getElementById('hf-mes');
+  if(!sf||!ms) return;
+  var safras=_hSafraLista();
+  var idx=parseInt(sf.value)||0;
+  var s=safras[idx]||safras[0];
+  var mesV=ms.value;
+  var de=s.de, ate=s.ate;
+  if(de&&ate&&mesV){
+    var anoSafra=de.substring(0,4), anoFim=ate.substring(0,4);
+    var ano=parseInt(mesV)>=7?anoSafra:anoFim;
+    de=ano+'-'+mesV+'-01';
+    var ult=new Date(parseInt(ano),parseInt(mesV),0);
+    ate=ano+'-'+mesV+'-'+String(ult.getDate()).padStart(2,'0');
+  }
+  window._hFiltro={de:de,ate:ate};
+  var tab=window._sHistTabAtual||'lotes';
+  if(tab==='rotacao') rHistRotacao();
+  else if(tab==='pastos') rHistRankingPastos();
+  else if(tab==='consumo') rHistConsumo();
+}
+// =========================================================
 
 // ── ABA LOTES ─────────────────────────────────────────────
 function rHistLotes(){
@@ -5716,7 +5775,14 @@ function _hTimeline(movsLote){
 // cada pasto (entrada→próxima entrada do mesmo lote; última = até hoje) e agrega
 // por pasto/piquete e por módulo. Calcula dias de ocupação e descanso médio (dias vazio).
 function _rotacaoStats(){
-  var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
+  var _f=window._hFiltro||{};
+  var movs=(S.rT||[]).filter(function(r){
+    if(r.tipo!=='mudanca_pasto'||r._apagado) return false;
+    var dt=(r.dt||r.ts||'').substring(0,10);
+    if(_f.de&&dt<_f.de) return false;
+    if(_f.ate&&dt>_f.ate) return false;
+    return true;
+  });
   movs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
   function labelArea(id){ var a=MAPA_AREAS.find(function(x){return x.id===id;}); return a?a.label:(id||'—'); }
   function ehPasto(id){ var a=MAPA_AREAS.find(function(x){return x.id===id;}); return a&&a.tipo==='pasto'; }
@@ -6638,7 +6704,8 @@ function gerarPDFRotacao(){
   function labelArea(id){ return (MAPA_AREAS.find(function(a){return a.id===id;})||{}).label||id||'\u2014'; }
   var lotes=Object.keys(mapa).map(function(lt){
     var arr=mapa[lt];
-    var trilha=[{piq:labelArea(arr[0].origem),dias:arr[0].dias,atual:false}];
+    var trilha=[];
+    if(arr[0].origem){ trilha.push({piq:labelArea(arr[0].origem),dias:arr[0].dias,atual:false}); }
     for(var k=0;k<arr.length-1;k++){ trilha.push({piq:labelArea(arr[k].destino),dias:arr[k+1].dias,atual:false}); }
     var ult=arr[arr.length-1];
     var diasAt=ult.saida?Math.max(0,Math.round((hojeR-new Date(ult.saida+'T12:00:00'))/864e5)):0;
@@ -6678,7 +6745,7 @@ function gerarPDFRotacao(){
       var seta=i>0?'<span style="color:#bbb;font-size:11px">\u2192</span>':'';
       return seta+'<span style="display:inline-block;background:'+bg+';color:'+fg+';padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;margin:2px 1px">'+t.piq+' \u00b7 '+t.dias+'d'+(t.atual?' \u2713':'')+'</span>';
     }).join('');
-    var enc=L.trilha.filter(function(t){return !t.atual;});
+    var enc=L.trilha.filter(function(t){return !t.atual && t.dias>0;});
     var partes=enc.map(function(t){return t.piq+' ('+t.dias+' dias)';});
     var atual=L.trilha[L.trilha.length-1];
     var frase='O '+L.lote+' passou por '+(partes.length?partes.join(', ')+', e est\u00e1':'est\u00e1')+' no '+atual.piq+' h\u00e1 '+atual.dias+' dias.';
@@ -6705,7 +6772,7 @@ function gerarPDFRotacao(){
   function rankItem(p,modo){
     var tag='';
     if(modo==='pastejo' && p.dias>avgPastejo && (p.descanso==null||p.descanso<avgDesc)) tag=' <span style="font-size:9px;font-weight:700;color:#E65100;background:#FFF3E0;padding:1px 7px;border-radius:8px">for\u00e7ado</span>';
-    if(modo==='descanso' && p.status&&p.status.st==='vazio' && p.status.dias>avgDesc && p.dias<avgPastejo) tag=' <span style="font-size:9px;font-weight:700;color:#7CB342;background:#F1F8E9;padding:1px 7px;border-radius:8px">subutilizado</span>';
+    if(modo==='descanso' && p.status&&p.status.st==='vazio' && p.status.dias>avgDesc && p.dias<avgPastejo) tag=' <span style="font-size:9px;font-weight:700;color:#7CB342;background:#F1F8E9;padding:1px 7px;border-radius:8px">subutilizado \u00b7 '+p.pass+'x</span>';
     var val=modo==='pastejo'?(p.dias+'d pastejo'):((p.status?p.status.dias:0)+'d descanso');
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f0f0"><span style="font-size:12px;font-weight:700;color:#1B5E20">'+p.label+tag+'</span><span style="font-size:12px;font-weight:800;color:#2E7D32">'+val+'</span></div>';
   }
@@ -6733,7 +6800,7 @@ function gerarPDFRotacao(){
     +statusBloco
     +'<div style="font-size:12px;font-weight:800;color:#1B5E20;margin:14px 0 0">Rank dos pastos</div>'
     +rankBloco
-    +'<p class="nota">"For\u00e7ado" = pasto pastejado acima da m\u00e9dia e com pouco descanso (risco de degradar). "Subutilizado" = pasto descansando h\u00e1 muito tempo e pouco usado (capacidade sobrando). Os limites s\u00e3o relativos \u00e0 m\u00e9dia da pr\u00f3pria fazenda.</p>'
+    +'<p class="nota">"For\u00e7ado" = pasto pastejado acima da m\u00e9dia e com pouco descanso (risco de degradar). "Subutilizado" = pasto descansando h\u00e1 muito tempo e pouco usado (capacidade sobrando). O "Nx" indica quantas vezes o pasto recebeu gado. Os limites s\u00e3o relativos \u00e0 m\u00e9dia da pr\u00f3pria fazenda.</p>'
     +'<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:12px">Imprimir / Salvar PDF</button>'
     +_pdfRodape()
     +'</body></html>');
@@ -6754,7 +6821,14 @@ function _consumoDias(dtA,dtB){
 
 // Monta os perfis de consumo por lote (reusado por tela e PDF)
 function _consumoPerfis(){
-  var tratos=(S.rT||[]).filter(function(r){return r.tipo==='trato'&&!r._apagado;});
+  var _f=window._hFiltro||{};
+  var tratos=(S.rT||[]).filter(function(r){
+    if(r.tipo!=='trato'||r._apagado) return false;
+    var dt=(r.dt||r.ts||'').substring(0,10);
+    if(_f.de&&dt<_f.de) return false;
+    if(_f.ate&&dt>_f.ate) return false;
+    return true;
+  });
   tratos.forEach(function(r){ if(!r.dt&&r.ts) r.dt=r.ts.substring(0,10); });
   var lotes=S.LOTES||[];
   var porLote={};
