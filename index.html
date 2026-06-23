@@ -8251,11 +8251,15 @@ function gerarFCMsg(){
   var ateFmt=window._fcAte||'';
   var NL='\n';
   var sel=lista.filter(function(p){return window._fcSel&&window._fcSel[p.n]!==false;});
+  var _diasSem=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+  function _diaSemana(iso){ if(!iso||iso.length<10) return ''; var d=new Date(iso+'T12:00:00'); return isNaN(d.getTime())?'':(_diasSem[d.getDay()]||''); }
+  function _dtSemAno(iso){ if(!iso) return ''; var p=iso.split('-'); return p.length>=3?(p[2]+'/'+p[1]):iso; }
+  function _periodoSemAno(d){ var p=(d||'').split('/'); return p.length>=2?(p[0]+'/'+p[1]):d; }
 
   var linhas=[];
   linhas.push('FECHAMENTO DE CONTA - A PAGAR');
   linhas.push('Fazenda: '+faz);
-  linhas.push('Periodo: '+deFmt+' a '+ateFmt);
+  linhas.push('Periodo: '+_periodoSemAno(deFmt)+' a '+_periodoSemAno(ateFmt));
   linhas.push('');
 
   sel.forEach(function(p){
@@ -8268,8 +8272,8 @@ function gerarFCMsg(){
       var dOrd = p.diarias.slice().sort(function(a,b){return (a.dt||'')>(b.dt||'')?1:-1;});
       dOrd.forEach(function(r){
         if(r.srv){
-          var dtFmt=r.dt?r.dt.split('-').reverse().join('/'):'';
-          linhas.push('  '+dtFmt+': '+r.srv);
+          var ds=_diaSemana(r.dt), dt2=_dtSemAno(r.dt);
+          linhas.push('  '+(ds?ds+', ':'')+dt2+': '+r.srv);
         }
       });
     }
