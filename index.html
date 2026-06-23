@@ -5291,6 +5291,8 @@ function salvarNota(faz,k){if(!S.NOTAS)S.NOTAS={};const ta=document.getElementBy
 // ═══ HISTÓRICO ═══
 function sHistTab(tab){
   window._sHistTabAtual=tab;
+  var hf=document.getElementById('hist-filtros');
+  if(hf) hf.style.display=(tab==='lotes')?'none':'flex';
   ['lotes','rotacao','pastos','consumo'].forEach(function(t){
     var b=document.getElementById('htab-'+t);
     var c=document.getElementById('htab-'+t+'-content');
