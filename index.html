@@ -6617,70 +6617,78 @@ function gerarPDFPastos(){
 
 // PDF da Rotação: classificação por pasto/piquete e por módulo (dias + descanso médio).
 function gerarPDFRotacao(){
-  var st;
-  try{ st=_rotacaoStats(); }catch(e){ alert('Não foi possível calcular a rotação.'); return; }
-  if(!st || !st.pastos.length){ alert('Sem movimentações para o relatório.'); return; }
   var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
-  function linhas(itens, nomeCampo){
-    return itens.slice().sort(function(a,b){return b.dias-a.dias;}).map(function(p,i){
-      var nm=p[nomeCampo]||p.label||p.nome;
-      var tag='';
-      if(p.status){
-        tag = p.status.st==='vazio'
-          ? ' <span style="color:#2E7D32;font-size:9px">🟢 vazio há '+p.status.dias+'d</span>'
-          : ' <span style="color:#1565C0;font-size:9px">ocupado há '+p.status.dias+'d</span>';
-      }
-      return '<tr>'
-        +'<td style="text-align:center">'+(i+1)+'</td>'
-        +'<td>'+nm+tag+'</td>'
-        +'<td style="text-align:center;font-weight:700">'+p.dias+'</td>'
-        +'<td style="text-align:center">'+p.pass+'</td>'
-        +'<td style="text-align:center">'+p.media+'</td>'
-        +'<td style="text-align:center">'+(p.descanso===null?'—':p.descanso)+'</td>'
-        +'</tr>';
-    }).join('');
-  }
-  var cab='<tr><th>#</th><th>Local</th><th>Total dias</th><th>Passagens</th><th>Média dias</th><th>Descanso médio</th></tr>';
-  // gráfico de barras SVG para o PDF
-  function barrasPdf(itens, modo){
-    var top=itens.slice().sort(function(a,b){return b.dias-a.dias;}).slice(0,12);
-    if(!top.length) return '';
-    var max=Math.max(1, Math.max.apply(null, top.map(function(p){return p.dias;})));
-    var h=top.length*24+10;
-    var svg='<svg viewBox="0 0 480 '+h+'" style="width:100%;max-width:520px" xmlns="http://www.w3.org/2000/svg">';
-    top.forEach(function(p,i){
-      var nm=(p.label||p.nome||'').substring(0,12);
-      var w=Math.round((p.dias/max)*300);
-      var y=i*24+6;
-      var cor='#2E7D32';
-      if(modo==='status' && p.status){ cor = p.status.st==='vazio' ? '#43A047' : '#1565C0'; }
-      svg+='<text x="0" y="'+(y+13)+'" font-size="11" fill="#444">'+nm+'</text>';
-      svg+='<rect x="110" y="'+(y+3)+'" width="'+Math.max(2,w)+'" height="14" rx="3" fill="'+cor+'"/>';
-      svg+='<text x="'+(110+Math.max(2,w)+5)+'" y="'+(y+14)+'" font-size="11" font-weight="700" fill="#1B5E20">'+p.dias+'d</text>';
-    });
-    svg+='</svg>';
-    return svg;
-  }
+  var dtHoje=new Date().toLocaleDateString('pt-BR');
+  var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
+  movs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
+  if(!movs.length){ alert('Sem movimenta\u00e7\u00f5es para o relat\u00f3rio.'); return; }
+
+  var mapa={};
+  movs.forEach(function(r,i){
+    var rDt=(r.dt||r.ts||'').substring(0,10);
+    var prev=null; for(var j=i-1;j>=0;j--){ if(movs[j].lote===r.lote){prev=movs[j];break;} }
+    var dtEnt=prev?(prev.dt||prev.ts||'').substring(0,10):rDt;
+    var dias=0; if(dtEnt&&rDt&&dtEnt!==rDt){ dias=Math.max(0,Math.round((new Date(rDt+'T12:00:00')-new Date(dtEnt+'T12:00:00'))/864e5)); }
+    if(!mapa[r.lote]) mapa[r.lote]=[];
+    mapa[r.lote].push({origem:r.origem,destino:r.destino,saida:rDt,dias:dias});
+  });
+  var hojeR=new Date();
+  function labelArea(id){ return (MAPA_AREAS.find(function(a){return a.id===id;})||{}).label||id||'\u2014'; }
+
+  var lotes=Object.keys(mapa).map(function(lt){
+    var arr=mapa[lt];
+    var trilha=[{piq:arr[0].origem,dias:arr[0].dias,atual:false}];
+    for(var k=0;k<arr.length-1;k++){ trilha.push({piq:arr[k].destino,dias:arr[k+1].dias,atual:false}); }
+    var ult=arr[arr.length-1];
+    var diasAt=ult.saida?Math.max(0,Math.round((hojeR-new Date(ult.saida+'T12:00:00'))/864e5)):0;
+    trilha.push({piq:ult.destino,dias:diasAt,atual:true});
+    var enc=trilha.filter(function(t){return !t.atual;});
+    var med=enc.length?Math.round(enc.reduce(function(s,t){return s+t.dias;},0)/enc.length):0;
+    return {lote:lt, atualPiq:labelArea(ult.destino), diasAtual:diasAt, media:med, nPiq:trilha.length, entrada:ult.saida};
+  });
+  var mediaGeral=lotes.length?Math.round(lotes.reduce(function(s,L){return s+L.media;},0)/lotes.length):0;
+
+  function bn(v,l){ return '<div style="flex:1;min-width:130px;background:#fff;border-radius:14px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:3px solid #2E7D32"><div style="font-size:26px;font-weight:900;color:#1B5E20;line-height:1">'+v+'</div><div style="font-size:9px;color:#666;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:5px">'+l+'</div></div>'; }
+  function mini(v,l,c){ return '<div style="flex:1;min-width:70px;background:#E8F5E9;border-radius:10px;padding:9px 6px;text-align:center"><div style="font-size:18px;font-weight:900;color:'+(c||'#1B5E20')+';line-height:1">'+v+'</div><div style="font-size:8px;color:#555;font-weight:700;margin-top:2px">'+l+'</div></div>'; }
+
+  var topo='<div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0">'
+    +bn(lotes.length,'Lotes em rota\u00e7\u00e3o')
+    +bn(mediaGeral+' dias','M\u00e9dia geral por piquete')
+    +'</div>';
+
+  var cards=lotes.map(function(L){
+    var atencao = (L.media>0 && L.diasAtual > L.media*1.5);
+    var corA = atencao ? '#E65100' : '#2E7D32';
+    var tag = atencao
+      ? '<span style="font-size:9px;font-weight:700;color:#E65100;background:#E6510018;padding:2px 8px;border-radius:9px">acima do ritmo</span>'
+      : '<span style="font-size:9px;font-weight:700;color:#2E7D32;background:#2E7D3218;padding:2px 8px;border-radius:9px">no ritmo</span>';
+    var ent = L.entrada?('desde '+L.entrada.split('-').reverse().join('/')):'';
+    return '<div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-left:4px solid '+corA+';break-inside:avoid">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><div style="font-size:16px;font-weight:900;color:#1B5E20">'+L.lote+'</div>'+tag+'</div>'
+      +'<div style="font-size:12px;color:#333">Agora no <b style="color:#1B5E20">'+L.atualPiq+'</b></div>'
+      +'<div style="font-size:10px;color:#888;margin-bottom:8px">'+ent+'</div>'
+      +'<div style="display:flex;gap:6px">'
+      +  mini(L.diasAtual+'d','NESTE PIQUETE',corA)
+      +  mini(L.media+'d','M\u00c9DIA /PIQUETE')
+      +  mini(L.nPiq,'PIQUETES')
+      +'</div>'
+      +'</div>';
+  }).join('');
+
   var w=window.open('','_blank');
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Rotação de Pastos — GPL</title>'
-    +'<style>body{font-family:Arial,sans-serif;padding:20px;color:#222}'
-    +'h2{color:#1B5E20;font-size:14px;margin:16px 0 4px}'
-    +'table{width:100%;border-collapse:collapse;font-size:11px;margin-top:6px}'
-    +'th{background:#1B5E20;color:#fff;padding:6px;text-align:left;font-size:10px}'
-    +'td{padding:6px;border-bottom:1px solid #eee}'
-    +'.crit{font-size:10px;color:#666;margin-top:8px;line-height:1.5}'
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Rota\u00e7\u00e3o por Lote \u2014 GPL</title>'
+    +'<style>*{box-sizing:border-box}'
+    +'body{font-family:Arial,"Segoe UI",Roboto,system-ui,sans-serif;padding:20px;color:#222;background:#eef1ec;max-width:900px;margin:0 auto}'
+    +'.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:620px){.grid2{grid-template-columns:1fr}}'
+    +'.nota{font-size:10px;color:#666;margin-top:12px;line-height:1.5;padding:10px;background:#fff;border-radius:10px;border-left:3px solid #8BC34A}'
     +_pdfTimbreCss()
-    +'@media print{button{display:none}}'
+    +'@media print{button{display:none!important}body{background:#fff}}'
     +'</style></head><body>'
-    +_pdfTimbre('🔄 Rotação de Pastos', 'Dias de ocupação e descanso por área', faz)
-    +'<h2>📊 Dias de ocupação por pasto</h2>'+barrasPdf(st.pastos,'dias')
-    +'<h2>📊 Status atual (verde = descansando · azul = ocupado)</h2>'+barrasPdf(st.pastos,'status')
-    +'<h2>🏆 Classificação por Pasto / Piquete</h2>'
-    +'<table>'+cab+linhas(st.pastos,'label')+'</table>'
-    +'<h2>🏆 Classificação por Módulo</h2>'
-    +'<table>'+cab+linhas(st.modulos,'nome')+'</table>'
-    +'<p class="crit">Total dias = soma dos dias de ocupação em todas as passagens. Média = dias por passagem. <b>🟢 vazio há Xd</b> = a área está descansando agora (saída do último lote até hoje), pronta/quase pronta pra receber gado. <b>Descanso médio</b> = média de dias vazio entre passagens (indica o tempo de rebrota); "—" = ainda sem ciclo medível. Dias calculados pelas datas de entrada das movimentações.</p>'
-    +'<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:12px">🖨️ Imprimir / Salvar PDF</button>'
+    +_pdfTimbre('Rota\u00e7\u00e3o por Lote', dtHoje, faz)
+    +topo
+    +'<div class="grid2">'+cards+'</div>'
+    +'<p class="nota">Mostra onde cada lote est\u00e1 agora, h\u00e1 quantos dias, a m\u00e9dia de dias por piquete e quantos piquetes percorreu. "Acima do ritmo" = o lote est\u00e1 no piquete atual bem mais tempo que a m\u00e9dia dele \u2014 vale conferir se j\u00e1 \u00e9 hora de mudar.</p>'
+    +'<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:12px">Imprimir / Salvar PDF</button>'
     +_pdfRodape()
     +'</body></html>');
   w.document.close();
