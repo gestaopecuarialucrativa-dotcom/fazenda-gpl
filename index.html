@@ -5879,13 +5879,15 @@ function rHistRotacao(){
     });
   }
   var filtro=sl?sl.value:'';
-  var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
+  var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado&&_passaFiltro(r);});
   movs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
   if(filtro) movs=movs.filter(function(m){return m.lote===filtro;});
   var div=document.getElementById('hist-rotacao');
   if(!div) return;
   if(!movs.length){
-    div.innerHTML='<div style="color:#888;font-size:12px;text-align:center;padding:20px">Sem movimentações registradas.</div>';
+    var _ff=window._hFiltro||{};
+    var _m=(_ff.de||_ff.ate)?'Sem movimentações nesta safra/mês. Experimente "Todos os períodos" ou outro mês.':'Sem movimentações registradas.';
+    div.innerHTML='<div style="color:#888;font-size:12px;text-align:center;padding:20px">'+_m+'</div>';
     return;
   }
   // Calcular dias que ficou em cada pasto (dt_saida - dt_entrada)
@@ -6064,7 +6066,7 @@ function _rkpDiasEntre(isoA,isoB){
 
 // Monta, por área, a lista de ocupações: {entrada, saida, dias, lote, ua}
 function _rkpOcupacoesPorArea(){
-  var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
+  var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado&&_passaFiltro(r);});
   movs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
   var lotes=S.LOTES||[];
   // Para cada lote, percorrer seus movimentos em ordem: cada destino é uma
@@ -6398,7 +6400,9 @@ function rHistRankingPastos(){
     +'<div style="font-size:10px;color:#888;margin-bottom:10px">Cada módulo com seus piquetes: onde está o gado, há quanto tempo, e quais já descansaram o suficiente.</div>';
 
   if(!comHist.length){
-    out+='<div style="color:#888;font-size:12px;text-align:center;padding:16px">Ainda não há movimentações para avaliar os pastos.</div>';
+    var _ff=window._hFiltro||{};
+    var _m=(_ff.de||_ff.ate)?'Sem movimentações de pasto nesta safra/mês. Experimente "Todos os períodos" ou outro mês.':'Ainda não há movimentações para avaliar os pastos.';
+    out+='<div style="color:#888;font-size:12px;text-align:center;padding:16px">'+_m+'</div>';
   } else {
     var grupos={}, ordem=[];
     comHist.forEach(function(p){
@@ -6705,7 +6709,7 @@ function gerarPDFRotacao(){
   var dtHoje=new Date().toLocaleDateString('pt-BR');
 
   // ---- trilha por lote ----
-  var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
+  var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado&&_passaFiltro(r);});
   movs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
   var mapa={};
   movs.forEach(function(r,i){
@@ -6945,7 +6949,7 @@ function _consumoGrafico(perfis){
 function rHistConsumo(){
   var div=document.getElementById('hist-consumo');
   var perfis=_consumoPerfis();
-  window._consumoPerfis=perfis; // reuso no PDF
+  window._consumoCache=perfis; // reuso no PDF (nome distinto da função)
   if(!div) return;
 
   if(!perfis.length){
@@ -7068,7 +7072,7 @@ function gerarPDFConsumoPeriodo(){
 
 function gerarPDFConsumo(){
   try{ rHistConsumo(); }catch(e){}
-  var perfis=window._consumoPerfis;
+  var perfis=window._consumoCache||_consumoPerfis();
   if(!perfis||!perfis.length){ alert('Sem tratos para o relat\u00f3rio de consumo.'); return; }
   var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
   var dtHoje=new Date().toLocaleDateString('pt-BR');
