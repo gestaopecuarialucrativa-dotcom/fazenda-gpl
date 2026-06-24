@@ -1194,7 +1194,8 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 </div>
 
 <div id="htab-consumo-content" style="display:none">
-  <button onclick="gerarPDFConsumo()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px">📄 Gerar Relatório PDF</button>
+  <button onclick="gerarPDFConsumo()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📄 PDF — consumo atual</button>
+  <div style="background:#fff;border:1px solid #e0e7e0;border-radius:12px;padding:10px;margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:#1B5E20;margin-bottom:6px">PDF do consumo por período</div><div style="display:flex;gap:6px;flex-wrap:wrap"><label style="flex:1;min-width:120px;font-size:11px;color:#666">De<br><input type="date" id="cp-de" style="width:100%;padding:8px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label><label style="flex:1;min-width:120px;font-size:11px;color:#666">Até<br><input type="date" id="cp-ate" style="width:100%;padding:8px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label></div><button onclick="gerarPDFConsumoPeriodo()" style="width:100%;padding:10px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px">📄 PDF do período</button></div>
   <div id="hist-consumo"></div>
 </div>
 
@@ -6906,7 +6907,7 @@ function _consumoPerfis(){
       }
       return {nome:pr, sacos:pp.sacos, kg:pp.kg, ini:pini, fim:pfim, dias:pdias, recKg:recKg, custoTotal:custoTotal,
         temPar:temPar, gCabDia:gCabDia, pvReal:pvReal, sacUlt:sacUlt, diasEntre:diasEntre, ultDtBR:ultDtBR};
-    }).sort(function(a,b){return b.kg-a.kg;});
+    }).sort(function(a,b){ var d=(b.fim||'').localeCompare(a.fim||''); return d!==0?d:(b.kg-a.kg); });
     var custoLote=prods.reduce(function(s,p){return s+p.custoTotal;},0);
     var custoCab=cab>0&&custoLote>0?custoLote/cab:0;
     var pesoMed=(loteObj&&loteObj.peso)?parseFloat(loteObj.peso):0;
@@ -6916,7 +6917,7 @@ function _consumoPerfis(){
     return {lote:ln, sacos:o.sacos, kg:o.kg, ini:ini, fim:fim, dias:dias,
       cab:cab, kgDia:kgDia, kgCab:kgCab, custoLote:custoLote, custoCab:custoCab,
       pesoMed:pesoMed, gCabDia:gCabDia, pvDia:pvDia, custoCabDia:custoCabDia, prods:prods};
-  }).sort(function(a,b){return b.kg-a.kg;});
+  }).sort(function(a,b){ var na=parseInt((String(a.lote).match(/\d+/)||[9999])[0],10), nb=parseInt((String(b.lote).match(/\d+/)||[9999])[0],10); return na!==nb?na-nb:String(a.lote).localeCompare(String(b.lote)); });
 
   return perfis;
 }
@@ -6993,6 +6994,76 @@ function rHistConsumo(){
   });
 
   div.innerHTML=out;
+}
+
+function gerarPDFConsumoPeriodo(){
+  var de=((document.getElementById('cp-de')||{}).value)||'';
+  var ate=((document.getElementById('cp-ate')||{}).value)||'';
+  if(!de||!ate){ alert('Escolha a data de in\u00edcio e de fim do per\u00edodo.'); return; }
+  if(de>ate){ var _t=de; de=ate; ate=_t; }
+  var tratos=(S.rT||[]).filter(function(r){
+    if(r.tipo!=='trato'||r._apagado) return false;
+    var dt=_regData(r); if(!dt) return false;
+    return dt>=de && dt<=ate;
+  });
+  if(!tratos.length){ alert('Nenhum trato lan\u00e7ado nesse per\u00edodo.'); return; }
+  var porLote={}, totS=0, totKg=0, totC=0;
+  tratos.forEach(function(t){
+    var ln=(t.lote||t.co||'?').replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
+    var pr=t.pr||t.prod||'?';
+    var sacos=parseFloat(t.q||t.qtd||0)||0;
+    var est=(S.EST&&t.pr)?S.EST[t.pr]:null;
+    var ps=(est&&est.peso_saco)?parseFloat(est.peso_saco):30;
+    var kg=parseFloat(t.kg_fornecido||0)||(sacos*ps);
+    var preco=(est&&est.preco_saco)?parseFloat(est.preco_saco):0;
+    var custo=preco>0?sacos*preco:0;
+    if(!porLote[ln]) porLote[ln]={lote:ln,sacos:0,kg:0,custo:0,prods:{}};
+    porLote[ln].sacos+=sacos; porLote[ln].kg+=kg; porLote[ln].custo+=custo;
+    if(!porLote[ln].prods[pr]) porLote[ln].prods[pr]={sacos:0,kg:0,custo:0};
+    porLote[ln].prods[pr].sacos+=sacos; porLote[ln].prods[pr].kg+=kg; porLote[ln].prods[pr].custo+=custo;
+    totS+=sacos; totKg+=kg; totC+=custo;
+  });
+  var perfis=Object.keys(porLote).map(function(k){return porLote[k];}).sort(function(a,b){return b.custo-a.custo;});
+  var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
+  var deBR=de.split('-').reverse().join('/'), ateBR=ate.split('-').reverse().join('/');
+
+  function bn(v,l){ return '<div style="flex:1;min-width:110px;background:#fff;border-radius:14px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:3px solid #2E7D32"><div style="font-size:24px;font-weight:900;color:#1B5E20;line-height:1">'+v+'</div><div style="font-size:9px;color:#666;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:5px">'+l+'</div></div>'; }
+  function mini(v,l){ return '<div style="flex:1;min-width:64px;background:#E8F5E9;border-radius:10px;padding:8px 5px;text-align:center"><div style="font-size:16px;font-weight:900;color:#1B5E20;line-height:1">'+v+'</div><div style="font-size:8px;color:#555;font-weight:700;margin-top:2px">'+l+'</div></div>'; }
+
+  var topo='<div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0">'
+    +bn('R$ '+Math.round(totC),'Custo total')
+    +bn((Math.round(totS*10)/10)+' sc','Total sacos')
+    +bn(Math.round(totKg)+' kg','Total consumido')
+    +'</div>';
+
+  var cards=perfis.map(function(p){
+    var prods=Object.keys(p.prods).map(function(pr){
+      var x=p.prods[pr];
+      return '<div style="border-top:1px solid #f0f0f0;padding:7px 0"><div style="display:flex;justify-content:space-between"><span style="font-size:12px;font-weight:700;color:#1B5E20">'+pr+'</span><span style="font-size:12px;font-weight:800;color:#2E7D32">R$ '+Math.round(x.custo)+'</span></div><div style="font-size:10px;color:#777">'+Math.round(x.kg)+' kg \u00b7 '+(Math.round(x.sacos*10)/10)+' sc</div></div>';
+    }).join('');
+    return '<div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-left:4px solid #2E7D32;break-inside:avoid">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:16px;font-weight:900;color:#1B5E20">'+p.lote+'</div><div style="font-size:14px;font-weight:900;color:#2E7D32">R$ '+Math.round(p.custo)+'</div></div>'
+      +'<div style="display:flex;gap:6px;margin-bottom:2px">'+mini((Math.round(p.sacos*10)/10)+' sc','SACOS')+mini(Math.round(p.kg)+' kg','TOTAL KG')+'</div>'
+      +prods
+      +'</div>';
+  }).join('');
+
+  var w=window.open('','_blank');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Consumo do Per\u00edodo \u2014 GPL</title>'
+    +'<style>*{box-sizing:border-box}'
+    +'body{font-family:Arial,"Segoe UI",Roboto,system-ui,sans-serif;padding:20px;color:#222;background:#eef1ec;max-width:900px;margin:0 auto}'
+    +'.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:620px){.grid2{grid-template-columns:1fr}}'
+    +_pdfTimbreCss()
+    +'@media print{button{display:none!important}body{background:#fff}}'
+    +'</style></head><body>'
+    +_pdfTimbre('Consumo do Per\u00edodo', deBR+' a '+ateBR, faz)
+    +topo
+    +'<div class="grid2">'+cards+'</div>'
+    +'<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:14px">Imprimir / Salvar PDF</button>'
+    +_pdfRodape()
+    +'</body></html>');
+  w.document.close();
+  setTimeout(function(){ try{w.print();}catch(e){} },500);
 }
 
 function gerarPDFConsumo(){
