@@ -5292,7 +5292,7 @@ function salvarNota(faz,k){if(!S.NOTAS)S.NOTAS={};const ta=document.getElementBy
 function sHistTab(tab){
   window._sHistTabAtual=tab;
   var hf=document.getElementById('hist-filtros');
-  if(hf) hf.style.display=(tab==='lotes')?'none':'flex';
+  if(hf) hf.style.display=(tab==='lotes'||tab==='consumo')?'none':'flex';
   ['lotes','rotacao','pastos','consumo'].forEach(function(t){
     var b=document.getElementById('htab-'+t);
     var c=document.getElementById('htab-'+t+'-content');
@@ -5319,6 +5319,26 @@ function _getHa(areaObj){
   return areaObj.ha || 0;
 }
 
+// ---- data segura de um registro (ISO, epoch ou BR) ----
+function _regData(r){
+  var d=(r&&(r.dt!=null&&r.dt!==''?r.dt:r.ts));
+  if(d==null||d==='') return '';
+  if(typeof d==='number'){ try{ return new Date(d).toISOString().substring(0,10); }catch(e){ return ''; } }
+  d=String(d);
+  if(/^\d{4}-\d{2}-\d{2}/.test(d)) return d.substring(0,10);
+  var m=d.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if(m) return m[3]+'-'+m[2]+'-'+m[1];
+  return '';
+}
+function _passaFiltro(r){
+  var _f=window._hFiltro||{};
+  if(!_f.de&&!_f.ate) return true;
+  var dt=_regData(r);
+  if(!dt) return true; // data desconhecida nunca some
+  if(_f.de&&dt<_f.de) return false;
+  if(_f.ate&&dt>_f.ate) return false;
+  return true;
+}
 // ============ FILTROS SAFRA/MÊS DO HISTÓRICO ============
 function _hSafraLista(){
   var hojeA=new Date().getFullYear(), hojeM=new Date().getMonth()+1;
@@ -5777,14 +5797,7 @@ function _hTimeline(movsLote){
 // cada pasto (entrada→próxima entrada do mesmo lote; última = até hoje) e agrega
 // por pasto/piquete e por módulo. Calcula dias de ocupação e descanso médio (dias vazio).
 function _rotacaoStats(){
-  var _f=window._hFiltro||{};
-  var movs=(S.rT||[]).filter(function(r){
-    if(r.tipo!=='mudanca_pasto'||r._apagado) return false;
-    var dt=(r.dt||r.ts||'').substring(0,10);
-    if(_f.de&&dt<_f.de) return false;
-    if(_f.ate&&dt>_f.ate) return false;
-    return true;
-  });
+  var movs=(S.rT||[]).filter(function(r){ return r.tipo==='mudanca_pasto'&&!r._apagado&&_passaFiltro(r); });
   movs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
   function labelArea(id){ var a=MAPA_AREAS.find(function(x){return x.id===id;}); return a?a.label:(id||'—'); }
   function ehPasto(id){ var a=MAPA_AREAS.find(function(x){return x.id===id;}); return a&&a.tipo==='pasto'; }
@@ -6823,15 +6836,8 @@ function _consumoDias(dtA,dtB){
 
 // Monta os perfis de consumo por lote (reusado por tela e PDF)
 function _consumoPerfis(){
-  var _f=window._hFiltro||{};
-  var tratos=(S.rT||[]).filter(function(r){
-    if(r.tipo!=='trato'||r._apagado) return false;
-    var dt=(r.dt||r.ts||'').substring(0,10);
-    if(_f.de&&dt<_f.de) return false;
-    if(_f.ate&&dt>_f.ate) return false;
-    return true;
-  });
-  tratos.forEach(function(r){ if(!r.dt&&r.ts) r.dt=r.ts.substring(0,10); });
+  var tratos=(S.rT||[]).filter(function(r){ return r.tipo==='trato'&&!r._apagado; });
+  tratos.forEach(function(r){ if(!r.dt&&r.ts) r.dt=_regData(r); });
   var lotes=S.LOTES||[];
   var porLote={};
   tratos.forEach(function(t){
