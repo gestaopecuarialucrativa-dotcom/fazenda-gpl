@@ -1108,6 +1108,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <div id="feed-lista"></div>
 </div>
 <div id="pg-consultoria" class="pg" style="display:none;padding:14px;padding-bottom:40px">
+  <div style="margin-bottom:10px"><div style="font-size:16px;font-weight:800;color:#1B5E20">Conferir lançamentos da equipe</div><div style="font-size:12px;color:#777;margin-top:2px">Fiscalização — o vaqueiro tratou certo?</div></div>
   <div class="card" style="padding:14px">
     <div style="font-size:13px;font-weight:800;color:#1b2c1b;margin-bottom:10px">Período do relatório</div>
     <div style="display:flex;gap:8px">
@@ -1186,11 +1187,14 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     </div>
   </div>
   <button onclick="gerarPDFPastos()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px">📄 Gerar Relatório PDF</button>
+  <div style="background:#fff;border:1px solid #e0e7e0;border-radius:12px;padding:10px;margin:8px 0"><div style="font-size:12px;font-weight:700;color:#1B5E20;margin-bottom:6px">PDF por período (opcional)</div><div style="display:flex;gap:6px;flex-wrap:wrap"><label style="flex:1;min-width:110px;font-size:11px;color:#666">De<br><input type="date" id="pas-de" style="width:100%;padding:7px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label><label style="flex:1;min-width:110px;font-size:11px;color:#666">Até<br><input type="date" id="pas-ate" style="width:100%;padding:7px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label></div></div>
   <div id="hist-ranking-pastos"></div>
 </div>
 
 <div id="htab-consumo-content" style="display:none">
-  <button onclick="gerarPDFConsumo()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px">📄 Gerar Relatório PDF</button>
+  <div style="margin:4px 0 10px"><div style="font-size:15px;font-weight:800;color:#1B5E20">Consumo</div><div style="font-size:12px;color:#777;margin-top:2px">Custo e relatório de consumo</div></div>
+  <button onclick="gerarPDFConsumo()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📄 PDF — consumo atual</button>
+  <div style="background:#fff;border:1px solid #e0e7e0;border-radius:12px;padding:10px;margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:#1B5E20;margin-bottom:6px">PDF do consumo por período</div><div style="display:flex;gap:6px;flex-wrap:wrap"><label style="flex:1;min-width:120px;font-size:11px;color:#666">De<br><input type="date" id="cp-de" style="width:100%;padding:8px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label><label style="flex:1;min-width:120px;font-size:11px;color:#666">Até<br><input type="date" id="cp-ate" style="width:100%;padding:8px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label></div><button onclick="gerarPDFConsumoPeriodo()" style="width:100%;padding:10px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px">📄 PDF do período</button></div>
   <div id="hist-consumo"></div>
 </div>
 
@@ -2235,15 +2239,53 @@ function rConsultoria(dias){
     var difDiaCor  = Math.abs(difSacDia)<0.05?'#2E7D32':'#E65100';
     var difSinal   = difSacDia>0?'+':'';
 
-    // diferenca
-    var difTxt='', difCor='#65766a';
+    // ciclos passados (defensivo): olha intervalos entre tratos do mesmo produto nos ultimos 45 dias
+    function _ciclosAbaixo(){
+      var rr={ciclos:0, abaixo:0};
+      if(!todosTratosLote.length || sacosDia<=0) return rr;
+      var lim=new Date(hoje.getTime()-45*864e5);
+      var porProd={};
+      todosTratosLote.forEach(function(t){ var p=_prodTrato(t); if(!p) return; (porProd[p]=porProd[p]||[]).push(t); });
+      Object.keys(porProd).forEach(function(p){
+        var pd={};
+        porProd[p].forEach(function(t){ var d=_dtTrato(t); if(d) pd[d]=(pd[d]||0)+(parseFloat(t.q||t.qtd||0)||0); });
+        var ds=Object.keys(pd).sort();
+        for(var i=1;i<ds.length;i++){
+          var dA=_toDate(ds[i-1]), dB=_toDate(ds[i]);
+          if(!dA||!dB||dB<lim) continue;
+          var di=Math.max(1,Math.round((dB-dA)/864e5));
+          var sd=pd[ds[i]]/di;
+          rr.ciclos++;
+          if(sd < sacosDia*0.85) rr.abaixo++;
+        }
+      });
+      return rr;
+    }
+    // diferenca (classificacao neutra: sem culpar o vaqueiro; ordem gado/produto/estrutura/lancamento)
+    var difTxt='', difCor='#65766a', sitDica='';
     if(prevSacos>0){
       var dif=realSacos-prevSacos;
-      if(realSacos===0){ difTxt='Sem trato no período'; difCor='#C62828';
-        alertas.push(nm+' tinha consumo previsto (~'+prevSacos.toFixed(1)+' sacos) mas não teve nenhum trato lançado — verificar com o vaqueiro.');
-      } else if(dif<0){ difTxt='Déficit de '+Math.abs(dif).toFixed(1)+' sacos'; difCor='#E65100'; }
-      else if(dif>0){ difTxt='Acima '+dif.toFixed(1)+' sacos'; difCor='#E65100'; }
-      else { difTxt='No ponto'; difCor='#2E7D32'; }
+      var diasSemTrato=Math.max(0,dias-diasComTrato);
+      var _rec=_ciclosAbaixo();
+      var recorrente=(_rec.ciclos>=3 && _rec.abaixo>=Math.ceil(_rec.ciclos*0.6));
+      if(realSacos===0){
+        difTxt='Sem registro no período'; difCor='#E65100';
+        alertas.push(nm+' não teve trato lançado no período (previsto ~'+prevSacos.toFixed(1)+' sacos) — conferir produto e lançamento.');
+      } else if(dif>0){ difTxt='Acima '+dif.toFixed(1)+' sacos'; difCor='#E65100'; }
+      else if(Math.abs(dif)<0.05){ difTxt='No ponto'; difCor='#2E7D32'; }
+      else {
+        var defPorFalta=diasSemTrato*prevSacDia;
+        var explicado=(diasSemTrato>0 && Math.abs(dif)<=defPorFalta*1.2);
+        if(recorrente){
+          difTxt='Abaixo do esperado · observar'; difCor='#E65100';
+          sitDica='Consumo abaixo vem se repetindo nos últimos ciclos. Vale conferir no campo: o gado pode não estar consumindo tudo, a palatabilidade/rendimento do produto, ou o espaço de cocho — e por último os lançamentos.';
+        } else if(explicado){
+          if(diasSemTrato<=1){ difTxt='Dentro do esperado'; difCor='#2E7D32'; }
+          else { difTxt='Aguardando lançamento'; difCor='#FF8F00'; }
+        } else {
+          difTxt='Consumo abaixo neste período'; difCor='#FF8F00';
+        }
+      }
     } else {
       difTxt = realSacos>0?('Sem % cadastrado'):('—');
     }
@@ -2290,6 +2332,7 @@ function rConsultoria(dias){
       +   gmdHtml
       +   '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:#65766a">Frequência</span><span style="font-weight:600;color:#65766a">tratou em '+diasComTrato+' de '+dias+' dias</span></div>'
       +   '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:8px"><span style="color:#65766a">Situação</span><span style="font-weight:800;color:'+difCor+'">'+difTxt+'</span></div>'
+      +   (sitDica?'<div style="background:#FFF3E0;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:11px;color:#8a5a00;line-height:1.6">'+sitDica+'</div>':'')
       // custo (periodo + por dia)
       +   '<div style="display:flex;gap:6px;margin-bottom:6px">'
       +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:7px;text-align:center"><div style="font-size:14px;font-weight:900;color:#2E7D32">R$ '+custo.toFixed(2).replace(".",",")+'</div><div style="font-size:9px;color:#65766a">custo total</div></div>'
@@ -5716,7 +5759,7 @@ function _hTimeline(movsLote){
 // cada pasto (entrada→próxima entrada do mesmo lote; última = até hoje) e agrega
 // por pasto/piquete e por módulo. Calcula dias de ocupação e descanso médio (dias vazio).
 function _rotacaoStats(){
-  var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
+  var movs=(S.rT||[]).filter(function(r){ return r.tipo==='mudanca_pasto'&&!r._apagado; });
   movs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
   function labelArea(id){ var a=MAPA_AREAS.find(function(x){return x.id===id;}); return a?a.label:(id||'—'); }
   function ehPasto(id){ var a=MAPA_AREAS.find(function(x){return x.id===id;}); return a&&a.tipo==='pasto'; }
@@ -5947,7 +5990,8 @@ function rHistRotacao(){
   out+=tabRank('🏆 Classificação por Pasto / Piquete', st.pastos, 'label', false);
   out+=tabRank('🏆 Classificação por Módulo', st.modulos, 'nome', true);
   if(st.pastos.length){
-    out+='<button onclick="gerarPDFRotacao()" style="width:100%;margin-top:12px;background:#1B5E20;color:#fff;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer">🖨️ Gerar PDF da Rotação</button>';
+    out+='<button onclick="gerarPDFRotacao()" style="width:100%;margin-top:12px;background:#1B5E20;color:#fff;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer">Gerar PDF da Rota\u00e7\u00e3o</button>'
+      +'<div style="background:#fff;border:1px solid #e0e7e0;border-radius:12px;padding:10px;margin-top:8px"><div style="font-size:12px;font-weight:700;color:#1B5E20;margin-bottom:6px">PDF por per\u00edodo (opcional)</div><div style="display:flex;gap:6px;flex-wrap:wrap"><label style="flex:1;min-width:110px;font-size:11px;color:#666">De<br><input type="date" id="rot-de" style="width:100%;padding:7px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label><label style="flex:1;min-width:110px;font-size:11px;color:#666">At\u00e9<br><input type="date" id="rot-ate" style="width:100%;padding:7px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label></div></div>';
   }
   div.innerHTML=out;
 }
@@ -5982,7 +6026,15 @@ function _rkpDiasEntre(isoA,isoB){
 
 // Monta, por área, a lista de ocupações: {entrada, saida, dias, lote, ua}
 function _rkpOcupacoesPorArea(){
-  var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
+  var _pf=window._pdfPasFiltro||{};
+  var movs=(S.rT||[]).filter(function(r){
+    if(r.tipo!=='mudanca_pasto'||r._apagado) return false;
+    if(!_pf.de&&!_pf.ate) return true;
+    var dt=(r.dt||r.ts||'').substring(0,10);
+    if(_pf.de&&dt<_pf.de) return false;
+    if(_pf.ate&&dt>_pf.ate) return false;
+    return true;
+  });
   movs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
   var lotes=S.LOTES||[];
   // Para cada lote, percorrer seus movimentos em ordem: cada destino é uma
@@ -6535,7 +6587,12 @@ function _rkpGraficoModulosPDF(comHist){
 }
 
 function gerarPDFPastos(){
+  var de=((document.getElementById('pas-de')||{}).value)||'';
+  var ate=((document.getElementById('pas-ate')||{}).value)||'';
+  if(de&&ate&&de>ate){var _t=de;de=ate;ate=_t;}
+  window._pdfPasFiltro={de:de,ate:ate};
   try{ rHistRankingPastos(); }catch(e){}
+  window._pdfPasFiltro={};
   var dados=window._rkpPerfis;
   if(!dados||!dados.comHist){ alert('Sem dados de pastos para o relat\u00f3rio.'); return; }
   var cfg=dados.cfg||{ideal:30,parado:60,intenso:5};
@@ -6617,70 +6674,135 @@ function gerarPDFPastos(){
 
 // PDF da Rotação: classificação por pasto/piquete e por módulo (dias + descanso médio).
 function gerarPDFRotacao(){
-  var st;
-  try{ st=_rotacaoStats(); }catch(e){ alert('Não foi possível calcular a rotação.'); return; }
-  if(!st || !st.pastos.length){ alert('Sem movimentações para o relatório.'); return; }
+  var st; try{ st=_rotacaoStats(); }catch(e){ alert('N\u00e3o foi poss\u00edvel calcular a rota\u00e7\u00e3o.'); return; }
+  if(!st||!st.pastos||!st.pastos.length){ alert('Sem movimenta\u00e7\u00f5es para o relat\u00f3rio.'); return; }
   var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
-  function linhas(itens, nomeCampo){
-    return itens.slice().sort(function(a,b){return b.dias-a.dias;}).map(function(p,i){
-      var nm=p[nomeCampo]||p.label||p.nome;
-      var tag='';
-      if(p.status){
-        tag = p.status.st==='vazio'
-          ? ' <span style="color:#2E7D32;font-size:9px">🟢 vazio há '+p.status.dias+'d</span>'
-          : ' <span style="color:#1565C0;font-size:9px">ocupado há '+p.status.dias+'d</span>';
-      }
-      return '<tr>'
-        +'<td style="text-align:center">'+(i+1)+'</td>'
-        +'<td>'+nm+tag+'</td>'
-        +'<td style="text-align:center;font-weight:700">'+p.dias+'</td>'
-        +'<td style="text-align:center">'+p.pass+'</td>'
-        +'<td style="text-align:center">'+p.media+'</td>'
-        +'<td style="text-align:center">'+(p.descanso===null?'—':p.descanso)+'</td>'
-        +'</tr>';
+  var dtHoje=new Date().toLocaleDateString('pt-BR');
+
+  var de=((document.getElementById('rot-de')||{}).value)||'';
+  var ate=((document.getElementById('rot-ate')||{}).value)||'';
+  if(de&&ate&&de>ate){var _t=de;de=ate;ate=_t;}
+  // ---- trilha por lote ----
+  var movs=(S.rT||[]).filter(function(r){
+    if(r.tipo!=='mudanca_pasto'||r._apagado) return false;
+    if(!de&&!ate) return true;
+    var dt=(r.dt||r.ts||'').substring(0,10);
+    if(de&&dt<de) return false;
+    if(ate&&dt>ate) return false;
+    return true;
+  ;});
+  movs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
+  var mapa={};
+  movs.forEach(function(r,i){
+    var rDt=(r.dt||r.ts||'').substring(0,10);
+    var prev=null; for(var j=i-1;j>=0;j--){ if(movs[j].lote===r.lote){prev=movs[j];break;} }
+    var dtEnt=prev?(prev.dt||prev.ts||'').substring(0,10):rDt;
+    var dias=0; if(dtEnt&&rDt&&dtEnt!==rDt){ dias=Math.max(0,Math.round((new Date(rDt+'T12:00:00')-new Date(dtEnt+'T12:00:00'))/864e5)); }
+    if(!mapa[r.lote]) mapa[r.lote]=[];
+    mapa[r.lote].push({origem:r.origem,destino:r.destino,saida:rDt,dias:dias});
+  });
+  var hojeR=new Date();
+  function labelArea(id){ return (MAPA_AREAS.find(function(a){return a.id===id;})||{}).label||id||'\u2014'; }
+  var lotes=Object.keys(mapa).map(function(lt){
+    var arr=mapa[lt];
+    var trilha=[];
+    if(arr[0].origem){ trilha.push({piq:labelArea(arr[0].origem),dias:arr[0].dias,atual:false}); }
+    for(var k=0;k<arr.length-1;k++){ trilha.push({piq:labelArea(arr[k].destino),dias:arr[k+1].dias,atual:false}); }
+    var ult=arr[arr.length-1];
+    var diasAt=ult.saida?Math.max(0,Math.round((hojeR-new Date(ult.saida+'T12:00:00'))/864e5)):0;
+    trilha.push({piq:labelArea(ult.destino),dias:diasAt,atual:true});
+    var enc=trilha.filter(function(t){return !t.atual;});
+    var med=enc.length?Math.round(enc.reduce(function(s,t){return s+t.dias;},0)/enc.length):0;
+    return {lote:lt, trilha:trilha, atualPiq:labelArea(ult.destino), diasAtual:diasAt, media:med, nPiq:trilha.length, entrada:ult.saida};
+  });
+
+  // ---- médias para leitura forçado/subutilizado ----
+  var avgPastejo = st.pastos.reduce(function(s,p){return s+p.dias;},0)/st.pastos.length;
+  var descV = st.pastos.filter(function(p){return p.descanso!=null;}).map(function(p){return p.descanso;});
+  var avgDesc = descV.length?descV.reduce(function(a,b){return a+b;},0)/descV.length:30;
+
+  function bn(v,l){ return '<div style="flex:1;min-width:120px;background:#fff;border-radius:14px;padding:14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:3px solid #2E7D32"><div style="font-size:24px;font-weight:900;color:#1B5E20;line-height:1">'+v+'</div><div style="font-size:9px;color:#666;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:5px">'+l+'</div></div>'; }
+  function mini(v,l,c){ return '<div style="flex:1;min-width:64px;background:#E8F5E9;border-radius:10px;padding:8px 5px;text-align:center"><div style="font-size:16px;font-weight:900;color:'+(c||'#1B5E20')+';line-height:1">'+v+'</div><div style="font-size:8px;color:#555;font-weight:700;margin-top:2px">'+l+'</div></div>'; }
+
+  // ---- ALERTA DE AÇÃO ----
+  var prontos=st.pastos.filter(function(p){return p.status&&p.status.st==='vazio'&&p.status.dias>=Math.round(avgDesc);}).sort(function(a,b){return b.status.dias-a.status.dias;}).slice(0,5);
+  var forcados=st.pastos.filter(function(p){return p.dias>avgPastejo && (p.descanso==null||p.descanso<avgDesc);}).sort(function(a,b){return b.dias-a.dias;}).slice(0,4);
+  var loteAcima=lotes.filter(function(L){return L.media>0&&L.diasAtual>L.media*1.5;});
+  function chip(txt,bg,fg){ return '<span style="display:inline-block;background:'+bg+';color:'+fg+';padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;margin:3px 4px 0 0">'+txt+'</span>'; }
+  var alertaItens='';
+  if(prontos.length) alertaItens+='<div style="margin-bottom:6px"><span style="font-size:11px;font-weight:700;color:#2E7D32">Prontos pra receber gado:</span> '+prontos.map(function(p){return chip(p.label+' \u00b7 '+p.status.dias+'d',' #E8F5E9','#1B5E20');}).join('')+'</div>';
+  if(forcados.length) alertaItens+='<div style="margin-bottom:6px"><span style="font-size:11px;font-weight:700;color:#E65100">Sendo for\u00e7ados (pouco descanso):</span> '+forcados.map(function(p){return chip(p.label,'#FFF3E0','#E65100');}).join('')+'</div>';
+  if(loteAcima.length) alertaItens+='<div><span style="font-size:11px;font-weight:700;color:#E65100">Lotes acima do ritmo:</span> '+loteAcima.map(function(L){return chip(L.lote+' \u00b7 '+L.diasAtual+'d no '+L.atualPiq,'#FFF3E0','#E65100');}).join('')+'</div>';
+  var alerta = alertaItens?('<div style="background:#fff;border-radius:14px;padding:14px 16px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,.07);border-left:4px solid #FFB300"><div style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">O que precisa de aten\u00e7\u00e3o</div>'+alertaItens+'</div>'):'';
+
+  // ---- TRILHA DE CADA LOTE ----
+  var trilhaCards=lotes.map(function(L){
+    var atencao=(L.media>0&&L.diasAtual>L.media*1.5);
+    var corA=atencao?'#E65100':'#2E7D32';
+    var tag=atencao?'<span style="font-size:9px;font-weight:700;color:#E65100;background:#FFF3E0;padding:2px 8px;border-radius:9px">acima do ritmo</span>':'<span style="font-size:9px;font-weight:700;color:#2E7D32;background:#E8F5E9;padding:2px 8px;border-radius:9px">no ritmo</span>';
+    var chips=L.trilha.map(function(t,i){
+      var bg=t.atual?'#2E7D32':(t.dias<=21?'#E8F5E9':'#FFF3E0');
+      var fg=t.atual?'#fff':(t.dias<=21?'#1B5E20':'#E65100');
+      var seta=i>0?'<span style="color:#bbb;font-size:11px">\u2192</span>':'';
+      return seta+'<span style="display:inline-block;background:'+bg+';color:'+fg+';padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;margin:2px 1px">'+t.piq+' \u00b7 '+t.dias+'d'+(t.atual?' \u2713':'')+'</span>';
     }).join('');
+    var enc=L.trilha.filter(function(t){return !t.atual && t.dias>0;});
+    var partes=enc.map(function(t){return t.piq+' ('+t.dias+' dias)';});
+    var atual=L.trilha[L.trilha.length-1];
+    var frase='O '+L.lote+' passou por '+(partes.length?partes.join(', ')+', e est\u00e1':'est\u00e1')+' no '+atual.piq+' h\u00e1 '+atual.dias+' dias.';
+    return '<div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-left:4px solid '+corA+';break-inside:avoid;margin-bottom:12px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><div style="font-size:16px;font-weight:900;color:#1B5E20">'+L.lote+'</div>'+tag+'</div>'
+      +'<div style="display:flex;flex-wrap:wrap;align-items:center;margin:8px 0">'+chips+'</div>'
+      +'<div style="background:#f5f7f4;border-radius:8px;padding:9px 11px;font-size:11px;color:#555;line-height:1.5;margin:6px 0"><b style="color:#1B5E20">Hist\u00f3rico:</b> '+frase+'</div>'
+      +'<div style="display:flex;gap:6px">'+mini(L.diasAtual+'d','NESTE PIQUETE',corA)+mini(L.media+'d','M\u00c9DIA /PIQUETE')+mini(L.nPiq,'PIQUETES')+'</div>'
+      +'</div>';
+  }).join('');
+
+  // ---- STATUS DOS PASTOS ----
+  var maxD=Math.max(1,Math.max.apply(null,st.pastos.map(function(p){return p.dias;})));
+  var statusBars=st.pastos.slice().sort(function(a,b){return b.dias-a.dias;}).map(function(p){
+    var ocup=p.status&&p.status.st==='ocupado';
+    var cor=ocup?'#2E7D32':'#9CCC65';
+    var w=Math.max(4,Math.round(p.dias/maxD*100));
+    var stxt=p.status?(ocup?p.status.dias+'d ocup.':p.status.dias+'d desc.'):'';
+    return '<div style="display:flex;align-items:center;gap:8px;margin:5px 0"><div style="width:52px;font-size:10px;font-weight:700;color:#555;flex-shrink:0">'+p.label+'</div><div style="flex:1;background:#eef0ec;border-radius:4px;height:13px;overflow:hidden"><div style="width:'+w+'%;background:'+cor+';height:100%"></div></div><div style="width:66px;text-align:right;font-size:9px;font-weight:700;color:'+(ocup?'#2E7D32':'#7CB342')+';flex-shrink:0">'+stxt+'</div></div>';
+  }).join('');
+  var statusBloco='<div style="background:#fff;border-radius:14px;padding:16px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,.07)"><div style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Status dos pastos agora</div><div style="font-size:9px;color:#888;margin-bottom:10px"><span style="color:#2E7D32;font-weight:900">\u25a0</span> ocupado &nbsp; <span style="color:#9CCC65;font-weight:900">\u25a0</span> descansando \u00b7 tamanho da barra = total de dias de pastejo</div>'+statusBars+'</div>';
+
+  // ---- RANK ----
+  function rankItem(p,modo){
+    var tag='';
+    if(modo==='pastejo' && p.dias>avgPastejo && (p.descanso==null||p.descanso<avgDesc)) tag=' <span style="font-size:9px;font-weight:700;color:#E65100;background:#FFF3E0;padding:1px 7px;border-radius:8px">for\u00e7ado</span>';
+    if(modo==='descanso' && p.status&&p.status.st==='vazio' && p.status.dias>avgDesc && p.dias<avgPastejo) tag=' <span style="font-size:9px;font-weight:700;color:#7CB342;background:#F1F8E9;padding:1px 7px;border-radius:8px">subutilizado \u00b7 '+p.pass+'x</span>';
+    var val=modo==='pastejo'?(p.dias+'d pastejo'):((p.status?p.status.dias:0)+'d descanso');
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f0f0"><span style="font-size:12px;font-weight:700;color:#1B5E20">'+p.label+tag+'</span><span style="font-size:12px;font-weight:800;color:#2E7D32">'+val+'</span></div>';
   }
-  var cab='<tr><th>#</th><th>Local</th><th>Total dias</th><th>Passagens</th><th>Média dias</th><th>Descanso médio</th></tr>';
-  // gráfico de barras SVG para o PDF
-  function barrasPdf(itens, modo){
-    var top=itens.slice().sort(function(a,b){return b.dias-a.dias;}).slice(0,12);
-    if(!top.length) return '';
-    var max=Math.max(1, Math.max.apply(null, top.map(function(p){return p.dias;})));
-    var h=top.length*24+10;
-    var svg='<svg viewBox="0 0 480 '+h+'" style="width:100%;max-width:520px" xmlns="http://www.w3.org/2000/svg">';
-    top.forEach(function(p,i){
-      var nm=(p.label||p.nome||'').substring(0,12);
-      var w=Math.round((p.dias/max)*300);
-      var y=i*24+6;
-      var cor='#2E7D32';
-      if(modo==='status' && p.status){ cor = p.status.st==='vazio' ? '#43A047' : '#1565C0'; }
-      svg+='<text x="0" y="'+(y+13)+'" font-size="11" fill="#444">'+nm+'</text>';
-      svg+='<rect x="110" y="'+(y+3)+'" width="'+Math.max(2,w)+'" height="14" rx="3" fill="'+cor+'"/>';
-      svg+='<text x="'+(110+Math.max(2,w)+5)+'" y="'+(y+14)+'" font-size="11" font-weight="700" fill="#1B5E20">'+p.dias+'d</text>';
-    });
-    svg+='</svg>';
-    return svg;
-  }
+  var maisPastejo=st.pastos.slice().sort(function(a,b){return b.dias-a.dias;}).slice(0,6).map(function(p){return rankItem(p,'pastejo');}).join('');
+  var maisDescanso=st.pastos.filter(function(p){return p.status&&p.status.st==='vazio';}).sort(function(a,b){return b.status.dias-a.status.dias;}).slice(0,6).map(function(p){return rankItem(p,'descanso');}).join('');
+  var rankBloco='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0">'
+    +'<div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.07)"><div style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Mais pastejados</div>'+(maisPastejo||'<div style="font-size:11px;color:#999">\u2014</div>')+'</div>'
+    +'<div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.07)"><div style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Mais descansaram</div>'+(maisDescanso||'<div style="font-size:11px;color:#999">\u2014</div>')+'</div>'
+    +'</div>';
+
   var w=window.open('','_blank');
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Rotação de Pastos — GPL</title>'
-    +'<style>body{font-family:Arial,sans-serif;padding:20px;color:#222}'
-    +'h2{color:#1B5E20;font-size:14px;margin:16px 0 4px}'
-    +'table{width:100%;border-collapse:collapse;font-size:11px;margin-top:6px}'
-    +'th{background:#1B5E20;color:#fff;padding:6px;text-align:left;font-size:10px}'
-    +'td{padding:6px;border-bottom:1px solid #eee}'
-    +'.crit{font-size:10px;color:#666;margin-top:8px;line-height:1.5}'
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Rota\u00e7\u00e3o dos Lotes \u2014 GPL</title>'
+    +'<style>*{box-sizing:border-box}'
+    +'body{font-family:Arial,"Segoe UI",Roboto,system-ui,sans-serif;padding:18px;color:#222;background:#eef1ec;max-width:900px;margin:0 auto}'
+    +'.cap{background:linear-gradient(135deg,#1B5E20,#2E7D32);border-radius:16px;padding:18px 20px;color:#fff;margin-bottom:6px}'
+    +'.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:620px){.grid2{grid-template-columns:1fr}}'
+    +'.nota{font-size:10px;color:#666;margin-top:12px;line-height:1.5;padding:10px;background:#fff;border-radius:10px;border-left:3px solid #8BC34A}'
     +_pdfTimbreCss()
-    +'@media print{button{display:none}}'
+    +'@media print{button{display:none!important}body{background:#fff}}'
     +'</style></head><body>'
-    +_pdfTimbre('🔄 Rotação de Pastos', 'Dias de ocupação e descanso por área', faz)
-    +'<h2>📊 Dias de ocupação por pasto</h2>'+barrasPdf(st.pastos,'dias')
-    +'<h2>📊 Status atual (verde = descansando · azul = ocupado)</h2>'+barrasPdf(st.pastos,'status')
-    +'<h2>🏆 Classificação por Pasto / Piquete</h2>'
-    +'<table>'+cab+linhas(st.pastos,'label')+'</table>'
-    +'<h2>🏆 Classificação por Módulo</h2>'
-    +'<table>'+cab+linhas(st.modulos,'nome')+'</table>'
-    +'<p class="crit">Total dias = soma dos dias de ocupação em todas as passagens. Média = dias por passagem. <b>🟢 vazio há Xd</b> = a área está descansando agora (saída do último lote até hoje), pronta/quase pronta pra receber gado. <b>Descanso médio</b> = média de dias vazio entre passagens (indica o tempo de rebrota); "—" = ainda sem ciclo medível. Dias calculados pelas datas de entrada das movimentações.</p>'
-    +'<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:12px">🖨️ Imprimir / Salvar PDF</button>'
+    +'<div class="cap"><div style="font-size:11px;letter-spacing:2px;opacity:.85;font-weight:700">GEST\u00c3O PECU\u00c1RIA LUCRATIVA</div><div style="font-size:22px;font-weight:900;margin-top:2px">Rota\u00e7\u00e3o dos Lotes</div><div style="font-size:11px;opacity:.9;margin-top:3px">'+faz+' \u00b7 '+dtHoje+'</div></div>'
+    +alerta
+    +'<div style="font-size:12px;font-weight:800;color:#1B5E20;margin:14px 0 4px">A viagem de cada lote</div>'
+    +'<div class="grid2">'+trilhaCards+'</div>'
+    +statusBloco
+    +'<div style="font-size:12px;font-weight:800;color:#1B5E20;margin:14px 0 0">Rank dos pastos</div>'
+    +rankBloco
+    +'<p class="nota">"For\u00e7ado" = pasto pastejado acima da m\u00e9dia e com pouco descanso (risco de degradar). "Subutilizado" = pasto descansando h\u00e1 muito tempo e pouco usado (capacidade sobrando). O "Nx" indica quantas vezes o pasto recebeu gado. Os limites s\u00e3o relativos \u00e0 m\u00e9dia da pr\u00f3pria fazenda.</p>'
+    +'<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:12px">Imprimir / Salvar PDF</button>'
     +_pdfRodape()
     +'</body></html>');
   w.document.close();
@@ -6700,8 +6822,8 @@ function _consumoDias(dtA,dtB){
 
 // Monta os perfis de consumo por lote (reusado por tela e PDF)
 function _consumoPerfis(){
-  var tratos=(S.rT||[]).filter(function(r){return r.tipo==='trato'&&!r._apagado;});
-  tratos.forEach(function(r){ if(!r.dt&&r.ts) r.dt=r.ts.substring(0,10); });
+  var tratos=(S.rT||[]).filter(function(r){ return r.tipo==='trato'&&!r._apagado; });
+  tratos.forEach(function(r){ if(!r.dt&&r.ts) r.dt=_regData(r); });
   var lotes=S.LOTES||[];
   var porLote={};
   tratos.forEach(function(t){
@@ -6770,7 +6892,7 @@ function _consumoPerfis(){
       }
       return {nome:pr, sacos:pp.sacos, kg:pp.kg, ini:pini, fim:pfim, dias:pdias, recKg:recKg, custoTotal:custoTotal,
         temPar:temPar, gCabDia:gCabDia, pvReal:pvReal, sacUlt:sacUlt, diasEntre:diasEntre, ultDtBR:ultDtBR};
-    }).sort(function(a,b){return b.kg-a.kg;});
+    }).sort(function(a,b){ var d=(b.fim||'').localeCompare(a.fim||''); return d!==0?d:(b.kg-a.kg); });
     var custoLote=prods.reduce(function(s,p){return s+p.custoTotal;},0);
     var custoCab=cab>0&&custoLote>0?custoLote/cab:0;
     var pesoMed=(loteObj&&loteObj.peso)?parseFloat(loteObj.peso):0;
@@ -6780,7 +6902,7 @@ function _consumoPerfis(){
     return {lote:ln, sacos:o.sacos, kg:o.kg, ini:ini, fim:fim, dias:dias,
       cab:cab, kgDia:kgDia, kgCab:kgCab, custoLote:custoLote, custoCab:custoCab,
       pesoMed:pesoMed, gCabDia:gCabDia, pvDia:pvDia, custoCabDia:custoCabDia, prods:prods};
-  }).sort(function(a,b){return b.kg-a.kg;});
+  }).sort(function(a,b){ var na=parseInt((String(a.lote).match(/\d+/)||[9999])[0],10), nb=parseInt((String(b.lote).match(/\d+/)||[9999])[0],10); return na!==nb?na-nb:String(a.lote).localeCompare(String(b.lote)); });
 
   return perfis;
 }
@@ -6808,7 +6930,7 @@ function _consumoGrafico(perfis){
 function rHistConsumo(){
   var div=document.getElementById('hist-consumo');
   var perfis=_consumoPerfis();
-  window._consumoPerfis=perfis; // reuso no PDF
+  window._consumoCache=perfis; // reuso no PDF (nome distinto da função)
   if(!div) return;
 
   if(!perfis.length){
@@ -6859,9 +6981,79 @@ function rHistConsumo(){
   div.innerHTML=out;
 }
 
+function gerarPDFConsumoPeriodo(){
+  var de=((document.getElementById('cp-de')||{}).value)||'';
+  var ate=((document.getElementById('cp-ate')||{}).value)||'';
+  if(!de||!ate){ alert('Escolha a data de in\u00edcio e de fim do per\u00edodo.'); return; }
+  if(de>ate){ var _t=de; de=ate; ate=_t; }
+  var tratos=(S.rT||[]).filter(function(r){
+    if(r.tipo!=='trato'||r._apagado) return false;
+    var dt=_regData(r); if(!dt) return false;
+    return dt>=de && dt<=ate;
+  });
+  if(!tratos.length){ alert('Nenhum trato lan\u00e7ado nesse per\u00edodo.'); return; }
+  var porLote={}, totS=0, totKg=0, totC=0;
+  tratos.forEach(function(t){
+    var ln=(t.lote||t.co||'?').replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
+    var pr=t.pr||t.prod||'?';
+    var sacos=parseFloat(t.q||t.qtd||0)||0;
+    var est=(S.EST&&t.pr)?S.EST[t.pr]:null;
+    var ps=(est&&est.peso_saco)?parseFloat(est.peso_saco):30;
+    var kg=parseFloat(t.kg_fornecido||0)||(sacos*ps);
+    var preco=(est&&est.preco_saco)?parseFloat(est.preco_saco):0;
+    var custo=preco>0?sacos*preco:0;
+    if(!porLote[ln]) porLote[ln]={lote:ln,sacos:0,kg:0,custo:0,prods:{}};
+    porLote[ln].sacos+=sacos; porLote[ln].kg+=kg; porLote[ln].custo+=custo;
+    if(!porLote[ln].prods[pr]) porLote[ln].prods[pr]={sacos:0,kg:0,custo:0};
+    porLote[ln].prods[pr].sacos+=sacos; porLote[ln].prods[pr].kg+=kg; porLote[ln].prods[pr].custo+=custo;
+    totS+=sacos; totKg+=kg; totC+=custo;
+  });
+  var perfis=Object.keys(porLote).map(function(k){return porLote[k];}).sort(function(a,b){return b.custo-a.custo;});
+  var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
+  var deBR=de.split('-').reverse().join('/'), ateBR=ate.split('-').reverse().join('/');
+
+  function bn(v,l){ return '<div style="flex:1;min-width:110px;background:#fff;border-radius:14px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:3px solid #2E7D32"><div style="font-size:24px;font-weight:900;color:#1B5E20;line-height:1">'+v+'</div><div style="font-size:9px;color:#666;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:5px">'+l+'</div></div>'; }
+  function mini(v,l){ return '<div style="flex:1;min-width:64px;background:#E8F5E9;border-radius:10px;padding:8px 5px;text-align:center"><div style="font-size:16px;font-weight:900;color:#1B5E20;line-height:1">'+v+'</div><div style="font-size:8px;color:#555;font-weight:700;margin-top:2px">'+l+'</div></div>'; }
+
+  var topo='<div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0">'
+    +bn('R$ '+Math.round(totC),'Custo total')
+    +bn((Math.round(totS*10)/10)+' sc','Total sacos')
+    +bn(Math.round(totKg)+' kg','Total consumido')
+    +'</div>';
+
+  var cards=perfis.map(function(p){
+    var prods=Object.keys(p.prods).map(function(pr){
+      var x=p.prods[pr];
+      return '<div style="border-top:1px solid #f0f0f0;padding:7px 0"><div style="display:flex;justify-content:space-between"><span style="font-size:12px;font-weight:700;color:#1B5E20">'+pr+'</span><span style="font-size:12px;font-weight:800;color:#2E7D32">R$ '+Math.round(x.custo)+'</span></div><div style="font-size:10px;color:#777">'+Math.round(x.kg)+' kg \u00b7 '+(Math.round(x.sacos*10)/10)+' sc</div></div>';
+    }).join('');
+    return '<div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-left:4px solid #2E7D32;break-inside:avoid">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:16px;font-weight:900;color:#1B5E20">'+p.lote+'</div><div style="font-size:14px;font-weight:900;color:#2E7D32">R$ '+Math.round(p.custo)+'</div></div>'
+      +'<div style="display:flex;gap:6px;margin-bottom:2px">'+mini((Math.round(p.sacos*10)/10)+' sc','SACOS')+mini(Math.round(p.kg)+' kg','TOTAL KG')+'</div>'
+      +prods
+      +'</div>';
+  }).join('');
+
+  var w=window.open('','_blank');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Consumo do Per\u00edodo \u2014 GPL</title>'
+    +'<style>*{box-sizing:border-box}'
+    +'body{font-family:Arial,"Segoe UI",Roboto,system-ui,sans-serif;padding:20px;color:#222;background:#eef1ec;max-width:900px;margin:0 auto}'
+    +'.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:620px){.grid2{grid-template-columns:1fr}}'
+    +_pdfTimbreCss()
+    +'@media print{button{display:none!important}body{background:#fff}}'
+    +'</style></head><body>'
+    +_pdfTimbre('Consumo do Per\u00edodo', deBR+' a '+ateBR, faz)
+    +topo
+    +'<div class="grid2">'+cards+'</div>'
+    +'<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:14px">Imprimir / Salvar PDF</button>'
+    +_pdfRodape()
+    +'</body></html>');
+  w.document.close();
+  setTimeout(function(){ try{w.print();}catch(e){} },500);
+}
+
 function gerarPDFConsumo(){
   try{ rHistConsumo(); }catch(e){}
-  var perfis=window._consumoPerfis;
+  var perfis=window._consumoCache||_consumoPerfis();
   if(!perfis||!perfis.length){ alert('Sem tratos para o relat\u00f3rio de consumo.'); return; }
   var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
   var dtHoje=new Date().toLocaleDateString('pt-BR');
@@ -8251,11 +8443,15 @@ function gerarFCMsg(){
   var ateFmt=window._fcAte||'';
   var NL='\n';
   var sel=lista.filter(function(p){return window._fcSel&&window._fcSel[p.n]!==false;});
+  var _diasSem=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+  function _diaSemana(iso){ if(!iso||iso.length<10) return ''; var d=new Date(iso+'T12:00:00'); return isNaN(d.getTime())?'':(_diasSem[d.getDay()]||''); }
+  function _dtSemAno(iso){ if(!iso) return ''; var p=iso.split('-'); return p.length>=3?(p[2]+'/'+p[1]):iso; }
+  function _periodoSemAno(d){ var p=(d||'').split('/'); return p.length>=2?(p[0]+'/'+p[1]):d; }
 
   var linhas=[];
   linhas.push('FECHAMENTO DE CONTA - A PAGAR');
   linhas.push('Fazenda: '+faz);
-  linhas.push('Periodo: '+deFmt+' a '+ateFmt);
+  linhas.push('Periodo: '+_periodoSemAno(deFmt)+' a '+_periodoSemAno(ateFmt));
   linhas.push('');
 
   sel.forEach(function(p){
@@ -8268,8 +8464,8 @@ function gerarFCMsg(){
       var dOrd = p.diarias.slice().sort(function(a,b){return (a.dt||'')>(b.dt||'')?1:-1;});
       dOrd.forEach(function(r){
         if(r.srv){
-          var dtFmt=r.dt?r.dt.split('-').reverse().join('/'):'';
-          linhas.push('  '+dtFmt+': '+r.srv);
+          var ds=_diaSemana(r.dt), dt2=_dtSemAno(r.dt);
+          linhas.push('  '+(ds?ds+', ':'')+dt2+': '+r.srv);
         }
       });
     }
