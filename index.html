@@ -1149,6 +1149,8 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 </div>
 
 <div id="htab-rotacao-content" style="display:none">
+  <div style="background:#fff;border:1px solid #e0e7e0;border-radius:12px;padding:10px;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:#1B5E20;margin-bottom:6px">PDF por período (opcional)</div><div style="display:flex;gap:6px;flex-wrap:wrap"><label style="flex:1;min-width:110px;font-size:11px;color:#666">De<br><input type="date" id="rot-de" style="width:100%;padding:7px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label><label style="flex:1;min-width:110px;font-size:11px;color:#666">Até<br><input type="date" id="rot-ate" style="width:100%;padding:7px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label></div></div>
+  <button onclick="gerarPDFRotacao()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📄 Gerar PDF da Rotação</button>
   <div class="card">
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
       <div class="stit" style="margin:0;flex:1">🔄 Histórico de Rotação</div>
@@ -1186,8 +1188,8 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
       <div style="font-size:10px;color:#888;margin-top:8px;line-height:1.4">A nota de cada pasto cruza esses tempos com as suas respostas sobre o capim. Uso intenso só vira alerta vermelho se você responder que o capim está rapado.</div>
     </div>
   </div>
+  <div style="background:#fff;border:1px solid #e0e7e0;border-radius:12px;padding:10px;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:#1B5E20;margin-bottom:6px">PDF por período (opcional)</div><div style="display:flex;gap:6px;flex-wrap:wrap"><label style="flex:1;min-width:110px;font-size:11px;color:#666">De<br><input type="date" id="pas-de" style="width:100%;padding:7px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label><label style="flex:1;min-width:110px;font-size:11px;color:#666">Até<br><input type="date" id="pas-ate" style="width:100%;padding:7px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label></div></div>
   <button onclick="gerarPDFPastos()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px">📄 Gerar Relatório PDF</button>
-  <div style="background:#fff;border:1px solid #e0e7e0;border-radius:12px;padding:10px;margin:8px 0"><div style="font-size:12px;font-weight:700;color:#1B5E20;margin-bottom:6px">PDF por período (opcional)</div><div style="display:flex;gap:6px;flex-wrap:wrap"><label style="flex:1;min-width:110px;font-size:11px;color:#666">De<br><input type="date" id="pas-de" style="width:100%;padding:7px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label><label style="flex:1;min-width:110px;font-size:11px;color:#666">Até<br><input type="date" id="pas-ate" style="width:100%;padding:7px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label></div></div>
   <div id="hist-ranking-pastos"></div>
 </div>
 
@@ -6483,8 +6485,11 @@ function _pdfTimbre(titulo, subtitulo, faz){
     +'<div class="gpl-bar"></div>';
 }
 function _pdfRodape(){
-  return '<div class="gpl-ft">'
-    +'<span><b>GPL</b> — Gestão Pecuária Lucrativa · Rogério Avelino</span>'
+  return '<div style="text-align:center;margin:18px 0 6px">'
+    +'<button onclick="window.close()" style="padding:10px 28px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">✕ Fechar e voltar ao app</button>'
+    +'</div>'
+    +'<div class="gpl-ft">'
+    +'<span><b>GPL</b> — Gestão Pecária Lucrativa · Rogério Avelino</span>'
     +'<span>Gerado em '+new Date().toLocaleDateString('pt-BR')+'</span>'
     +'</div>';
 }
