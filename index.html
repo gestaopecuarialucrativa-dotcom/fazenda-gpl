@@ -1099,6 +1099,8 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     <select id="feed-user" onchange="feedSetUser(this.value)" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:8px"><option value="">Todos os usuários</option></select>
     <div style="font-size:10px;color:#666;margin-bottom:3px">Tipo de lançamento</div>
     <select id="feed-tipo" onchange="feedSetTipo(this.value)" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:8px"><option value="">Todos os tipos</option><option value="Trato">Trato</option><option value="Movimentação">Movimentação</option><option value="Diária">Diária</option><option value="Cantina">Cantina</option><option value="Insumo">Insumo</option><option value="Escore">Escore</option><option value="Despesa">Despesa</option></select>
+    <div style="font-size:10px;color:#666;margin-bottom:3px">Lote</div>
+    <select id="feed-lote" onchange="feedSetLote(this.value)" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:8px"><option value="">Todos os lotes</option></select>
     <div style="display:flex;gap:6px">
       <button class="feedpb" onclick="feedSetPer(this,'dia')" style="flex:1;padding:7px 0;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:#f0f0f0;color:#333">Hoje</button>
       <button class="feedpb on" onclick="feedSetPer(this,'semana')" style="flex:1;padding:7px 0;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:#1B5E20;color:#fff">7 dias</button>
@@ -1923,7 +1925,7 @@ function pagarDiaria(idx){
 function excluirRegistro(arr,idx){if(!confirm('⚠️ Excluir este registro?'))return;if(!S[arr]||idx<0||idx>=S[arr].length)return;S[arr][idx]._apagado=true;salvar();if(S.cfgGS)salvarNuvem(function(){});rPan();if(typeof rListDesp==='function')rListDesp();}
 
 // ── FEED DE CONFERÊNCIA (Consultor) — acompanhar lançamentos da equipe ──
-var _feedPer='semana', _feedUser='', _feedTipo='';
+var _feedPer='semana', _feedUser='', _feedTipo='', _feedLote='';
 function _feedTs(r){ if(r&&r._ts)return r._ts; if(r&&r.id)return Math.floor(r.id); var dt=r&&(r.dt||r.data); if(dt){var p=(''+dt).split('-'); if(p.length===3)return new Date(+p[0],+p[1]-1,+p[2]).getTime();} return 0; }
 function _feedItens(){
   var it=[];
@@ -1935,12 +1937,12 @@ function _feedItens(){
     if(r.tipo==='mudanca_pasto'){
       var de=(r.origem||'').trim(), pa=(r.destino||'').trim();
       var cam = de ? (de+' → '+pa) : ('→ '+pa);
-      it.push({arr:'rT',idx:i,ts:_feedTs(r),tipo:'Movimentação',cor:'#00838F',mov:true,autor:r.n||'—',dt:r.dt,faz:r.faz,resumo:(r.lote||'')+' · '+cam});
+      it.push({arr:'rT',idx:i,ts:_feedTs(r),tipo:'Movimentação',cor:'#00838F',mov:true,autor:r.n||'—',dt:r.dt,faz:r.faz,lote:(r.lote||''),resumo:(r.lote||'')+' · '+cam});
     } else if(r.tipo==='trato'){
-      it.push({arr:'rT',idx:i,ts:_feedTs(r),tipo:'Trato',cor:'#2E7D32',autor:r.n||'—',dt:r.dt,faz:r.faz,resumo:(r.co||r.lote||'')+' · '+(r.pr||r.prod||'')+' · '+(r.q||r.qtd||0)+' '+(r.unid||'saco')});
+      it.push({arr:'rT',idx:i,ts:_feedTs(r),tipo:'Trato',cor:'#2E7D32',autor:r.n||'—',dt:r.dt,faz:r.faz,lote:(r.co||r.lote||''),resumo:(r.co||r.lote||'')+' · '+(r.pr||r.prod||'')+' · '+(r.q||r.qtd||0)+' '+(r.unid||'saco')});
     }
   });
-  (S.rE||[]).forEach(function(r,i){ if(r._apagado)return; it.push({arr:'rE',idx:i,ts:_feedTs(r),tipo:'Escore',cor:'#E65100',autor:r.n||'—',dt:r.dt,faz:r.faz,resumo:(r.co||'')+' · E'+(r.es)+' · '+(r.cab||0)+' cab'}); });
+  (S.rE||[]).forEach(function(r,i){ if(r._apagado)return; it.push({arr:'rE',idx:i,ts:_feedTs(r),tipo:'Escore',cor:'#E65100',autor:r.n||'—',dt:r.dt,faz:r.faz,lote:(r.co||''),resumo:(r.co||'')+' · E'+(r.es)+' · '+(r.cab||0)+' cab'}); });
   (S.rC||[]).forEach(function(r,i){ if(r._apagado)return; it.push({arr:'rC',idx:i,ts:_feedTs(r),tipo:'Cantina',cor:'#AD1457',autor:r.resp||'—',dt:r.dt,faz:r.faz,resumo:'R$ '+(parseFloat(r.total)||0).toFixed(2).replace('.',',')+(r.det?' · '+r.det:'')}); });
   (S.rDesp||[]).forEach(function(r,i){ if(r._apagado)return; it.push({arr:'rDesp',idx:i,ts:_feedTs(r),tipo:'Despesa',cor:'#C62828',autor:'—',dt:r.dt,faz:r.faz,resumo:'R$ '+(parseFloat(r.val)||0).toFixed(2).replace('.',',')+(r.desc?' · '+r.desc:'')}); });
   return it;
@@ -1955,6 +1957,7 @@ function _feedNoPeriodo(ts){
 }
 function feedSetUser(v){ _feedUser=v; rFeedConsultor(); }
 function feedSetTipo(v){ _feedTipo=v; rFeedConsultor(); }
+function feedSetLote(v){ _feedLote=v; rFeedConsultor(); }
 function feedSetPer(el,p){ _feedPer=p; document.querySelectorAll('.feedpb').forEach(function(b){b.classList.remove('on');b.style.background='#f0f0f0';b.style.color='#333';}); if(el){el.classList.add('on');el.style.background='#1B5E20';el.style.color='#fff';} rFeedConsultor(); }
 // Exclui do feed garantindo que apague TAMBÉM na planilha (senão volta no recarregar).
 // Trato, cantina e diária são relidos da aba pelo backend → precisam de ação no servidor.
@@ -2501,8 +2504,16 @@ function rFeedConsultor(){
     us.innerHTML='<option value="">Todos os usuários</option>'+nomes.map(function(n){return '<option value="'+(''+n).replace(/"/g,'&quot;')+'">'+n+'</option>';}).join('');
     us.value=_feedUser;
   }
+  var lo=document.getElementById('feed-lote');
+  if(lo){
+    var lotesSet={};
+    _feedItens().forEach(function(o){ if(o.lote) lotesSet[o.lote]=1; });
+    var lotes=Object.keys(lotesSet).sort(function(a,b){ var na=parseInt((a.match(/\d+/)||[9999])[0]), nb=parseInt((b.match(/\d+/)||[9999])[0]); return na!==nb?na-nb:a.localeCompare(b); });
+    lo.innerHTML='<option value="">Todos os lotes</option>'+lotes.map(function(n){return '<option value="'+(''+n).replace(/"/g,'&quot;')+'">'+n+'</option>';}).join('');
+    lo.value=_feedLote;
+  }
   var el=document.getElementById('feed-lista'); if(!el)return;
-  var it=_feedItens().filter(function(o){ return _feedNoPeriodo(o.ts) && (!_feedUser || o.autor===_feedUser) && (!_feedTipo || o.tipo===_feedTipo); });
+  var it=_feedItens().filter(function(o){ return _feedNoPeriodo(o.ts) && (!_feedUser || o.autor===_feedUser) && (!_feedTipo || o.tipo===_feedTipo) && (!_feedLote || o.lote===_feedLote); });
   it.sort(function(a,b){return b.ts-a.ts;});
   var cnt=document.getElementById('feed-cont'); if(cnt)cnt.textContent=it.length+' lançamento'+(it.length===1?'':'s');
   if(!it.length){ el.innerHTML='<div style="font-size:13px;color:#888;text-align:center;padding:24px">Nenhum lançamento no período/filtro selecionado.</div>'; return; }
