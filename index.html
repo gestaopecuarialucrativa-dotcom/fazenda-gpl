@@ -1927,6 +1927,10 @@ function excluirRegistro(arr,idx){if(!confirm('⚠️ Excluir este registro?'))r
 // ── FEED DE CONFERÊNCIA (Consultor) — acompanhar lançamentos da equipe ──
 var _feedPer='semana', _feedUser='', _feedTipo='', _feedLote='';
 function _feedTs(r){ if(r&&r._ts)return r._ts; if(r&&r.id)return Math.floor(r.id); var dt=r&&(r.dt||r.data); if(dt){var p=(''+dt).split('-'); if(p.length===3)return new Date(+p[0],+p[1]-1,+p[2]).getTime();} return 0; }
+function _feedLoteCanon(s){
+  // agrupa o lote pelo nome real, ignorando "(X animais)" e espacos extras
+  return String(s||'').replace(/\s*\(.*?\)\s*$/,'').trim();
+}
 function _feedItens(){
   var it=[];
   (S.rD||[]).forEach(function(r,i){ if(r._apagado)return;
@@ -1937,12 +1941,12 @@ function _feedItens(){
     if(r.tipo==='mudanca_pasto'){
       var de=(r.origem||'').trim(), pa=(r.destino||'').trim();
       var cam = de ? (de+' → '+pa) : ('→ '+pa);
-      it.push({arr:'rT',idx:i,ts:_feedTs(r),tipo:'Movimentação',cor:'#00838F',mov:true,autor:r.n||'—',dt:r.dt,faz:r.faz,lote:(r.lote||''),resumo:(r.lote||'')+' · '+cam});
+      it.push({arr:'rT',idx:i,ts:_feedTs(r),tipo:'Movimentação',cor:'#00838F',mov:true,autor:r.n||'—',dt:r.dt,faz:r.faz,lote:_feedLoteCanon(r.lote||''),resumo:(r.lote||'')+' · '+cam});
     } else if(r.tipo==='trato'){
-      it.push({arr:'rT',idx:i,ts:_feedTs(r),tipo:'Trato',cor:'#2E7D32',autor:r.n||'—',dt:r.dt,faz:r.faz,lote:(r.co||r.lote||''),resumo:(r.co||r.lote||'')+' · '+(r.pr||r.prod||'')+' · '+(r.q||r.qtd||0)+' '+(r.unid||'saco')});
+      it.push({arr:'rT',idx:i,ts:_feedTs(r),tipo:'Trato',cor:'#2E7D32',autor:r.n||'—',dt:r.dt,faz:r.faz,lote:_feedLoteCanon(r.co||r.lote||''),resumo:(r.co||r.lote||'')+' · '+(r.pr||r.prod||'')+' · '+(r.q||r.qtd||0)+' '+(r.unid||'saco')});
     }
   });
-  (S.rE||[]).forEach(function(r,i){ if(r._apagado)return; it.push({arr:'rE',idx:i,ts:_feedTs(r),tipo:'Escore',cor:'#E65100',autor:r.n||'—',dt:r.dt,faz:r.faz,lote:(r.co||''),resumo:(r.co||'')+' · E'+(r.es)+' · '+(r.cab||0)+' cab'}); });
+  (S.rE||[]).forEach(function(r,i){ if(r._apagado)return; it.push({arr:'rE',idx:i,ts:_feedTs(r),tipo:'Escore',cor:'#E65100',autor:r.n||'—',dt:r.dt,faz:r.faz,lote:_feedLoteCanon(r.co||''),resumo:(r.co||'')+' · E'+(r.es)+' · '+(r.cab||0)+' cab'}); });
   (S.rC||[]).forEach(function(r,i){ if(r._apagado)return; it.push({arr:'rC',idx:i,ts:_feedTs(r),tipo:'Cantina',cor:'#AD1457',autor:r.resp||'—',dt:r.dt,faz:r.faz,resumo:'R$ '+(parseFloat(r.total)||0).toFixed(2).replace('.',',')+(r.det?' · '+r.det:'')}); });
   (S.rDesp||[]).forEach(function(r,i){ if(r._apagado)return; it.push({arr:'rDesp',idx:i,ts:_feedTs(r),tipo:'Despesa',cor:'#C62828',autor:'—',dt:r.dt,faz:r.faz,resumo:'R$ '+(parseFloat(r.val)||0).toFixed(2).replace('.',',')+(r.desc?' · '+r.desc:'')}); });
   return it;
