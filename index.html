@@ -1097,6 +1097,8 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <div class="card" style="padding:10px;margin-bottom:4px">
     <div style="font-size:10px;color:#666;margin-bottom:3px">Quem lançou</div>
     <select id="feed-user" onchange="feedSetUser(this.value)" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:8px"><option value="">Todos os usuários</option></select>
+    <div style="font-size:10px;color:#666;margin-bottom:3px">Tipo de lançamento</div>
+    <select id="feed-tipo" onchange="feedSetTipo(this.value)" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:8px"><option value="">Todos os tipos</option><option value="Trato">Trato</option><option value="Movimentação">Movimentação</option><option value="Diária">Diária</option><option value="Cantina">Cantina</option><option value="Insumo">Insumo</option><option value="Escore">Escore</option><option value="Despesa">Despesa</option></select>
     <div style="display:flex;gap:6px">
       <button class="feedpb" onclick="feedSetPer(this,'dia')" style="flex:1;padding:7px 0;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:#f0f0f0;color:#333">Hoje</button>
       <button class="feedpb on" onclick="feedSetPer(this,'semana')" style="flex:1;padding:7px 0;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:#1B5E20;color:#fff">7 dias</button>
@@ -1921,7 +1923,7 @@ function pagarDiaria(idx){
 function excluirRegistro(arr,idx){if(!confirm('⚠️ Excluir este registro?'))return;if(!S[arr]||idx<0||idx>=S[arr].length)return;S[arr][idx]._apagado=true;salvar();if(S.cfgGS)salvarNuvem(function(){});rPan();if(typeof rListDesp==='function')rListDesp();}
 
 // ── FEED DE CONFERÊNCIA (Consultor) — acompanhar lançamentos da equipe ──
-var _feedPer='semana', _feedUser='';
+var _feedPer='semana', _feedUser='', _feedTipo='';
 function _feedTs(r){ if(r&&r._ts)return r._ts; if(r&&r.id)return Math.floor(r.id); var dt=r&&(r.dt||r.data); if(dt){var p=(''+dt).split('-'); if(p.length===3)return new Date(+p[0],+p[1]-1,+p[2]).getTime();} return 0; }
 function _feedItens(){
   var it=[];
@@ -1952,6 +1954,7 @@ function _feedNoPeriodo(ts){
   return d>=lim;
 }
 function feedSetUser(v){ _feedUser=v; rFeedConsultor(); }
+function feedSetTipo(v){ _feedTipo=v; rFeedConsultor(); }
 function feedSetPer(el,p){ _feedPer=p; document.querySelectorAll('.feedpb').forEach(function(b){b.classList.remove('on');b.style.background='#f0f0f0';b.style.color='#333';}); if(el){el.classList.add('on');el.style.background='#1B5E20';el.style.color='#fff';} rFeedConsultor(); }
 // Exclui do feed garantindo que apague TAMBÉM na planilha (senão volta no recarregar).
 // Trato, cantina e diária são relidos da aba pelo backend → precisam de ação no servidor.
@@ -2025,6 +2028,37 @@ function feedEditarTrato(idx){
   };
   s.onerror=function(){ delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s); alert('⚠️ Erro de conexão. Nada foi alterado.'); };
   document.body.appendChild(s);
+}
+// Editar movimentação de pasto (lote/origem/destino). Vive no CONFIG → grava direto no app + nuvem.
+function _feedNormArea(v){
+  var s=String(v||'').trim().toUpperCase();
+  s=s.replace(/^M(\d{1,2})\/P(\d{1,2})$/i,function(_,m,p){return 'M'+String(parseInt(m)).padStart(2,'0')+'P'+String(parseInt(p)).padStart(2,'0');});
+  s=s.replace(/^M(\d{1,2})P(\d{1,2})$/i,function(_,m,p){return 'M'+String(parseInt(m)).padStart(2,'0')+'P'+String(parseInt(p)).padStart(2,'0');});
+  s=s.replace(/^PA\s*(\d{1,2})$/i,function(_,n){return 'PA'+String(parseInt(n)).padStart(2,'0');});
+  return s;
+}
+function feedEditarMov(idx){
+  var r=S.rT[idx];
+  if(!r||r.tipo!=='mudanca_pasto'){ alert('Registro não encontrado.'); return; }
+  var loteOld=r.lote||'', origOld=r.origem||'', destOld=r.destino||'';
+  var loteNew=prompt('Lote:', loteOld);
+  if(loteNew===null) return;
+  loteNew=(''+loteNew).trim();
+  if(!loteNew){ alert('O lote não pode ficar vazio.'); return; }
+  var origNew=prompt('Origem — de onde saiu (ex: M02P04). Deixe vazio se for entrada:', origOld);
+  if(origNew===null) return;
+  origNew=_feedNormArea(origNew);
+  var destNew=prompt('Destino — para onde foi (ex: M02P02):', destOld);
+  if(destNew===null) return;
+  destNew=_feedNormArea(destNew);
+  if(!destNew){ alert('O destino não pode ficar vazio.'); return; }
+  if(loteNew===loteOld && origNew===origOld && destNew===destOld){ return; }
+  if(!confirm('Confirmar edição desta movimentação?\n\nLote: '+loteNew+'\nOrigem: '+(origNew||'(entrada)')+'\nDestino: '+destNew+'\n\nIsto afeta o cálculo de ocupação dos pastos.')) return;
+  r.lote=loteNew; r.origem=origNew; r.destino=destNew;
+  salvar();
+  if(S.cfgGS) salvarNuvem(function(){});
+  try{rFeedConsultor();}catch(e){} try{rPan();}catch(e){}
+  alert('✅ Movimentação editada.');
 }
 // Editar diária (valor + serviço). Só grava no app DEPOIS que a planilha confirmar,
 // porque o carregar lê as diárias da aba 👤 Diárias (fonte da verdade).
@@ -2468,7 +2502,7 @@ function rFeedConsultor(){
     us.value=_feedUser;
   }
   var el=document.getElementById('feed-lista'); if(!el)return;
-  var it=_feedItens().filter(function(o){ return _feedNoPeriodo(o.ts) && (!_feedUser || o.autor===_feedUser); });
+  var it=_feedItens().filter(function(o){ return _feedNoPeriodo(o.ts) && (!_feedUser || o.autor===_feedUser) && (!_feedTipo || o.tipo===_feedTipo); });
   it.sort(function(a,b){return b.ts-a.ts;});
   var cnt=document.getElementById('feed-cont'); if(cnt)cnt.textContent=it.length+' lançamento'+(it.length===1?'':'s');
   if(!it.length){ el.innerHTML='<div style="font-size:13px;color:#888;text-align:center;padding:24px">Nenhum lançamento no período/filtro selecionado.</div>'; return; }
@@ -2483,11 +2517,12 @@ function rFeedConsultor(){
       +'<div style="font-size:12px;color:#444;margin-top:3px;word-break:break-word">'+o.resumo+'</div>'
       +(o.faz?'<div style="font-size:10px;color:#999;margin-top:2px">'+o.faz+'</div>':'')
       +'</div>'
-      +(o.mov?'':(
+      +(
         (o.tipo==='Diária'?'<button onclick="feedEditarDiaria('+o.idx+')" style="padding:4px 9px;font-size:13px;background:#E8F5E9;color:#1B5E20;border:none;border-radius:6px;cursor:pointer;flex-shrink:0;margin-right:4px">✏️</button>':'')
       +(o.tipo==='Trato'?'<button onclick="feedEditarTrato('+o.idx+')" style="padding:4px 9px;font-size:13px;background:#E8F5E9;color:#1B5E20;border:none;border-radius:6px;cursor:pointer;flex-shrink:0;margin-right:4px">✏️</button>':'')
+      +(o.tipo==='Movimentação'?'<button onclick="feedEditarMov('+o.idx+')" style="padding:4px 9px;font-size:13px;background:#E8F5E9;color:#1B5E20;border:none;border-radius:6px;cursor:pointer;flex-shrink:0;margin-right:4px">✏️</button>':'')
       +'<button onclick="feedExcluir(\''+o.arr+'\','+o.idx+')" style="padding:4px 9px;font-size:13px;background:#FFEBEE;color:#C62828;border:none;border-radius:6px;cursor:pointer;flex-shrink:0">🗑️</button>'
-      ))
+      )
       +'</div>';
   });
   el.innerHTML=html;
