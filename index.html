@@ -1094,6 +1094,13 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <!-- HISTÓRICO ✅ -->
 <div id="pg-feed" class="pg" style="display:none;padding:14px;padding-bottom:24px">
   <div style="font-size:12px;color:#666;margin-bottom:10px">Acompanhe os lançamentos da equipe. Confira se está certo e toque em 🗑️ para excluir um lançamento errado (depois é só relançar correto).</div>
+  <div class="card" style="padding:12px;margin-bottom:8px;border-left:4px solid #FF8F00">
+    <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="var b=document.getElementById('diag-ritmo-body');var v=b.style.display==='none';b.style.display=v?'block':'none';if(v){b.innerHTML=_diagRitmoHtml();}">
+      <div><div style="font-size:13px;font-weight:800;color:#E65100">🧪 Teste — ritmo dos lotes</div><div style="font-size:11px;color:#888;margin-top:2px">Toque para conferir se o sistema entendeu o ritmo de cada lote</div></div>
+      <span style="font-size:18px;color:#FF8F00">▾</span>
+    </div>
+    <div id="diag-ritmo-body" style="display:none;margin-top:10px"></div>
+  </div>
   <div class="card" style="padding:10px;margin-bottom:4px">
     <div style="font-size:10px;color:#666;margin-bottom:3px">Quem lançou</div>
     <select id="feed-user" onchange="feedSetUser(this.value)" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:8px"><option value="">Todos os usuários</option></select>
@@ -1113,13 +1120,6 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 </div>
 <div id="pg-consultoria" class="pg" style="display:none;padding:14px;padding-bottom:40px">
   <div style="margin-bottom:10px"><div style="font-size:16px;font-weight:800;color:#1B5E20">Conferir lançamentos da equipe</div><div style="font-size:12px;color:#777;margin-top:2px">Fiscalização — o vaqueiro tratou certo?</div></div>
-  <div class="card" style="padding:14px;margin-bottom:10px;border-left:4px solid #FF8F00">
-    <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="var b=document.getElementById('diag-ritmo-body');var v=b.style.display==='none';b.style.display=v?'block':'none';if(v){b.innerHTML=_diagRitmoHtml();}">
-      <div><div style="font-size:13px;font-weight:800;color:#E65100">🧪 Teste — ritmo dos lotes</div><div style="font-size:11px;color:#888;margin-top:2px">Confira se o sistema entendeu o ritmo de cada lote</div></div>
-      <span style="font-size:18px;color:#FF8F00">▾</span>
-    </div>
-    <div id="diag-ritmo-body" style="display:none;margin-top:10px"></div>
-  </div>
   <div class="card" style="padding:14px">
     <div style="font-size:13px;font-weight:800;color:#1b2c1b;margin-bottom:10px">Período do relatório</div>
     <div style="display:flex;gap:8px">
