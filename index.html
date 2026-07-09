@@ -327,6 +327,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="agrid" id="vacts"></div>
 
 <!-- Mini-mapa da fazenda -->
+<div id="alerta-trato" style="display:none"></div>
 <div id="alerta-rotacao" style="display:none"></div>
 <div id="home-mapa-card" style="margin-bottom:12px;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1)">
   <div onclick="sp('mapa',true,'home')" style="background:linear-gradient(135deg,#1a5c10,#2d7a1f);padding:8px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent">
@@ -1381,6 +1382,7 @@ function entrar(i){CU=S.US[i];document.getElementById('login-screen').style.disp
     try{rUlt();}catch(e){}
   try{rVaqueiroPainel();}catch(e){}
   try{_alertaRotacao();}catch(e){}
+  try{_alertaTrato();}catch(e){}
     try{rPan();}catch(e){}
     try{_sincMapa();}catch(e){}
     if(CU&&(CU.r==='Consultor'||CU.r==='Dono')){try{rConsultor();}catch(e){}}
@@ -4946,6 +4948,74 @@ function _renderPinsNoContainer(contId, resumoId){
   if(res) res.textContent=ocupados?ocupados+' piquete(s) com gado':'Toque em qualquer área para alocar gado';
 }
 
+// ═══ AVISO PRO VAQUEIRO: lotes que passaram do ritmo de trato ═══
+// Usa o cerebro (_ritmoLote). Nao aparece domingo, nem antes das 11h.
+// So mostra lotes ATIVOS que passaram do ritmo. Botoes: tratar / nao precisa hoje.
+function _alertaTrato(){
+  var el=document.getElementById('alerta-trato');
+  if(!el) return;
+  // regra de horario/dia
+  var agora=new Date();
+  var dow=agora.getDay();        // 0=domingo
+  var hora=agora.getHours()+agora.getMinutes()/60;
+  if(dow===0 || hora<11){ el.style.display='none'; return; }
+  var hojeISO=agora.getFullYear()+'-'+String(agora.getMonth()+1).padStart(2,'0')+'-'+String(agora.getDate()).padStart(2,'0');
+  function _bl(x){return String(x||'').split('(')[0].trim();}
+  // ja marcou "nao precisa hoje" pra esse lote?
+  function _jaMarcado(nm){
+    return (S.rT||[]).some(function(r){ return r.tipo==='sem_trato' && !r._apagado && _bl(r.lote)===_bl(nm) && (r.dt||'').substring(0,10)===hojeISO; });
+  }
+  var lotes=(S.LOTES||[]).filter(function(l){return (l.qtd||0)>0;});
+  var pend=[];
+  lotes.forEach(function(l){
+    var r=_ritmoLote(l.nome);
+    if(!r.temHistorico) return;              // sem ritmo confiavel, nao cobra
+    if(r.diasDesdeUltimo==null) return;
+    if(_jaMarcado(l.nome)) return;           // vaqueiro ja justificou hoje
+    // ja lancou trato hoje? entao esta em dia
+    if(r.ultimaData===hojeISO) return;
+    // passou do ritmo?
+    if(r.diasDesdeUltimo >= r.ritmoDias){
+      pend.push({nome:l.nome, dias:r.diasDesdeUltimo, ritmo:r.ritmoDias});
+    }
+  });
+  if(!pend.length){ el.style.display='none'; return; }
+  el.style.display='block';
+  el.innerHTML='<div style="background:linear-gradient(90deg,#FFF3E0 0%,#fff 55%);border:1px solid #FFCC80;border-left:4px solid #FF8F00;border-radius:12px;padding:12px;margin-bottom:10px">'
+    +'<div style="font-size:14px;font-weight:800;color:#E65100;margin-bottom:8px">Falta lançar trato</div>'
+    +pend.map(function(p){
+      var txt = p.ritmo<=1 ? 'trato diário · sem lançamento hoje' : ('costuma tratar a cada '+p.ritmo+' dias · último há '+p.dias+' dias');
+      return '<div style="background:#fff;border:1px solid #f0e0cc;border-radius:9px;padding:10px;margin-bottom:8px">'
+        +'<div style="font-weight:800;font-size:13px;color:#1b2c1b">'+p.nome+'</div>'
+        +'<div style="font-size:11px;color:#999;margin-bottom:8px">'+txt+'</div>'
+        +'<div style="display:flex;gap:7px">'
+        +'<button onclick="_tratarLote(\''+p.nome.replace(/'/g,"\\'")+'\')" style="flex:1;padding:9px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer">Precisa tratar</button>'
+        +'<button onclick="_semTratoLote(\''+p.nome.replace(/'/g,"\\'")+'\')" style="flex:1;padding:9px;background:#fff;color:#8a5a00;border:1.5px solid #FF8F00;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer">Não precisa hoje</button>'
+        +'</div></div>';
+    }).join('')
+    +'</div>';
+}
+// Botao "Precisa tratar" -> abre a acao de Trato
+function _tratarLote(nm){
+  try{ sp('trato',true,'home'); }catch(e){}
+}
+// Botao "Nao precisa hoje" -> escolhe motivo e registra (tipo sem_trato, vive no CONFIG)
+function _semTratoLote(nm){
+  var motivos=['Choveu','Ainda tem no cocho','Acabou o produto'];
+  var msg='Por que o '+nm+' não precisa de trato hoje?\n\n1 - Choveu\n2 - Ainda tem no cocho\n3 - Acabou o produto';
+  var op=prompt(msg,'2');
+  if(op===null) return;
+  var idx=parseInt(op)-1;
+  if(isNaN(idx)||idx<0||idx>2){ alert('Escolha 1, 2 ou 3.'); return; }
+  var hoje=new Date();
+  var hojeISO=hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0')+'-'+String(hoje.getDate()).padStart(2,'0');
+  S.rT=S.rT||[];
+  S.rT.push({tipo:'sem_trato', lote:nm, motivo:motivos[idx], dt:hojeISO, ts:new Date().toISOString(), n:(CU?CU.n:''), faz:(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:''});
+  salvar();
+  if(S.cfgGS) salvarNuvem(function(){});
+  try{_alertaTrato();}catch(e){}
+  alert('✅ Registrado: '+nm+' — '+motivos[idx]);
+}
 function _alertaRotacao(){
   // Verificar lotes com mais de 21 dias no mesmo pasto
   var hoje=new Date();
