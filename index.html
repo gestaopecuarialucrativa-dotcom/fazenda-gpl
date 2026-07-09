@@ -1095,10 +1095,10 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <!-- HISTÓRICO ✅ -->
 <div id="pg-feed" class="pg" style="display:none;padding:14px;padding-bottom:24px">
   <div style="font-size:12px;color:#666;margin-bottom:10px">Acompanhe os lançamentos da equipe. Confira se está certo e toque em 🗑️ para excluir um lançamento errado (depois é só relançar correto).</div>
-  <div class="card" style="padding:12px;margin-bottom:8px;border-left:4px solid #FF8F00">
+  <div class="card" style="padding:12px;margin-bottom:8px;border-left:4px solid #2E7D32">
     <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="var b=document.getElementById('diag-ritmo-body');var v=b.style.display==='none';b.style.display=v?'block':'none';if(v){b.innerHTML=_diagRitmoHtml();}">
-      <div><div style="font-size:13px;font-weight:800;color:#E65100">🧪 Teste — ritmo dos lotes</div><div style="font-size:11px;color:#888;margin-top:2px">Toque para conferir se o sistema entendeu o ritmo de cada lote</div></div>
-      <span style="font-size:18px;color:#FF8F00">▾</span>
+      <div><div style="font-size:13px;font-weight:800;color:#1B5E20">Consumo esperado × praticado</div><div style="font-size:11px;color:#888;margin-top:2px">Toque para ver o ritmo de consumo de cada lote</div></div>
+      <span style="font-size:18px;color:#2E7D32">▾</span>
     </div>
     <div id="diag-ritmo-body" style="display:none;margin-top:10px"></div>
   </div>
@@ -1138,6 +1138,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <div class="tgo"    id="htab-rotacao" onclick="sHistTab('rotacao')" style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px">🔄 Rotação</div>
   <div class="tgo"    id="htab-pastos"  onclick="sHistTab('pastos')"  style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px">🌱 Pastos</div>
   <div class="tgo"    id="htab-consumo" onclick="sHistTab('consumo')" style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px">🛒 Consumo</div>
+  <div class="tgo"    id="htab-cocho"   onclick="sHistTab('cocho')"   style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px">📝 Cocho</div>
 </div>
 
 <div id="htab-lotes-content">
@@ -1205,6 +1206,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <div id="hist-ranking-pastos"></div>
 </div>
 
+<div id="htab-cocho-content" style="display:none"></div>
 <div id="htab-consumo-content" style="display:none">
   <div style="margin:4px 0 10px"><div style="font-size:15px;font-weight:800;color:#1B5E20">Consumo</div><div style="font-size:12px;color:#777;margin-top:2px">Custo e relatório de consumo</div></div>
   <button onclick="gerarPDFConsumo()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📄 PDF — consumo atual</button>
@@ -5550,8 +5552,61 @@ function gerarReciboPDF(){const faz=(document.getElementById('pf')||{}).value||'
 function salvarNota(faz,k){if(!S.NOTAS)S.NOTAS={};const ta=document.getElementById('nota-'+k);if(ta){S.NOTAS[faz]=ta.value;salvar();ta.style.borderColor='#2E7D32';setTimeout(()=>ta.style.borderColor='#ddd',1000);}}
 
 // ═══ HISTÓRICO ═══
+// ═══ ABA COCHO: respostas do vaqueiro (nao precisa hoje + motivo) ═══
+function rHistCocho(){
+  var el=document.getElementById('htab-cocho-content');
+  if(!el) return;
+  function _bl(x){return String(x||'').split('(')[0].trim();}
+  function _br(iso){ return iso&&iso.length>=10 ? iso.substring(8,10)+'/'+iso.substring(5,7)+'/'+iso.substring(0,4) : (iso||''); }
+  // respostas "sem_trato" registradas pelo vaqueiro
+  var resp=(S.rT||[]).filter(function(r){return r.tipo==='sem_trato' && !r._apagado;});
+  resp.sort(function(a,b){ var da=(a.dt||a.ts||''), db=(b.dt||b.ts||''); return da<db?1:(da>db?-1:0); });
+  var corMotivo={'Choveu':'#1565C0','Ainda tem no cocho':'#2E7D32','Acabou o produto':'#E65100'};
+  var out='<div style="margin:4px 0 10px"><div style="font-size:15px;font-weight:800;color:#1B5E20">Respostas do cocho</div>'
+    +'<div style="font-size:12px;color:#777;margin-top:2px">Quando o vaqueiro marcou "não precisa hoje" e o motivo</div></div>';
+  if(!resp.length){
+    out+='<div class="card" style="padding:16px;text-align:center;color:#888;font-size:13px">Nenhuma resposta registrada ainda.<br><span style="font-size:11px">Quando o vaqueiro marcar "não precisa hoje" no aviso, aparece aqui.</span></div>';
+  } else {
+    out+=resp.map(function(r){
+      var mot=r.motivo||'—';
+      var cor=corMotivo[mot]||'#666';
+      var data=_br((r.dt||'').substring(0,10));
+      var hora='';
+      if(r.ts){ try{ var d=new Date(r.ts); hora=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }catch(e){} }
+      return '<div class="card" style="padding:12px;margin-bottom:8px;border-left:4px solid '+cor+'">'
+        +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">'
+        +  '<div style="font-weight:800;font-size:14px;color:#1b2c1b">'+(r.lote||'—')+'</div>'
+        +  '<div style="font-size:11px;color:#999">'+data+(hora?' · '+hora:'')+'</div>'
+        +'</div>'
+        +'<div style="display:inline-block;font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px;background:'+cor+'22;color:'+cor+'">'+mot+'</div>'
+        +'<div style="font-size:11px;color:#888;margin-top:6px">respondido por '+(r.n||'—')+'</div>'
+        +'</div>';
+    }).join('');
+  }
+  // dias sem lançamento nenhum (últimos 14 dias) — pega falta geral
+  var hoje=new Date(); hoje.setHours(12,0,0,0);
+  var comLanc={};
+  (S.rT||[]).forEach(function(r){ if(!r._apagado && r.tipo!=='sem_trato'){ var d=(r.dt||'').substring(0,10); if(d) comLanc[d]=1; } });
+  (S.rD||[]).forEach(function(r){ if(!r._apagado){ var d=(r.dt||'').substring(0,10); if(d) comLanc[d]=1; } });
+  (S.rC||[]).forEach(function(r){ if(!r._apagado){ var d=(r.dt||'').substring(0,10); if(d) comLanc[d]=1; } });
+  var semNada=[];
+  for(var i=1;i<=14;i++){
+    var dd=new Date(hoje.getTime()-i*864e5);
+    if(dd.getDay()===0) continue; // domingo nao conta
+    var iso=dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0')+'-'+String(dd.getDate()).padStart(2,'0');
+    if(!comLanc[iso]) semNada.push(iso);
+  }
+  if(semNada.length){
+    out+='<div style="margin:16px 0 8px"><div style="font-size:13px;font-weight:800;color:#E65100">Dias sem nenhum lançamento</div>'
+      +'<div style="font-size:11px;color:#888">últimos 14 dias (sem contar domingo)</div></div>';
+    out+='<div class="card" style="padding:12px">'+semNada.map(function(iso){
+      return '<div style="font-size:13px;color:#C62828;padding:3px 0">• '+_br(iso)+'</div>';
+    }).join('')+'</div>';
+  }
+  el.innerHTML=out;
+}
 function sHistTab(tab){
-  ['lotes','rotacao','pastos','consumo'].forEach(function(t){
+  ['lotes','rotacao','pastos','consumo','cocho'].forEach(function(t){
     var b=document.getElementById('htab-'+t);
     var c=document.getElementById('htab-'+t+'-content');
     if(b) b.classList.toggle('on', t===tab);
@@ -5561,6 +5616,7 @@ function sHistTab(tab){
   else if(tab==='rotacao') rHistRotacao();
   else if(tab==='pastos') rHistRankingPastos();
   else if(tab==='consumo') rHistConsumo();
+  else if(tab==='cocho') rHistCocho();
 }
 
 function rHistorico(){
