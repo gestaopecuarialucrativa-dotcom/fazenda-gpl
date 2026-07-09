@@ -1113,6 +1113,13 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 </div>
 <div id="pg-consultoria" class="pg" style="display:none;padding:14px;padding-bottom:40px">
   <div style="margin-bottom:10px"><div style="font-size:16px;font-weight:800;color:#1B5E20">Conferir lançamentos da equipe</div><div style="font-size:12px;color:#777;margin-top:2px">Fiscalização — o vaqueiro tratou certo?</div></div>
+  <div class="card" style="padding:14px;margin-bottom:10px;border-left:4px solid #FF8F00">
+    <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="var b=document.getElementById('diag-ritmo-body');var v=b.style.display==='none';b.style.display=v?'block':'none';if(v){b.innerHTML=_diagRitmoHtml();}">
+      <div><div style="font-size:13px;font-weight:800;color:#E65100">🧪 Teste — ritmo dos lotes</div><div style="font-size:11px;color:#888;margin-top:2px">Confira se o sistema entendeu o ritmo de cada lote</div></div>
+      <span style="font-size:18px;color:#FF8F00">▾</span>
+    </div>
+    <div id="diag-ritmo-body" style="display:none;margin-top:10px"></div>
+  </div>
   <div class="card" style="padding:14px">
     <div style="font-size:13px;font-weight:800;color:#1b2c1b;margin-bottom:10px">Período do relatório</div>
     <div style="display:flex;gap:8px">
@@ -2501,6 +2508,49 @@ function _gerarPDFConsultoriaFinal(selIdx){
   pdfModalAbrir('Relatório de Consultoria', html);
 }
 
+// ═══ CÉREBRO DOS AVISOS: descobre o ritmo de trato de cada lote ═══
+// Retorna, para um lote: de quantos em quantos dias costuma ser tratado (mediana
+// dos intervalos reais) e há quantos dias foi o último trato. Só calcula, não decide.
+function _ritmoLote(nomeLote){
+  function _bl(x){return String(x||'').split('(')[0].trim();}
+  function _dt(r){return (r.dt||'').substring(0,10);}
+  function _td(d){ if(!d||d.length<8)return null; var x; if(d.indexOf('/')>0){var p=d.split('/');x=new Date(p[2]+'-'+p[1]+'-'+p[0]+'T12:00:00');}else{x=new Date(d+'T12:00:00');} return isNaN(x.getTime())?null:x; }
+  var alvo=_bl(nomeLote);
+  var tr=(S.rT||[]).filter(function(r){return r.tipo==='trato' && !r._apagado && _bl(r.lote||r.co)===alvo;});
+  var ds={};
+  tr.forEach(function(r){ var d=_dt(r); if(d) ds[d]=1; });
+  var datas=Object.keys(ds).sort();
+  var res={ritmoDias:null, diasDesdeUltimo:null, ultimaData:(datas.length?datas[datas.length-1]:null), nTratos:datas.length, temHistorico:false};
+  var hj=new Date(); hj.setHours(12,0,0,0);
+  if(datas.length>=1){ var ud=_td(datas[datas.length-1]); if(ud) res.diasDesdeUltimo=Math.round((hj-ud)/864e5); }
+  if(datas.length<3) return res;
+  var ints=[];
+  for(var i=1;i<datas.length;i++){ var a=_td(datas[i-1]), b=_td(datas[i]); if(a&&b){ var di=Math.round((b-a)/864e5); if(di>0) ints.push(di); } }
+  if(!ints.length) return res;
+  var rec=ints.slice(-6).sort(function(x,y){return x-y;});
+  var mid=Math.floor(rec.length/2);
+  var med=rec.length%2?rec[mid]:Math.round((rec[mid-1]+rec[mid])/2);
+  res.ritmoDias=Math.max(1,med);
+  res.temHistorico=true;
+  return res;
+}
+// diagnóstico visual (TESTE): mostra o ritmo calculado de cada lote ativo
+function _diagRitmoHtml(){
+  var lotes=(S.LOTES||[]).filter(function(l){return (l.qtd||0)>0;});
+  if(!lotes.length) return '<div style="color:#888;font-size:12px;padding:10px">Nenhum lote ativo.</div>';
+  var linhas=lotes.map(function(l){
+    var r=_ritmoLote(l.nome);
+    var ritmo = r.temHistorico ? ('a cada '+r.ritmoDias+(r.ritmoDias>1?' dias':' dia')) : (r.nTratos>0?'pouco histórico':'sem trato');
+    var ult = r.diasDesdeUltimo==null ? '—' : (r.diasDesdeUltimo===0?'hoje':(r.diasDesdeUltimo===1?'ontem':('há '+r.diasDesdeUltimo+' dias')));
+    var cor = r.temHistorico ? '#2E7D32' : '#FF8F00';
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #eef2ec">'
+      +'<div><div style="font-weight:800;font-size:13px;color:#1b2c1b">'+l.nome+'</div>'
+      +'<div style="font-size:11px;color:#888">'+r.nTratos+' tratos registrados</div></div>'
+      +'<div style="text-align:right"><div style="font-weight:800;font-size:13px;color:'+cor+'">'+ritmo+'</div>'
+      +'<div style="font-size:11px;color:#888">último: '+ult+'</div></div></div>';
+  }).join('');
+  return linhas;
+}
 function rFeedConsultor(){
   var us=document.getElementById('feed-user');
   if(us && us.options.length<=1){
