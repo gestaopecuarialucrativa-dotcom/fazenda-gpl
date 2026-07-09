@@ -2535,19 +2535,69 @@ function _ritmoLote(nomeLote){
   return res;
 }
 // diagnóstico visual (TESTE): mostra o ritmo calculado de cada lote ativo
+// ═══ RITMO ESPERADO pelo consumo: usa SÓ o último produto lançado no lote ═══
+// Reusa a MESMA fórmula do app: kg/dia = (pct/100)*peso*qtd ; sacos/dia = kg/dia ÷ peso_saco.
+// O "ritmo esperado" = quantos dias o último lançamento deveria durar (sacos lançados ÷ sacos/dia).
+function _ritmoEsperado(nomeLote){
+  function _bl(x){return String(x||'').split('(')[0].trim();}
+  function _dt(r){return (r.dt||'').substring(0,10);}
+  var alvo=_bl(nomeLote);
+  var res={diasEsperado:null, produto:'', temDados:false};
+  // dados do lote (peso medio + n animais)
+  var lote=(S.LOTES||[]).find(function(l){return _bl(l.nome)===alvo;});
+  if(!lote) return res;
+  var peso=lote.peso||0, qtd=lote.qtd||0;
+  if(peso<=0||qtd<=0) return res;
+  // ULTIMO produto lançado no lote (nunca mistura produtos)
+  var tr=(S.rT||[]).filter(function(r){return r.tipo==='trato' && !r._apagado && _bl(r.lote||r.co)===alvo;});
+  if(!tr.length) return res;
+  tr.sort(function(a,b){return _dt(a)<_dt(b)?-1:(_dt(a)>_dt(b)?1:0);});
+  var ultDt=_dt(tr[tr.length-1]);
+  var ultProd=tr[tr.length-1].pr||tr[tr.length-1].prod||'';
+  if(!ultProd) return res;
+  // soma sacos do último lançamento (mesma data + mesmo produto)
+  var ultSac=0;
+  tr.forEach(function(r){ if(_dt(r)===ultDt && (r.pr||r.prod||'')===ultProd){ ultSac+=parseFloat(r.q||r.qtd||0)||0; } });
+  var est=(S.EST&&S.EST[ultProd])?S.EST[ultProd]:null;
+  var pct=est&&est.pct?est.pct:0;
+  var pSaco=est&&est.peso_saco?est.peso_saco:30;
+  if(pct<=0||pSaco<=0||ultSac<=0) return res;
+  var kgDia=(pct/100)*peso*qtd;           // MESMA formula do app
+  var sacosDia=kgDia/pSaco;
+  if(sacosDia<=0) return res;
+  res.diasEsperado=Math.max(1,Math.round(ultSac/sacosDia));
+  res.produto=ultProd;
+  res.temDados=true;
+  return res;
+}
 function _diagRitmoHtml(){
   var lotes=(S.LOTES||[]).filter(function(l){return (l.qtd||0)>0;});
   if(!lotes.length) return '<div style="color:#888;font-size:12px;padding:10px">Nenhum lote ativo.</div>';
   var linhas=lotes.map(function(l){
     var r=_ritmoLote(l.nome);
-    var ritmo = r.temHistorico ? ('a cada '+r.ritmoDias+(r.ritmoDias>1?' dias':' dia')) : (r.nTratos>0?'pouco histórico':'sem trato');
-    var ult = r.diasDesdeUltimo==null ? '—' : (r.diasDesdeUltimo===0?'hoje':(r.diasDesdeUltimo===1?'ontem':('há '+r.diasDesdeUltimo+' dias')));
-    var cor = r.temHistorico ? '#2E7D32' : '#FF8F00';
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #eef2ec">'
-      +'<div><div style="font-weight:800;font-size:13px;color:#1b2c1b">'+l.nome+'</div>'
-      +'<div style="font-size:11px;color:#888">'+r.nTratos+' tratos registrados</div></div>'
-      +'<div style="text-align:right"><div style="font-weight:800;font-size:13px;color:'+cor+'">'+ritmo+'</div>'
-      +'<div style="font-size:11px;color:#888">último: '+ult+'</div></div></div>';
+    var e=_ritmoEsperado(l.nome);
+    var pratico = r.temHistorico ? ('a cada '+r.ritmoDias+(r.ritmoDias>1?' dias':' dia')) : (r.nTratos>0?'pouco hist\u00f3rico':'sem trato');
+    var esperado = e.temDados ? ('a cada '+e.diasEsperado+(e.diasEsperado>1?' dias':' dia')) : '\u2014';
+    var ult = r.diasDesdeUltimo==null ? '\u2014' : (r.diasDesdeUltimo===0?'hoje':(r.diasDesdeUltimo===1?'ontem':('h\u00e1 '+r.diasDesdeUltimo+' dias')));
+    // leitura da diferença esperado x praticado
+    var leitura='', lcor='#888';
+    if(r.temHistorico && e.temDados){
+      if(r.ritmoDias < e.diasEsperado){ leitura='consome ACIMA do previsto'; lcor='#E65100'; }
+      else if(r.ritmoDias > e.diasEsperado){ leitura='consome ABAIXO do previsto \u00b7 observar'; lcor='#E65100'; }
+      else { leitura='consumo no previsto'; lcor='#2E7D32'; }
+    }
+    return '<div style="padding:10px 0;border-bottom:1px solid #eef2ec">'
+      +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">'
+      +  '<div style="font-weight:800;font-size:13px;color:#1b2c1b">'+l.nome+'</div>'
+      +  '<div style="font-size:11px;color:#888">\u00faltimo: '+ult+'</div>'
+      +'</div>'
+      +'<div style="display:flex;gap:8px">'
+      +  '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:7px 9px"><div style="font-size:10px;color:#888">esperado (consumo)</div><div style="font-weight:800;font-size:13px;color:#1B5E20">'+esperado+'</div></div>'
+      +  '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:7px 9px"><div style="font-size:10px;color:#888">praticado (hist\u00f3rico)</div><div style="font-weight:800;font-size:13px;color:#2E7D32">'+pratico+'</div></div>'
+      +'</div>'
+      +(leitura?'<div style="font-size:11px;font-weight:700;color:'+lcor+';margin-top:5px">'+leitura+'</div>':'')
+      +(e.produto?'<div style="font-size:10px;color:#aaa;margin-top:2px">base: '+e.produto+'</div>':'')
+      +'</div>';
   }).join('');
   return linhas;
 }
