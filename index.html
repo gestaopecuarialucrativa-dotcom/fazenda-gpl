@@ -5011,11 +5011,11 @@ function _semTratoLote(nm){
   if(isNaN(idx)||idx<0||idx>2){ alert('Escolha 1, 2 ou 3.'); return; }
   var hoje=new Date();
   var hojeISO=hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0')+'-'+String(hoje.getDate()).padStart(2,'0');
-  S.rT=S.rT||[];
   var _fazST=(typeof getFL==='function'&&getFL()[0])?getFL()[0]:((CU&&CU.fs&&CU.fs[0])?CU.fs[0]:Object.keys(S.FAZ||{})[0]||'');
-  S.rT.push({tipo:'sem_trato', lote:nm, motivo:motivos[idx], dt:hojeISO, ts:new Date().toISOString(), n:(CU?CU.n:''), faz:_fazST});
-  salvar();
-  if(S.cfgGS) salvarNuvem(function(){});
+  var r={tipo:'sem_trato', lote:nm, motivo:motivos[idx], dt:hojeISO, ts:new Date().toISOString(), n:(CU?CU.n:''), faz:_fazST};
+  S.rT=S.rT||[];
+  S.rT.push(r);
+  enviarDado(r);            // MESMO caminho do trato: grava na aba da planilha
   try{_alertaTrato();}catch(e){}
   alert('✅ Registrado: '+nm+' — '+motivos[idx]);
 }
