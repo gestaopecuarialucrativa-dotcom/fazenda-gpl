@@ -2542,6 +2542,17 @@ function _gerarPDFConsultoriaFinal(selIdx){
 // de cada uma, e ele escolhe. Depois calcula quanto comprar pra X dias de trato.
 window._ctSel = null;
 
+// Saldo do produto — FONTE UNICA: usa a MESMA _compraSaldoEst() da tela de plano de
+// compra, pra as duas telas nunca darem numeros diferentes. Aqui so acrescenta
+// entrada/tratado pra poder mostrar a conta aberta na tela.
+function _ctSaldo(prod){
+  var est=(S.EST&&S.EST[prod])?S.EST[prod]:null;
+  if(!est) return {entrada:0, tratado:0, saldo:0};
+  var entrada=parseFloat(est.q)||0;
+  var saldo=entrada;
+  try{ var mapa=_compraSaldoEst(); if(mapa && mapa[prod]!=null) saldo=parseFloat(mapa[prod])||0; }catch(e){}
+  return {entrada:entrada, tratado:parseFloat((entrada-saldo).toFixed(2)), saldo:saldo};
+}
 function _ctLoteObj(){
   var nm=(document.getElementById('ct-lote')||{}).value||'';
   return (S.LOTES||[]).find(function(l){return l.nome===nm;})||null;
@@ -2637,7 +2648,8 @@ function _ctEscolher(sacosDia){
     var maisMenos = pctOfer>pctPedido ? 'pra mais' : 'pra menos';
     aviso='<div style="background:#FFF3E0;border:1px solid #FFCC80;border-radius:9px;padding:10px;font-size:12px;color:#8a5a00;margin-bottom:10px">Arredondado <b>'+maisMenos+'</b> para facilitar o trato do vaqueiro. Voc\u00ea pediu <b>'+fmt(pctPedido,2)+'%</b> e vai ofertar <b>'+fmt(pctOfer,2)+'%</b>.</div>';
   }
-  var estQ=est&&est.q?parseFloat(est.q)||0:0;
+  var _sd=_ctSaldo(pr);
+  var estQ=_sd.saldo;
   var html='<div class="card" style="padding:14px;margin-bottom:10px;border-left:4px solid #2E7D32">';
   html+='<div style="font-size:12px;color:#888">'+l.nome+' \u00b7 '+pr+'</div>';
   html+='<div style="font-size:20px;font-weight:800;color:#1B5E20;margin:4px 0">'+String(sacosDia).replace('.',',')+' saco(s)/dia</div>';
@@ -2647,7 +2659,7 @@ function _ctEscolher(sacosDia){
   html+='<div style="font-size:13px;font-weight:800;color:#1b2c1b;margin-bottom:8px">Quanto comprar</div>';
   html+='<div style="font-size:11px;color:#666;margin-bottom:3px">Quantos dias de trato</div>';
   html+='<input id="ct-dias" type="number" value="30" oninput="_ctCompra()" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:9px;font-size:14px;margin-bottom:10px">';
-  html+='<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#555;cursor:pointer;margin-bottom:10px"><input id="ct-desc" type="checkbox" checked onchange="_ctCompra()" style="width:17px;height:17px">Descontar o que j\u00e1 tem no estoque ('+fmt(estQ,1)+' sacos)</label>';
+  html+='<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#555;cursor:pointer;margin-bottom:10px"><input id="ct-desc" type="checkbox" checked onchange="_ctCompra()" style="width:17px;height:17px">Descontar o saldo em estoque ('+fmt(estQ,1)+' sacos dispon\u00edveis)</label>';
   html+='<div id="ct-compra"></div>';
   html+='<button onclick="_ctCalcular()" style="width:100%;padding:10px;background:#fff;color:#555;border:1.5px solid #ddd;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-top:10px">Voltar e escolher outro</button>';
   html+='</div>';
@@ -2660,7 +2672,8 @@ function _ctCompra(){
   var dias=parseInt((document.getElementById('ct-dias')||{}).value||'0')||0;
   var desc=(document.getElementById('ct-desc')||{}).checked;
   var est=(S.EST&&S.EST[sel.prod])?S.EST[sel.prod]:null;
-  var estQ=est&&est.q?parseFloat(est.q)||0:0;
+  var _sd=_ctSaldo(sel.prod);
+  var estQ=_sd.saldo;
   var preco=est&&est.preco_saco?parseFloat(est.preco_saco)||0:0;
   function fmt(n,c){ return n.toFixed(c==null?1:c).replace('.',','); }
   if(dias<=0){ el.innerHTML='<div style="font-size:12px;color:#999">Informe quantos dias.</div>'; return; }
@@ -2669,7 +2682,8 @@ function _ctCompra(){
   var comprarInt=Math.ceil(comprar);
   var html='<div style="background:#eef2ec;border-radius:9px;padding:12px">';
   html+='<div style="display:flex;justify-content:space-between;font-size:13px;color:#555;padding:3px 0"><span>Precisa no per\u00edodo</span><b style="color:#1b2c1b">'+fmt(totalSacos,1)+' sacos</b></div>';
-  if(desc) html+='<div style="display:flex;justify-content:space-between;font-size:13px;color:#555;padding:3px 0"><span>J\u00e1 tem no estoque</span><b style="color:#2E7D32">-'+fmt(estQ,1)+' sacos</b></div>';
+  if(desc){ html+='<div style="display:flex;justify-content:space-between;font-size:13px;color:#555;padding:3px 0"><span>Saldo em estoque</span><b style="color:#2E7D32">-'+fmt(estQ,1)+' sacos</b></div>';
+    html+='<div style="font-size:10px;color:#aaa;text-align:right;margin-top:-2px">entrada '+fmt(_sd.entrada,0)+' \u2212 tratado '+fmt(_sd.tratado,0)+'</div>'; }
   html+='<div style="border-top:1px solid #d5ded5;margin-top:6px;padding-top:8px;display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;font-weight:800;color:#1b2c1b">Comprar</span><b style="font-size:22px;font-weight:800;color:#1B5E20">'+comprarInt+' sacos</b></div>';
   html+='<div style="font-size:11px;color:#888;text-align:right">'+fmt(comprarInt*sel.pSaco,0)+' kg';
   if(preco>0) html+=' \u00b7 R$ '+fmt(comprarInt*preco,2);
