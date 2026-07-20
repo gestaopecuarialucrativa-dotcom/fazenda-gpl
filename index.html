@@ -3692,10 +3692,12 @@ function rCompraLotes(){
       +  '<div style="flex:2;min-width:140px"><div style="font-size:10px;color:#666;margin-bottom:2px">Produto</div>'
       +    '<select id="cmp-prod-'+i+'" onchange="rCompraSyncPct('+i+')" style="width:100%;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px">'+opts+'</select></div>'
       +  '<div style="flex:1;min-width:70px"><div style="font-size:10px;color:#666;margin-bottom:2px">% PV/dia</div>'
-      +    '<input type="number" id="cmp-pct-'+i+'" step="0.01" min="0" placeholder="0" style="width:100%;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px"></div>'
+      +    '<input type="number" id="cmp-pct-'+i+'" step="0.01" min="0" placeholder="0" oninput="delete _compraArred['+i+'];rCompraArred('+i+')" style="width:100%;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px"></div>'
       +  '<div style="flex:1;min-width:80px"><div style="font-size:10px;color:#666;margin-bottom:2px">R$/saco</div>'
       +    '<input type="number" id="cmp-preco-'+i+'" step="0.01" min="0" placeholder="0,00" style="width:100%;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px"></div>'
-      +'</div></div>';
+      +'</div>'
+      +'<div id="cmp-arred-'+i+'" style="margin-top:7px"></div>'
+      +'</div>';
   }).join('');
   rCompraGenericos();
   rCompraAvulsos();
@@ -3988,6 +3990,9 @@ function salvarGenericos(){
 
 // ── Produtos avulsos (digitados na hora, só para a cotação) ──
 var _compraAvulsos=[];
+// Arredondamento da dose diaria por lote (indice -> sacos/dia escolhidos).
+// Vazio = usa o valor exato do %PV digitado.
+var _compraArred={};
 function rCompraAvulsos(){
   var div=document.getElementById('compra-avulsos-box'); if(!div)return;
   div.innerHTML=_compraAvulsos.map(function(a,i){
@@ -4005,6 +4010,55 @@ function rCompraAvulsos(){
 function compraAddAvulso(){ _compraAvulsos.push({prod:'',sacos:0,preco:0}); rCompraAvulsos(); }
 
 // Ao escolher o produto, preenche o % com o cadastrado (editável)
+// Mostra as opcoes de arredondar a dose DIARIA em saco inteiro, com o %PV real
+// que cada opcao entrega. Rogerio escolhe; se nao escolher, usa o exato do %PV.
+function rCompraArred(i){
+  var el=document.getElementById('cmp-arred-'+i); if(!el) return;
+  var lotes=(S.LOTES||[]).filter(function(l){return (l.qtd||0)>0;});
+  var l=lotes[i]; if(!l){ el.innerHTML=''; return; }
+  var sel=document.getElementById('cmp-prod-'+i);
+  var inp=document.getElementById('cmp-pct-'+i);
+  var prod=sel?sel.value:'';
+  var pct=parseFloat(inp&&inp.value)||0;
+  if(!prod || pct<=0){ el.innerHTML=''; delete _compraArred[i]; return; }
+  var saco=(S.EST[prod]&&S.EST[prod].peso_saco)?S.EST[prod].peso_saco:SACO_KG_PADRAO;
+  var pv=(l.peso||0)*(l.qtd||0);
+  var kgDia=pv*(pct/100);
+  var exato=kgDia/saco;
+  var baixo=Math.floor(exato), cima=Math.ceil(exato);
+  function f(n,c){ return n.toFixed(c).replace('.',','); }
+  function pctDe(s){ return (s*saco)/pv*100; }
+  function kgCab(s){ return (s*saco)/(l.qtd||1); }
+  var esc=_compraArred[i];
+  var html='<div style="border-top:1px dashed #ddd;padding-top:7px">';
+  html+='<div style="font-size:10px;color:#888;margin-bottom:5px">Dose di\u00e1ria: <b style="color:#1b2c1b">'+f(kgDia,1)+' kg</b> = '+f(exato,2)+' sacos \u00b7 '+f(kgDia/(l.qtd||1),3)+' kg/cab</div>';
+  if(baixo===cima || Math.abs(exato-Math.round(exato))<0.005){
+    html+='<div style="font-size:11px;color:#2E7D32;font-weight:700">Deu saco inteiro certinho ('+Math.round(exato)+' sc/dia)</div>';
+  } else {
+    html+='<div style="display:flex;gap:5px;flex-wrap:wrap">';
+    if(baixo>=1){
+      var onB=(esc===baixo);
+      html+='<button onclick="_compraSetArred('+i+','+baixo+')" style="flex:1;min-width:96px;padding:6px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid '+(onB?'#FF8F00':'#e0e7e0')+';background:'+(onB?'#FFF3E0':'#fff')+';color:'+(onB?'#E65100':'#666')+'">'+baixo+' sc \u00b7 '+f(pctDe(baixo),2)+'%<div style="font-size:9px;font-weight:400;opacity:.8">pra menos \u00b7 '+f(kgCab(baixo),2)+' kg/cab</div></button>';
+    }
+    var onC=(esc===cima);
+    html+='<button onclick="_compraSetArred('+i+','+cima+')" style="flex:1;min-width:96px;padding:6px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid '+(onC?'#2E7D32':'#e0e7e0')+';background:'+(onC?'#E8F5E9':'#fff')+';color:'+(onC?'#1B5E20':'#666')+'">'+cima+' sc \u00b7 '+f(pctDe(cima),2)+'%<div style="font-size:9px;font-weight:400;opacity:.8">pra mais \u00b7 '+f(kgCab(cima),2)+' kg/cab</div></button>';
+    var onE=(esc==null);
+    html+='<button onclick="_compraSetArred('+i+',null)" style="flex:1;min-width:96px;padding:6px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid '+(onE?'#2E7D32':'#e0e7e0')+';background:'+(onE?'#E8F5E9':'#fff')+';color:'+(onE?'#1B5E20':'#666')+'">exato \u00b7 '+f(pct,2)+'%<div style="font-size:9px;font-weight:400;opacity:.8">sem arredondar</div></button>';
+    html+='</div>';
+    if(esc!=null){
+      var difP=pctDe(esc)-pct;
+      var lado=difP>0?'pra mais':'pra menos';
+      html+='<div style="font-size:10px;color:#8a5a00;background:#FFF3E0;border-radius:6px;padding:5px 7px;margin-top:5px">Arredondado <b>'+lado+'</b>: pediu '+f(pct,2)+'% e vai ofertar <b>'+f(pctDe(esc),2)+'%</b> ('+f(esc*saco,0)+' kg/dia)</div>';
+    }
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
+function _compraSetArred(i,sacos){
+  if(sacos==null) delete _compraArred[i]; else _compraArred[i]=sacos;
+  rCompraArred(i);
+  if(typeof rCompraCalc==='function') rCompraCalc();
+}
 function rCompraSyncPct(i){
   var sel=document.getElementById('cmp-prod-'+i);
   var inp=document.getElementById('cmp-pct-'+i);
@@ -4012,6 +4066,8 @@ function rCompraSyncPct(i){
   var p=sel.value;
   if(p&&S.EST[p]&&S.EST[p].pct!=null){ inp.value=S.EST[p].pct; }
   else { inp.value=''; }
+  delete _compraArred[i];          // trocou produto: recomeca a escolha
+  rCompraArred(i);
 }
 
 // Calcula e devolve as linhas do plano (reuso por tela e PDF)
@@ -4027,10 +4083,18 @@ function _compraPlano(){
     if(pct<=0)return;
     var preco=parseFloat((document.getElementById('cmp-preco-'+i)||{}).value)||0;
     var saco=(S.EST[prod]&&S.EST[prod].peso_saco)?S.EST[prod].peso_saco:SACO_KG_PADRAO;
-    var consDia=l.peso*(pct/100)*l.qtd; // kg/dia do lote
+    var consDia=l.peso*(pct/100)*l.qtd; // kg/dia do lote (exato pelo %PV digitado)
+    var pctReal=pct;
+    // Se Rogerio escolheu arredondar a dose diaria em saco inteiro, o plano passa
+    // a usar essa dose — e o %PV real muda junto.
+    if(_compraArred[i]!=null){
+      consDia=_compraArred[i]*saco;
+      pctReal=(consDia/(l.peso*l.qtd))*100;
+    }
     function sacos(dias){ return Math.ceil((consDia*dias)/saco); }
     linhas.push({
-      lote:l.nome, qtd:l.qtd, peso:l.peso, prod:prod, pct:pct, saco:saco, preco:preco,
+      lote:l.nome, qtd:l.qtd, peso:l.peso, prod:prod, pct:pct, pctReal:pctReal,
+      arred:(_compraArred[i]!=null?_compraArred[i]:null), saco:saco, preco:preco,
       consDia:consDia,
       s30:sacos(30), s60:sacos(60), s90:sacos(90),
       kg30:consDia*30, kg60:consDia*60, kg90:consDia*90
@@ -4855,15 +4919,24 @@ function carregarNuvem(cb){
             var rdLocal = S.rD || [];
             var pagosLocal = {};
             var apagadosLocal = {};
+            // Chave TOLERANTE: data + nome + valor. NAO usa o texto do servico, porque
+            // servico longo volta da planilha com espaco/quebra de linha diferente e a
+            // chave deixava de bater -> a diaria paga voltava a aparecer como pendente.
+            function _kDiaria(r){
+              var _d=String(r.dt||'').substring(0,10);
+              var _n=String(r.n||'').trim().toLowerCase();
+              var _v=(parseFloat(r.v)||0).toFixed(2);
+              return _d+'|'+_n+'|'+_v;
+            }
             rdLocal.forEach(function(r){
-              var k = (r.dt||'')+'|'+(r.n||'')+'|'+(r.srv||'')+'|'+(r.v||0);
+              var k = _kDiaria(r);
               if(r.pago){
                 pagosLocal[k] = {pago_por:r.pago_por||'', pago_dt:r.pago_dt||''};
               }
               if(r._apagado){ apagadosLocal[k] = true; }
             });
             S.rD = cfg.rD.map(function(r){
-              var k = (r.dt||'')+'|'+(r.n||'')+'|'+(r.srv||'')+'|'+(r.v||0);
+              var k = _kDiaria(r);
               var out = r;
               if(pagosLocal[k]){
                 out = Object.assign({},r,{pago:true,pago_por:pagosLocal[k].pago_por,pago_dt:pagosLocal[k].pago_dt});
