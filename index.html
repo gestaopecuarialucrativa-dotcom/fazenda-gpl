@@ -726,6 +726,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div id="pg-painel" class="pg" style="display:none">
 <button id="btn-feed-acesso" onclick="sp('feed','painel')" style="display:none;width:100%;background:#fff;color:#2E7D32;padding:11px;border:1.5px solid #2E7D32;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:8px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><rect x="9" y="3" width="6" height="3.5" rx="1"/><path d="M9 4.5H7a1.5 1.5 0 00-1.5 1.5V19A1.5 1.5 0 007 20.5h10A1.5 1.5 0 0018.5 19V6A1.5 1.5 0 0017 4.5h-2"/><path d="M8.5 11h7M8.5 15h5"/></svg>Conferir lançamentos da equipe</button>
 <button id="btn-consultoria-acesso" onclick="sp('consultoria','painel')" style="display:none;width:100%;background:#fff;color:#2E7D32;padding:11px;border:1.5px solid #2E7D32;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:8px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M3 3v18h18"/><path d="M7 16l4-4 3 3 5-6"/></svg>Relatório de consultoria</button>
+<button id="btn-calctrato-acesso" onclick="sp('calctrato','painel');_ctInit()" style="display:none;width:100%;background:#fff;color:#2E7D32;padding:11px;border:1.5px solid #2E7D32;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:8px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><rect x="4" y="2.5" width="16" height="19" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M16 11h.5M8 15h2M12 15h2M16 15h.5M8 18.5h6"/></svg>Calcular trato e compra</button>
 <div id="diag-btn" style="display:none;background:#fff;border:1px solid #e0e7e0;color:#999;padding:8px;border-radius:10px;text-align:center;margin-bottom:8px;cursor:pointer;font-size:11px" onclick="var m='v:'+S.rD.length+' cfgGS:'+(S.cfgGS?'OK':'VAZIO')+' FAZ:'+Object.keys(S.FAZ).join(',');alert(m)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg>diagnóstico</div>
 
 <!-- FILTROS -->
@@ -1119,8 +1120,28 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <div id="feed-cont" style="font-size:11px;color:#888;margin:6px 2px 8px"></div>
   <div id="feed-lista"></div>
 </div>
+<!-- CALCULADORA DE TRATO E COMPRA -->
+<div id="pg-calctrato" class="pg" style="display:none;padding:14px;padding-bottom:40px">
+  <div style="margin-bottom:12px"><div style="font-size:16px;font-weight:800;color:#1B5E20">Calcular trato e compra</div><div style="font-size:12px;color:#777;margin-top:2px">Quero ofertar X% do peso vivo — quantos sacos por dia e quanto comprar?</div></div>
+
+  <div class="card" style="padding:14px;margin-bottom:10px">
+    <div style="font-size:11px;color:#666;margin-bottom:3px">Lote</div>
+    <select id="ct-lote" onchange="_ctLoteMuda()" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:9px;font-size:14px;margin-bottom:10px"></select>
+
+    <div style="font-size:11px;color:#666;margin-bottom:3px">Produto</div>
+    <select id="ct-prod" onchange="_ctProdMuda()" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:9px;font-size:14px;margin-bottom:10px"></select>
+
+    <div style="font-size:11px;color:#666;margin-bottom:3px">Quero ofertar (% do peso vivo)</div>
+    <input id="ct-pct" type="number" step="0.01" placeholder="ex: 0,50" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:9px;font-size:14px;margin-bottom:4px">
+    <div id="ct-info" style="font-size:11px;color:#999;margin-bottom:10px"></div>
+
+    <button onclick="_ctCalcular()" style="width:100%;padding:12px;background:#2E7D32;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:800;cursor:pointer">Calcular</button>
+  </div>
+
+  <div id="ct-result"></div>
+</div>
 <div id="pg-consultoria" class="pg" style="display:none;padding:14px;padding-bottom:40px">
-  <div style="margin-bottom:10px"><div style="font-size:16px;font-weight:800;color:#1B5E20">Conferir lançamentos da equipe</div><div style="font-size:12px;color:#777;margin-top:2px">Fiscalização — o vaqueiro tratou certo?</div></div>
+  <div style="margin-bottom:10px"><div style="font-size:16px;font-weight:800;color:#1B5E20">Desempenho do lote</div><div style="font-size:12px;color:#777;margin-top:2px">Consumo × ganho de peso × custo — o lote paga o que come?</div></div>
   <div class="card" style="padding:14px">
     <div style="font-size:13px;font-weight:800;color:#1b2c1b;margin-bottom:10px">Período do relatório</div>
     <div style="display:flex;gap:8px">
@@ -1208,7 +1229,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
 <div id="htab-cocho-content" style="display:none"></div>
 <div id="htab-consumo-content" style="display:none">
-  <div style="margin:4px 0 10px"><div style="font-size:15px;font-weight:800;color:#1B5E20">Consumo</div><div style="font-size:12px;color:#777;margin-top:2px">Custo e relatório de consumo</div></div>
+  <div style="margin:4px 0 10px"><div style="font-size:15px;font-weight:800;color:#1B5E20">Custo do suplemento</div><div style="font-size:12px;color:#777;margin-top:2px">Quanto cada lote e cada produto está custando</div></div>
   <button onclick="gerarPDFConsumo()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📄 PDF — consumo atual</button>
   <div style="background:#fff;border:1px solid #e0e7e0;border-radius:12px;padding:10px;margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:#1B5E20;margin-bottom:6px">PDF do consumo por período</div><div style="display:flex;gap:6px;flex-wrap:wrap"><label style="flex:1;min-width:120px;font-size:11px;color:#666">De<br><input type="date" id="cp-de" style="width:100%;padding:8px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label><label style="flex:1;min-width:120px;font-size:11px;color:#666">Até<br><input type="date" id="cp-ate" style="width:100%;padding:8px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label></div><button onclick="gerarPDFConsumoPeriodo()" style="width:100%;padding:10px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px">📄 PDF do período</button></div>
   <div id="hist-consumo"></div>
@@ -1482,7 +1503,7 @@ function rHomeMapa(){
   }
 }
 
-function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',relatorio:'📈 Relatório & Dashboard',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda',feed:'📋 Conferir Lançamentos',pesagem:'Identificar Animal'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home'){setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);setTimeout(function(){try{rHomeMapa();}catch(e){}},600);setTimeout(function(){try{rHomeMapa();}catch(e){}},1500);}if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}try{var _fb=document.getElementById('btn-feed-acesso');if(_fb)_fb.style.display=(CU&&CU.r==='Consultor')?'block':'none';var _cb=document.getElementById('btn-consultoria-acesso');if(_cb)_cb.style.display=(CU&&CU.r==='Consultor')?'block':'none';var _db=document.getElementById('diag-btn');if(_db)_db.style.display=(CU&&CU.r==='Consultor')?'block':'none';}catch(e){}if(_nuvemCarregando){setTimeout(()=>{try{rPan();}catch(e){}},3500);}},50);if(id==='feed')setTimeout(()=>{try{rFeedConsultor();}catch(e){}},50);if(id==='consultoria')setTimeout(()=>{try{rConsultoria(7);}catch(e){console.error('rConsultoria:',e);}},50);if(id==='pesagem')setTimeout(()=>{try{rPesagem();}catch(e){console.error('rPesagem:',e);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _mt=0;var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');var img=document.getElementById('mapa-img-sat');var ok=wrap&&wrap.offsetWidth>0&&img&&(img.complete||img._loaded);if(!ok&&_mt++<30){setTimeout(_rmapa,300);return;}
+function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.display='none');const el=document.getElementById('pg-'+id);if(!el){console.warn('pg-'+id+' not found');return;}el.style.display='block';const hh=document.getElementById('hhome');if(hh)hh.style.display=id==='home'?'none':'flex';prevPage=prev||null;const TT={home:'Início',diaria:'Lançar Diária',insumo:'Insumos',trato:'Trato de Cocho',escore:'Escore de Fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',relatorio:'📈 Relatório & Dashboard',config:'Configurações',lote:'Lotes',mapa:'Mapa da Fazenda',feed:'📋 Conferir Lançamentos',pesagem:'Identificar Animal'};document.getElementById('h-t').textContent=CU?CU.n:'GPL';document.getElementById('h-s').textContent=TT[id]||'';if(id==='home'){setTimeout(function(){try{_sincMapa();rHomeMapa();}catch(e){}},80);setTimeout(function(){try{rHomeMapa();}catch(e){}},600);setTimeout(function(){try{rHomeMapa();}catch(e){}},1500);}if(id==='painel')setTimeout(()=>{try{popAll();}catch(e){}try{rPan();}catch(e){console.error('rPan:',e);}try{_sincMapa();}catch(e){}try{var _fb=document.getElementById('btn-feed-acesso');if(_fb)_fb.style.display=(CU&&CU.r==='Consultor')?'block':'none';var _cb=document.getElementById('btn-consultoria-acesso');if(_cb)_cb.style.display=(CU&&CU.r==='Consultor')?'block':'none';var _ctb=document.getElementById('btn-calctrato-acesso');if(_ctb)_ctb.style.display=(CU&&CU.r==='Consultor')?'block':'none';var _db=document.getElementById('diag-btn');if(_db)_db.style.display=(CU&&CU.r==='Consultor')?'block':'none';}catch(e){}if(_nuvemCarregando){setTimeout(()=>{try{rPan();}catch(e){}},3500);}},50);if(id==='feed')setTimeout(()=>{try{rFeedConsultor();}catch(e){}},50);if(id==='consultoria')setTimeout(()=>{try{rConsultoria(7);}catch(e){console.error('rConsultoria:',e);}},50);if(id==='pesagem')setTimeout(()=>{try{rPesagem();}catch(e){console.error('rPesagem:',e);}},50);if(id==='insumo')setTimeout(()=>{rListProdutos();updInsCadFaz();},50);if(id==='lote')setTimeout(()=>{try{popAll();}catch(e){}try{rListLotes();rListAreas();updTLLotes();}catch(e){console.error(e);}},50);if(id==='mapa'){var _mt=0;var _rmapa=function(){var wrap=document.getElementById('mapa-wrap-main');var img=document.getElementById('mapa-img-sat');var ok=wrap&&wrap.offsetWidth>0&&img&&(img.complete||img._loaded);if(!ok&&_mt++<30){setTimeout(_rmapa,300);return;}
     // Se MAPA_COORDS vazio, carregar da nuvem primeiro
     if(S.cfgGS&&(!S.MAPA_COORDS||!Object.keys(S.MAPA_COORDS).length)){
       carregarNuvem(function(){try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}});
@@ -2515,6 +2536,148 @@ function _gerarPDFConsultoriaFinal(selIdx){
 // ═══ CÉREBRO DOS AVISOS: descobre o ritmo de trato de cada lote ═══
 // Retorna, para um lote: de quantos em quantos dias costuma ser tratado (mediana
 // dos intervalos reais) e há quantos dias foi o último trato. Só calcula, não decide.
+// ═══ CALCULADORA DE TRATO E COMPRA (planejamento — olha pra frente) ═══
+// Rogerio digita o %PV que QUER ofertar; o sistema calcula kg/dia e sacos exatos.
+// NAO arredonda sozinho: mostra a opcao de saco a menos e a mais, com o %PV real
+// de cada uma, e ele escolhe. Depois calcula quanto comprar pra X dias de trato.
+window._ctSel = null;
+
+function _ctLoteObj(){
+  var nm=(document.getElementById('ct-lote')||{}).value||'';
+  return (S.LOTES||[]).find(function(l){return l.nome===nm;})||null;
+}
+function _ctInit(){
+  var selL=document.getElementById('ct-lote'), selP=document.getElementById('ct-prod');
+  if(!selL||!selP) return;
+  var lotes=(S.LOTES||[]).filter(function(l){return (l.qtd||0)>0;});
+  selL.innerHTML=lotes.map(function(l){return '<option value="'+l.nome+'">'+l.nome+'</option>';}).join('');
+  var prods=Object.keys(S.EST||{});
+  selP.innerHTML=prods.map(function(p){return '<option value="'+p+'">'+p+'</option>';}).join('');
+  var r=document.getElementById('ct-result'); if(r) r.innerHTML='';
+  _ctProdMuda();
+}
+function _ctLoteMuda(){ _ctProdMuda(); }
+function _ctProdMuda(){
+  var el=document.getElementById('ct-info'); if(!el) return;
+  var l=_ctLoteObj();
+  var pr=(document.getElementById('ct-prod')||{}).value||'';
+  var est=(S.EST&&S.EST[pr])?S.EST[pr]:null;
+  var pctCad=est&&est.pct?est.pct:0;
+  var pSaco=est&&est.peso_saco?est.peso_saco:30;
+  var txt='';
+  if(l) txt+=l.qtd+' animais \u00b7 '+l.peso+' kg \u00b7 ';
+  txt+='saco de '+pSaco+' kg';
+  if(pctCad>0) txt+=' \u00b7 cadastrado: '+String(pctCad).replace('.',',')+'%';
+  el.innerHTML=txt;
+  var ip=document.getElementById('ct-pct');
+  if(ip && !ip.value && pctCad>0) ip.value=pctCad;
+}
+function _ctCalcular(){
+  var out=document.getElementById('ct-result'); if(!out) return;
+  var l=_ctLoteObj();
+  var pr=(document.getElementById('ct-prod')||{}).value||'';
+  var pct=parseFloat(String((document.getElementById('ct-pct')||{}).value||'').replace(',','.'))||0;
+  if(!l){ out.innerHTML='<div class="card" style="padding:14px;color:#C62828;font-size:13px">Selecione um lote.</div>'; return; }
+  if(!pr){ out.innerHTML='<div class="card" style="padding:14px;color:#C62828;font-size:13px">Selecione um produto.</div>'; return; }
+  if(pct<=0){ out.innerHTML='<div class="card" style="padding:14px;color:#C62828;font-size:13px">Digite o % do peso vivo que quer ofertar.</div>'; return; }
+  var est=(S.EST&&S.EST[pr])?S.EST[pr]:null;
+  var pSaco=est&&est.peso_saco?est.peso_saco:30;
+  var peso=l.peso||0, qtd=l.qtd||0;
+  if(peso<=0||qtd<=0){ out.innerHTML='<div class="card" style="padding:14px;color:#C62828;font-size:13px">Esse lote est\u00e1 sem peso m\u00e9dio ou sem animais cadastrados.</div>'; return; }
+  var pvTotal=peso*qtd;
+  var kgDia=(pct/100)*pvTotal;              // MESMA formula do app
+  var sacosExato=kgDia/pSaco;
+  var baixo=Math.floor(sacosExato), cima=Math.ceil(sacosExato);
+  function pctReal(s){ return (s*pSaco)/pvTotal*100; }
+  function difKg(s){ return (s*pSaco)-kgDia; }
+  function fmt(n,c){ return n.toFixed(c==null?1:c).replace('.',','); }
+  var html='<div class="card" style="padding:14px;margin-bottom:10px;border-left:4px solid #2E7D32">';
+  html+='<div style="font-size:12px;color:#888;margin-bottom:6px">Peso vivo do lote: <b style="color:#1b2c1b">'+fmt(pvTotal,0)+' kg</b></div>';
+  html+='<div style="font-size:13px;color:#555">Para ofertar <b>'+fmt(pct,2)+'%</b> voc\u00ea precisa de:</div>';
+  html+='<div style="font-size:22px;font-weight:800;color:#1B5E20;margin:4px 0">'+fmt(kgDia,1)+' kg/dia</div>';
+  html+='<div style="font-size:13px;color:#666">= <b>'+fmt(sacosExato,2)+' sacos/dia</b> (exato)</div>';
+  html+='</div>';
+  if(baixo===cima || Math.abs(sacosExato-Math.round(sacosExato))<0.005){
+    var s=Math.round(sacosExato);
+    html+='<div class="card" style="padding:14px;margin-bottom:10px"><div style="font-size:13px;color:#2E7D32;font-weight:800">Deu saco inteiro certinho: '+s+' saco(s)/dia</div>';
+    html+='<button onclick="_ctEscolher('+s+')" style="width:100%;padding:12px;background:#2E7D32;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:800;cursor:pointer;margin-top:10px">Usar '+s+' saco(s)/dia</button></div>';
+  } else {
+    html+='<div style="font-size:12px;color:#888;margin:2px 0 8px">Escolha como quer arredondar (o vaqueiro trata com saco inteiro):</div>';
+    // opcao PRA MENOS
+    if(baixo>=1){
+      html+='<div class="card" style="padding:13px;margin-bottom:8px;border-left:4px solid #FF8F00">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:16px;font-weight:800;color:#1b2c1b">'+baixo+' saco(s)/dia</div><div style="font-size:15px;font-weight:800;color:#E65100">'+fmt(pctReal(baixo),2)+'%</div></div>';
+      html+='<div style="font-size:12px;color:#888;margin-top:3px">'+fmt(baixo*pSaco,0)+' kg/dia \u00b7 arredondado <b>pra menos</b> \u00b7 '+fmt(Math.abs(difKg(baixo)),1)+' kg abaixo do pedido</div>';
+      html+='<button onclick="_ctEscolher('+baixo+')" style="width:100%;padding:10px;background:#fff;color:#E65100;border:1.5px solid #FF8F00;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;margin-top:9px">Usar '+baixo+' saco(s)</button></div>';
+    }
+    // opcao PRA MAIS
+    html+='<div class="card" style="padding:13px;margin-bottom:8px;border-left:4px solid #2E7D32">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:16px;font-weight:800;color:#1b2c1b">'+cima+' saco(s)/dia</div><div style="font-size:15px;font-weight:800;color:#2E7D32">'+fmt(pctReal(cima),2)+'%</div></div>';
+    html+='<div style="font-size:12px;color:#888;margin-top:3px">'+fmt(cima*pSaco,0)+' kg/dia \u00b7 arredondado <b>pra mais</b> \u00b7 '+fmt(difKg(cima),1)+' kg acima do pedido</div>';
+    html+='<button onclick="_ctEscolher('+cima+')" style="width:100%;padding:10px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;margin-top:9px">Usar '+cima+' saco(s)</button></div>';
+    // fracao livre
+    html+='<div class="card" style="padding:12px;margin-bottom:8px;background:#f7faf7"><div style="font-size:12px;color:#777">Se quiser o valor exato, sem arredondar: <b style="color:#1b2c1b">'+fmt(sacosExato,2)+' sacos/dia</b> ('+fmt(pct,2)+'%)</div>';
+    html+='<button onclick="_ctEscolher('+sacosExato.toFixed(2)+')" style="width:100%;padding:9px;background:#fff;color:#555;border:1.5px solid #ddd;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-top:8px">Usar o exato ('+fmt(sacosExato,2)+')</button></div>';
+  }
+  out.innerHTML=html;
+}
+function _ctEscolher(sacosDia){
+  var out=document.getElementById('ct-result'); if(!out) return;
+  var l=_ctLoteObj();
+  var pr=(document.getElementById('ct-prod')||{}).value||'';
+  var est=(S.EST&&S.EST[pr])?S.EST[pr]:null;
+  var pSaco=est&&est.peso_saco?est.peso_saco:30;
+  var pctPedido=parseFloat(String((document.getElementById('ct-pct')||{}).value||'').replace(',','.'))||0;
+  var pvTotal=(l.peso||0)*(l.qtd||0);
+  var pctOfer=(sacosDia*pSaco)/pvTotal*100;
+  window._ctSel={sacos:sacosDia, prod:pr, lote:l.nome, pSaco:pSaco, pctPedido:pctPedido, pctOfer:pctOfer};
+  function fmt(n,c){ return n.toFixed(c==null?1:c).replace('.',','); }
+  var aviso='';
+  if(Math.abs(pctOfer-pctPedido)>0.001){
+    var maisMenos = pctOfer>pctPedido ? 'pra mais' : 'pra menos';
+    aviso='<div style="background:#FFF3E0;border:1px solid #FFCC80;border-radius:9px;padding:10px;font-size:12px;color:#8a5a00;margin-bottom:10px">Arredondado <b>'+maisMenos+'</b> para facilitar o trato do vaqueiro. Voc\u00ea pediu <b>'+fmt(pctPedido,2)+'%</b> e vai ofertar <b>'+fmt(pctOfer,2)+'%</b>.</div>';
+  }
+  var estQ=est&&est.q?parseFloat(est.q)||0:0;
+  var html='<div class="card" style="padding:14px;margin-bottom:10px;border-left:4px solid #2E7D32">';
+  html+='<div style="font-size:12px;color:#888">'+l.nome+' \u00b7 '+pr+'</div>';
+  html+='<div style="font-size:20px;font-weight:800;color:#1B5E20;margin:4px 0">'+String(sacosDia).replace('.',',')+' saco(s)/dia</div>';
+  html+='<div style="font-size:13px;color:#666">'+fmt(sacosDia*pSaco,1)+' kg/dia \u00b7 ofertando '+fmt(pctOfer,2)+'% do peso vivo</div></div>';
+  html+=aviso;
+  html+='<div class="card" style="padding:14px">';
+  html+='<div style="font-size:13px;font-weight:800;color:#1b2c1b;margin-bottom:8px">Quanto comprar</div>';
+  html+='<div style="font-size:11px;color:#666;margin-bottom:3px">Quantos dias de trato</div>';
+  html+='<input id="ct-dias" type="number" value="30" oninput="_ctCompra()" style="width:100%;padding:10px;border:1.5px solid #ddd;border-radius:9px;font-size:14px;margin-bottom:10px">';
+  html+='<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#555;cursor:pointer;margin-bottom:10px"><input id="ct-desc" type="checkbox" checked onchange="_ctCompra()" style="width:17px;height:17px">Descontar o que j\u00e1 tem no estoque ('+fmt(estQ,1)+' sacos)</label>';
+  html+='<div id="ct-compra"></div>';
+  html+='<button onclick="_ctCalcular()" style="width:100%;padding:10px;background:#fff;color:#555;border:1.5px solid #ddd;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-top:10px">Voltar e escolher outro</button>';
+  html+='</div>';
+  out.innerHTML=html;
+  _ctCompra();
+}
+function _ctCompra(){
+  var el=document.getElementById('ct-compra'); if(!el||!window._ctSel) return;
+  var sel=window._ctSel;
+  var dias=parseInt((document.getElementById('ct-dias')||{}).value||'0')||0;
+  var desc=(document.getElementById('ct-desc')||{}).checked;
+  var est=(S.EST&&S.EST[sel.prod])?S.EST[sel.prod]:null;
+  var estQ=est&&est.q?parseFloat(est.q)||0:0;
+  var preco=est&&est.preco_saco?parseFloat(est.preco_saco)||0:0;
+  function fmt(n,c){ return n.toFixed(c==null?1:c).replace('.',','); }
+  if(dias<=0){ el.innerHTML='<div style="font-size:12px;color:#999">Informe quantos dias.</div>'; return; }
+  var totalSacos=sel.sacos*dias;
+  var comprar=desc ? Math.max(0,totalSacos-estQ) : totalSacos;
+  var comprarInt=Math.ceil(comprar);
+  var html='<div style="background:#eef2ec;border-radius:9px;padding:12px">';
+  html+='<div style="display:flex;justify-content:space-between;font-size:13px;color:#555;padding:3px 0"><span>Precisa no per\u00edodo</span><b style="color:#1b2c1b">'+fmt(totalSacos,1)+' sacos</b></div>';
+  if(desc) html+='<div style="display:flex;justify-content:space-between;font-size:13px;color:#555;padding:3px 0"><span>J\u00e1 tem no estoque</span><b style="color:#2E7D32">-'+fmt(estQ,1)+' sacos</b></div>';
+  html+='<div style="border-top:1px solid #d5ded5;margin-top:6px;padding-top:8px;display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:13px;font-weight:800;color:#1b2c1b">Comprar</span><b style="font-size:22px;font-weight:800;color:#1B5E20">'+comprarInt+' sacos</b></div>';
+  html+='<div style="font-size:11px;color:#888;text-align:right">'+fmt(comprarInt*sel.pSaco,0)+' kg';
+  if(preco>0) html+=' \u00b7 R$ '+fmt(comprarInt*preco,2);
+  html+='</div>';
+  if(desc && comprar<=0) html+='<div style="font-size:12px;color:#2E7D32;font-weight:700;margin-top:6px">O estoque atual j\u00e1 cobre esse per\u00edodo.</div>';
+  html+='</div>';
+  el.innerHTML=html;
+}
 function _ritmoLote(nomeLote){
   function _bl(x){return String(x||'').split('(')[0].trim();}
   function _dt(r){return (r.dt||'').substring(0,10);}
