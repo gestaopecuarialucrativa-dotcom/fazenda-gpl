@@ -2606,6 +2606,10 @@ function _ctCalcular(){
   html+='<div style="font-size:12px;color:#888;margin-bottom:6px">Peso vivo do lote: <b style="color:#1b2c1b">'+fmt(pvTotal,0)+' kg</b></div>';
   html+='<div style="font-size:13px;color:#555">Para ofertar <b>'+fmt(pct,2)+'%</b> voc\u00ea precisa de:</div>';
   html+='<div style="font-size:22px;font-weight:800;color:#1B5E20;margin:4px 0">'+fmt(kgDia,1)+' kg/dia</div>';
+  html+='<div style="display:flex;gap:8px;margin:8px 0 6px">';
+  html+='<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px 10px"><div style="font-size:10px;color:#888">por cabe\u00e7a/dia</div><div style="font-weight:800;font-size:15px;color:#1B5E20">'+fmt(kgDia/qtd,3)+' kg</div></div>';
+  html+='<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px 10px"><div style="font-size:10px;color:#888">gramas/cab/dia</div><div style="font-weight:800;font-size:15px;color:#1B5E20">'+fmt((kgDia/qtd)*1000,0)+' g</div></div>';
+  html+='</div>';
   html+='<div style="font-size:13px;color:#666">= <b>'+fmt(sacosExato,2)+' sacos/dia</b> (exato)</div>';
   html+='</div>';
   if(baixo===cima || Math.abs(sacosExato-Math.round(sacosExato))<0.005){
@@ -2618,13 +2622,13 @@ function _ctCalcular(){
     if(baixo>=1){
       html+='<div class="card" style="padding:13px;margin-bottom:8px;border-left:4px solid #FF8F00">';
       html+='<div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:16px;font-weight:800;color:#1b2c1b">'+baixo+' saco(s)/dia</div><div style="font-size:15px;font-weight:800;color:#E65100">'+fmt(pctReal(baixo),2)+'%</div></div>';
-      html+='<div style="font-size:12px;color:#888;margin-top:3px">'+fmt(baixo*pSaco,0)+' kg/dia \u00b7 arredondado <b>pra menos</b> \u00b7 '+fmt(Math.abs(difKg(baixo)),1)+' kg abaixo do pedido</div>';
+      html+='<div style="font-size:12px;color:#888;margin-top:3px">'+fmt(baixo*pSaco,0)+' kg/dia \u00b7 '+fmt((baixo*pSaco)/qtd,3)+' kg/cab \u00b7 arredondado <b>pra menos</b> \u00b7 '+fmt(Math.abs(difKg(baixo)),1)+' kg abaixo do pedido</div>';
       html+='<button onclick="_ctEscolher('+baixo+')" style="width:100%;padding:10px;background:#fff;color:#E65100;border:1.5px solid #FF8F00;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;margin-top:9px">Usar '+baixo+' saco(s)</button></div>';
     }
     // opcao PRA MAIS
     html+='<div class="card" style="padding:13px;margin-bottom:8px;border-left:4px solid #2E7D32">';
     html+='<div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:16px;font-weight:800;color:#1b2c1b">'+cima+' saco(s)/dia</div><div style="font-size:15px;font-weight:800;color:#2E7D32">'+fmt(pctReal(cima),2)+'%</div></div>';
-    html+='<div style="font-size:12px;color:#888;margin-top:3px">'+fmt(cima*pSaco,0)+' kg/dia \u00b7 arredondado <b>pra mais</b> \u00b7 '+fmt(difKg(cima),1)+' kg acima do pedido</div>';
+    html+='<div style="font-size:12px;color:#888;margin-top:3px">'+fmt(cima*pSaco,0)+' kg/dia \u00b7 '+fmt((cima*pSaco)/qtd,3)+' kg/cab \u00b7 arredondado <b>pra mais</b> \u00b7 '+fmt(difKg(cima),1)+' kg acima do pedido</div>';
     html+='<button onclick="_ctEscolher('+cima+')" style="width:100%;padding:10px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;margin-top:9px">Usar '+cima+' saco(s)</button></div>';
     // fracao livre
     html+='<div class="card" style="padding:12px;margin-bottom:8px;background:#f7faf7"><div style="font-size:12px;color:#777">Se quiser o valor exato, sem arredondar: <b style="color:#1b2c1b">'+fmt(sacosExato,2)+' sacos/dia</b> ('+fmt(pct,2)+'%)</div>';
@@ -2653,7 +2657,8 @@ function _ctEscolher(sacosDia){
   var html='<div class="card" style="padding:14px;margin-bottom:10px;border-left:4px solid #2E7D32">';
   html+='<div style="font-size:12px;color:#888">'+l.nome+' \u00b7 '+pr+'</div>';
   html+='<div style="font-size:20px;font-weight:800;color:#1B5E20;margin:4px 0">'+String(sacosDia).replace('.',',')+' saco(s)/dia</div>';
-  html+='<div style="font-size:13px;color:#666">'+fmt(sacosDia*pSaco,1)+' kg/dia \u00b7 ofertando '+fmt(pctOfer,2)+'% do peso vivo</div></div>';
+  var _qtdA=l.qtd||1;
+  html+='<div style="font-size:13px;color:#666">'+fmt(sacosDia*pSaco,1)+' kg/dia \u00b7 <b>'+fmt((sacosDia*pSaco)/_qtdA,3)+' kg por cabe\u00e7a</b> \u00b7 ofertando '+fmt(pctOfer,2)+'% do peso vivo</div></div>';
   html+=aviso;
   html+='<div class="card" style="padding:14px">';
   html+='<div style="font-size:13px;font-weight:800;color:#1b2c1b;margin-bottom:8px">Quanto comprar</div>';
