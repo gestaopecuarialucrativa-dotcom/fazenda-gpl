@@ -4314,9 +4314,17 @@ function gerarPDFCompra(){
   function _vs(r,d){return d===30?r.s30:(d===60?r.s60:r.s90);}
 
   var linhasTab=linhas.map(function(r){
-    function cel(d){var sc=_vs(r,d),kg=_vk(r,d);return '<td style="text-align:center">'+sc+' sacos<br><span style="font-size:9px;color:#888">'+kg.toFixed(0)+' kg</span>'+(r.preco>0?'<br><span style="font-size:9px;color:#1565C0">'+fmtR(sc*r.preco)+'</span>':'')+'</td>';}
-    return '<tr><td>'+r.lote+'</td><td>'+_compraRotulo(r.prod,r.pct)+'</td><td style="text-align:center">'+r.qtd+'</td>'
-      +'<td style="text-align:center">'+r.peso+'</td><td style="text-align:center">'+r.pct+'%</td>'
+    // Dias realmente contados no prazo (menos que o prazo = tem venda prevista)
+    function _dP(d){ return d===30?(r.d30!=null?r.d30:30):(d===60?(r.d60!=null?r.d60:60):(r.d90!=null?r.d90:90)); }
+    function cel(d){
+      var sc=_vs(r,d),kg=_vk(r,d), dd=_dP(d);
+      var nota=(r.venda && dd<d) ? ('<br><span style="font-size:8px;color:#E65100;font-weight:700">s\u00f3 '+dd+' dia(s)</span>') : '';
+      return '<td style="text-align:center">'+sc+' sacos'+nota+'<br><span style="font-size:9px;color:#888">'+kg.toFixed(0)+' kg</span>'+(r.preco>0?'<br><span style="font-size:9px;color:#1565C0">'+fmtR(sc*r.preco)+'</span>':'')+'</td>';
+    }
+    var _vBR = r.venda ? (r.venda.substring(8,10)+'/'+r.venda.substring(5,7)+'/'+r.venda.substring(0,4)) : '';
+    var _celLote = '<td>'+r.lote+(r.venda?('<br><span style="font-size:8px;color:#E65100;font-weight:700">vende '+_vBR+'</span>'):'')+'</td>';
+    return '<tr>'+_celLote+'<td>'+_compraRotulo(r.prod,r.pct)+'</td><td style="text-align:center">'+r.qtd+'</td>'
+      +'<td style="text-align:center">'+r.peso+'</td><td style="text-align:center">'+(r.pctReal!=null?r.pctReal.toFixed(2).replace('.',','):r.pct)+'%</td>'
       +'<td style="text-align:center">'+r.consDia.toFixed(1)+' kg</td>'
       +prazos.map(cel).join('')+'</tr>';
   }).join('');
@@ -4362,6 +4370,7 @@ function gerarPDFCompra(){
     +linhasTot
     +linhaGeral
     +'</table>'
+    +(linhas.some(function(x){return !!x.venda;}) ? ('<p class="crit" style="color:#8a5a00;background:#FFF8E1;padding:6px 8px;border-radius:6px"><b>Venda prevista:</b> '+linhas.filter(function(x){return !!x.venda;}).map(function(x){var b=x.venda.substring(8,10)+'/'+x.venda.substring(5,7)+'/'+x.venda.substring(0,4);return x.lote+' vende em '+b;}).join(' · ')+'. Nesses lotes o cálculo conta só os dias até a venda — por isso a quantidade é menor que a do período cheio.</p>') : '')
     +'<p class="crit">Sacos arredondados para cima. Consumo/dia = peso médio × % do peso vivo × nº de animais. <b>A comprar = Preciso − Saldo atual do estoque</b> (aba 📦 Saldo Estoque). Produtos marcados (avulso) foram adicionados na hora e não descontam estoque. Nomes podem ser genéricos (para cotação). Valores de planejamento — não representam compra registrada.</p>'
     +'<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:12px">🖨️ Imprimir / Salvar PDF</button>'
     +_pdfRodape()
