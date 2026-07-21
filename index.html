@@ -3696,6 +3696,12 @@ function rCompraLotes(){
       +  '<div style="flex:1;min-width:80px"><div style="font-size:10px;color:#666;margin-bottom:2px">R$/saco</div>'
       +    '<input type="number" id="cmp-preco-'+i+'" step="0.01" min="0" placeholder="0,00" oninput="rCompraArred('+i+')" style="width:100%;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px"></div>'
       +'</div>'
+      +'<div style="margin-top:7px;display:flex;align-items:center;gap:7px">'
+      +  '<div style="font-size:10px;color:#666;white-space:nowrap">Vende em</div>'
+      +  '<input type="date" id="cmp-venda-'+i+'" onchange="_compraSetVenda('+i+',this.value)" style="flex:1;padding:5px 7px;border:1px solid #ddd;border-radius:7px;font-size:11px">'
+      +  '<button onclick="_compraSetVenda('+i+',\'\')" title="limpar" style="padding:5px 8px;background:#fff;border:1px solid #ddd;border-radius:7px;font-size:11px;color:#888;cursor:pointer">limpar</button>'
+      +'</div>'
+      +'<div id="cmp-venda-info-'+i+'" style="font-size:10px;color:#888;margin-top:3px"></div>'
       +'<div id="cmp-arred-'+i+'" style="margin-top:7px"></div>'
       +'</div>';
   }).join('');
@@ -3993,6 +3999,20 @@ var _compraAvulsos=[];
 // Arredondamento da dose diaria por lote (indice -> sacos/dia escolhidos).
 // Vazio = usa o valor exato do %PV digitado.
 var _compraArred={};
+// Data de venda prevista por lote (indice -> 'yyyy-mm-dd'), SO pra esta tela.
+// Vazio = sem venda no periodo, conta o prazo cheio (comportamento normal).
+var _compraVenda={};
+// Dias de trato que sobram ate a venda. Sem data = prazo cheio.
+function _compraDiasAteVenda(i,dias){
+  var dv=_compraVenda[i];
+  if(!dv) return dias;
+  var hoje=new Date(); hoje.setHours(12,0,0,0);
+  var d=new Date(dv+'T12:00:00');
+  if(isNaN(d.getTime())) return dias;
+  var faltam=Math.round((d-hoje)/864e5);
+  if(faltam<0) faltam=0;
+  return Math.min(dias,faltam);
+}
 function rCompraAvulsos(){
   var div=document.getElementById('compra-avulsos-box'); if(!div)return;
   div.innerHTML=_compraAvulsos.map(function(a,i){
@@ -4085,6 +4105,22 @@ function _compraManAplica(i,val){
   rCompraArred(i);
   if(typeof rCompraCalc==='function') rCompraCalc();
 }
+// Data de venda: so afeta o orcamento desta tela.
+function _compraSetVenda(i,val){
+  if(!val){ delete _compraVenda[i]; var inp=document.getElementById('cmp-venda-'+i); if(inp) inp.value=''; }
+  else _compraVenda[i]=val;
+  _compraVendaInfo(i);
+  if(typeof rCompraCalc==='function') rCompraCalc();
+}
+function _compraVendaInfo(i){
+  var el=document.getElementById('cmp-venda-info-'+i); if(!el) return;
+  var dv=_compraVenda[i];
+  if(!dv){ el.innerHTML=''; return; }
+  var faltam=_compraDiasAteVenda(i,99999);
+  var br=dv.substring(8,10)+'/'+dv.substring(5,7)+'/'+dv.substring(0,4);
+  if(faltam<=0) el.innerHTML='<span style="color:#E65100;font-weight:700">Vende em '+br+' \u2014 data j\u00e1 passou, n\u00e3o entra na compra</span>';
+  else el.innerHTML='<span style="color:#E65100;font-weight:700">Vende em '+br+' \u2014 s\u00f3 '+faltam+' dia(s) de trato</span>';
+}
 function _compraSetArred(i,sacos){
   if(sacos==null) delete _compraArred[i]; else _compraArred[i]=sacos;
   rCompraArred(i);
@@ -4122,13 +4158,16 @@ function _compraPlano(){
       consDia=_compraArred[i]*saco;
       pctReal=(consDia/(l.peso*l.qtd))*100;
     }
-    function sacos(dias){ return Math.ceil((consDia*dias)/saco); }
+    // Dias efetivos: se o lote vende dentro do prazo, so conta ate a venda.
+    var _dEf=function(dias){ return _compraDiasAteVenda(i,dias); };
+    function sacos(dias){ return Math.ceil((consDia*_dEf(dias))/saco); }
     linhas.push({
       lote:l.nome, qtd:l.qtd, peso:l.peso, prod:prod, pct:pct, pctReal:pctReal,
       arred:(_compraArred[i]!=null?_compraArred[i]:null), saco:saco, preco:preco,
       consDia:consDia,
       s30:sacos(30), s60:sacos(60), s90:sacos(90),
-      kg30:consDia*30, kg60:consDia*60, kg90:consDia*90
+      kg30:consDia*_dEf(30), kg60:consDia*_dEf(60), kg90:consDia*_dEf(90),
+      venda:(_compraVenda[i]||null), d30:_dEf(30), d60:_dEf(60), d90:_dEf(90)
     });
   });
   return linhas;
@@ -4215,6 +4254,7 @@ function rCompraCalc(){
         +'<div style="flex:1;background:#eef2ec;border-radius:7px;padding:6px 9px"><div style="font-size:9px;color:#888">custo/dia do lote</div><div style="font-weight:800;font-size:13px;color:#1B5E20">'+fmtR((r.consDia/r.saco)*r.preco)+'</div></div>'
         +'<div style="flex:1;background:#eef2ec;border-radius:7px;padding:6px 9px"><div style="font-size:9px;color:#888">custo/cabeça/dia</div><div style="font-weight:800;font-size:13px;color:#1B5E20">'+fmtR(((r.consDia/r.saco)*r.preco)/(r.qtd||1))+'</div></div>'
         +'</div>'):'')
+      +(r.venda?('<div style="font-size:10px;color:#E65100;font-weight:700;background:#FFF3E0;border-radius:6px;padding:4px 7px;margin-bottom:5px">Vende em '+r.venda.substring(8,10)+'/'+r.venda.substring(5,7)+'/'+r.venda.substring(0,4)+' · conta só '+r.d30+'/'+r.d60+'/'+r.d90+' dia(s) em vez de 30/60/90</div>'):'')
       +'<div style="display:flex;gap:12px;flex-wrap:wrap">'+bloco('30 dias',r.kg30,r.s30)+bloco('60 dias',r.kg60,r.s60)+bloco('90 dias',r.kg90,r.s90)+'</div>'
       +'</div>';
   });
