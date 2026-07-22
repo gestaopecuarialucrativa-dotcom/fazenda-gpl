@@ -4002,6 +4002,15 @@ var _compraArred={};
 // Data de venda prevista por lote (indice -> 'yyyy-mm-dd'), SO pra esta tela.
 // Vazio = sem venda no periodo, conta o prazo cheio (comportamento normal).
 var _compraVenda={};
+// Frete por produto (nome do produto -> R$ total do frete daquele produto).
+// OPCIONAL: sem frete, o custo fica so o do produto (igual antes).
+// O frete e rateado sobre os sacos A COMPRAR e entra no custo real do saco.
+var _compraFrete={};
+function _compraSetFrete(prod,val){
+  var v=parseFloat(String(val).replace(',','.'))||0;
+  if(v>0) _compraFrete[prod]=v; else delete _compraFrete[prod];
+  if(typeof rCompraCalc==='function') rCompraCalc();
+}
 // Dias de trato que sobram ate a venda. Sem data = prazo cheio.
 function _compraDiasAteVenda(i,dias){
   var dv=_compraVenda[i];
@@ -4218,6 +4227,12 @@ function _compraTotais(linhas){
     t.c90=Math.max(0, t.s90-t.saldo);
     var saco=t.saco||SACO_KG_PADRAO;
     t.diasCobre = t.consDia>0 ? Math.floor((t.saldo*saco)/t.consDia) : null;
+    // FRETE (opcional): rateia o frete total sobre os sacos a comprar de cada prazo.
+    // fretePorSaco muda por prazo porque a qtd a comprar muda. Sem frete = 0.
+    t.frete = (_compraFrete[p]!=null) ? _compraFrete[p] : 0;
+    t.freteSaco30 = (t.frete>0 && t.c30>0) ? t.frete/t.c30 : 0;
+    t.freteSaco60 = (t.frete>0 && t.c60>0) ? t.frete/t.c60 : 0;
+    t.freteSaco90 = (t.frete>0 && t.c90>0) ? t.frete/t.c90 : 0;
   });
   return tot;
 }
@@ -4271,7 +4286,21 @@ function rCompraCalc(){
     var ths=prazos.map(function(d){return '<td style="text-align:center;font-size:9px;color:#999">'+d+' dias</td>';}).join('');
     var lp=prazos.map(function(d){return '<td style="text-align:center;font-size:11px;color:#666;padding:1px 2px">'+_vp(t,d)+'</td>';}).join('');
     var lt=prazos.map(function(){return '<td style="text-align:center;font-size:11px;color:#999;padding:1px 2px">−'+t.saldo+'</td>';}).join('');
-    var lc=prazos.map(function(d){var sc=_vc(t,d);var r=t.preco>0?('<div style="font-size:9px;color:#1565C0;font-weight:700">'+fmtR(sc*t.preco)+'</div>'):'';return '<td style="text-align:center;font-size:13px;font-weight:800;color:#1B5E20;padding:1px 2px">'+sc+' sc'+r+'</td>';}).join('');
+    function _freteSaco(d){ return d===30?t.freteSaco30:(d===60?t.freteSaco60:t.freteSaco90); }
+    var lc=prazos.map(function(d){
+      var sc=_vc(t,d);
+      var custoProd=sc*t.preco;
+      var fr=_freteSaco(d)*sc; // frete rateado * sacos = frete total daquele prazo (=t.frete quando sc>0)
+      var valTotal=custoProd+fr;
+      var r='';
+      if(t.preco>0 || t.frete>0){
+        r='<div style="font-size:9px;color:#1565C0;font-weight:700">'+fmtR(valTotal)+'</div>';
+        if(t.frete>0 && sc>0) r+='<div style="font-size:8px;color:#E65100">c/ frete '+fmtR(_freteSaco(d))+'/sc</div>';
+      }
+      return '<td style="text-align:center;font-size:13px;font-weight:800;color:#1B5E20;padding:1px 2px">'+sc+' sc'+r+'</td>';
+    }).join('');
+    var _pid='frete-'+btoa(unescape(encodeURIComponent(p))).replace(/=/g,'');
+    var linhaFrete='<tr><td style="font-size:10px;color:#E65100;padding:3px 2px">Frete (total R$)</td><td colspan="'+prazos.length+'" style="padding:3px 2px"><input type="number" step="0.01" min="0" id="'+_pid+'" value="'+(t.frete>0?t.frete:'')+'" placeholder="sem frete" onchange="_compraSetFrete('+JSON.stringify(p)+',this.value)" style="width:100%;padding:5px 7px;border:1px solid #FFCC80;border-radius:6px;font-size:11px"></td></tr>';
     var nome=(t.avulso? p : _compraRotulo(p,t.pct))+(t.avulso?' <span style="font-size:9px;color:#E65100;font-weight:700">avulso</span>':'');
     var alerta = t.avulso ? '' : ((t.diasCobre!=null&&t.diasCobre>=90)
       ? '<div style="font-size:10px;color:#2E7D32;margin-top:5px">✅ Saldo ('+t.saldo+' sacos ≈ '+t.diasCobre+' dias) já cobre o período. Sem compra urgente.</div>'
@@ -4283,13 +4312,14 @@ function rCompraCalc(){
       +'<tr><td style="font-size:10px;color:#666;padding:1px 2px">Preciso</td>'+lp+'</tr>'
       +'<tr><td style="font-size:10px;color:#666;padding:1px 2px">Já tenho</td>'+lt+'</tr>'
       +'<tr><td style="font-size:10px;color:#1B5E20;font-weight:700;padding:1px 2px">A comprar</td>'+lc+'</tr>'
+      +linhaFrete
       +'</table>'+alerta
       +'</div>';
   });
   // Total geral a comprar
   var g={}; prazos.forEach(function(d){g['c'+d]=0;g['r'+d]=0;});
-  Object.keys(tot).forEach(function(p){var t=tot[p];prazos.forEach(function(d){var sc=_vc(t,d);g['c'+d]+=sc;if(t.preco>0)g['r'+d]+=sc*t.preco;});});
-  var temP=linhas.some(function(r){return r.preco>0;})||Object.keys(tot).some(function(p){return tot[p].avulso&&tot[p].preco>0;});
+  Object.keys(tot).forEach(function(p){var t=tot[p];prazos.forEach(function(d){var sc=_vc(t,d);g['c'+d]+=sc;if(t.preco>0)g['r'+d]+=sc*t.preco;if(t.frete>0&&sc>0)g['r'+d]+=t.frete;});});
+  var temP=linhas.some(function(r){return r.preco>0;})||Object.keys(tot).some(function(p){return tot[p].avulso&&tot[p].preco>0;})||Object.keys(_compraFrete).length>0;
   function gcel(sc,rs){ return '<td style="text-align:center;color:#fff;font-weight:800;font-size:13px;padding:5px 2px">'+sc+' sc'+(temP?'<div style="font-size:9px;color:#C8E6C9;font-weight:600">'+fmtR(rs)+'</div>':'')+'</td>'; }
   out+='<table style="width:100%;border-collapse:collapse;margin-top:10px;background:#1B5E20;border-radius:8px;overflow:hidden">'
     +'<tr><td style="color:#fff;font-weight:800;font-size:11px;padding:5px 6px">TOTAL A COMPRAR</td>'+prazos.map(function(d){return gcel(g['c'+d],g['r'+d]);}).join('')+'</tr></table>';
@@ -4307,7 +4337,7 @@ function gerarPDFCompra(){
   var ncol=6+prazos.length;
 
   var fmtR=function(v){return 'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});};
-  var temPreco=linhas.some(function(r){return r.preco>0;})||Object.keys(tot).some(function(p){return tot[p].preco>0;});
+  var temPreco=Object.keys(_compraFrete).length>0||linhas.some(function(r){return r.preco>0;})||Object.keys(tot).some(function(p){return tot[p].preco>0;});
   function _vc(t,d){return d===30?t.c30:(d===60?t.c60:t.c90);}
   function _vp(t,d){return d===30?t.s30:(d===60?t.s60:t.s90);}
   function _vk(r,d){return d===30?r.kg30:(d===60?r.kg60:r.kg90);}
@@ -4332,7 +4362,16 @@ function gerarPDFCompra(){
     var t=tot[p];
     function cP(d){ return '<td style="text-align:center;color:#777;font-size:10px">'+_vp(t,d)+'</td>'; }
     function cT(){ return '<td style="text-align:center;color:#999;font-size:10px">−'+t.saldo+'</td>'; }
-    function cC(d){ var sc=_vc(t,d); return '<td style="text-align:center;font-weight:800;color:#1B5E20">'+sc+' sc'+(t.preco>0?'<br><span style="font-size:9px;color:#1565C0">'+fmtR(sc*t.preco)+'</span>':'')+'</td>'; }
+    function cC(d){
+      var sc=_vc(t,d);
+      var val=sc*t.preco + ((t.frete>0&&sc>0)?t.frete:0);
+      var linha='';
+      if(t.preco>0 || t.frete>0){
+        linha='<br><span style="font-size:9px;color:#1565C0">'+fmtR(val)+'</span>';
+        if(t.frete>0&&sc>0) linha+='<br><span style="font-size:8px;color:#E65100">c/ frete</span>';
+      }
+      return '<td style="text-align:center;font-weight:800;color:#1B5E20">'+sc+' sc'+linha+'</td>';
+    }
     var nome=(t.avulso? p : _compraRotulo(p,t.pct));
     if(t.avulso){
       return '<tr style="background:#FFF8E1;font-weight:700"><td colspan="6">'+nome+' <span style="color:#E65100;font-size:9px">(avulso)</span> — A comprar</td>'+prazos.map(cC).join('')+'</tr>';
@@ -4343,12 +4382,13 @@ function gerarPDFCompra(){
     return '<tr style="background:#F1F8E9"><td colspan="6" style="font-weight:700">'+nome+' — Preciso</td>'+prazos.map(cP).join('')+'</tr>'
       +'<tr style="background:#F1F8E9"><td colspan="6" style="color:#999">Já tenho (saldo estoque)</td>'+prazos.map(cT).join('')+'</tr>'
       +'<tr style="background:#E8F5E9;font-weight:700"><td colspan="6" style="text-align:right">A comprar</td>'+prazos.map(cC).join('')+'</tr>'
+      +(t.frete>0?('<tr style="background:#FFF8E1"><td colspan="6" style="text-align:right;color:#E65100;font-size:10px">Frete (rateado)</td>'+prazos.map(function(d){var sc=_vc(t,d);var fs=(sc>0?t.frete/sc:0);return '<td style="text-align:center;color:#E65100;font-size:10px">'+fmtR(t.frete)+'<br><span style="font-size:8px">'+fmtR(fs)+'/sc</span></td>';}).join('')+'</tr>'):'')
       +'<tr><td colspan="'+ncol+'" style="font-size:9px;color:#555;border:none;padding:2px 6px 8px">'+alerta+'</td></tr>';
   }).join('');
 
   // Total geral a comprar (soma do "A comprar" de todos os produtos)
   var geral={}; prazos.forEach(function(d){geral['c'+d]=0;geral['r'+d]=0;});
-  Object.keys(tot).forEach(function(p){var t=tot[p];prazos.forEach(function(d){var sc=_vc(t,d);geral['c'+d]+=sc;if(t.preco>0)geral['r'+d]+=sc*t.preco;});});
+  Object.keys(tot).forEach(function(p){var t=tot[p];prazos.forEach(function(d){var sc=_vc(t,d);geral['c'+d]+=sc;if(t.preco>0)geral['r'+d]+=sc*t.preco;if(t.frete>0&&sc>0)geral['r'+d]+=t.frete;});});
   function celGeral(d){var sc=geral['c'+d],rs=geral['r'+d];return '<td style="text-align:center;color:#fff">'+sc+' sacos'+(temPreco?'<br><span style="font-size:9px;color:#C8E6C9">'+fmtR(rs)+'</span>':'')+'</td>';}
   var linhaGeral='<tr style="font-weight:800;background:#1B5E20"><td colspan="6" style="text-align:right;color:#fff;background:#1B5E20">TOTAL A COMPRAR</td>'+prazos.map(celGeral).join('')+'</tr>';
   var cabPrazos=prazos.map(function(d){return '<th style="text-align:center">'+d+' dias</th>';}).join('');
