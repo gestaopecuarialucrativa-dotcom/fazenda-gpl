@@ -2367,22 +2367,15 @@ function rConsultoria(dias){
       difTxt = realSacos>0?('Sem % cadastrado'):('—');
     }
 
-    // GMD do lote (ganho médio diário entre as 2 últimas pesagens)
-    var gmd = _calcGMD(nm);
-    var gmdHtml = '';
-    if(gmd){
-      var dtAntBR=gmd.dtAnt.split('-').reverse().join('/');
-      var dtAtuBR=gmd.dtAtu.split('-').reverse().join('/');
-      var gmdCor = gmd.gmdMedio>0?'#2E7D32':(gmd.gmdMedio<0?'#C62828':'#65766a');
-      gmdHtml = '<div style="font-size:10px;color:#9bb39b;margin:8px 0 4px;text-transform:uppercase;letter-spacing:.3px">Ganho de peso (GMD)</div>'
-        + '<div style="display:flex;gap:6px;margin-bottom:8px">'
-        +   '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px 6px;text-align:center"><div style="font-size:17px;font-weight:900;color:'+gmdCor+'">'+gmd.gmdMedio.toFixed(3).replace(".",",")+' <span style="font-size:11px;font-weight:700">kg/dia</span></div><div style="font-size:9px;color:#9bb39b;margin-top:1px">GMD médio</div></div>'
-        +   '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px 6px;text-align:center"><div style="font-size:17px;font-weight:900;color:#1b2c1b">'+(gmd.ganhoMedio>=0?'+':'')+gmd.ganhoMedio.toFixed(1).replace(".",",")+' <span style="font-size:11px;font-weight:700">kg</span></div><div style="font-size:9px;color:#9bb39b;margin-top:1px">ganho no período</div></div>'
-        +   '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:8px 6px;text-align:center"><div style="font-size:17px;font-weight:900;color:#1b2c1b">'+gmd.dias+' <span style="font-size:11px;font-weight:700">dias</span></div><div style="font-size:9px;color:#9bb39b;margin-top:1px">entre pesagens</div></div>'
-        + '</div>'
-        + '<div style="font-size:9px;color:#9bb39b;margin:-4px 0 8px">'+dtAntBR+' ('+gmd.pesoMedioAnt.toFixed(0)+' kg) → '+dtAtuBR+' ('+gmd.pesoMedioAtu.toFixed(0)+' kg) · '+gmd.nAnimais+' animais comparados</div>'
-        + (gmd.nSuspeitos>0?'<div style="font-size:10px;color:#E65100;background:#FFF3E0;border-radius:6px;padding:6px 8px;margin:-2px 0 8px">⚠ '+gmd.nSuspeitos+' animal(is) com ganho acima de 2 kg/dia — verificar pesagem (podem ser erro de digitação ou brinco repetido).</div>':'');
-    }
+    // GMD digitado manualmente (vem da ferramenta de pesagem no curral)
+    var _gmdVal = (lote && lote.gmd!=null) ? lote.gmd : null;
+    var _gmdId  = 'gmd-inp-'+nm.replace(/\s+/g,'');
+    var _gmdCor = _gmdVal!=null ? (_gmdVal>0?'#2E7D32':(_gmdVal<0?'#C62828':'#65766a')) : '#65766a';
+    var gmdHtml = '<div style="border-top:1px solid #eef2ec;margin:8px 0 6px;padding-top:8px;display:flex;align-items:center;gap:8px">'
+      + '<div style="font-size:10px;color:#9bb39b;white-space:nowrap">GMD (kg/dia)</div>'
+      + '<input type="number" step="0.001" id="'+_gmdId+'" value="'+(_gmdVal!=null?String(_gmdVal).replace(".",","):'') +'" placeholder="digitar da ferramenta" onchange="_salvarGMD('+JSON.stringify(nm)+',this.value)" style="flex:1;padding:6px 9px;border:1px solid #ddd;border-radius:7px;font-size:13px;font-weight:700;text-align:center;color:'+_gmdCor+'">'
+      + (_gmdVal!=null?'<div style="font-size:14px;font-weight:900;color:'+_gmdCor+'">'+(_gmdVal>0?'+':'')+String(_gmdVal).replace(".",",")+'</div>':'')
+      + '</div>';
 
     var _blocoLote = '<div class="card" style="padding:0;overflow:hidden;border-left:4px solid #2E7D32">'
       + '<div style="background:#f5f8f4;padding:10px 14px;display:flex;justify-content:space-between;align-items:center">'
@@ -2698,6 +2691,18 @@ function _ctCompra(){
   if(desc && comprar<=0) html+='<div style="font-size:12px;color:#2E7D32;font-weight:700;margin-top:6px">O estoque atual j\u00e1 cobre esse per\u00edodo.</div>';
   html+='</div>';
   el.innerHTML=html;
+}
+// Salva o GMD digitado no lote (vem da ferramenta de pesagem no curral)
+function _salvarGMD(nomeLote, val){
+  var v=parseFloat(String(val).replace(',','.'))||null;
+  var lote=(S.LOTES||[]).find(function(l){return l.nome===nomeLote;});
+  if(!lote) return;
+  if(v!=null) lote.gmd=v; else delete lote.gmd;
+  salvar();
+  if(S.cfgGS) salvarNuvem(function(){});
+  // atualizar a cor do campo na hora
+  var el=document.getElementById('gmd-inp-'+nomeLote.replace(/\s+/g,''));
+  if(el) el.style.color=v!=null?(v>0?'#2E7D32':(v<0?'#C62828':'#65766a')):'#65766a';
 }
 function _ritmoLote(nomeLote){
   function _bl(x){return String(x||'').split('(')[0].trim();}
@@ -7007,9 +7012,28 @@ function rHistRankingPastos(){
           +'<button onclick="rkpResponder(\''+p.id+'\',\'reforma\')" style="flex:1;min-width:120px;background:#fff;border:1px solid #CE93D8;color:#6A1B9A;border-radius:8px;padding:7px;font-size:11px;font-weight:600;cursor:pointer">🚜 Em reforma</button>'
           +'</div></div>';
       } else if(p.alerta==='intenso'){
+        // Pega a media de dias por piquete do lote que esta nesse pasto agora
+        var _loteAqui=p.loteAtual||'';
+        var _mediaGiro=null;
+        if(_loteAqui && comHist){
+          var _mapa={}; 
+          (S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado&&r.lote===_loteAqui;}).forEach(function(r){
+            if(!_mapa[r.lote]) _mapa[r.lote]=[];
+            _mapa[r.lote].push(r);
+          });
+          var _mov=_mapa[_loteAqui]||[];
+          if(_mov.length>1){
+            var _enc=_mov.slice(0,-1);
+            var _sum=_enc.reduce(function(s,r){return s+(r.dias||0);},0);
+            _mediaGiro=_enc.length?Math.round(_sum/_enc.length):null;
+          }
+        }
+        var _ctx = _mediaGiro!=null
+          ? ('Giro médio do '+_loteAqui+': <b>'+_mediaGiro+' dias/piquete</b> · descanso atual: <b>'+p.descMedio+' dias</b>. O ritmo da época define se é suficiente.')
+          : ('Descanso de <b>'+p.descMedio+' dias</b>. Confirme o estado do capim.');
         out+='<div style="background:#FFEBEE;border:1px solid #EF9A9A;border-radius:8px;padding:10px;margin-bottom:8px">'
-          +'<div style="font-weight:700;font-size:13px;color:#B71C1C">'+p.label+' · descanso de só '+p.descMedio+' dias</div>'
-          +'<div style="font-size:11px;color:#666;margin:4px 0 8px">Recebe lote com pouco descanso. Como está o capim?</div>'
+          +'<div style="font-weight:700;font-size:13px;color:#B71C1C">'+p.label+' · descanso de '+p.descMedio+' dias</div>'
+          +'<div style="font-size:11px;color:#555;margin:4px 0 8px;line-height:1.5">'+_ctx+'</div>'
           +'<div style="display:flex;gap:6px;flex-wrap:wrap">'
           +'<button onclick="rkpResponder(\''+p.id+'\',\'rapado\')" style="flex:1;min-width:120px;background:#fff;border:1px solid #EF9A9A;color:#B71C1C;border-radius:8px;padding:7px;font-size:11px;font-weight:600;cursor:pointer">🥀 Rapado / passou do ponto</button>'
           +'<button onclick="rkpResponder(\''+p.id+'\',\'ok\')" style="flex:1;min-width:120px;background:#fff;border:1px solid #A5D6A7;color:#1B5E20;border-radius:8px;padding:7px;font-size:11px;font-weight:600;cursor:pointer">🌱 No ponto, aguenta</button>'
