@@ -2368,13 +2368,29 @@ function rConsultoria(dias){
     }
 
     // GMD digitado manualmente (vem da ferramenta de pesagem no curral)
+    // Aparece como texto fixo + botão Editar pra não sumir ao rerenderizar
     var _gmdVal = (lote && lote.gmd!=null) ? lote.gmd : null;
-    var _gmdId  = 'gmd-inp-'+nm.replace(/\s+/g,'');
-    var _gmdCor = _gmdVal!=null ? (_gmdVal>0?'#2E7D32':(_gmdVal<0?'#C62828':'#65766a')) : '#65766a';
-    var gmdHtml = '<div style="border-top:1px solid #eef2ec;margin:8px 0 6px;padding-top:8px;display:flex;align-items:center;gap:8px">'
-      + '<div style="font-size:10px;color:#9bb39b;white-space:nowrap">GMD (kg/dia)</div>'
-      + '<input type="number" step="0.001" id="'+_gmdId+'" value="'+(_gmdVal!=null?String(_gmdVal).replace(".",","):'') +'" placeholder="digitar da ferramenta" onchange="_salvarGMD('+JSON.stringify(nm)+',this.value)" style="flex:1;padding:6px 9px;border:1px solid #ddd;border-radius:7px;font-size:13px;font-weight:700;text-align:center;color:'+_gmdCor+'">'
-      + (_gmdVal!=null?'<div style="font-size:14px;font-weight:900;color:'+_gmdCor+'">'+(_gmdVal>0?'+':'')+String(_gmdVal).replace(".",",")+'</div>':'')
+    var _gmdNmJ = JSON.stringify(nm);
+    var _gmdCor = _gmdVal!=null ? (_gmdVal>0?'#2E7D32':(_gmdVal<0?'#C62828':'#65766a')) : '#9bb39b';
+    var gmdHtml = '<div style="border-top:1px solid #eef2ec;margin:8px 0 6px;padding-top:8px">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'
+      +   '<div style="font-size:10px;color:#9bb39b;text-transform:uppercase;letter-spacing:.3px">GMD (kg/dia)</div>'
+      +   '<div style="display:flex;align-items:center;gap:8px">'
+      +     (_gmdVal!=null
+              ? '<div style="font-size:18px;font-weight:900;color:'+_gmdCor+'">'+(_gmdVal>0?'+':'')+String(_gmdVal).replace(".",",")+'</div>'
+              : '<div style="font-size:12px;color:#ccc;font-style:italic">não informado</div>')
+      +     '<button onclick="_gmdEditar('+_gmdNmJ+')" style="padding:4px 10px;font-size:10px;font-weight:700;background:#fff;border:1px solid #ddd;border-radius:6px;cursor:pointer;color:#555">'
+      +       (_gmdVal!=null?'Editar':'Digitar')
+      +     '</button>'
+      +   '</div>'
+      + '</div>'
+      + '<div id="gmd-edit-'+nm.replace(/\s+/g,'')+'" style="display:none;margin-top:6px;display:none">'
+      +   '<div style="display:flex;gap:6px;align-items:center">'
+      +     '<input type="number" step="0.001" id="gmd-inp-'+nm.replace(/\s+/g,'')+'" value="'+(_gmdVal!=null?_gmdVal:'')+'" placeholder="ex: 0.412" style="flex:1;padding:7px 9px;border:1.5px solid #2E7D32;border-radius:7px;font-size:14px;font-weight:700;text-align:center">'
+      +     '<button onclick="_gmdSalvar('+_gmdNmJ+')" style="padding:7px 14px;background:#2E7D32;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:800;cursor:pointer">Salvar</button>'
+      +     '<button onclick="_gmdCancelar('+_gmdNmJ+')" style="padding:7px 10px;background:#fff;color:#888;border:1px solid #ddd;border-radius:7px;font-size:11px;cursor:pointer">✕</button>'
+      +   '</div>'
+      + '</div>'
       + '</div>';
 
     var _blocoLote = '<div class="card" style="padding:0;overflow:hidden;border-left:4px solid #2E7D32">'
@@ -2693,16 +2709,33 @@ function _ctCompra(){
   el.innerHTML=html;
 }
 // Salva o GMD digitado no lote (vem da ferramenta de pesagem no curral)
-function _salvarGMD(nomeLote, val){
-  var v=parseFloat(String(val).replace(',','.'))||null;
+// Abre o campo de edição do GMD sem rerenderizar a tela
+function _gmdEditar(nomeLote){
+  var id='gmd-edit-'+nomeLote.replace(/\s+/g,'');
+  var el=document.getElementById(id);
+  if(el){ el.style.display=(el.style.display==='none'?'block':'none'); }
+  var inp=document.getElementById('gmd-inp-'+nomeLote.replace(/\s+/g,''));
+  if(inp) inp.focus();
+}
+function _gmdCancelar(nomeLote){
+  var el=document.getElementById('gmd-edit-'+nomeLote.replace(/\s+/g,''));
+  if(el) el.style.display='none';
+}
+// Salva o GMD no S.LOTES + manda pro backend (salvar_config persiste os lotes)
+function _gmdSalvar(nomeLote){
+  var inp=document.getElementById('gmd-inp-'+nomeLote.replace(/\s+/g,''));
+  if(!inp) return;
+  var v=parseFloat(String(inp.value).replace(',','.'))||null;
   var lote=(S.LOTES||[]).find(function(l){return l.nome===nomeLote;});
   if(!lote) return;
-  if(v!=null) lote.gmd=v; else delete lote.gmd;
+  if(v!=null) lote.gmd=parseFloat(v.toFixed(3)); else delete lote.gmd;
   salvar();
   if(S.cfgGS) salvarNuvem(function(){});
-  // atualizar a cor do campo na hora
-  var el=document.getElementById('gmd-inp-'+nomeLote.replace(/\s+/g,''));
-  if(el) el.style.color=v!=null?(v>0?'#2E7D32':(v<0?'#C62828':'#65766a')):'#65766a';
+  // fecha o campo e atualiza o texto sem rerenderizar tudo
+  var editDiv=document.getElementById('gmd-edit-'+nomeLote.replace(/\s+/g,''));
+  if(editDiv) editDiv.style.display='none';
+  // rAtualiza só o bloco de texto do GMD nesta tela
+  rConsultoria(_diasConsPeriodo||7);
 }
 function _ritmoLote(nomeLote){
   function _bl(x){return String(x||'').split('(')[0].trim();}
