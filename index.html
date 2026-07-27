@@ -1943,16 +1943,19 @@ function pagarDiaria(idx){
   r.pago_por=CU?CU.n.split(' ')[0]:'Sistema';
   r.pago_dt=TD;
   salvar();
-  // Enviar para a planilha: atualizar col G (Status Pgto) para "Pago"
-  if(S.cfgGS && navigator.onLine){
-    var payload={tipo:'atualizar_diaria',dt:r.dt,n:r.n,srv:r.srv||'',v:r.v,st:'Pago',pago_por:r.pago_por,faz:r.faz||''};
-    var url=getFazGasUrl(r.faz||'');
-    var cbN='_pd_'+Date.now();
-    var s=document.createElement('script');
-    s.src=url+'?acao=atualizar_diaria&data='+encodeURIComponent(JSON.stringify(payload))+'&callback='+cbN+'&t='+Date.now();
-    window[cbN]=function(){delete window[cbN];if(s.parentNode)s.parentNode.removeChild(s);};
-    s.onerror=function(){delete window[cbN];if(s.parentNode)s.parentNode.removeChild(s);};
-    document.body.appendChild(s);
+  if(S.cfgGS){
+    // _acao faz a fila (syncAgora) reenviar pelo caminho acao=atualizar_diaria.
+    // uid faz o backend recusar duplicado se a mesma confirmacao chegar 2x.
+    var payload={_acao:'atualizar_diaria', uid:_uid(), tipo:'atualizar_diaria',
+      dt:r.dt, n:r.n, srv:r.srv||'', v:r.v, st:'Pago', pago_por:r.pago_por, faz:r.faz||''};
+    // 1) coloca SEMPRE na fila primeiro — assim nunca se perde, mesmo se a tela fechar
+    S.queue=S.queue||[];
+    var _jaTem=S.queue.some(function(q){return q._acao==='atualizar_diaria'&&q.dt===r.dt&&q.n===r.n&&q.v===r.v;});
+    if(!_jaTem){ S.queue.push(payload); }
+    salvar();
+    // 2) tenta enviar agora; se conseguir, a propria syncAgora tira da fila
+    if(navigator.onLine){ syncAgora(true); }
+    else { showOk('⚠️ Offline. O pagamento será confirmado na planilha quando conectar.','#E65100'); }
   }
   rPan();
 }
@@ -2907,14 +2910,14 @@ function fecharQR(){document.getElementById('qr-modal').classList.remove('open')
 
 // ═══ SYNC ═══
 function atualizarSync(){const dot=document.getElementById('sdot');if(!navigator.onLine){if(dot)dot.className='sdot';}else if(S.queue.length>0){if(dot)dot.className='sdot sy';}else{if(dot)dot.className='sdot on';}const pl=document.getElementById('pend-list');if(pl)pl.innerHTML=S.queue.length?S.queue.map(r=>`<div class="ri"><div class="rt"><span class="rn">${r.tipo} <span class="bdg ba">pendente</span></span></div><div class="rd">${r.dt||'—'} · ${r.faz||''}</div></div>`).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:12px">Nenhum dado pendente. ✅</div>';}
-function syncAgora(){
+function syncAgora(silencioso){
   if(!navigator.onLine){
-    alert('❌ Sem internet. Seus dados estão guardados no celular e serão enviados automaticamente quando você tiver sinal.');
+    if(!silencioso) alert('❌ Sem internet. Seus dados estão guardados no celular e serão enviados automaticamente quando você tiver sinal.');
     return;
   }
-  if(!S.cfgGS){alert('Configure o Apps Script primeiro.');return;}
+  if(!S.cfgGS){ if(!silencioso) alert('Configure o Apps Script primeiro.'); return;}
   if(!S.queue.length){
-    alert('✅ Nenhum dado pendente. Tudo sincronizado!');
+    if(!silencioso) alert('✅ Nenhum dado pendente. Tudo sincronizado!');
     return;
   }
   var total=S.queue.length;
@@ -2922,6 +2925,12 @@ function syncAgora(){
   function next(i){
     if(i<0){
       salvar();atualizarSync();
+      if(silencioso){
+        // pagamento/ação em segundo plano: feedback discreto
+        if(erros===0) showOk('\u2705 Confirmado na planilha.');
+        else showOk('\u26a0\ufe0f Guardado no aparelho. Vai confirmar sozinho quando a conex\u00e3o melhorar.','#E65100');
+        return;
+      }
       if(erros===0){
         alert('✅ Dados salvos com sucesso na planilha! ('+enviados+' registro(s) enviado(s))');
       } else {
@@ -2933,7 +2942,13 @@ function syncAgora(){
     var url=getFazGasUrl((reg||{}).faz||'');
     var cbN='_sq_'+Date.now()+'_'+i;
     var s=document.createElement('script');
-    s.src=url+'?data='+encodeURIComponent(JSON.stringify(reg))+'&callback='+cbN+'&t='+Date.now();
+    // Item de AÇÃO (ex: atualizar_diaria) vai pelo caminho acao=; lançamento vai por data=
+    if(reg&&reg._acao){
+      var _regEnv=Object.assign({},reg); delete _regEnv._acao;
+      s.src=url+'?acao='+encodeURIComponent(reg._acao)+'&data='+encodeURIComponent(JSON.stringify(_regEnv))+'&callback='+cbN+'&t='+Date.now();
+    } else {
+      s.src=url+'?data='+encodeURIComponent(JSON.stringify(reg))+'&callback='+cbN+'&t='+Date.now();
+    }
     var tmout=setTimeout(function(){
       erros++;
       delete window[cbN];
