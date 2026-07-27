@@ -2373,14 +2373,15 @@ function rConsultoria(dias){
     // GMD digitado manualmente (vem da ferramenta de pesagem no curral)
     // Aparece como texto fixo + botão Editar pra não sumir ao rerenderizar
     var _gmdVal = (lote && lote.gmd!=null) ? lote.gmd : null;
-    var _gmdNmJ = JSON.stringify(nm);
+    var _gmdDias = (lote && lote.gmd_dias!=null) ? lote.gmd_dias : null;
+    var _gmdNmJ = "'"+String(nm).replace(/\\/g,'\\\\').replace(/'/g,"\\'")+"'";
     var _gmdCor = _gmdVal!=null ? (_gmdVal>0?'#2E7D32':(_gmdVal<0?'#C62828':'#65766a')) : '#9bb39b';
     var gmdHtml = '<div style="border-top:1px solid #eef2ec;margin:8px 0 6px;padding-top:8px">'
       + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'
       +   '<div style="font-size:10px;color:#9bb39b;text-transform:uppercase;letter-spacing:.3px">GMD (kg/dia)</div>'
       +   '<div style="display:flex;align-items:center;gap:8px">'
       +     (_gmdVal!=null
-              ? '<div style="font-size:18px;font-weight:900;color:'+_gmdCor+'">'+(_gmdVal>0?'+':'')+String(_gmdVal).replace(".",",")+'</div>'
+              ? '<div style="font-size:18px;font-weight:900;color:'+_gmdCor+'">'+(_gmdVal>0?'+':'')+String(_gmdVal).replace(".",",")+(_gmdDias?' <span style="font-size:10px;font-weight:600;color:#9bb39b">em '+_gmdDias+'d</span>':'')+'</div>'
               : '<div style="font-size:12px;color:#ccc;font-style:italic">não informado</div>')
       +     '<button onclick="_gmdEditar('+_gmdNmJ+')" style="padding:4px 10px;font-size:10px;font-weight:700;background:#fff;border:1px solid #ddd;border-radius:6px;cursor:pointer;color:#555">'
       +       (_gmdVal!=null?'Editar':'Digitar')
@@ -2388,10 +2389,13 @@ function rConsultoria(dias){
       +   '</div>'
       + '</div>'
       + '<div id="gmd-edit-'+nm.replace(/\s+/g,'')+'" style="display:none;margin-top:6px">'
+      +   '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">'
+      +     '<div style="flex:1"><div style="font-size:9px;color:#9bb39b;margin-bottom:2px">GMD (kg/dia)</div><input type="number" step="0.001" id="gmd-inp-'+nm.replace(/\s+/g,'')+'" value="'+(_gmdVal!=null?_gmdVal:'')+'" placeholder="ex: 0.412" style="width:100%;padding:7px 9px;border:1.5px solid #2E7D32;border-radius:7px;font-size:14px;font-weight:700;text-align:center;box-sizing:border-box"></div>'
+      +     '<div style="flex:1"><div style="font-size:9px;color:#9bb39b;margin-bottom:2px">em quantos dias</div><input type="number" step="1" id="gmd-dias-'+nm.replace(/\s+/g,'')+'" value="'+(_gmdDias!=null?_gmdDias:'')+'" placeholder="ex: 60" style="width:100%;padding:7px 9px;border:1.5px solid #2E7D32;border-radius:7px;font-size:14px;font-weight:700;text-align:center;box-sizing:border-box"></div>'
+      +   '</div>'
       +   '<div style="display:flex;gap:6px;align-items:center">'
-      +     '<input type="number" step="0.001" id="gmd-inp-'+nm.replace(/\s+/g,'')+'" value="'+(_gmdVal!=null?_gmdVal:'')+'" placeholder="ex: 0.412" style="flex:1;padding:7px 9px;border:1.5px solid #2E7D32;border-radius:7px;font-size:14px;font-weight:700;text-align:center">'
-      +     '<button onclick="_gmdSalvar('+_gmdNmJ+')" style="padding:7px 14px;background:#2E7D32;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:800;cursor:pointer">Salvar</button>'
-      +     '<button onclick="_gmdCancelar('+_gmdNmJ+')" style="padding:7px 10px;background:#fff;color:#888;border:1px solid #ddd;border-radius:7px;font-size:11px;cursor:pointer">✕</button>'
+      +     '<button onclick="_gmdSalvar('+_gmdNmJ+')" style="flex:1;padding:8px 14px;background:#2E7D32;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:800;cursor:pointer">Salvar</button>'
+      +     '<button onclick="_gmdCancelar('+_gmdNmJ+')" style="padding:8px 12px;background:#fff;color:#888;border:1px solid #ddd;border-radius:7px;font-size:11px;cursor:pointer">✕</button>'
       +   '</div>'
       + '</div>'
       + '</div>';
@@ -2431,6 +2435,23 @@ function rConsultoria(dias){
       +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:7px;text-align:center"><div style="font-size:14px;font-weight:900;color:#2E7D32">R$ '+custoCab.toFixed(2).replace(".",",")+'</div><div style="font-size:9px;color:#65766a">por cabeça</div></div>'
       +     '<div style="flex:1;background:#eef2ec;border-radius:8px;padding:7px;text-align:center"><div style="font-size:14px;font-weight:900;color:#2E7D32">R$ '+custoCabDia.toFixed(2).replace(".",",")+'</div><div style="font-size:9px;color:#65766a">cabeça / dia</div></div>'
       +   '</div>'
+      // ── CUSTO POR ARROBA GANHA (só quando o GMD e os dias foram digitados) ──
+      // kg ganho = GMD × dias × nº animais | arroba = 30 kg | custo do suplemento ÷ arrobas
+      +   (function(){
+           if(_gmdVal==null || !_gmdDias || _gmdDias<=0 || totAnim<=0) {
+             return '<div style="background:#FFF8E1;border-radius:8px;padding:8px 10px;margin-bottom:8px;font-size:10px;color:#8a6d00;line-height:1.5">Para ver o <b>custo por arroba</b>, toque em <b>'+(_gmdVal!=null?'Editar':'Digitar')+'</b> no GMD e informe o ganho e em quantos dias.</div>';
+           }
+           var kgGanho = _gmdVal * _gmdDias * totAnim;      // kg ganhos no periodo do GMD
+           var arrobas = kgGanho / 30;                       // @ de 30 kg (peso vivo)
+           var custoArroba = arrobas>0 ? (custo / arrobas) : 0;
+           var custoKg = kgGanho>0 ? (custo / kgGanho) : 0;
+           var _cor = custoArroba>0 ? '#1B5E20' : '#65766a';
+           return '<div style="display:flex;gap:6px;margin-bottom:8px">'
+             + '<div style="flex:1;background:#E8F5E9;border:1px solid #A5D6A7;border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:900;color:'+_cor+'">R$ '+custoArroba.toFixed(2).replace(".",",")+'</div><div style="font-size:9px;color:#65766a">custo / @ ganha</div></div>'
+             + '<div style="flex:1;background:#E8F5E9;border:1px solid #A5D6A7;border-radius:8px;padding:8px;text-align:center"><div style="font-size:16px;font-weight:900;color:'+_cor+'">R$ '+custoKg.toFixed(2).replace(".",",")+'</div><div style="font-size:9px;color:#65766a">custo / kg ganho</div></div>'
+             + '</div>'
+             + '<div style="font-size:9px;color:#9bb39b;margin:-4px 0 8px;text-align:center">'+_gmdVal.toString().replace(".",",")+' kg/dia × '+_gmdDias+' dias × '+totAnim+' animais = '+kgGanho.toFixed(0)+' kg ganhos ('+arrobas.toFixed(1).replace(".",",")+' @)</div>';
+         })()
       // pasto + taxas
       +   '<div style="display:flex;gap:8px">'
       +     '<div style="flex:1;background:#fff;border:1px solid #e0e7e0;border-radius:8px;padding:8px;text-align:center"><div style="font-size:15px;font-weight:900;color:#1b2c1b">'+(diasPasto!=null?diasPasto:'—')+'</div><div style="font-size:10px;color:#65766a">dias no pasto</div></div>'
@@ -2729,9 +2750,12 @@ function _gmdSalvar(nomeLote){
   var inp=document.getElementById('gmd-inp-'+nomeLote.replace(/\s+/g,''));
   if(!inp) return;
   var v=parseFloat(String(inp.value).replace(',','.'))||null;
+  var inpD=document.getElementById('gmd-dias-'+nomeLote.replace(/\s+/g,''));
+  var vd=inpD?(parseInt(inpD.value)||null):null;
   var lote=(S.LOTES||[]).find(function(l){return l.nome===nomeLote;});
   if(!lote) return;
   if(v!=null) lote.gmd=parseFloat(v.toFixed(3)); else delete lote.gmd;
+  if(vd!=null && vd>0) lote.gmd_dias=vd; else delete lote.gmd_dias;
   salvar();
   if(S.cfgGS) salvarNuvem(function(){});
   // fecha o campo e atualiza o texto sem rerenderizar tudo
@@ -5071,7 +5095,12 @@ function carregarNuvem(cb){
           }
           if(cfg.SERVS&&cfg.SERVS.length)S.SERVS=cfg.SERVS;
           if(cfg.PR)S.PR=cfg.PR;
-          if(cfg.LOTES&&cfg.LOTES.length){S.LOTES=cfg.LOTES; salvar();}
+          if(cfg.LOTES&&cfg.LOTES.length){
+            // Mesma proteção do estoque: se editei um lote nos últimos 30s,
+            // NÃO deixa o carregamento da nuvem sobrescrever e apagar a edição.
+            var _loteEditRecente = window._loteEditTs && (Date.now()-window._loteEditTs < 30000);
+            if(!_loteEditRecente){ S.LOTES=cfg.LOTES; salvar(); }
+          }
           else if(!S.LOTES||!S.LOTES.length)S.LOTES=DEFAULT.LOTES;
           if(cfg.AREAS)S.AREAS=cfg.AREAS;
           if(cfg.PROD_GEN)S.PROD_GEN=cfg.PROD_GEN;
@@ -5839,8 +5868,13 @@ function salvarLote(){
   if(!nome||!qtd){alert('Informe nome e número de animais.');return;}
   if(!S.LOTES)S.LOTES=[];
   var idx=S.LOTES.findIndex(function(l){return l.nome===nome&&l.faz===faz;});
+  // preserva o gmd/gmd_dias já existentes do lote ao reeditar qtd/peso
+  var _ant = idx>=0 ? S.LOTES[idx] : null;
   var lote={faz,nome,qtd,peso,insumos:ltInsumos.slice()};
+  if(_ant && _ant.gmd!=null) lote.gmd=_ant.gmd;
+  if(_ant && _ant.gmd_dias!=null) lote.gmd_dias=_ant.gmd_dias;
   if(idx>=0)S.LOTES[idx]=lote;else S.LOTES.push(lote);
+  window._loteEditTs = Date.now();   // trava a sobrescrita da nuvem por 30s
   salvar();
   if(S.cfgGS)salvarNuvem(function(){});
   ltInsumos=[];rListLotes();
@@ -6495,7 +6529,11 @@ function _hTimeline(movsLote){
 // cada pasto (entrada→próxima entrada do mesmo lote; última = até hoje) e agrega
 // por pasto/piquete e por módulo. Calcula dias de ocupação e descanso médio (dias vazio).
 function _rotacaoStats(){
-  var movs=(S.rT||[]).filter(function(r){ return r.tipo==='mudanca_pasto'&&!r._apagado; });
+  var movs=(S.rT||[]).filter(function(r){ return r.tipo==='mudanca_pasto'&&!r._apagado; })
+    // NORMALIZA a grafia dos piquetes (M1/P1, M01P01, M1P1 viram o MESMO id).
+    // Sem isso, a mesma área escrita de dois jeitos vira dois piquetes e o
+    // cálculo de descanso conta "vazio há X dias" errado.
+    .map(function(r){ return Object.assign({},r,{origem:_feedNormArea(r.origem),destino:_feedNormArea(r.destino)}); });
   movs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
   function labelArea(id){ var a=MAPA_AREAS.find(function(x){return x.id===id;}); return a?a.label:(id||'—'); }
   function ehPasto(id){ var a=MAPA_AREAS.find(function(x){return x.id===id;}); return a&&a.tipo==='pasto'; }
