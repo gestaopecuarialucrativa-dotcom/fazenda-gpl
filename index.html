@@ -2927,8 +2927,13 @@ function syncAgora(silencioso){
       salvar();atualizarSync();
       if(silencioso){
         // pagamento/ação em segundo plano: feedback discreto
-        if(erros===0) showOk('\u2705 Confirmado na planilha.');
-        else showOk('\u26a0\ufe0f Guardado no aparelho. Vai confirmar sozinho quando a conex\u00e3o melhorar.','#E65100');
+        if(erros===0){
+          showOk('\u2705 Confirmado na planilha.');
+        } else {
+          var _m = _syncErroDetalhe || 'n\u00e3o confirmado';
+          showOk('\u26a0\ufe0f N\u00e3o confirmou: '+_m+'. Toque em Sincronizar pra tentar.','#C62828');
+        }
+        _syncErroDetalhe='';
         return;
       }
       if(erros===0){
@@ -2955,13 +2960,27 @@ function syncAgora(silencioso){
       if(s.parentNode)s.parentNode.removeChild(s);
       next(i-1);
     },10000);
-    window[cbN]=function(){
-      enviados++;
-      S.queue.splice(i,1);
+    window[cbN]=function(resp){
       clearTimeout(tmout);
       delete window[cbN];
       if(s.parentNode)s.parentNode.removeChild(s);
-      salvar();
+      // LÊ a resposta do backend. Ação (ex: atualizar_diaria) devolve {ok:true/false}.
+      // Se o backend não achou a linha, NÃO é sucesso: mantém na fila e conta erro.
+      var okBackend = true;
+      if(reg && reg._acao){
+        // resp pode ser objeto {ok:...} ou texto; trata os dois
+        if(resp && typeof resp==='object' && resp.ok===false) okBackend=false;
+        if(typeof resp==='string' && resp.indexOf('false')>=0) okBackend=false;
+      }
+      if(okBackend){
+        enviados++;
+        S.queue.splice(i,1);
+        salvar();
+      } else {
+        erros++;
+        _syncErroDetalhe = (resp && resp.msg) ? resp.msg : 'não encontrada na planilha';
+        // mantém na fila pra tentar de novo — NÃO remove
+      }
       next(i-1);
     };
     s.onerror=function(){
