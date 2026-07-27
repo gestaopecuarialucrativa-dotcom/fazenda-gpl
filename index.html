@@ -9544,8 +9544,20 @@ function abrirDetalheLancamento(arr, gi){
   var btnRep = document.getElementById('det-rep');
   var btnDel = document.getElementById('det-del');
   
-  btnVal.style.display = r.validado ? 'none' : '';
-  btnVal.onclick = function(){ validarLancamento(arr, gi); };
+  // Diária: o botão "Marcar como pago" PAGA de verdade (valida + paga, pois
+  // pra este uso é a mesma coisa) e grava na planilha. Cantina continua só validando.
+  btnVal.style.display = (arr==='rD' ? (r.pago ? 'none' : '') : (r.validado ? 'none' : ''));
+  btnVal.onclick = function(){
+    if(arr==='rD'){
+      // marca validado tb (pra sair de "aguardando validação") e paga
+      r.validado = true; r.validado_por = CU ? CU.n : '';
+      var _gi = (typeof gi==='number') ? gi : S.rD.indexOf(r);
+      fecharDetModal();
+      pagarDiaria(_gi);   // pagarDiaria já grava na planilha (atualizar_diaria) e faz rPan
+    } else {
+      validarLancamento(arr, gi);
+    }
+  };
   btnEdit.onclick = function(){ fecharDetModal(); abrirEdicao(arr, gi); };
   btnRep.onclick = function(){ reprovarLancamento(arr, gi); };
   btnDel.onclick = function(){
