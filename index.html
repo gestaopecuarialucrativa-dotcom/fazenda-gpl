@@ -2188,8 +2188,10 @@ function _calcGMD(loteNome){
   };
 }
 
+var _diasConsPeriodo = 7;   // período atualmente selecionado no Desempenho
 function rConsultoria(dias){
   dias = dias || 7;
+  _diasConsPeriodo = dias;    // guarda pra quando o GMD salvar e precisar re-renderizar no mesmo período
   ['7','15','30'].forEach(function(p){
     var b=document.getElementById('cons-p'+p);
     if(b){ var on=(String(dias)===p); b.style.background=on?'#2E7D32':'#fff'; b.style.color=on?'#fff':'#2E7D32'; }
@@ -3525,7 +3527,7 @@ function gerarRelPDF(){
     var inf=getUAArea(a.id);
     var dias=inf.lote?diasNoPasto(inf.lote,a.id):null;
     // Histórico: lote anterior quando piquete vazio
-    var movsPiq2=movs.filter(function(m){return m.tipo==='mudanca_pasto'&&m.origem===a.id&&!m._apagado;});
+    var movsPiq2=movs.filter(function(m){return m.tipo==='mudanca_pasto'&&_feedNormArea(m.origem)===_feedNormArea(a.id)&&!m._apagado;});
     var loteAnt2='', dtSaida2='', uaAnt2=0, txAnt2='—';
     if(movsPiq2.length){
       var us2=movsPiq2[movsPiq2.length-1];
@@ -5187,6 +5189,16 @@ function carregarNuvem(cb){
               if(r.tipo!=='mudanca_pasto')return r;
               function nId(v){
                 var s=String(v||'').trim();
+                if(!s) return '';
+                // 1) se já é um id de área, mantém
+                if(typeof MAPA_AREAS!=='undefined'){
+                  var byId=MAPA_AREAS.find(function(a){return a.id===s;});
+                  if(byId) return byId.id;
+                  // 2) se é um label (M1/P1), converte pro id (M01P01)
+                  var byLabel=MAPA_AREAS.find(function(a){return a.label===s;});
+                  if(byLabel) return byLabel.id;
+                }
+                // 3) fallback: normaliza a grafia
                 s=s.replace(/^M(\d{1,2})\/P(\d{1,2})$/i,function(_,m,p){return 'M'+String(parseInt(m)).padStart(2,'0')+'P'+String(parseInt(p)).padStart(2,'0');});
                 s=s.replace(/^M(\d{1,2})P(\d{1,2})$/i,function(_,m,p){return 'M'+String(parseInt(m)).padStart(2,'0')+'P'+String(parseInt(p)).padStart(2,'0');});
                 s=s.replace(/^PA\s*(\d{1,2})$/i,function(_,n){return 'PA'+String(parseInt(n)).padStart(2,'0');});
@@ -6284,7 +6296,7 @@ function _rTaxaLotacaoPiquetes(){
     var ua=loteObj?(parseInt(loteObj.qtd||0)*(parseFloat(loteObj.peso||0)/450)):0;
     var txLot=ha>0&&ua>0?(ua/ha).toFixed(2):'—';
     // Última saída deste piquete
-    var movsPiq=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&r.origem===a.id&&!r._apagado;});
+    var movsPiq=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&_feedNormArea(r.origem)===_feedNormArea(a.id)&&!r._apagado;});
     var dtSaida='', loteAnterior='';
     if(movsPiq.length){var us=movsPiq[movsPiq.length-1];dtSaida=(us.dt||'').substring(0,10).split('-').reverse().join('/');loteAnterior=us.lote||'';}
     // Calcular UA/ha do lote anterior (histórico) se piquete vazio
@@ -8473,7 +8485,7 @@ function salvarDtEntrada(loteNome, areaId){
 
   // Verificar se já existe uma movimentação para este lote nesta área
   var movExist = (S.rT||[]).find(function(r){
-    return r.tipo==='mudanca_pasto' && r.lote===loteNome && r.destino===areaId && !r._apagado;
+    return r.tipo==='mudanca_pasto' && r.lote===loteNome && _feedNormArea(r.destino)===_feedNormArea(areaId) && !r._apagado;
   });
 
   if(movExist){
@@ -10094,7 +10106,19 @@ function confirmarMudancaPasto(){
   S.MAPA_ALOC[dest]=loteNome;
   var dt=(document.getElementById('mud-dt')||{}).value||TD;
   var faz=CU&&CU.fs&&CU.fs.length?CU.fs[0]:Object.keys(S.FAZ||{})[0]||'';
-  var r={tipo:'mudanca_pasto',faz:faz,n:CU?CU.n:'',lote:loteNome,origem:pastoSelecionadoNoMapa||'',destino:dest,dt:dt,ts:new Date().toISOString()};
+  // Normaliza origem/destino pro ID interno (M1/P1 e M01P01 viram M01P01),
+  // porque as comparações no sistema usam a.id. Se o select/mapa mandou o label,
+  // converte pro id da área correspondente.
+  function _idArea(v){
+    var s=String(v||'').trim();
+    if(!s) return '';
+    var byId=MAPA_AREAS.find(function(a){return a.id===s;});
+    if(byId) return byId.id;
+    var byLabel=MAPA_AREAS.find(function(a){return a.label===s;});
+    if(byLabel) return byLabel.id;
+    return _feedNormArea(s); // fallback: normaliza a grafia
+  }
+  var r={tipo:'mudanca_pasto',faz:faz,n:CU?CU.n:'',lote:loteNome,origem:_idArea(pastoSelecionadoNoMapa),destino:_idArea(dest),dt:dt,ts:new Date().toISOString()};
   if(!S.rT)S.rT=[];S.rT.push(r);
   try{enviarDado(r);}catch(ex){}
   salvar();
