@@ -2756,6 +2756,7 @@ function _gmdSalvar(nomeLote){
   if(!lote) return;
   if(v!=null) lote.gmd=parseFloat(v.toFixed(3)); else delete lote.gmd;
   if(vd!=null && vd>0) lote.gmd_dias=vd; else delete lote.gmd_dias;
+  window._loteEditTs = Date.now();   // trava a sobrescrita da nuvem por 30s (senão o GMD some ao recarregar)
   salvar();
   if(S.cfgGS) salvarNuvem(function(){});
   // fecha o campo e atualiza o texto sem rerenderizar tudo
