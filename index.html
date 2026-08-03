@@ -307,7 +307,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 03/08/2026 v6.28 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 03/08/2026 v6.29 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -6283,7 +6283,7 @@ function rHistLotes(){
   // rT pode vir da nuvem com campo 'dt' = '2026-05-25'
   var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
   movs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
-  var lotes=S.LOTES||[], aloc=S.MAPA_ALOC||{}, html='', _lp=[];
+  var lotes=(S.LOTES||[]).filter(function(l){return (l.status||'ativo')!=='vendido';}), _vendidos=(S.LOTES||[]).filter(function(l){return (l.status||'ativo')==='vendido';}), aloc=S.MAPA_ALOC||{}, html='', _lp=[];
 
   lotes.forEach(function(lote){
     var nm=lote.nome, qtd=parseInt(lote.qtd)||0, peso=parseFloat(lote.peso)||0;
@@ -6360,9 +6360,18 @@ function rHistLotes(){
       +'<div style="font-size:9px;color:#999;margin-top:6px">animais ÷ hectare</div>'
       +'</div>'
       +'</div>'
+      +'<button onclick="darBaixaLote(\''+nm+'\',\''+(lote.faz||'')+'\')" style="width:100%;margin-top:10px;padding:10px;background:#fff;border:1.5px solid #FF8F00;color:#8a5a00;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer">📤 Dar baixa (lote vendido)</button>'
       +'</div>';
   });
 
+  if(_vendidos.length){
+    html+='<div style="margin-top:16px;font-size:12px;font-weight:800;color:#9aa39a;letter-spacing:.5px;margin-bottom:6px">🔒 LOTES VENDIDOS</div>';
+    html+=_vendidos.map(function(l){
+      var qv=(l.vendas||[]).reduce(function(s,v){return s+(v.qtd||0);},0);
+      var dtb=l.dt_baixa?_isoBR(l.dt_baixa):'—';
+      return '<div style="background:#fafafa;border:1px solid #eee;border-radius:12px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;opacity:.9"><span style="font-weight:700;font-size:14px;color:#7d867d">'+l.nome+'</span><span style="font-size:11px;background:#eee;color:#777;border-radius:10px;padding:4px 10px">vendido em '+dtb+(qv?' · '+qv+' animais':'')+'</span></div>';
+    }).join('');
+  }
   cont.innerHTML=html||'<div style="color:#888;font-size:13px;text-align:center;padding:30px">Nenhum lote cadastrado.</div>';
   window._lotesPerfis=_lp;
 
