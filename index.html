@@ -1600,8 +1600,8 @@ function getCF(f){return S.FAZ[f]?S.FAZ[f].cochos:[];}
 function popAll(){try{const fl=getFL();const isC=CU&&CU.r==='Consultor';const uF=(!isC&&CU&&CU.fs&&CU.fs.length===1)?CU.fs[0]:null;['d-faz','i-faz','t-faz','es-faz','ct-faz','lt-faz','ar-faz','i-cad-faz'].forEach(id=>{const s=document.getElementById(id);if(!s)return;s.innerHTML=fl.map(f=>`<option>${f}</option>`).join('');if(uF){s.value=uF;const fg=s.closest?s.closest('.fg'):null;if(fg)fg.style.display='none';}else{const fg=s.closest?s.closest('.fg'):null;if(fg)fg.style.display='';}});const pf=document.getElementById('pf');if(pf){if(isC){pf.innerHTML='<option value="">Todas</option>'+fl.map(f=>`<option value="${f}">${f}</option>`).join('');pf.disabled=false;}else{const f=uF||fl[0]||'';pf.innerHTML=`<option value="${f}">${f}</option>`;pf.disabled=true;}}const df=document.getElementById('desp-faz');if(df)df.innerHTML='<option value="">Todas</option>'+fl.map(f=>`<option>${f}</option>`).join('');const dn=document.getElementById('d-nome');if(dn){const faz=document.getElementById('d-faz')?document.getElementById('d-faz').value:'';const dl=getDiaristas(faz||uF||'');dn.innerHTML='<option value="">Selecione...</option>'+dl.map(n=>`<option>${n}</option>`).join('');if(CU&&CU.r==='Vaqueiro'){if(!dl.includes(CU.n)){const o=document.createElement('option');o.value=CU.n;o.textContent=CU.n;dn.appendChild(o);}dn.value=CU.n;}}updTrato();updEsCo();updInsProd();updInsCadFaz();const ep=document.getElementById('ep');if(ep)ep.innerHTML='<option value="">Selecione...</option>'+Object.keys(S.EST).map(p=>`<option>${p}</option>`).join('');['d-data','i-data','t-data','es-data','ct-data','ed'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=TD;});const vc=document.getElementById('val-cafe');const va=document.getElementById('val-almoco');const vj=document.getElementById('val-janta');if(vc&&!vc.value)vc.value=S.PR.cafe;if(va&&!va.value)va.value=S.PR.almoco;if(vj&&!vj.value)vj.value=S.PR.janta;popServs();const cc=document.getElementById('ins-cad-card');if(cc)cc.style.display=(CU&&CU.p&&CU.p.config)?'block':'none';}catch(e){console.error('popAll:',e);}}
 function popServs(){const so=document.getElementById('d-servs');if(!so)return;so.innerHTML=S.SERVS.map(s=>`<div class="bopt" onclick="sSrv(this,'${s}')">${s}</div>`).join('');}
 function updInsProd(){const faz=document.getElementById('i-faz')?document.getElementById('i-faz').value:getFL()[0]||'';document.querySelectorAll('.ip').forEach(s=>{const v=s.value;s.innerHTML='<option value="">Sel...</option>'+getPF(faz).map(p=>`<option>${p}</option>`).join('');if(v)s.value=v;});}
-function updTrato(){const faz=(document.getElementById('t-faz')||{}).value||'';const tc=document.getElementById('t-cocho');if(!tc)return;const lotes=(S.LOTES||[]).filter(l=>!faz||l.faz===faz);tc.innerHTML='<option value="">Selecione o lote...</option>'+lotes.map(l=>`<option>${l.nome} (${l.qtd} animais)</option>`).join('');const tp=document.getElementById('t-prod');if(!tp)return;var _lp=_prodTrato(faz);if(_lp.length){tp.innerHTML='<option value="">Selecione...</option>'+_lp.map(p=>`<option>${p}</option>`).join('');tp.disabled=false;}else{tp.innerHTML='<option value="">\u26a0\ufe0f Nenhum produto com saldo \u2014 precisa comprar</option>';tp.disabled=false;}}
-function updEsCo(){const faz=(document.getElementById('es-faz')||{}).value||'';const ec=document.getElementById('es-cocho');if(!ec)return;const lotes=(S.LOTES||[]).filter(l=>!faz||l.faz===faz);ec.innerHTML='<option value="">Selecione o lote...</option>'+(lotes.length?lotes.map(l=>`<option>${l.nome}</option>`).join(''):getCF(faz).map(c=>`<option>${c}</option>`).join(''));}
+function updTrato(){const faz=(document.getElementById('t-faz')||{}).value||'';const tc=document.getElementById('t-cocho');if(!tc)return;const lotes=(S.LOTES||[]).filter(l=>(!faz||l.faz===faz)&&(l.status||'ativo')!=='vendido');tc.innerHTML='<option value="">Selecione o lote...</option>'+lotes.map(l=>`<option>${l.nome} (${l.qtd} animais)</option>`).join('');const tp=document.getElementById('t-prod');if(!tp)return;var _lp=_prodTrato(faz);if(_lp.length){tp.innerHTML='<option value="">Selecione...</option>'+_lp.map(p=>`<option>${p}</option>`).join('');tp.disabled=false;}else{tp.innerHTML='<option value="">\u26a0\ufe0f Nenhum produto com saldo \u2014 precisa comprar</option>';tp.disabled=false;}}
+function updEsCo(){const faz=(document.getElementById('es-faz')||{}).value||'';const ec=document.getElementById('es-cocho');if(!ec)return;const lotes=(S.LOTES||[]).filter(l=>(!faz||l.faz===faz)&&(l.status||'ativo')!=='vendido');ec.innerHTML='<option value="">Selecione o lote...</option>'+(lotes.length?lotes.map(l=>`<option>${l.nome}</option>`).join(''):getCF(faz).map(c=>`<option>${c}</option>`).join(''));}
 // [cantina legacy removida: updPrecosCt]
 // [cantina legacy removida: sincronizarDadosCantina]
 function _showStatusCt(msg, cor){
@@ -5963,6 +5963,10 @@ function salvarLote(){
   var lote={faz,nome,qtd,peso,insumos:ltInsumos.slice()};
   if(_ant && _ant.gmd!=null) lote.gmd=_ant.gmd;
   if(_ant && _ant.gmd_dias!=null) lote.gmd_dias=_ant.gmd_dias;
+  lote.id=(_ant&&_ant.id)?_ant.id:('L'+Date.now()+Math.floor(Math.random()*1000));
+  lote.status=(_ant&&_ant.status)?_ant.status:'ativo';
+  if(_ant&&_ant.dt_baixa)lote.dt_baixa=_ant.dt_baixa;
+  if(_ant&&_ant.vendas)lote.vendas=_ant.vendas;
   if(idx>=0)S.LOTES[idx]=lote;else S.LOTES.push(lote);
   window._loteEditTs = Date.now();   // trava a sobrescrita da nuvem por 30s
   salvar();
@@ -5979,14 +5983,16 @@ function rListLotes(){
   var el=document.getElementById('lotes-lista');
   if(!el)return;
   var faz=(document.getElementById('lt-faz')||{}).value||'';
-  var lista=(S.LOTES||[]).filter(function(l){return!faz||l.faz===faz;});
-  if(!lista.length){el.innerHTML='<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum lote cadastrado.</div>';return;}
+  var todos=(S.LOTES||[]).filter(function(l){return!faz||l.faz===faz;});
+  var ativos=todos.filter(function(l){return (l.status||'ativo')!=='vendido';});
+  var vendidos=todos.filter(function(l){return (l.status||'ativo')==='vendido';});
+  if(!ativos.length&&!vendidos.length){el.innerHTML='<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum lote cadastrado.</div>';return;}
   var haTotal=((S.AREAS&&S.AREAS[faz])||[]).reduce(function(s,a){return s+a.ha_total;},0);
-  el.innerHTML=lista.map(function(l){
+  var html=ativos.map(function(l){
     var total=l.qtd*(l.peso||0);
     var ua=total/450;
     var tl=haTotal>0?(ua/haTotal):0;
-    var arroba=(total/30).toFixed(1);
+    var jaVend=(l.vendas&&l.vendas.length)?l.vendas.reduce(function(s,v){return s+(v.qtd||0);},0):0;
     return'<div style="background:#fff;border:1px solid #eee;border-radius:10px;padding:12px;margin-bottom:8px">'
       +'<div style="display:flex;justify-content:space-between;align-items:center">'
       +'<span style="font-weight:700;font-size:14px">🐄 '+l.nome+'</span>'
@@ -6002,8 +6008,63 @@ function rListLotes(){
       +'<div style="text-align:center;background:#E8F5E9;border-radius:6px;padding:6px"><div style="font-size:10px;color:#666">UA</div><div style="font-weight:700;color:#2E7D32">'+ua.toFixed(1)+'</div></div>'
       +'</div>'
       +(haTotal>0?'<div style="margin-top:6px;font-size:11px;color:#E65100;font-weight:600">TL: '+tl.toFixed(2)+' UA/ha ('+haTotal.toFixed(1)+' ha total)</div>':'')
+      +(jaVend>0?'<div style="margin-top:6px;font-size:11px;color:#8a5a00">Já vendeu '+jaVend+' animal(is) deste lote</div>':'')
+      +'<button onclick="darBaixaLote(\''+l.nome.replace(/'/g,"'")+'\',\''+((l.faz||'').replace(/'/g,"'"))+'\')" style="width:100%;margin-top:9px;padding:9px;background:#fff;border:1.5px solid #FF8F00;color:#8a5a00;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer">📤 Dar baixa (lote vendido)</button>'
       +'</div>';
   }).join('');
+  if(vendidos.length){
+    html+='<div style="margin-top:14px;font-size:11px;font-weight:800;color:#9aa39a;letter-spacing:.5px;margin-bottom:6px">VENDIDOS</div>';
+    html+=vendidos.map(function(l){
+      var qv=(l.vendas||[]).reduce(function(s,v){return s+(v.qtd||0);},0);
+      var dtb=l.dt_baixa?_isoBR(l.dt_baixa):'—';
+      return'<div style="background:#fafafa;border:1px solid #eee;border-radius:10px;padding:10px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;opacity:.85">'
+        +'<span style="font-weight:700;font-size:13px;color:#7d867d">🐄 '+l.nome+'</span>'
+        +'<span style="font-size:10px;background:#eee;color:#777;border-radius:8px;padding:3px 8px">vendido em '+dtb+(qv?' · '+qv+' animais':'')+'</span>'
+        +'</div>';
+    }).join('');
+  }
+  el.innerHTML=html;
+}
+
+function _isoBR(iso){iso=String(iso||'');var m=iso.match(/^(\d{4})-(\d{2})-(\d{2})/);return m?(m[3]+'/'+m[2]+'/'+m[1]):iso;}
+function _parseDataBRp(s){s=String(s||'').trim();var m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);if(m){var d=('0'+m[1]).slice(-2),mo=('0'+m[2]).slice(-2),y=m[3].length===2?('20'+m[3]):m[3];return y+'-'+mo+'-'+d;}var i=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(i)return s;return null;}
+function darBaixaLote(nome,faz){
+  var l=(S.LOTES||[]).find(function(x){return x.nome===nome&&x.faz===faz;});
+  if(!l){alert('Lote não encontrado.');return;}
+  var op=prompt('Vendeu o "'+nome+'" todo ou só uma parte?\n\n1 = Lote TODO\n2 = Só uma PARTE','1');
+  if(op===null)return;
+  op=String(op).trim();
+  if(op!=='1'&&op!=='2'){alert('Escolha 1 (lote todo) ou 2 (parte).');return;}
+  var qtdVend=l.qtd;
+  if(op==='2'){
+    var q=prompt('Quantos animais foram vendidos? (o lote tem '+l.qtd+')',String(l.qtd));
+    if(q===null)return;
+    qtdVend=parseInt(q)||0;
+    if(qtdVend<=0){alert('Quantidade inválida.');return;}
+    if(qtdVend>l.qtd){alert('Não pode vender mais que os '+l.qtd+' animais do lote.');return;}
+  }
+  var dprompt=prompt('Data da venda (dd/mm/aaaa):',_isoBR(TD));
+  if(dprompt===null)return;
+  var dtVenda=_parseDataBRp(dprompt)||TD;
+  var vendeuTudo=(op==='1')||(qtdVend>=l.qtd);
+  if(!l.id)l.id='L'+Date.now()+Math.floor(Math.random()*1000);
+  l.vendas=l.vendas||[];
+  l.vendas.push({dt:dtVenda,qtd:vendeuTudo?l.qtd:qtdVend,parcial:!vendeuTudo,n:(CU?CU.n:'')});
+  if(vendeuTudo){
+    l.status='vendido';
+    l.dt_baixa=dtVenda;
+    if(S.MAPA_ALOC){Object.keys(S.MAPA_ALOC).forEach(function(k){if(S.MAPA_ALOC[k]===nome)delete S.MAPA_ALOC[k];});}
+    l.qtd=0;
+  }else{
+    l.qtd=l.qtd-qtdVend;
+  }
+  window._loteEditTs=Date.now();
+  salvar();
+  if(S.cfgGS)salvarNuvem(function(){});
+  try{rListLotes();}catch(e){}
+  try{_alertaTrato();}catch(e){}
+  if(vendeuTudo){alert('✅ Baixa registrada: "'+nome+'" vendido em '+_isoBR(dtVenda)+'.\nSaiu do trato e do pasto, foi pros Vendidos.');}
+  else{alert('✅ Venda parcial: '+qtdVend+' animal(is) de "'+nome+'" em '+_isoBR(dtVenda)+'.\nO lote continua ativo com '+l.qtd+' animais.');}
 }
 
 function editLote(nome,faz){
