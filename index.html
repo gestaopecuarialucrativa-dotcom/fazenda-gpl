@@ -307,7 +307,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 03/08/2026 v6.30 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 03/08/2026 v6.31 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -5967,6 +5967,7 @@ function salvarLote(){
   lote.status=(_ant&&_ant.status)?_ant.status:'ativo';
   if(_ant&&_ant.dt_baixa)lote.dt_baixa=_ant.dt_baixa;
   if(_ant&&_ant.vendas)lote.vendas=_ant.vendas;
+  if(_ant){ if(_ant.dt_abertura)lote.dt_abertura=_ant.dt_abertura; } else { lote.dt_abertura=TD; }
   if(idx>=0)S.LOTES[idx]=lote;else S.LOTES.push(lote);
   window._loteEditTs = Date.now();   // trava a sobrescrita da nuvem por 30s
   salvar();
@@ -6070,25 +6071,20 @@ function darBaixaLote(nome,faz){
   else{alert('✅ Venda parcial: '+qtdVend+' animal(is) de "'+nome+'" em '+_isoBR(dtVenda)+'.\nO lote continua ativo com '+l.qtd+' animais.');}
 }
 
-function reabrirLote(nome,faz){
-  var arr=S.LOTES_VENDIDOS||[];
-  var idx=arr.findIndex(function(x){return x.nome===nome&&x.faz===faz;});
-  if(idx<0){alert('Lote não encontrado no arquivo.');return;}
-  var l=arr[idx];
-  if(!confirm('Reabrir "'+nome+'"? Volta pros lotes ativos com '+(l.qtd||0)+' animais.'))return;
-  l.status='ativo';
-  delete l.dt_baixa;
-  S.LOTES=S.LOTES||[];
-  S.LOTES.push(l);
-  arr.splice(idx,1);
-  S.LOTES_VENDIDOS=arr;
+function editInicioCiclo(nome,faz){
+  var l=(S.LOTES||[]).find(function(x){return x.nome===nome&&x.faz===faz;});
+  if(!l)return;
+  var atual=l.dt_abertura?_isoBR(l.dt_abertura):_isoBR(TD);
+  var d=prompt('Início do ciclo do "'+nome+'" (dd/mm/aaaa).\nOs relatórios vão contar a partir dessa data.',atual);
+  if(d===null)return;
+  var iso=_parseDataBRp(d);
+  if(!iso){alert('Data inválida. Use dd/mm/aaaa.');return;}
+  l.dt_abertura=iso;
   window._loteEditTs=Date.now();
   salvar();
   if(S.cfgGS)salvarNuvem(function(){});
   try{rHistLotes();}catch(e){}
-  try{rListLotes();}catch(e){}
-  try{_alertaTrato();}catch(e){}
-  alert('✅ "'+nome+'" reaberto — voltou pros ativos com '+(l.qtd||0)+' animais.');
+  alert('✅ Início do ciclo do "'+nome+'" definido pra '+_isoBR(iso)+'.');
 }
 
 function editLote(nome,faz){
@@ -6384,6 +6380,7 @@ function rHistLotes(){
       +'<div style="font-size:9px;color:#999;margin-top:6px">animais ÷ hectare</div>'
       +'</div>'
       +'</div>'
+      +'<div style="margin-top:8px;font-size:11px;color:#65766a">Início do ciclo: <b style="color:#1b2c1b">'+(lote.dt_abertura?_isoBR(lote.dt_abertura):'desde sempre')+'</b> <span onclick="editInicioCiclo(\''+nm+'\',\''+(lote.faz||'')+'\')" style="color:#2E7D32;font-weight:700;cursor:pointer;text-decoration:underline">editar</span></div>'
       +'<button onclick="darBaixaLote(\''+nm+'\',\''+(lote.faz||'')+'\')" style="width:100%;margin-top:10px;padding:10px;background:#fff;border:1.5px solid #FF8F00;color:#8a5a00;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer">📤 Dar baixa (lote vendido)</button>'
       +'</div>';
   });
@@ -6394,7 +6391,6 @@ function rHistLotes(){
       var dtb=l.dt_baixa?_isoBR(l.dt_baixa):'—';
       return '<div style="background:#fafafa;border:1px solid #eee;border-radius:12px;padding:12px;margin-bottom:8px;opacity:.92">'
         +'<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700;font-size:14px;color:#7d867d">'+l.nome+'</span><span style="font-size:11px;background:#eee;color:#777;border-radius:10px;padding:4px 10px">vendido em '+dtb+((l.qtd||0)?' · '+l.qtd+' animais':'')+'</span></div>'
-        +'<button onclick="reabrirLote(\''+l.nome+'\',\''+(l.faz||'')+'\')" style="width:100%;margin-top:9px;padding:8px;background:#fff;border:1.5px solid #2E7D32;color:#1B5E20;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">↩️ Reabrir (voltar pros ativos)</button>'
         +'</div>';
     }).join('');
   }
