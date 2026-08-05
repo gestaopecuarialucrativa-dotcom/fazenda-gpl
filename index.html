@@ -307,7 +307,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 05/08/2026 v6.36 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 05/08/2026 v6.37 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2323,6 +2323,8 @@ function rConsultoria(dias){
     var txGr=haGr>0?ua/haGr:0;
     var grpLabel=areaObj&&areaObj.tipo==='modulo'?('Módulo '+areaObj.modulo):'Pasto';
 
+    // pula lotes vendidos no histórico de rotação
+    if((lote.status||'ativo')==='vendido')return;
     // dias no pasto
     var movsLote=movs.filter(function(m){return m.lote===nm;});
     var dtEnt=null;
@@ -6356,7 +6358,8 @@ function rHistLotes(){
   var lotes=(S.LOTES||[]).filter(function(l){return (l.status||'ativo')!=='vendido';}), _vendidos=(S.LOTES_VENDIDOS||[]), aloc=S.MAPA_ALOC||{}, html='', _lp=[];
 
   lotes.forEach(function(lote){
-    var nm=lote.nome, qtd=parseInt(lote.qtd)||0, peso=parseFloat(lote.peso)||0;
+    if(!lote||!lote.nome)return; // guarda contra lote malformado
+    var nm=lote.nome, faz=lote.faz||'', qtd=parseInt(lote.qtd)||0, peso=parseFloat(lote.peso)||0;
 
     // Área atual pelo MAPA_ALOC
     var areaId=null;
@@ -7220,7 +7223,8 @@ function rHistRankingPastos(){
 
     // Situação atual de tempo
     var ultima=encerradas.length?encerradas[encerradas.length-1]:null;
-    var diasVazio = ocupadoAgora ? 0 : (ultima ? _rkpDiasEntre(ultima.saida, TD) : null);
+    // ocupadoAgora=true (entrada sem saída) ou MAPA_ALOC → diasVazio=0
+    var diasVazio = (ocupadoAgora || _aberta.length>0) ? 0 : (ultima ? _rkpDiasEntre(ultima.saida, TD) : null);
     var diasOcupadoAgora = ocupadoAgora ? (_aberta.length?_aberta[_aberta.length-1].dias:(oc.length?oc[oc.length-1].dias:0)) : 0;
 
     // segmentos para a barrinha de ritmo (verde=ocupado, cinza=descanso)
