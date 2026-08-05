@@ -307,7 +307,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 03/08/2026 v6.33 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 03/08/2026 v6.34 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -853,6 +853,8 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div style="background:#E3F2FD;border-radius:8px;padding:10px;margin-bottom:10px;font-size:12px;color:#1565C0">
   ℹ️ UA = (Nº animais × Peso médio) ÷ 450 kg
 </div>
+<div class="fg"><div class="lbl">Área inicial — piquete onde o lote entra</div><select id="lt-area"><option value="">Selecione o piquete...</option></select></div>
+<div class="fg"><div class="lbl">Data de início (cadastro)</div><input type="date" id="lt-inicio"></div>
 <button class="sbtn" onclick="salvarLote()">💾 Salvar lote</button>
 <div class="ok" id="ok-lt">✅ Lote salvo!</div>
 </div>
@@ -5956,6 +5958,8 @@ function salvarLote(){
   var nome=((document.getElementById('lt-nome')||{}).value||'').trim();
   var qtd=parseInt((document.getElementById('lt-qtd')||{}).value)||0;
   var peso=parseFloat((document.getElementById('lt-peso')||{}).value)||0;
+  var area=(document.getElementById('lt-area')||{}).value||'';
+  var dini=(document.getElementById('lt-inicio')||{}).value||'';
   if(!nome||!qtd){alert('Informe nome e número de animais.');return;}
   if(!S.LOTES)S.LOTES=[];
   var idx=S.LOTES.findIndex(function(l){return l.nome===nome&&l.faz===faz;});
@@ -5968,13 +5972,15 @@ function salvarLote(){
   lote.status=(_ant&&_ant.status)?_ant.status:'ativo';
   if(_ant&&_ant.dt_baixa)lote.dt_baixa=_ant.dt_baixa;
   if(_ant&&_ant.vendas)lote.vendas=_ant.vendas;
-  if(_ant){ if(_ant.dt_abertura)lote.dt_abertura=_ant.dt_abertura; } else { lote.dt_abertura=TD; }
+  if(dini){ lote.dt_abertura=dini; } else if(_ant){ if(_ant.dt_abertura)lote.dt_abertura=_ant.dt_abertura; } else { lote.dt_abertura=TD; }
   if(idx>=0)S.LOTES[idx]=lote;else S.LOTES.push(lote);
+  if(area){ if(!S.MAPA_ALOC)S.MAPA_ALOC={}; Object.keys(S.MAPA_ALOC).forEach(function(k){if(S.MAPA_ALOC[k]===nome)delete S.MAPA_ALOC[k];}); S.MAPA_ALOC[area]=nome; }
   window._loteEditTs = Date.now();   // trava a sobrescrita da nuvem por 30s
   salvar();
   if(S.cfgGS)salvarNuvem(function(){});
   ltInsumos=[];rListLotes();
-  ['lt-nome','lt-qtd','lt-peso'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  ['lt-nome','lt-qtd','lt-peso','lt-inicio'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
+  var _la=document.getElementById('lt-area');if(_la)_la.value='';
   var ptEl=document.getElementById('lt-peso-total');if(ptEl)ptEl.textContent='—';
   var arEl=document.getElementById('lt-arroba');if(arEl)arEl.textContent='—';
   var uaEl=document.getElementById('lt-ua');if(uaEl)uaEl.textContent='—';
@@ -6096,7 +6102,11 @@ function editLote(nome,faz){
   document.getElementById('lt-qtd').value=l.qtd;
   document.getElementById('lt-peso').value=l.peso||0;
   ltInsumos=l.insumos?l.insumos.slice():[];
-  calcLote();window.scrollTo(0,0);
+  calcLote();
+  var _pq=''; if(S.MAPA_ALOC){Object.keys(S.MAPA_ALOC).forEach(function(k){if(S.MAPA_ALOC[k]===l.nome)_pq=k;});}
+  _fillLoteArea(_pq);
+  var _li=document.getElementById('lt-inicio'); if(_li)_li.value=l.dt_abertura||'';
+  window.scrollTo(0,0);
 }
 // Extrai o número do lote a partir do nome ("Lote 06" -> "6")
 function _loteNumero(nome){ var m=String(nome||'').match(/(\d+)/); return m?String(parseInt(m[1],10)):''; }
@@ -6296,12 +6306,20 @@ function _getHa(areaObj){
 }
 
 // ── ABA LOTES ─────────────────────────────────────────────
+function _fillLoteArea(sel){
+  var la=document.getElementById('lt-area'); if(!la)return;
+  la.innerHTML='<option value="">Selecione o piquete...</option>'+MAPA_AREAS.map(function(a){return '<option value="'+a.id+'">'+a.label+(a.ha?' ('+a.ha+' ha)':'')+'</option>';}).join('');
+  if(sel)la.value=sel;
+}
+
 function novoLote(){
   sp('lote');
   try{sLoteTab('lotes');}catch(e){}
   ['lt-nome','lt-qtd','lt-peso'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});
   ltInsumos=[];
   try{calcLote();}catch(e){}
+  _fillLoteArea('');
+  var li=document.getElementById('lt-inicio'); if(li)li.value=TD;
   var n=document.getElementById('lt-nome'); if(n)n.focus();
   try{window.scrollTo(0,0);}catch(e){}
 }
