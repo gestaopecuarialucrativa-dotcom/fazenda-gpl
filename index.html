@@ -307,7 +307,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 05/08/2026 v6.37 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 05/08/2026 v6.38 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -7063,7 +7063,13 @@ function _rkpOcupacoesPorArea(){
     var lotObj=lotes.find(function(l){return l.nome===lt;});
     var ua=lotObj?(lotObj.qtd*lotObj.peso/450):0;
     for(var i=0;i<seq.length;i++){
-      var destino=_feedNormArea(seq[i].destino); if(!destino) continue;
+      var destRaw=seq[i].destino;
+      // fallback: se destino nulo, tenta MAPA_ALOC
+      if(!destRaw||String(destRaw).trim()==='null'||String(destRaw).trim()===''){
+        var _aloc=S.MAPA_ALOC||{};
+        destRaw=Object.keys(_aloc).find(function(k){return _aloc[k]===lt;})||'';
+      }
+      var destino=_feedNormArea(destRaw); if(!destino) continue;
       var entrada=(seq[i].dt||seq[i].ts||'').substring(0,10);
       var saida=(i+1<seq.length)?((seq[i+1].dt||seq[i+1].ts||'').substring(0,10)):''; // '' = ainda ocupado
       var dias=saida?_rkpDiasEntre(entrada,saida):_rkpDiasEntre(entrada,TD);
