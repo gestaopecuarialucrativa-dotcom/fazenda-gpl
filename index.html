@@ -307,7 +307,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 05/08/2026 v6.35 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 05/08/2026 v6.36 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -6324,6 +6324,27 @@ function novoLote(){
   try{window.scrollTo(0,0);}catch(e){}
 }
 
+function alterarAreaLote(nome,faz){
+  var opts=MAPA_AREAS.map(function(a){return a.label+(a.ha?' ('+a.ha+' ha)':'');});
+  var atual='';
+  if(S.MAPA_ALOC){Object.keys(S.MAPA_ALOC).forEach(function(k){if(S.MAPA_ALOC[k]===nome)atual=k;});}
+  var atualLabel=atual?(MAPA_AREAS.find(function(a){return a.id===atual;})||{}).label||atual:'';
+  var lista=opts.map(function(o,i){return (i+1)+') '+o;}).join('\n');
+  var esc=prompt('Escolha a área para "'+nome+'":\n\n'+lista+'\n\n(atual: '+(atualLabel||'sem área')+'\n\nDigite o número:');
+  if(esc===null)return;
+  var idx=parseInt(esc)-1;
+  if(isNaN(idx)||idx<0||idx>=MAPA_AREAS.length){alert('Opção inválida.');return;}
+  var novaArea=MAPA_AREAS[idx];
+  if(!S.MAPA_ALOC)S.MAPA_ALOC={};
+  Object.keys(S.MAPA_ALOC).forEach(function(k){if(S.MAPA_ALOC[k]===nome)delete S.MAPA_ALOC[k];});
+  S.MAPA_ALOC[novaArea.id]=nome;
+  window._loteEditTs=Date.now();
+  salvar();
+  if(S.cfgGS)salvarNuvem(function(){});
+  try{rHistLotes();}catch(e){}
+  alert('✅ "'+nome+'" alocado em '+novaArea.label);
+}
+
 function rHistLotes(){
   var cont=document.getElementById('hist-lotes-cards');
   if(!cont) return;
@@ -6386,7 +6407,7 @@ function rHistLotes(){
       +'<div style="background:#f5f7f4;border-radius:10px;padding:10px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">'
       +  '<div>'
       +    '<div style="font-size:11px;color:#888;font-weight:600">ÁREA ATUAL</div>'
-      +    '<div style="font-size:14px;font-weight:700;color:#333">'+areaNm+(ha>0?' · '+ha+' ha':'')+'</div>'
+      +    '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-size:14px;font-weight:700;color:#333">'+areaNm+(ha>0?' · '+ha+' ha':'')+'</span><button onclick="alterarAreaLote(\''+nm+'\',\''+faz+'\')" style="font-size:11px;background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;border-radius:6px;padding:2px 9px;cursor:pointer;font-weight:700">Alterar</button></div>'
       +    (temDt
           ?'<div style="display:flex;align-items:center;gap:6px;margin-top:2px"><span style="font-size:11px;color:#888">Entrada: '+dtEnt.split('-').reverse().join('/')+'</span><button onclick="editarDataEntrada(\''+nm+'\',\''+areaId+'\',\''+dtEnt+'\')" style="font-size:10px;background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;border-radius:5px;padding:1px 7px;cursor:pointer">Editar</button></div>'
           :'<div style="display:flex;align-items:center;gap:6px;margin-top:2px"><span style="font-size:11px;color:#E65100;font-weight:600">Sem data de entrada</span><button onclick="editarDataEntrada(\''+nm+'\',\''+areaId+'\',\'\')" style="font-size:10px;background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;border-radius:5px;padding:1px 7px;cursor:pointer">Registrar</button></div>')
