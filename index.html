@@ -307,7 +307,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 05/08/2026 v6.38 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 08/08/2026 v6.39 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1030,7 +1030,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
         <button onclick="rRelFazendaPreview();setTimeout(function(){var el=document.getElementById('rel-fazenda-preview');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},100)" style="flex:1;padding:10px;background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">👁 Visualizar</button>
         <button onclick="gerarRelPDF()" style="flex:1;padding:10px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">📄 Rel. Técnico</button>
         <button onclick="gerarRelPreviewPDF()" style="flex:1;padding:10px;background:#1565C0;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🌿 Rel. Fazenda</button>
-        <button onclick="enviarRelatorioWppGPL()" style="flex:1;padding:10px;background:#25D366;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">📲 WhatsApp</button>
+        <button onclick="gerarPDFRelFazenda()" style="flex:1;padding:10px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">📄 Rel. PDF</button>
       </div>
     </div>
   </div>
@@ -4818,30 +4818,71 @@ function gerarRelPagamentosPDF(){
   setTimeout(function(){j.print();},800);
 }
 
-function enviarRelatorioWppGPL(){
-  var faz=Object.keys(S.FAZ||{})[0]||'Fazenda Estrela';
-  var lotes=S.LOTES||[];
+function enviarRelatorioWppGPL(){ gerarPDFRelFazenda(); }
+function gerarPDFRelFazenda(){
+  var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'Fazenda Estrela');
+  var lotes=(S.LOTES||[]).filter(function(l){return(l.status||'ativo')!=='vendido';});
   var aloc=S.MAPA_ALOC||{};
   var hoje=new Date(); hoje.setHours(12,0,0,0);
   var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
-  var msg='🌿 *RELATÓRIO DA FAZENDA*\n';
-  msg+='📍 '+faz+' · '+new Date().toLocaleDateString('pt-BR')+'\n\n';
-  msg+='🐄 *LOTES*\n';
-  lotes.forEach(function(lot){
+  var diasSemana=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  var dtHoje=diasSemana[hoje.getDay()]+', '+hoje.toLocaleDateString('pt-BR');
+  var totalAni=lotes.reduce(function(s,l){return s+(l.qtd||0);},0);
+  var totalUA=lotes.reduce(function(s,l){return s+(l.qtd||0)*(l.peso||0)/450;},0);
+  var linhas=lotes.map(function(lot){
+    if(!lot||!lot.nome)return'';
     var aId=null; Object.keys(aloc).forEach(function(k){if(aloc[k]===lot.nome)aId=k;});
     var aObj=aId?MAPA_AREAS.find(function(a){return a.id===aId;}):null;
-    var ua=lot.qtd*lot.peso/450;
-    var tx=aObj&&aObj.ha>0?ua/aObj.ha:0;
+    var ua=(lot.qtd||0)*(lot.peso||0)/450;
+    var tx=aObj&&aObj.ha>0?(ua/aObj.ha).toFixed(2)+' UA/ha':'—';
     var ml=movs.filter(function(m){return m.lote===lot.nome;});
     var dt=null;
-    for(var i=ml.length-1;i>=0;i--){if(ml[i].destino===aId){dt=ml[i].dt;break;}}
+    for(var i=ml.length-1;i>=0;i--){
+      var dest=ml[i].destino;
+      if(!dest||String(dest).trim()==='null'||String(dest).trim()===''){
+        dest=Object.keys(aloc).find(function(k){return aloc[k]===lot.nome;})||'';
+      }
+      if(aId&&_feedNormArea(dest)===aId){dt=ml[i].dt;break;}
+    }
     var dias=dt?Math.max(0,Math.round((hoje-new Date(dt+'T12:00:00'))/864e5)):null;
-    msg+=lot.nome+': '+(aObj?aObj.label:'—')+' | '+lot.qtd+' ani | '+lot.peso+'kg | '+(dias!==null?dias+'d':'—')+'\n';
-  });
-  var dono=Object.values(S.US||{}).find?((S.US||[]).find?.(u=>u.r==='Dono')):null;
-  var tel=dono&&dono.tel?dono.tel.replace(/[^\d]/g,''):'';
-  var url=tel?'https://wa.me/'+tel+'?text='+encodeURIComponent(msg):'https://wa.me/?text='+encodeURIComponent(msg);
-  window.open(url,'_blank');
+    var diasCor=dias===null?'#888':dias<=7?'#2E7D32':dias<=14?'#E65100':'#C62828';
+    var diasTxt=dias!==null?('<b style="color:'+diasCor+'">'+dias+'d</b>'):'—';
+    return '<tr style="border-bottom:1px solid #f0f0f0">'
+      +'<td style="padding:8px 6px;font-weight:700">'+lot.nome+'</td>'
+      +'<td style="padding:8px 6px;color:#1B5E20">'+(aObj?aObj.label:'<span style="color:#888">Sem área</span>')+'</td>'
+      +'<td style="padding:8px 6px;text-align:right">'+(lot.qtd||0)+'</td>'
+      +'<td style="padding:8px 6px;text-align:right">'+(lot.peso||0)+' kg</td>'
+      +'<td style="padding:8px 6px;text-align:right">'+ua.toFixed(1)+'</td>'
+      +'<td style="padding:8px 6px;text-align:right">'+tx+'</td>'
+      +'<td style="padding:8px 6px;text-align:center">'+diasTxt+'</td>'
+      +'</tr>';
+  }).join('');
+  var html='<!doctype html><html><head><meta charset="utf-8"><style>'
+    +_pdfTimbreCss()
+    +'body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:18px;color:#222;font-size:13px}'
+    +'.kpi{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}'
+    +'.kpi-box{background:#f0f9f0;border:1px solid #c8e6c9;border-radius:8px;padding:10px 14px}'
+    +'.kpi-lbl{font-size:10px;color:#555;text-transform:uppercase;letter-spacing:.5px}'
+    +'.kpi-val{font-size:24px;font-weight:900;color:#1B5E20;line-height:1.1}'
+    +'.kpi-sub{font-size:10px;color:#888}'
+    +'table{width:100%;border-collapse:collapse}'
+    +'th{background:#1B5E20;color:#fff;padding:8px 6px;font-size:11px;text-align:left}'
+    +'th:nth-child(n+3){text-align:right} th:last-child{text-align:center}'
+    +'tr:nth-child(even){background:#f9fdf9}'
+    +'@media print{table{break-inside:avoid}}'
+    +'</style></head><body>'
+    +_pdfTimbre('Relatório da Fazenda', dtHoje, faz)
+    +'<div class="kpi">'
+    +'<div class="kpi-box"><div class="kpi-lbl">Total de animais</div><div class="kpi-val">'+totalAni+'</div><div class="kpi-sub">'+lotes.length+' lote(s)</div></div>'
+    +'<div class="kpi-box"><div class="kpi-lbl">UA total</div><div class="kpi-val">'+totalUA.toFixed(1)+'</div><div class="kpi-sub">÷ 450</div></div>'
+    +'<div class="kpi-box"><div class="kpi-lbl">'+diasSemana[hoje.getDay()]+'</div><div class="kpi-val" style="font-size:16px">'+hoje.toLocaleDateString('pt-BR')+'</div><div class="kpi-sub">data de emissão</div></div>'
+    +'</div>'
+    +'<table><thead><tr>'
+    +'<th>Lote</th><th>Área atual</th><th>Animais</th><th>Peso méd.</th><th>UA</th><th>TL</th><th>Dias no pasto</th>'
+    +'</tr></thead><tbody>'+linhas+'</tbody></table>'
+    +_pdfRodape()
+    +'</body></html>';
+  pdfModalAbrir('Relatório da Fazenda', html);
 }
 
 // ── DASHBOARD com gráficos SVG ──
