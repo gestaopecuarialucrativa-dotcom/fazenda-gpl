@@ -307,7 +307,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 11/08/2026 v6.42 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 11/08/2026 v6.43 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2244,7 +2244,10 @@ function feedEditarMov(idx){
 function feedEditarDiaria(idx){
   var r=S.rD[idx];
   if(!r||r.tipo!=='diaria'){ alert('Registro não encontrado.'); return; }
-  var srvOld=r.srv||'', vOld=parseFloat(r.v)||0;
+  var nOld=r.n||'', srvOld=r.srv||'', vOld=parseFloat(r.v)||0;
+  var nNew=prompt('Nome do colaborador:', nOld);
+  if(nNew===null) return;
+  nNew=(''+nNew).trim(); if(!nNew){alert('Nome não pode ficar vazio.');return;}
   var srvNew=prompt('Serviço:', srvOld);
   if(srvNew===null) return;
   srvNew=(''+srvNew).trim();
@@ -2253,13 +2256,13 @@ function feedEditarDiaria(idx){
   if(vStr===null) return;
   var vNew=parseFloat((''+vStr).replace(',','.'));
   if(isNaN(vNew)||vNew<0){ alert('Valor inválido.'); return; }
-  if(srvNew===srvOld && Math.abs(vNew-vOld)<0.01){ return; }
-  if(!confirm('Confirmar edição desta diária?\n\nServiço: '+srvNew+'\nValor: R$ '+vNew.toFixed(2).replace('.',','))) return;
+  if(nNew===nOld && srvNew===srvOld && Math.abs(vNew-vOld)<0.01){ return; }
+  if(!confirm('Confirmar edição?\n\nNome: '+nNew+'\nServiço: '+srvNew+'\nValor: R$ '+vNew.toFixed(2).replace('.',','))) return;
   if(!(S.cfgGS && navigator.onLine)){
     alert('⚠️ Sem conexão com a planilha. A edição precisa de internet para gravar na nuvem (senão volta ao antigo no próximo carregamento). Tente de novo quando estiver online.');
     return;
   }
-  var payload={dt:r.dt,n:r.n,srv_old:srvOld,v_old:vOld,srv_new:srvNew,v_new:vNew,faz:r.faz||''};
+  var payload={dt:r.dt,n:r.n,n_old:nOld,n_new:nNew,srv_old:srvOld,v_old:vOld,srv_new:srvNew,v_new:vNew,faz:r.faz||''};
   var url=getFazGasUrl(r.faz||'');
   var cbN='_ediD_'+Date.now();
   var s=document.createElement('script');
@@ -2267,7 +2270,7 @@ function feedEditarDiaria(idx){
   window[cbN]=function(res){
     delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s);
     if(res && res.ok){
-      r.srv=srvNew; r.v=vNew; salvar();
+      r.n=nNew; r.srv=srvNew; r.v=vNew; salvar();
       try{rFeedConsultor();}catch(e){}
       alert('✅ Diária editada na planilha.');
     } else {
