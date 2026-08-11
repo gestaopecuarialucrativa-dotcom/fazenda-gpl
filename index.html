@@ -307,7 +307,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 11/08/2026 v6.41 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 11/08/2026 v6.42 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -398,7 +398,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="card">
 <div class="stit">👤 Diária do colaborador</div>
 <div class="fg"><div class="lbl">Fazenda</div><select id="d-faz" onchange="updDiariaNome()"></select></div>
-<div class="fg"><div class="lbl">Nome do colaborador</div><div style="display:flex;gap:6px;align-items:center"><select id="d-nome" style="flex:1"></select><button onclick="addDiarista()" style="padding:8px 12px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-size:18px;cursor:pointer">＋</button></div></div>
+<div class="fg"><div class="lbl">Nome do colaborador</div><div id="d-nome-btns" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:2px"></div><input type="hidden" id="d-nome" value=""></div>
 <div class="fg"><div class="lbl">Data</div><input type="date" id="d-data"></div>
 <div class="fg"><div class="lbl">Tipo de serviço</div><div class="brow" id="d-servs"></div></div>
 <div class="fg" id="d-ow" style="display:none"><div class="lbl">Descreva</div><input type="text" id="d-out" placeholder="Ex: conserto de cerca"></div>
@@ -1600,7 +1600,7 @@ function _prodTrato(f){
   return comSaldo;   // só os com saldo; se vazio, o dropdown mostra o aviso
 }
 function getCF(f){return S.FAZ[f]?S.FAZ[f].cochos:[];}
-function popAll(){try{const fl=getFL();const isC=CU&&CU.r==='Consultor';const uF=(!isC&&CU&&CU.fs&&CU.fs.length===1)?CU.fs[0]:null;['d-faz','i-faz','t-faz','es-faz','ct-faz','lt-faz','ar-faz','i-cad-faz'].forEach(id=>{const s=document.getElementById(id);if(!s)return;s.innerHTML=fl.map(f=>`<option>${f}</option>`).join('');if(uF){s.value=uF;const fg=s.closest?s.closest('.fg'):null;if(fg)fg.style.display='none';}else{const fg=s.closest?s.closest('.fg'):null;if(fg)fg.style.display='';}});const pf=document.getElementById('pf');if(pf){if(isC){pf.innerHTML='<option value="">Todas</option>'+fl.map(f=>`<option value="${f}">${f}</option>`).join('');pf.disabled=false;}else{const f=uF||fl[0]||'';pf.innerHTML=`<option value="${f}">${f}</option>`;pf.disabled=true;}}const df=document.getElementById('desp-faz');if(df)df.innerHTML='<option value="">Todas</option>'+fl.map(f=>`<option>${f}</option>`).join('');const dn=document.getElementById('d-nome');if(dn){const faz=document.getElementById('d-faz')?document.getElementById('d-faz').value:'';const dl=getDiaristas(faz||uF||'');dn.innerHTML='<option value="">Selecione...</option>'+dl.map(n=>`<option>${n}</option>`).join('');if(CU&&CU.r==='Vaqueiro'){if(!dl.includes(CU.n)){const o=document.createElement('option');o.value=CU.n;o.textContent=CU.n;dn.appendChild(o);}dn.value=CU.n;}}updTrato();updEsCo();updInsProd();updInsCadFaz();const ep=document.getElementById('ep');if(ep)ep.innerHTML='<option value="">Selecione...</option>'+Object.keys(S.EST).map(p=>`<option>${p}</option>`).join('');['d-data','i-data','t-data','es-data','ct-data','ed'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=TD;});const vc=document.getElementById('val-cafe');const va=document.getElementById('val-almoco');const vj=document.getElementById('val-janta');if(vc&&!vc.value)vc.value=S.PR.cafe;if(va&&!va.value)va.value=S.PR.almoco;if(vj&&!vj.value)vj.value=S.PR.janta;popServs();const cc=document.getElementById('ins-cad-card');if(cc)cc.style.display=(CU&&CU.p&&CU.p.config)?'block':'none';}catch(e){console.error('popAll:',e);}}
+function popAll(){try{const fl=getFL();const isC=CU&&CU.r==='Consultor';const uF=(!isC&&CU&&CU.fs&&CU.fs.length===1)?CU.fs[0]:null;['d-faz','i-faz','t-faz','es-faz','ct-faz','lt-faz','ar-faz','i-cad-faz'].forEach(id=>{const s=document.getElementById(id);if(!s)return;s.innerHTML=fl.map(f=>`<option>${f}</option>`).join('');if(uF){s.value=uF;const fg=s.closest?s.closest('.fg'):null;if(fg)fg.style.display='none';}else{const fg=s.closest?s.closest('.fg'):null;if(fg)fg.style.display='';}});const pf=document.getElementById('pf');if(pf){if(isC){pf.innerHTML='<option value="">Todas</option>'+fl.map(f=>`<option value="${f}">${f}</option>`).join('');pf.disabled=false;}else{const f=uF||fl[0]||'';pf.innerHTML=`<option value="${f}">${f}</option>`;pf.disabled=true;}}const df=document.getElementById('desp-faz');if(df)df.innerHTML='<option value="">Todas</option>'+fl.map(f=>`<option>${f}</option>`).join('');try{updDiariaNome();}catch(e){}updTrato();updEsCo();updInsProd();updInsCadFaz();const ep=document.getElementById('ep');if(ep)ep.innerHTML='<option value="">Selecione...</option>'+Object.keys(S.EST).map(p=>`<option>${p}</option>`).join('');['d-data','i-data','t-data','es-data','ct-data','ed'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=TD;});const vc=document.getElementById('val-cafe');const va=document.getElementById('val-almoco');const vj=document.getElementById('val-janta');if(vc&&!vc.value)vc.value=S.PR.cafe;if(va&&!va.value)va.value=S.PR.almoco;if(vj&&!vj.value)vj.value=S.PR.janta;popServs();const cc=document.getElementById('ins-cad-card');if(cc)cc.style.display=(CU&&CU.p&&CU.p.config)?'block':'none';}catch(e){console.error('popAll:',e);}}
 function popServs(){const so=document.getElementById('d-servs');if(!so)return;so.innerHTML=S.SERVS.map(s=>`<div class="bopt" onclick="sSrv(this,'${s}')">${s}</div>`).join('');}
 function updInsProd(){const faz=document.getElementById('i-faz')?document.getElementById('i-faz').value:getFL()[0]||'';document.querySelectorAll('.ip').forEach(s=>{const v=s.value;s.innerHTML='<option value="">Sel...</option>'+getPF(faz).map(p=>`<option>${p}</option>`).join('');if(v)s.value=v;});}
 function updTrato(){const faz=(document.getElementById('t-faz')||{}).value||'';const tc=document.getElementById('t-cocho');if(!tc)return;const lotes=(S.LOTES||[]).filter(l=>(!faz||l.faz===faz)&&(l.status||'ativo')!=='vendido');tc.innerHTML='<option value="">Selecione o lote...</option>'+lotes.map(l=>`<option>${l.nome} (${l.qtd} animais)</option>`).join('');const tp=document.getElementById('t-prod');if(!tp)return;var _lp=_prodTrato(faz);if(_lp.length){tp.innerHTML='<option value="">Selecione...</option>'+_lp.map(p=>`<option>${p}</option>`).join('');tp.disabled=false;}else{tp.innerHTML='<option value="">\u26a0\ufe0f Nenhum produto com saldo \u2014 precisa comprar</option>';tp.disabled=false;}}
@@ -1611,9 +1611,64 @@ function _showStatusCt(msg, cor){
   _ctStatusMsg(msg, cor);
 }
 // [cantina legacy removida: _updBtnSyncCt]
-function updDiariaNome(){const faz=(document.getElementById('d-faz')||{}).value||'';const sel=document.getElementById('d-nome');if(!sel)return;const dl=getDiaristas(faz);sel.innerHTML='<option value="">Selecione...</option>'+dl.map(n=>`<option>${n}</option>`).join('');if(CU&&CU.r==='Vaqueiro'){if(!dl.includes(CU.n)){const o=document.createElement('option');o.value=CU.n;o.textContent=CU.n;sel.appendChild(o);}sel.value=CU.n;}}
+function _selDiarista(btn,nome){
+  var wrap=document.getElementById('d-nome-btns');
+  if(wrap)wrap.querySelectorAll('button').forEach(function(b){
+    b.style.background='#E8F5E9';b.style.color='#1B5E20';b.style.borderColor='#A5D6A7';
+  });
+  btn.style.background='#2E7D32';btn.style.color='#fff';btn.style.borderColor='#1B5E20';
+  var hidden=document.getElementById('d-nome');if(hidden)hidden.value=nome;
+}
+function updDiariaNome(){
+  var faz=(document.getElementById('d-faz')||{}).value||'';
+  var wrap=document.getElementById('d-nome-btns');
+  var hidden=document.getElementById('d-nome');
+  if(!wrap||!hidden){return;}
+  wrap.innerHTML='';hidden.value='';
+  var dl=getDiaristas(faz);
+  dl.forEach(function(nome){
+    var btn=document.createElement('button');
+    btn.type='button';btn.textContent=nome;
+    btn.style.cssText='padding:10px 16px;background:#E8F5E9;color:#1B5E20;border:1.5px solid #A5D6A7;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer';
+    btn.addEventListener('click',function(){_selDiarista(btn,nome);});
+    wrap.appendChild(btn);
+  });
+}
 function getDiaristas(faz){if(!S.DIARISTAS)S.DIARISTAS={};return S.DIARISTAS[faz]||[];}
-function addDiarista(){const faz=(document.getElementById('d-faz')||{}).value||'';const n=prompt('Nome do diarista:');if(!n||!n.trim())return;if(!S.DIARISTAS)S.DIARISTAS={};if(!S.DIARISTAS[faz])S.DIARISTAS[faz]=[];if(!S.DIARISTAS[faz].includes(n.trim())){S.DIARISTAS[faz].push(n.trim());salvar();updDiariaNome();}}
+function addDiarista(faz,nome){
+  if(!faz)faz=(document.getElementById('d-faz')||document.getElementById('cfg-faz-sel')||{}).value||getFL()[0]||'';
+  if(!nome)nome=prompt('Nome do diarista a cadastrar:');
+  if(!nome||!nome.trim())return;
+  if(!S.DIARISTAS)S.DIARISTAS={};
+  if(!S.DIARISTAS[faz])S.DIARISTAS[faz]=[];
+  if(S.DIARISTAS[faz].includes(nome.trim())){alert('Nome já cadastrado.');return;}
+  S.DIARISTAS[faz].push(nome.trim());
+  salvar();if(S.cfgGS)salvarNuvem(function(){});
+  updDiariaNome();rCfgDiaristas();
+}
+function remDiarista(faz,nome){
+  if(!S.DIARISTAS||!S.DIARISTAS[faz])return;
+  if(!confirm('Remover "'+nome+'" da lista?'))return;
+  S.DIARISTAS[faz]=S.DIARISTAS[faz].filter(function(n){return n!==nome;});
+  salvar();if(S.cfgGS)salvarNuvem(function(){});
+  updDiariaNome();rCfgDiaristas();
+}
+function rCfgDiaristas(){
+  var el=document.getElementById('cfg-diaristas-lista');if(!el)return;
+  var faz=(document.getElementById('cfg-faz-sel')||{}).value||getFL()[0]||'';
+  var dl=getDiaristas(faz);
+  if(!dl.length){el.innerHTML='<div style="font-size:12px;color:#888;padding:8px 0">Nenhum cadastrado. Toque em + para adicionar.</div>';return;}
+  el.innerHTML='';
+  dl.forEach(function(nome){
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0';
+    var sp=document.createElement('span');sp.textContent=nome;sp.style.cssText='font-size:14px;font-weight:700';
+    var btn=document.createElement('button');btn.textContent='Remover';
+    btn.style.cssText='background:#FFEBEE;color:#C62828;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer';
+    btn.addEventListener('click',function(){remDiarista(faz,nome);});
+    row.appendChild(sp);row.appendChild(btn);el.appendChild(row);
+  });
+}
 
 // ═══ FORM ═══
 let avSel='',srvSel='',coSel='',esSel=0,esTSel='';
