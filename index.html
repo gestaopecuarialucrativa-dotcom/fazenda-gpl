@@ -307,7 +307,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 11/08/2026 v6.45 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 11/08/2026 v6.46 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1273,6 +1273,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 </div>
 <div class="card"><div class="stit">👥 Usuários e PIN</div><div id="ucfg-l"></div><button class="savb" style="width:100%;margin-top:9px;background:#2d7a1f;color:#fff;border-color:#2d7a1f;font-weight:700" onclick="addUser()">＋ Novo usuário</button></div>
 <div class="card"><div class="stit">💰 Pix dos Colaboradores</div><div id="pix-diaristas-l"><div style="font-size:12px;color:#aaa;padding:6px">Nenhum colaborador cadastrado.</div></div></div>
+<div class="card"><div class="stit">👥 Diaristas da fazenda</div><div style="font-size:12px;color:#65766a;margin-bottom:10px">Nomes disponíveis para lançar diária. Só consultor/dono cadastra.</div><div id="cfg-diaristas-lista"></div><button onclick="addDiarista()" class="savb" style="width:100%;margin-top:10px;background:#2E7D32;color:#fff;border-color:#2E7D32;font-weight:700">＋ Adicionar diarista</button></div>
 <div class="card"><div class="stit">📋 Tipos de serviço</div><div id="serv-l"></div><div class="addr"><input type="text" id="ns" placeholder="Nome do serviço" style="flex:1"><button class="savb" onclick="addServ()">Add</button></div></div>
 <div class="card">
 <div class="stit">🧾 Preços cantina (R$)</div>
@@ -1505,7 +1506,7 @@ function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.di
       carregarNuvem(function(){try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}});
     } else {
       try{rMapaMain();rMapa();}catch(e){console.error('rMapa:',e);}
-    }var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'inline-block':'none';setTimeout(function(){try{rMapaMain();rMapa();}catch(e){}},1000);};setTimeout(_rmapa,100);}if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();// Popular fazendas no select de areas
+    }var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'inline-block':'none';setTimeout(function(){try{rMapaMain();rMapa();}catch(e){}},1000);};setTimeout(_rmapa,100);}if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();rCfgDiaristas();// Popular fazendas no select de areas
 var arFaz=document.getElementById('ar-faz');if(arFaz&&arFaz.options.length<=1){arFaz.innerHTML='<option value="">Selecione...</option>'+Object.keys(S.FAZ||{}).map(function(f){return'<option value="'+f+'">'+(f.replace('Fazenda ','🏠 '))+'</option>';}).join('');if(arFaz.options.length===2)arFaz.selectedIndex=1;}rListAreas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';
   var _wppEl=document.getElementById('cfg-wpp');
   if(_wppEl)_wppEl.value=S.wppAdmin||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);
@@ -1667,7 +1668,7 @@ function remDiarista(faz,nome){
 }
 function rCfgDiaristas(){
   var el=document.getElementById('cfg-diaristas-lista');if(!el)return;
-  var faz=(document.getElementById('cfg-faz-sel')||{}).value||getFL()[0]||'';
+  var faz=getFL()[0]||'';
   var dl=getDiaristas(faz);
   if(!dl.length){el.innerHTML='<div style="font-size:12px;color:#888;padding:8px 0">Nenhum cadastrado. Toque em + para adicionar.</div>';return;}
   el.innerHTML='';
