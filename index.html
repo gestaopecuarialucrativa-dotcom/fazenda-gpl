@@ -307,7 +307,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 08/08/2026 v6.39 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 11/08/2026 v6.41 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -9422,8 +9422,7 @@ function renderFCLista(lista, totalGeral, deFmt, ateFmt, faz){
   html+='<div style="background:#FFF3E0;border-radius:10px;padding:12px;margin-top:8px;border:1px solid #FFB300">';
   html+='<div style="font-size:14px;font-weight:700;color:#E65100;margin-bottom:8px">Total selecionado: R$ '+totalSel.toFixed(2).replace('.',',')+'</div>';
   if(!telDono)html+='<div style="font-size:11px;color:#888;margin-bottom:6px">Cadastre o WhatsApp do Dono em Config.</div>';
-  html+='<button onclick="enviarFCWpp()" style="width:100%;padding:11px;background:#25D366;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:6px">📲 Enviar WhatsApp ao Dono</button>';
-  html+='<button onclick="copiarFCMsg()" style="width:100%;padding:9px;background:#f5f5f5;color:#333;border:1px solid #ddd;border-radius:10px;font-size:13px;cursor:pointer">📋 Copiar mensagem</button>';
+  html+='<button onclick="gerarPDFFConta()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:6px">📄 Gerar PDF</button>';
   html+='<button onclick="marcarFCSelecionadosComoPago()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px">✅ Marcar selecionados como pago</button>';
   html+='</div>';
 
@@ -9590,6 +9589,68 @@ function gerarFCMsg(){
   salvar();
 
   return linhas.join(NL);
+}
+
+function gerarPDFFConta(){
+  var lista=window._fcLista||[];
+  var faz=window._fcFaz||'';
+  var deFmt=window._fcDe||'';
+  var ateFmt=window._fcAte||'';
+  var sel=lista.filter(function(p){return window._fcSel&&window._fcSel[p.n]!==false;});
+  if(!sel.length){alert('Selecione pelo menos um colaborador.');return;}
+  var diasSemana=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  function _diaSem(iso){if(!iso||iso.length<10)return'';var d=new Date(iso+'T12:00:00');return isNaN(d.getTime())?'':diasSemana[d.getDay()];}
+  function _dtBR(iso){if(!iso)return'';var p=iso.split('-');return p.length>=3?(p[2]+'/'+p[1]+'/'+p[0]):iso;}
+  var totalGeral=sel.reduce(function(a,p){return a+p.totalD+p.totalC+(p.totalX||0);},0);
+  var linhasColab=sel.map(function(p){
+    var total=p.totalD+p.totalC+(p.totalX||0);
+    var pix=_fcPix(p.n).chave;
+    var pixTit=_fcPix(p.n).titular;
+    var dOrd=p.diarias.slice().sort(function(a,b){return(a.dt||'')>(b.dt||'')?1:-1;});
+    var trDiarias=dOrd.map(function(r){
+      return '<tr><td style="padding:5px 8px;color:#555">'+(_diaSem(r.dt)?_diaSem(r.dt)+', ':'')+_dtBR(r.dt)+'</td>'
+        +'<td style="padding:5px 8px">'+(r.srv||'Diária')+'</td>'
+        +'<td style="padding:5px 8px;text-align:right">R$\u00a0'+r.v.toFixed(2).replace('.',',')+'</td></tr>';
+    }).join('');
+    var trCantina=p.cantina.length
+      ?'<tr style="background:#f9fdf9"><td colspan="2" style="padding:5px 8px;color:#555">Cantina ('+p.cantina.length+' lançamento(s))</td><td style="padding:5px 8px;text-align:right">R$\u00a0'+p.totalC.toFixed(2).replace('.',',')+'</td></tr>':'';
+    var trDesp=(p.despesas&&p.despesas.length)?p.despesas.map(function(r){
+      return '<tr style="background:#f9fdf9"><td style="padding:5px 8px;color:#555">'+_dtBR(r.venc||r.dt)+'</td>'
+        +'<td style="padding:5px 8px">'+(r.desc||'Despesa')+'</td>'
+        +'<td style="padding:5px 8px;text-align:right">R$\u00a0'+(r.val||0).toFixed(2).replace('.',',')+'</td></tr>';
+    }).join(''):'';
+    return '<div style="background:#fff;border:1px solid #e0e7e0;border-left:4px solid #2E7D32;'
+      +'border-radius:0 10px 10px 0;padding:14px;margin-bottom:14px;page-break-inside:avoid">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+      +'<div style="font-size:16px;font-weight:800;color:#1B5E20">'+p.n+'</div>'
+      +'<div style="font-size:15px;font-weight:700">R$\u00a0'+total.toFixed(2).replace('.',',')+'</div>'
+      +'</div>'
+      +'<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px">'
+      +'<thead><tr style="background:#E8F5E9">'
+      +'<th style="padding:5px 8px;text-align:left;font-size:11px;color:#1B5E20">Data</th>'
+      +'<th style="padding:5px 8px;text-align:left;font-size:11px;color:#1B5E20">Descrição</th>'
+      +'<th style="padding:5px 8px;text-align:right;font-size:11px;color:#1B5E20">Valor</th>'
+      +'</tr></thead><tbody>'+trDiarias+trCantina+trDesp+'</tbody>'
+      +'</table>'
+      +(pix?'<div style="font-size:12px;color:#1B5E20;background:#E8F5E9;border-radius:6px;'
+        +'padding:6px 10px;display:inline-block">Pix: <b>'+pix+'</b>'+(pixTit?'\u00a0·\u00a0'+pixTit:'')+'</div>':'')
+      +'</div>';
+  }).join('');
+  var html='<!doctype html><html><head><meta charset="utf-8"><style>'
+    +_pdfTimbreCss()
+    +'body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:18px;color:#222;font-size:13px}'
+    +'@media print{div{page-break-inside:avoid}}'
+    +'</style></head><body>'
+    +_pdfTimbre('Fechamento de Conta','Período: '+deFmt+' a '+ateFmt,faz)
+    +'<div style="background:#E8F5E9;border:1px solid #A5D6A7;border-radius:10px;'
+    +'padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">'
+    +'<div style="font-size:12px;color:#1B5E20">'+sel.length+' colaborador(es) selecionado(s)</div>'
+    +'<div style="font-size:18px;font-weight:900;color:#1B5E20">Total: R$\u00a0'+totalGeral.toFixed(2).replace('.',',')+'</div>'
+    +'</div>'
+    +linhasColab
+    +_pdfRodape()
+    +'</body></html>';
+  pdfModalAbrir('Fechamento de Conta', html);
 }
 
 function enviarFCWpp(){
