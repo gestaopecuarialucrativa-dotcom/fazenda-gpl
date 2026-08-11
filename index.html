@@ -307,7 +307,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 11/08/2026 v6.46 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 11/08/2026 v6.47 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -9179,7 +9179,7 @@ function abrirEdicao(arr, idx){
   
   modal.classList.add('open');
   // popula botões de nome se for diária
-  if(tipo==='diaria'){
+  if(r.tipo==='diaria'){
     var edWrap=document.getElementById('ed-nome-btns');
     var edHidden=document.getElementById('ed-nome');
     var faz=(r&&r.faz)||getFL()[0]||'';
