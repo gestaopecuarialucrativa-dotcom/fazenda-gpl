@@ -307,7 +307,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 11/08/2026 v6.44 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 11/08/2026 v6.45 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1634,7 +1634,19 @@ function updDiariaNome(){
     wrap.appendChild(btn);
   });
 }
-function getDiaristas(faz){if(!S.DIARISTAS)S.DIARISTAS={};return S.DIARISTAS[faz]||[];}
+function getDiaristas(faz){
+  if(!S.DIARISTAS)S.DIARISTAS={};
+  var lista=S.DIARISTAS[faz]||[];
+  if(lista.length)return lista;
+  // fallback: extrai nomes únicos das diárias já lançadas
+  var vistos={};
+  (S.rD||[]).forEach(function(r){
+    if(r.tipo==='diaria'&&r.n&&(!faz||r.faz===faz)&&!r._apagado){
+      if(!vistos[r.n])vistos[r.n]=true;
+    }
+  });
+  return Object.keys(vistos).sort();
+}
 function addDiarista(faz,nome){
   if(!faz)faz=(document.getElementById('d-faz')||document.getElementById('cfg-faz-sel')||{}).value||getFL()[0]||'';
   if(!nome)nome=prompt('Nome do diarista a cadastrar:');
