@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 11/08/2026 v6.49 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 11/08/2026 v6.50 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1613,9 +1613,7 @@ var SERVICOS_DIARIA=[
   {n:'Aplicação herbicida',ic:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2h8l-1 7H9z"/><path d="M12 9v7"/><circle cx="12" cy="19" r="3"/></svg>'},
   {n:'Lida no campo',ic:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l2-3h14l2 3"/><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8"/><circle cx="12" cy="13" r="2"/></svg>'},
   {n:'Lida no curral',ic:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="1"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>'},
-  {n:'Marcação',ic:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4-6.3-4.6L5.7 21.4 8 14 2 9.4h7.6z"/></svg>'},
   {n:'Aceiro de cerca',ic:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6v14M20 6v14M4 10h16M4 15h16"/><path d="M2 6h20"/></svg>'},
-  {n:'Banheiro',ic:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12V5a2 2 0 0 1 4 0v7"/><path d="M4 12h16v3a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/></svg>'},
   {n:'Outro',ic:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>'}
 ];
 function popServs(){
@@ -1754,7 +1752,7 @@ function _montaCamposServico(v){
   var dyn=document.getElementById('d-dyn'); if(!dyn)return;
   _dPastos=['']; _dPraga='';
   var vl=(v||'').toLowerCase();
-  var usaPasto=(vl.indexOf('roç')>=0||vl.indexOf('roc')>=0||vl.indexOf('aplica')>=0||vl.indexOf('herbic')>=0);
+  var usaPasto=(vl.indexOf('roç')>=0||vl.indexOf('roc')>=0||vl.indexOf('aplica')>=0||vl.indexOf('herbic')>=0||vl.indexOf('aceir')>=0||vl.indexOf('cerca')>=0);
   var usaPraga=(vl.indexOf('aplica')>=0||vl.indexOf('herbic')>=0);
   var html='';
   if(usaPraga){
