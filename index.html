@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 12/08/2026 v6.56 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 12/08/2026 v6.58 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1690,17 +1690,41 @@ function rCfgPragas(){
     row.appendChild(sp);row.appendChild(btn);el.appendChild(row);
   });
 }
-function getDiaristas(faz){
+function _semearDiaristas(faz){
+  // Se o cadastro da fazenda está vazio, semeia UMA vez com os nomes do histórico.
+  // Depois disso, a lista é 100% controlada pelo Config (remover funciona de verdade).
   if(!S.DIARISTAS)S.DIARISTAS={};
-  // JUNTA os nomes cadastrados (fixos) + os que já apareceram em diárias (pagas ou não)
+  if(S.DIARISTAS[faz] && S.DIARISTAS[faz].length) return; // já tem cadastro, não semeia
   var vistos={};
-  (S.DIARISTAS[faz]||[]).forEach(function(nome){ if(nome)vistos[nome]=true; });
   (S.rD||[]).forEach(function(r){
-    if(r.tipo==='diaria'&&r.n&&(!faz||r.faz===faz)&&!r._apagado){
-      vistos[r.n]=true; // inclui mesmo se pago/baixado — nome não some da lista
-    }
+    if(r.tipo==='diaria'&&r.n&&(!faz||r.faz===faz)&&!r._apagado){ vistos[r.n]=true; }
   });
-  return Object.keys(vistos).sort();
+  var nomes=Object.keys(vistos).sort();
+  if(nomes.length){ S.DIARISTAS[faz]=nomes; salvar(); if(S.cfgGS)salvarNuvem(function(){}); }
+}
+function _diaristaInativo(faz,nome){
+  return !!(S.DIARISTAS_INATIVOS&&S.DIARISTAS_INATIVOS[faz]&&S.DIARISTAS_INATIVOS[faz].indexOf(nome)>=0);
+}
+function getDiaristas(faz){
+  // usado no LANÇAMENTO — só ATIVOS
+  if(!S.DIARISTAS)S.DIARISTAS={};
+  _semearDiaristas(faz);
+  return (S.DIARISTAS[faz]||[]).slice().filter(function(n){return !_diaristaInativo(faz,n);}).sort();
+}
+function getDiaristasTodos(faz){
+  // usado no CONFIG — todos (ativos e inativos)
+  if(!S.DIARISTAS)S.DIARISTAS={};
+  _semearDiaristas(faz);
+  return (S.DIARISTAS[faz]||[]).slice().sort();
+}
+function toggleDiaristaAtivo(faz,nome){
+  if(!S.DIARISTAS_INATIVOS)S.DIARISTAS_INATIVOS={};
+  if(!S.DIARISTAS_INATIVOS[faz])S.DIARISTAS_INATIVOS[faz]=[];
+  var idx=S.DIARISTAS_INATIVOS[faz].indexOf(nome);
+  if(idx>=0){ S.DIARISTAS_INATIVOS[faz].splice(idx,1); }  // reativa
+  else { S.DIARISTAS_INATIVOS[faz].push(nome); }          // inativa
+  salvar();if(S.cfgGS)salvarNuvem(function(){});
+  updDiariaNome();rCfgDiaristas();
 }
 function addDiarista(faz,nome){
   if(!faz)faz=(document.getElementById('d-faz')||document.getElementById('cfg-faz-sel')||{}).value||getFL()[0]||'';
@@ -1723,17 +1747,30 @@ function remDiarista(faz,nome){
 function rCfgDiaristas(){
   var el=document.getElementById('cfg-diaristas-lista');if(!el)return;
   var faz=getFL()[0]||'';
-  var dl=getDiaristas(faz);
+  var dl=getDiaristasTodos(faz);
   if(!dl.length){el.innerHTML='<div style="font-size:12px;color:#888;padding:8px 0">Nenhum cadastrado. Toque em + para adicionar.</div>';return;}
   el.innerHTML='';
   dl.forEach(function(nome){
+    var inativo=_diaristaInativo(faz,nome);
     var row=document.createElement('div');
-    row.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0';
-    var sp=document.createElement('span');sp.textContent=nome;sp.style.cssText='font-size:14px;font-weight:700';
+    row.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0;gap:8px';
+    var sp=document.createElement('span');sp.textContent=nome;
+    sp.style.cssText='font-size:14px;font-weight:700;flex:1'+(inativo?';color:#aaa;text-decoration:line-through':'');
+    var acts=document.createElement('div');acts.style.cssText='display:flex;gap:6px;align-items:center';
+    // toggle Ativo/Inativo
+    var tog=document.createElement('span');
+    tog.style.cssText='display:inline-flex;border:1.5px solid #A5D6A7;border-radius:20px;overflow:hidden;font-size:11px;font-weight:700;cursor:pointer';
+    var tA=document.createElement('span');tA.textContent='Ativo';
+    tA.style.cssText='padding:5px 12px;'+(!inativo?'background:#2E7D32;color:#fff':'background:#fff;color:#65766a');
+    var tI=document.createElement('span');tI.textContent='Inativo';
+    tI.style.cssText='padding:5px 12px;'+(inativo?'background:#eee;color:#888':'background:#fff;color:#65766a');
+    tog.appendChild(tA);tog.appendChild(tI);
+    tog.addEventListener('click',function(){toggleDiaristaAtivo(faz,nome);});
     var btn=document.createElement('button');btn.textContent='Remover';
-    btn.style.cssText='background:#FFEBEE;color:#C62828;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer';
+    btn.style.cssText='background:#FFEBEE;color:#C62828;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer';
     btn.addEventListener('click',function(){remDiarista(faz,nome);});
-    row.appendChild(sp);row.appendChild(btn);el.appendChild(row);
+    acts.appendChild(tog);acts.appendChild(btn);
+    row.appendChild(sp);row.appendChild(acts);el.appendChild(row);
   });
 }
 
