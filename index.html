@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 11/08/2026 v6.51 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 11/08/2026 v6.52 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -9830,33 +9830,53 @@ function gerarPDFFConta(){
     var pix=_fcPix(p.n).chave;
     var pixTit=_fcPix(p.n).titular;
     var dOrd=p.diarias.slice().sort(function(a,b){return(a.dt||'')>(b.dt||'')?1:-1;});
-    var trDiarias=dOrd.map(function(r){
-      return '<tr><td style="padding:5px 8px;color:#555">'+(_diaSem(r.dt)?_diaSem(r.dt)+', ':'')+_dtBR(r.dt)+'</td>'
-        +'<td style="padding:5px 8px">'+(r.srv||'Diária')+'</td>'
-        +'<td style="padding:5px 8px;text-align:right">R$\u00a0'+r.v.toFixed(2).replace('.',',')+'</td></tr>';
+    // agrupa diárias por semana (segunda a domingo)
+    function _segDaSemana(iso){var d=new Date(iso+'T12:00:00');var dow=d.getDay();var diff=(dow===0?6:dow-1);d.setDate(d.getDate()-diff);return d;}
+    function _isoDe(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+    var semanas={};
+    dOrd.forEach(function(r){
+      if(!r.dt||r.dt.length<10){ (semanas['—']=semanas['—']||[]).push(r); return; }
+      var seg=_segDaSemana(r.dt); var dom=new Date(seg); dom.setDate(dom.getDate()+6);
+      var chave=_isoDe(seg);
+      if(!semanas[chave])semanas[chave]={ini:seg,fim:dom,regs:[]};
+      semanas[chave].regs.push(r);
+    });
+    var chaves=Object.keys(semanas).filter(function(k){return k!=='—';}).sort();
+    var blocosSemana=chaves.map(function(ck){
+      var sm=semanas[ck];
+      var subtotal=sm.regs.reduce(function(a,r){return a+(r.v||0);},0);
+      var trs=sm.regs.map(function(r){
+        var extra=[];
+        if(r.pasto)extra.push('📍 '+r.pasto);
+        if(r.praga)extra.push('🌿 '+r.praga);
+        var extraHtml=extra.length?'<div style="font-size:10px;color:#888;margin-top:2px">'+extra.join(' · ')+'</div>':'';
+        return '<tr><td style="padding:5px 8px;color:#555;white-space:nowrap">'+(_diaSem(r.dt)?_diaSem(r.dt)+', ':'')+_dtBR(r.dt)+'</td>'
+          +'<td style="padding:5px 8px">'+(r.srv||'Diária')+extraHtml+'</td>'
+          +'<td style="padding:5px 8px;text-align:right;white-space:nowrap">R$\u00a0'+r.v.toFixed(2).replace('.',',')+'</td></tr>';
+      }).join('');
+      return '<div style="margin-bottom:8px">'
+        +'<div style="background:#1B5E20;color:#fff;font-size:11px;font-weight:700;padding:5px 10px;border-radius:6px 6px 0 0">Semana '+_dtBR(_isoDe(sm.ini))+' a '+_dtBR(_isoDe(sm.fim))+'</div>'
+        +'<table style="width:100%;border-collapse:collapse;font-size:12px">'
+        +'<tbody>'+trs
+        +'<tr style="background:#E8F5E9"><td colspan="2" style="padding:5px 8px;text-align:right;font-weight:700;color:#1B5E20">Subtotal da semana</td>'
+        +'<td style="padding:5px 8px;text-align:right;font-weight:800;color:#1B5E20;white-space:nowrap">R$\u00a0'+subtotal.toFixed(2).replace('.',',')+'</td></tr>'
+        +'</tbody></table></div>';
     }).join('');
     var trCantina=p.cantina.length
-      ?'<tr style="background:#f9fdf9"><td colspan="2" style="padding:5px 8px;color:#555">Cantina ('+p.cantina.length+' lançamento(s))</td><td style="padding:5px 8px;text-align:right">R$\u00a0'+p.totalC.toFixed(2).replace('.',',')+'</td></tr>':'';
-    var trDesp=(p.despesas&&p.despesas.length)?p.despesas.map(function(r){
-      return '<tr style="background:#f9fdf9"><td style="padding:5px 8px;color:#555">'+_dtBR(r.venc||r.dt)+'</td>'
-        +'<td style="padding:5px 8px">'+(r.desc||'Despesa')+'</td>'
-        +'<td style="padding:5px 8px;text-align:right">R$\u00a0'+(r.val||0).toFixed(2).replace('.',',')+'</td></tr>';
-    }).join(''):'';
+      ?'<div style="margin-bottom:8px"><table style="width:100%;border-collapse:collapse;font-size:12px"><tbody><tr style="background:#f9fdf9"><td style="padding:5px 8px;color:#555">🍽️ Cantina ('+p.cantina.length+' lançamento(s))</td><td style="padding:5px 8px;text-align:right;white-space:nowrap">R$\u00a0'+p.totalC.toFixed(2).replace('.',',')+'</td></tr></tbody></table></div>':'';
+    var trDesp=(p.despesas&&p.despesas.length)?'<div style="margin-bottom:8px"><table style="width:100%;border-collapse:collapse;font-size:12px"><tbody>'+p.despesas.map(function(r){
+      return '<tr style="background:#f9fdf9"><td style="padding:5px 8px;color:#555">'+_dtBR(r.venc||r.dt)+' · '+(r.desc||'Despesa')+'</td>'
+        +'<td style="padding:5px 8px;text-align:right;white-space:nowrap">R$\u00a0'+(r.val||0).toFixed(2).replace('.',',')+'</td></tr>';
+    }).join('')+'</tbody></table></div>':'';
     return '<div style="background:#fff;border:1px solid #e0e7e0;border-left:4px solid #2E7D32;'
       +'border-radius:0 10px 10px 0;padding:14px;margin-bottom:14px;page-break-inside:avoid">'
-      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'
       +'<div style="font-size:16px;font-weight:800;color:#1B5E20">'+p.n+'</div>'
       +'<div style="font-size:15px;font-weight:700">R$\u00a0'+total.toFixed(2).replace('.',',')+'</div>'
       +'</div>'
-      +'<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px">'
-      +'<thead><tr style="background:#E8F5E9">'
-      +'<th style="padding:5px 8px;text-align:left;font-size:11px;color:#1B5E20">Data</th>'
-      +'<th style="padding:5px 8px;text-align:left;font-size:11px;color:#1B5E20">Descrição</th>'
-      +'<th style="padding:5px 8px;text-align:right;font-size:11px;color:#1B5E20">Valor</th>'
-      +'</tr></thead><tbody>'+trDiarias+trCantina+trDesp+'</tbody>'
-      +'</table>'
+      +blocosSemana+trCantina+trDesp
       +(pix?'<div style="font-size:12px;color:#1B5E20;background:#E8F5E9;border-radius:6px;'
-        +'padding:6px 10px;display:inline-block">Pix: <b>'+pix+'</b>'+(pixTit?'\u00a0·\u00a0'+pixTit:'')+'</div>':'')
+        +'padding:6px 10px;display:inline-block;margin-top:6px">Pix: <b>'+pix+'</b>'+(pixTit?'\u00a0·\u00a0'+pixTit:'')+'</div>':'')
       +'</div>';
   }).join('');
   var html='<!doctype html><html><head><meta charset="utf-8"><style>'
