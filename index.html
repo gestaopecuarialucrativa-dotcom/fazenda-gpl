@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 11/08/2026 v6.52 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 11/08/2026 v6.53 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -9366,12 +9366,39 @@ function salvarEdicao(){
 
 function excluirEdicao(){
   if(!editCtx) return;
-  if(!confirm('Excluir este lançamento?')) return;
-  S[editCtx.arr][editCtx.idx]._apagado = true;
-  salvar();
-  if(S.cfgGS) salvarNuvem(function(){});
-  document.getElementById('edit-modal').classList.remove('open');
-  rPan();
+  var r=S[editCtx.arr] && S[editCtx.arr][editCtx.idx];
+  if(!r) return;
+  var tipo=r.tipo;
+  var precisaServidor=(tipo==='trato'||tipo==='cantina'||tipo==='diaria');
+  if(!confirm('⚠️ Excluir este lançamento?\n\nSerá removido do app e da planilha.')) return;
+  if(precisaServidor && !(S.cfgGS && navigator.onLine)){
+    alert('⚠️ Sem conexão com a planilha. Este tipo só pode ser excluído online (senão volta ao recarregar).');
+    return;
+  }
+  if(!precisaServidor){
+    r._apagado=true; salvar(); if(S.cfgGS)salvarNuvem(function(){});
+    document.getElementById('edit-modal').classList.remove('open'); rPan(); return;
+  }
+  // trato/cantina/diaria → apaga na planilha ANTES
+  var acao, payload;
+  if(tipo==='cantina'){ acao='excluir_cantina'; payload={dt:r.dt||'',resp:r.resp||r.n||'',total:r.total||0,det:r.det||'',faz:r.faz||''}; }
+  else if(tipo==='diaria'){ acao='diaria_del'; payload={dt:r.dt||'',n:r.n||r.lancadoPor||'',srv:r.srv||'',v:parseFloat(r.v)||0,faz:r.faz||''}; }
+  else { acao='trato_del'; payload={dt:r.dt||'',n:r.n||'',lote:r.co||r.lote||'',prod:r.pr||r.prod||'',q:parseFloat(r.q||r.qtd)||0,faz:r.faz||''}; }
+  var url=getFazGasUrl(r.faz||'');
+  var cbN='_edel_'+Date.now();
+  var s=document.createElement('script');
+  s.src=url+'?acao='+acao+'&data='+encodeURIComponent(JSON.stringify(payload))+'&callback='+cbN+'&t='+Date.now();
+  window[cbN]=function(res){
+    delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s);
+    if(res && res.ok){
+      r._apagado=true; salvar();
+      document.getElementById('edit-modal').classList.remove('open'); rPan();
+    } else {
+      alert('⚠️ Não encontrei este lançamento na planilha para excluir — nada foi removido. Pode ser duplicado ou ainda não sincronizado.');
+    }
+  };
+  s.onerror=function(){ delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s); alert('⚠️ Erro de conexão. Nada foi removido.'); };
+  document.body.appendChild(s);
 }
 
 // Inicializar modal
