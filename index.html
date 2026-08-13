@@ -7049,7 +7049,8 @@ function _rotacaoStats(){
     seq.forEach(function(m,i){
       var pasto=m.destino; if(!pasto) return;
       var ent=(m.dt||m.ts||'').substring(0,10); if(!ent) return;
-      var sai = (i<seq.length-1) ? (seq[i+1].dt||seq[i+1].ts||'').substring(0,10) : null;
+      var sai = (m.dt_saida && m.dt_saida.length>=10) ? m.dt_saida.substring(0,10)
+                : (i<seq.length-1) ? (seq[i+1].dt||seq[i+1].ts||'').substring(0,10) : null;
       var fim = sai ? new Date(sai+'T12:00:00') : hoje;
       var dias=Math.max(0,Math.round((fim-new Date(ent+'T12:00:00'))/864e5));
       var aberta=!sai;
@@ -10759,7 +10760,12 @@ function confirmarMudancaPasto(){
     return _feedNormArea(s); // fallback: normaliza a grafia
   }
   var r={tipo:'mudanca_pasto',faz:faz,n:CU?CU.n:'',lote:loteNome,origem:_idArea(pastoSelecionadoNoMapa),destino:_idArea(dest),dt:dt,ts:new Date().toISOString()};
-  if(!S.rT)S.rT=[];S.rT.push(r);
+  if(!S.rT)S.rT=[];
+  // Grava dt_saida no movimento anterior aberto do mesmo lote (evita depender de sequência)
+  var movsMov=S.rT.filter(function(x){return x.tipo==='mudanca_pasto'&&!x._apagado&&x.lote===loteNome;});
+  movsMov.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
+  if(movsMov.length>0){var prev=movsMov[movsMov.length-1];if(!prev.dt_saida)prev.dt_saida=dt;}
+  S.rT.push(r);
   try{enviarDado(r);}catch(ex){}
   salvar();
   if(S.cfgGS&&navigator.onLine){try{salvarNuvem(null);}catch(ex){}}
