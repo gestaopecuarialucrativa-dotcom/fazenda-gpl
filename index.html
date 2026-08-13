@@ -7049,8 +7049,12 @@ function _rotacaoStats(){
     seq.forEach(function(m,i){
       var pasto=m.destino; if(!pasto) return;
       var ent=(m.dt||m.ts||'').substring(0,10); if(!ent) return;
-      var sai = (m.dt_saida && m.dt_saida.length>=10) ? m.dt_saida.substring(0,10)
-                : (i<seq.length-1) ? (seq[i+1].dt||seq[i+1].ts||'').substring(0,10) : null;
+      // dt_saida só vale para movimentos intermediários (não o último do lote).
+      // O último é sempre aberto: statusAtual calcula "ocupado há X dias" sem
+      // usar uma data de saída antiga de ciclo anterior.
+      var ehUltimo=(i===seq.length-1);
+      var sai=(!ehUltimo&&m.dt_saida&&m.dt_saida.length>=10)?m.dt_saida.substring(0,10)
+              :(!ehUltimo&&i<seq.length-1)?(seq[i+1].dt||seq[i+1].ts||'').substring(0,10):null;
       var fim = sai ? new Date(sai+'T12:00:00') : hoje;
       var dias=Math.max(0,Math.round((fim-new Date(ent+'T12:00:00'))/864e5));
       var aberta=!sai;
