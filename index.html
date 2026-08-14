@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 13/08/2026 v6.60 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 13/08/2026 v6.61 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -7488,6 +7488,12 @@ function rHistRankingPastos(){
   // receberam lote — elas aparecem como "sem histórico").
   var perfis=MAPA_AREAS.map(function(a){
     var oc=(ocupMap[a.id]?ocupMap[a.id].ocupacoes:[]);
+    // CORREÇÃO: ordenar as ocupações por data de entrada. O array vinha na ordem
+    // em que os lotes foram processados (Lote 06 inteiro, depois Lote 05), então
+    // a "última" ocupação da lista podia ser uma antiga (ex: Lote 05 de maio) e o
+    // cálculo de "vazio há X dias" pegava a saída errada. Ordenar conserta o
+    // status atual, o descanso médio e a barrinha de ritmo de uma vez.
+    oc=oc.slice().sort(function(x,y){return (x.entrada||'').localeCompare(y.entrada||'');});
     // Ocupado agora?
     var alocLote=S.MAPA_ALOC[a.id];
     var loteObjA=alocLote?lotes.find(function(l){return l.nome===alocLote;}):null;
