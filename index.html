@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 13/08/2026 v6.61 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 15/08/2026 v6.62 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -5295,7 +5295,7 @@ function salvarNuvem(cb){
   updCloudStatus('saving');
 
   // cfgBase SEM MAPA_COORDS (evita URL grande demais)
-  var cfgBase={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PR:S.PR,
+  var cfgBase={FAZ:S.FAZ,US:S.US,EST:S.EST,SERVS:S.SERVS,PRAGAS:S.PRAGAS,PR:S.PR,
     LOTES:S.LOTES,LOTES_VENDIDOS:S.LOTES_VENDIDOS||[],AREAS:S.AREAS||{},MAPA_ALOC:S.MAPA_ALOC||{},
     DIARISTAS:S.DIARISTAS,cfgGS:S.cfgGS,cfgGHT:S.cfgGHT||'',
     NOTAS:S.NOTAS||{},PIX_D:S.PIX_D||{},PROD_GEN:S.PROD_GEN||{}};
@@ -5440,6 +5440,7 @@ function carregarNuvem(cb){
             if(!_editRecente){ S.EST = cfg.EST; }
           }
           if(cfg.SERVS&&cfg.SERVS.length)S.SERVS=cfg.SERVS;
+          if(cfg.PRAGAS&&cfg.PRAGAS.length)S.PRAGAS=cfg.PRAGAS;
           if(cfg.PR)S.PR=cfg.PR;
           if(cfg.LOTES&&cfg.LOTES.length){
             // Mesma proteção do estoque: se editei um lote nos últimos 30s,
