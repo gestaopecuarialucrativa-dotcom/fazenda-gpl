@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 15/08/2026 v6.62 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 16/08/2026 v6.63 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -10828,7 +10828,7 @@ function _abrirEditor(){
     +'<span style="font-size:14px;font-weight:800;color:#FF6F00">✏️ Editor de Pins</span>'
     +'<button onclick="_fecharEditor()" style="background:#f0f0f0;border:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:13px;font-weight:700">✕</button>'
     +'</div>'
-    +'<div style="font-size:11px;color:#888;margin-bottom:10px;background:#FFF8E1;border-radius:8px;padding:8px">Toque em um pin no mapa para selecionar e use os botões para mover</div>'
+    +'<div style="font-size:11px;color:#888;margin-bottom:10px;background:#FFF8E1;border-radius:8px;padding:8px">Toque num pin pra selecionar, depois <b>clique no mapa</b> onde ele deve ficar. As setinhas fazem ajuste fino.</div>'
     +'<div id="editor-area-info" style="background:#E8F5E9;border-radius:8px;padding:8px;font-size:12px;font-weight:700;color:#1B5E20;margin-bottom:10px;text-align:center">📍 Toque em um pin para selecionar</div>'
     +'<div id="editor-controles" style="display:none">'
     +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">'
@@ -10853,11 +10853,42 @@ function _abrirEditor(){
     +'</div>';
   document.body.appendChild(painel);
   _renderPinsEditor();
+  _ativarCliqueMapa();
+}
+
+// Clicar no mapa posiciona o pin selecionado (muito mais rápido que setinhas)
+function _cliqueMapaHandler(e){
+  if(!_editorAreaId) return; // precisa ter um piquete selecionado
+  var wrap = document.getElementById('mapa-wrap-main');
+  if(!wrap) return;
+  var rect = wrap.getBoundingClientRect();
+  var px = e.touches ? e.touches[0].clientX : e.clientX;
+  var py = e.touches ? e.touches[0].clientY : e.clientY;
+  var x = Math.round(((px - rect.left) / rect.width) * 100);
+  var y = Math.round(((py - rect.top) / rect.height) * 100);
+  x = Math.max(0, Math.min(100, x));
+  y = Math.max(0, Math.min(100, y));
+  if(!S.MAPA_COORDS) S.MAPA_COORDS = {};
+  S.MAPA_COORDS[_editorAreaId] = {x:x, y:y};
+  _renderPinsEditor();
+}
+function _ativarCliqueMapa(){
+  var wrap = document.getElementById('mapa-wrap-main');
+  if(!wrap) return;
+  wrap.style.cursor = 'crosshair';
+  wrap.addEventListener('click', _cliqueMapaHandler);
+}
+function _desativarCliqueMapa(){
+  var wrap = document.getElementById('mapa-wrap-main');
+  if(!wrap) return;
+  wrap.style.cursor = '';
+  wrap.removeEventListener('click', _cliqueMapaHandler);
 }
 
 function _fecharEditor(){
   _editorAberto = false;
   _editorAreaId = null;
+  _desativarCliqueMapa();
   var p = document.getElementById('editor-coords-painel');
   if(p && p.parentNode) p.parentNode.removeChild(p);
   // Salvar e re-renderizar tudo com coordenadas atualizadas
