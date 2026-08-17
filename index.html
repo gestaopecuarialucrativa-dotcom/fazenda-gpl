@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 16/08/2026 v6.63 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 16/08/2026 v6.64 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1470,12 +1470,15 @@ function rHomeMapa(){
     pin.type='button';
     pin.style.cssText = 'position:absolute;left:'+cx+'%;top:'+cy+'%;transform:translate(-50%,-100%);z-index:10;pointer-events:auto;background:none;border:none;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation';
     var nomeLote = lote ? lote.nome : '';
-    pin.innerHTML = '<div style="background:#1B5E20;border:2px solid #4CAF50;border-radius:9px;padding:5px 9px;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,.5);min-width:44px">'
+    // Cor por módulo (igual mapa principal); pasto avulso = marrom
+    var _coresH = {1:{bg:'#1B5E20',bd:'#4CAF50',tx:'#A5D6A7'},2:{bg:'#B71C1C',bd:'#EF5350',tx:'#FFCDD2'},3:{bg:'#4A148C',bd:'#CE93D8',tx:'#E1BEE7'},4:{bg:'#827717',bd:'#F9A825',tx:'#FFE082'}};
+    var _corH = (a.tipo==='modulo') ? (_coresH[a.modulo]||_coresH[1]) : {bg:'#5D4037',bd:'#A1887F',tx:'#D7CCC8'};
+    pin.innerHTML = '<div style="background:'+_corH.bg+';border:2px solid '+_corH.bd+';border-radius:9px;padding:5px 9px;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,.5);min-width:44px">'
       +'<div style="font-size:15px;font-weight:900;color:#fff;line-height:1.2">'+qtd+'</div>'
-      +(nomeLote ? '<div style="font-size:9px;color:#A5D6A7;font-weight:700;line-height:1.1;max-width:54px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+nomeLote+'</div>' : '')
+      +(nomeLote ? '<div style="font-size:9px;color:'+_corH.tx+';font-weight:700;line-height:1.1;max-width:54px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+nomeLote+'</div>' : '')
       +'</div>'
-      +'<div style="width:2px;height:6px;background:#4CAF50;margin:0 auto;pointer-events:none"></div>'
-      +'<div style="width:6px;height:6px;border-radius:50%;background:#4CAF50;margin:0 auto;pointer-events:none"></div>';
+      +'<div style="width:2px;height:6px;background:'+_corH.bd+';margin:0 auto;pointer-events:none"></div>'
+      +'<div style="width:6px;height:6px;border-radius:50%;background:'+_corH.bd+';margin:0 auto;pointer-events:none"></div>';
     (function(pasto, loteNome){
       pin.addEventListener('click', function(e){
         e.preventDefault(); e.stopPropagation();
@@ -5739,7 +5742,7 @@ function _renderPinsNoContainer(contId, resumoId){
       3:{bg:'#4A148C',bd:'#CE93D8',bgV:'rgba(74,20,140,0.25)'},
       4:{bg:'#827717',bd:'#F9A825',bgV:'rgba(130,119,23,0.25)'}
     };
-    var cor = a.tipo==='modulo'?(cores[a.modulo]||cores[1]):{bg:'#2E7D32',bd:'#66BB6A',bgV:'rgba(46,125,50,0.25)'};
+    var cor = a.tipo==='modulo'?(cores[a.modulo]||cores[1]):{bg:'#5D4037',bd:'#A1887F',bgV:'rgba(93,64,55,0.25)'};
     var lbl = a.label.replace('MOD:0','M').replace('MOD:','M').replace('/P:0','/P').replace('/P:','/P');
 
     // BOTÃO — pointer-events:auto sobrescreve o none do container
