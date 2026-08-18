@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 18/08/2026 v6.71 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 18/08/2026 v6.72 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -4384,14 +4384,70 @@ function pesagemArquivo(input){
     reader.readAsArrayBuffer(f);
   });
 }
+// Conta quantos animais da importação já existem IDÊNTICOS (mesma data+brinco+peso) no histórico.
+// Serve pra avisar quando o MESMO arquivo é reimportado sem querer.
+function _pesagemContarIdenticos(lista){
+  var P=S.PESAGEM||{};
+  // monta um conjunto de "data|brinco|peso" já existentes
+  var existentes={};
+  Object.keys(P).forEach(function(lote){
+    var h=P[lote].historico||[];
+    h.forEach(function(entry){
+      (entry.animais||[]).forEach(function(a){
+        var d=(a.data||entry.data||'').substring(0,10);
+        var chave=d+'|'+String(a.brinco).trim()+'|'+(parseFloat(a.peso)||0);
+        existentes[chave]=true;
+      });
+    });
+  });
+  var iguais=0;
+  lista.forEach(function(a){
+    var d=(a.data||'').substring(0,10);
+    var chave=d+'|'+String(a.brinco).trim()+'|'+(parseFloat(a.peso)||0);
+    if(existentes[chave]) iguais++;
+  });
+  return iguais;
+}
+// Índice por BRINCO: histórico de pesagens de cada animal (pro GMD do Passo 2).
+// Roda em paralelo à estrutura por lote — não substitui nada, só adiciona.
+function _reconstruirHistoricoPorBrinco(){
+  var P=S.PESAGEM||{};
+  var porBrinco={};
+  Object.keys(P).forEach(function(lote){
+    var h=P[lote].historico||[];
+    h.forEach(function(entry){
+      (entry.animais||[]).forEach(function(a){
+        var b=String(a.brinco).trim(); if(!b)return;
+        var d=(a.data||entry.data||'').substring(0,10);
+        var peso=parseFloat(a.peso)||0;
+        if(!d||!peso)return;
+        if(!porBrinco[b])porBrinco[b]=[];
+        // evita duplicar a mesma data+peso pro mesmo brinco
+        if(!porBrinco[b].some(function(x){return x.data===d&&x.peso===peso;})){
+          porBrinco[b].push({data:d, peso:peso, lote:lote});
+        }
+      });
+    });
+  });
+  // ordena cada brinco por data
+  Object.keys(porBrinco).forEach(function(b){
+    porBrinco[b].sort(function(x,y){return (x.data||'')<(y.data||'')?-1:1;});
+  });
+  S.PESAGEM_BRINCO=porBrinco;
+  return porBrinco;
+}
 function pesagemConfirmarImport(){
   if(!_pesImport){ alert('Selecione uma planilha primeiro.'); return; }
-  // avisa se a data já existe no histórico
-  if(_pesagemDataExiste(_pesImport.animais, _pesImport.data)){
-    var dBR=(_pesImport.data||'').split('-').reverse().join('/')||'(sem data)';
-    if(!confirm('Já existe pesagem salva na data '+dBR+'.\n\nSe continuar, ela será SUBSTITUÍDA por esta nova.\n\nDeseja continuar?')) return;
+  // 1) avisa se a importação é IDÊNTICA (mesmo arquivo: data+brinco+peso já existem)
+  var iguais=_pesagemContarIdenticos(_pesImport.animais);
+  if(iguais>0){
+    var msg=iguais===_pesImport.animais.length
+      ? 'Todos os '+iguais+' animais desta planilha JÁ foram importados (mesma data, brinco e peso).\n\nParece o MESMO arquivo. Importar de novo não vai mudar nada.\n\nImportar mesmo assim?'
+      : iguais+' de '+_pesImport.animais.length+' animais já existem idênticos (mesma data, brinco e peso).\n\nOs repetidos serão ignorados; os novos entram normalmente.\n\nContinuar?';
+    if(!confirm(msg)) return;
   }
   var r=_pesagemImportar(_pesImport.animais, _pesImport.data);
+  _reconstruirHistoricoPorBrinco();
   salvar();
   salvarPesagemNuvem(function(ok){
     _pesImport=null;
@@ -5519,7 +5575,7 @@ function carregarNuvem(cb){
           else if(!S.LOTES||!S.LOTES.length)S.LOTES=DEFAULT.LOTES;
           if(cfg.AREAS)S.AREAS=cfg.AREAS;
           if(cfg.PROD_GEN)S.PROD_GEN=cfg.PROD_GEN;
-          if(cfg.PESAGEM)S.PESAGEM=cfg.PESAGEM;
+          if(cfg.PESAGEM){S.PESAGEM=cfg.PESAGEM;try{_reconstruirHistoricoPorBrinco();}catch(e){}}
           if(cfg.MAPA_ALOC){
             var aloc={};
             Object.keys(cfg.MAPA_ALOC).forEach(function(k){
