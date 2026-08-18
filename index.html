@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 17/08/2026 v6.68 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 18/08/2026 v6.71 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -4172,29 +4172,40 @@ function _pesagemBuscar(q){
 }
 // Importa uma lista [{brinco,peso,lote}] com uma data; guarda HISTÓRICO (não apaga datas anteriores).
 // Mantém data/animais (última pesagem) para a busca do vaqueiro e o backend continuarem iguais.
+// Nomes especiais de lote por número (regra fixa da Fazenda Estrela)
+function _nomeLoteEspecial(num){
+  var n=parseInt(num);
+  var esp={11:'Vaca',12:'Reprodutor',13:'Mamando',14:'Enfermaria'};
+  return esp[n] || ('Lote '+num);
+}
 function _pesagemImportar(lista, data){
   if(!S.PESAGEM)S.PESAGEM={};
-  var grupos={};
+  // Agrupa por LOTE + DATA (cada data do mesmo lote vira uma entrada separada).
+  // Antes agrupava só por lote com uma data única → perdia a data real dos animais.
+  var grupos={}; // lote → { data → [animais] }
   lista.forEach(function(a){
     var lote=String(a.lote).trim(); if(!lote||a.brinco==null||a.peso==null)return;
-    if(!grupos[lote])grupos[lote]=[];
-    grupos[lote].push({brinco:String(a.brinco).trim(), peso:a.peso, obs:a.obs||''});
+    var dtA=(a.data && String(a.data).trim()) ? String(a.data).trim() : (data||'');
+    if(!grupos[lote])grupos[lote]={};
+    if(!grupos[lote][dtA])grupos[lote][dtA]=[];
+    grupos[lote][dtA].push({brinco:String(a.brinco).trim(), peso:a.peso, obs:a.obs||'', data:dtA});
   });
   var lotesAfetados=Object.keys(grupos);
   lotesAfetados.forEach(function(lote){
     var atual=S.PESAGEM[lote]||{};
     var hist=atual.historico||[];
-    // se a última pesagem salva (data/animais) ainda não está no histórico, leva ela pra lá
+    // se a última pesagem salva ainda não está no histórico, leva ela pra lá
     if(atual.data && !hist.some(function(h){return h.data===atual.data;})){
       hist.push({data:atual.data, animais:atual.animais||[]});
     }
-    // remove do histórico uma entrada com a MESMA data que está importando (substitui)
-    hist=hist.filter(function(h){return h.data!==(data||'');});
-    // adiciona a nova data ao histórico
-    hist.push({data:data||'', animais:grupos[lote]});
+    // para cada DATA importada desse lote: substitui a entrada dessa data e adiciona
+    Object.keys(grupos[lote]).forEach(function(dt){
+      hist=hist.filter(function(h){return h.data!==dt;}); // remove mesma data (substitui)
+      hist.push({data:dt, animais:grupos[lote][dt]});
+    });
     // ordena histórico por data crescente
     hist.sort(function(a,b){return (a.data||'')<(b.data||'')?-1:((a.data||'')>(b.data||'')?1:0);});
-    // a "última pesagem" (data/animais) = a mais recente do histórico
+    // a "última pesagem" = a mais recente do histórico
     var maisRecente=hist[hist.length-1];
     S.PESAGEM[lote]={data:maisRecente.data, animais:maisRecente.animais, historico:hist};
   });
@@ -4234,7 +4245,7 @@ function _pesagemParsePlanilha(workbook){
       }
     });
   }
-  // animais: a partir da linha índice 13 (linha 14), col0=brinco col1=peso col2=lote
+  // animais: a partir da linha índice 13 (linha 14), col0=brinco col1=peso col2=lote col3=obs col4=data
   var animais=[];
   for(var r=13;r<linhas.length;r++){
     var row=linhas[r]||[];
@@ -4242,7 +4253,18 @@ function _pesagemParsePlanilha(workbook){
     var peso=parseFloat(row[1]); var lote=parseInt(row[2]);
     if(isNaN(peso)||isNaN(lote))continue;
     var obs=String(row[3]==null?'':row[3]).trim();
-    animais.push({brinco:String(row[0]).trim(), peso:peso, lote:lote, obs:obs});
+    // data por animal (coluna E = índice 4); aceita Date, serial Excel ou texto AAAA-MM-DD / DD/MM/AAAA
+    var dtAnimal='';
+    var vd=row[4];
+    if(vd instanceof Date){ dtAnimal=vd.toISOString().substring(0,10); }
+    else if(typeof vd==='number' && vd>40000 && vd<60000){ var dd=new Date(Math.round((vd-25569)*86400*1000)); dtAnimal=dd.toISOString().substring(0,10); }
+    else if(typeof vd==='string' && vd.trim()){
+      var s=vd.trim();
+      if(/^\d{4}-\d{2}-\d{2}/.test(s)) dtAnimal=s.substring(0,10);
+      else { var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); if(m) dtAnimal=m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2); }
+    }
+    if(!dtAnimal) dtAnimal=data; // se a linha não tem data, usa a data geral do topo
+    animais.push({brinco:String(row[0]).trim(), peso:peso, lote:lote, obs:obs, data:dtAnimal});
   }
   return {data:data, animais:animais};
 }
@@ -4257,7 +4279,7 @@ function rPesagem(){
   var info=document.getElementById('pes-info');
   if(info){
     info.innerHTML = lotes.length
-      ? ('Base atual: '+totAn+' animais em '+lotes.length+' lote(s). '+lotes.map(function(l){return 'Lote '+l+' ('+_dataBR(P[l].data)+')';}).join(' · '))
+      ? ('Base atual: '+totAn+' animais em '+lotes.length+' lote(s). '+lotes.map(function(l){return _nomeLoteEspecial(l)+' ('+_dataBR(P[l].data)+')';}).join(' · '))
       : 'Nenhuma pesagem importada ainda.';
   }
   // bloco de importação só para Consultor
