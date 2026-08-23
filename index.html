@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 23/08/2026 v6.74 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 23/08/2026 v6.75 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -6567,9 +6567,27 @@ function editarNomeLote(nomeEnc, faz){
       if(S.MAPA_ALOC[piq]===nomeAtual) S.MAPA_ALOC[piq]=novoNome;
     });
   }
+  // ATUALIZA os registros antigos pra o histórico seguir junto com o novo nome
+  var _nMov=0, _nTrato=0, _nEscore=0;
+  (S.rT||[]).forEach(function(r){
+    if(r.tipo==='mudanca_pasto' && r.lote===nomeAtual){ r.lote=novoNome; _nMov++; }
+    if(r.tipo==='trato'){
+      var mudou=false;
+      if(r.lote===nomeAtual){ r.lote=novoNome; mudou=true; }
+      if(r.co===nomeAtual){ r.co=novoNome; mudou=true; }
+      if(mudou) _nTrato++;
+    }
+  });
+  (S.rE||[]).forEach(function(r){
+    if(r.co===nomeAtual){ r.co=novoNome; _nEscore++; }
+    if(r.lote===nomeAtual){ r.lote=novoNome; }
+  });
   salvar();
   salvarNuvem(function(ok){
-    if(ok) showOk('Nome alterado para "'+novoNome+'"');
+    var resumo = (_nMov+_nTrato+_nEscore>0)
+      ? ' ('+_nMov+' movimentos, '+_nTrato+' tratos atualizados)'
+      : '';
+    if(ok) showOk('Nome alterado para "'+novoNome+'"'+resumo);
     else showOk('Nome alterado (sincronize quando tiver internet)');
     try{rHistLotes();}catch(e){}
   });
