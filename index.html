@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 18/08/2026 v6.73 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 23/08/2026 v6.74 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -6547,6 +6547,33 @@ function rListLotes(){
 
 function _isoBR(iso){iso=String(iso||'');var m=iso.match(/^(\d{4})-(\d{2})-(\d{2})/);return m?(m[3]+'/'+m[2]+'/'+m[1]):iso;}
 function _parseDataBRp(s){s=String(s||'').trim();var m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);if(m){var d=('0'+m[1]).slice(-2),mo=('0'+m[2]).slice(-2),y=m[3].length===2?('20'+m[3]):m[3];return y+'-'+mo+'-'+d;}var i=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(i)return s;return null;}
+function editarNomeLote(nomeEnc, faz){
+  var nomeAtual = decodeURIComponent(nomeEnc);
+  var novoNome = prompt('Novo nome para o lote "'+nomeAtual+'":', nomeAtual);
+  if(!novoNome || novoNome.trim()==='' || novoNome.trim()===nomeAtual) return;
+  novoNome = novoNome.trim();
+  // verifica se já existe lote com esse nome
+  if((S.LOTES||[]).some(function(l){return l.nome===novoNome&&l.faz===(faz||l.faz);})){
+    alert('Já existe um lote com o nome "'+novoNome+'". Escolha outro nome.'); return;
+  }
+  var idx=(S.LOTES||[]).findIndex(function(l){return l.nome===nomeAtual&&(!faz||l.faz===faz);});
+  if(idx<0){alert('Lote não encontrado.'); return;}
+  // garante que o lote tem um ID único (pra separar o histórico)
+  if(!S.LOTES[idx].id) S.LOTES[idx].id='L'+Date.now();
+  S.LOTES[idx].nome = novoNome;
+  // atualiza também no MAPA_ALOC (pasto alocado)
+  if(S.MAPA_ALOC){
+    Object.keys(S.MAPA_ALOC).forEach(function(piq){
+      if(S.MAPA_ALOC[piq]===nomeAtual) S.MAPA_ALOC[piq]=novoNome;
+    });
+  }
+  salvar();
+  salvarNuvem(function(ok){
+    if(ok) showOk('Nome alterado para "'+novoNome+'"');
+    else showOk('Nome alterado (sincronize quando tiver internet)');
+    try{rHistLotes();}catch(e){}
+  });
+}
 function darBaixaLote(nome,faz){
   var l=(S.LOTES||[]).find(function(x){return x.nome===nome&&x.faz===faz;});
   if(!l){alert('Lote não encontrado.');return;}
@@ -6943,7 +6970,8 @@ function rHistLotes(){
       +'</div>'
       +'</div>'
       +'<div style="margin-top:8px;font-size:11px;color:#65766a">Início do ciclo: <b style="color:#1b2c1b">'+(lote.dt_abertura?_isoBR(lote.dt_abertura):'desde sempre')+'</b> <span onclick="editInicioCiclo(\''+nm+'\',\''+(lote.faz||'')+'\')" style="color:#2E7D32;font-weight:700;cursor:pointer;text-decoration:underline">editar</span></div>'
-      +'<button onclick="darBaixaLote(\''+nm+'\',\''+(lote.faz||'')+'\')" style="width:100%;margin-top:10px;padding:10px;background:#fff;border:1.5px solid #FF8F00;color:#8a5a00;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer">📤 Dar baixa (lote vendido)</button>'
+      +'<button onclick="editarNomeLote(\''+encodeURIComponent(nm)+'\',\''+(lote.faz||'')+'\')" style="width:100%;margin-top:10px;padding:10px;background:#fff;border:1.5px solid #A5D6A7;color:#1B5E20;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Editar nome do lote</button>'
+      +'<button onclick="darBaixaLote(\''+nm+'\',\''+(lote.faz||'')+'\')" style="width:100%;margin-top:8px;padding:10px;background:#fff;border:1.5px solid #FF8F00;color:#8a5a00;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Dar baixa (lote vendido)</button>'
       +'</div>';
   });
 
