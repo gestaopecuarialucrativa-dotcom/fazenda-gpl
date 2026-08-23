@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 23/08/2026 v6.75 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 23/08/2026 v6.76 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -7035,10 +7035,24 @@ function editarPesoHistLote(btn){
   var val=parseFloat(String(novo).replace(',','.'));
   if(isNaN(val)||val<=0){alert('Valor inválido.');return;}
   S.LOTES[idx].peso=val;
+  // Pergunta se é uma nova pesagem (novo ciclo) — a data vira a fronteira do ciclo
+  var hojeBR=_isoBR(TD);
+  var dtCiclo=prompt('Peso atualizado.\n\nIsso é uma NOVA PESAGEM (começa um novo ciclo)?\n\n• Se SIM, digite a data da pesagem (dd/mm/aaaa) — o histórico antigo fica pra trás e os relatórios passam a contar desta data.\n\n• Se for só uma correção, deixe em BRANCO e toque OK.', '');
+  var msgCiclo='';
+  if(dtCiclo!==null && String(dtCiclo).trim()!==''){
+    var iso=_parseDataBRp(String(dtCiclo).trim());
+    if(iso){
+      if(!S.LOTES[idx].id) S.LOTES[idx].id='L'+Date.now();
+      S.LOTES[idx].dt_abertura=iso;
+      msgCiclo='\nNovo ciclo iniciado em '+_isoBR(iso)+'.';
+    } else {
+      alert('Data inválida — o peso foi salvo, mas o ciclo NÃO foi alterado. Use o formato dd/mm/aaaa.');
+    }
+  }
   salvar();
   if(S.cfgGS)salvarNuvem(function(){});
   rHistLotes();
-  alert('✅ Peso médio do '+nome+' atualizado para '+val+' kg.');
+  alert('Peso médio do '+nome+' atualizado para '+val+' kg.'+msgCiclo);
 }
 
 function _rTaxaLotacaoPiquetes(){
