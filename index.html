@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/08/2026 v6.85 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/08/2026 v6.86 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -8418,7 +8418,13 @@ function gerarPDFPastoSafra(){
       } else if(diasAg>0 && diasSe===0){
         leitura='Só foi pastejado nas águas nesta safra — sem uso na seca.';
       } else if(diasSe>0 && diasAg===0){
-        leitura='Só foi pastejado na seca nesta safra.';
+        // Verifica se a safra atual ainda está em andamento (safra corrente = a que inclui hoje)
+        var _hojeAno=new Date().getFullYear(); var _hojeMes=new Date().getMonth()+1;
+        var _safraCorrente=(_hojeMes>=7)?String(_hojeAno).slice(2)+'/'+String(_hojeAno+1).slice(2):String(_hojeAno-1).slice(2)+'/'+String(_hojeAno).slice(2);
+        var _eAtual=(ultima===_safraCorrente);
+        leitura=_eAtual
+          ? 'Safra em andamento ('+_safraCorrente+'). Período de seca — águas e transições ainda virão. Compare no final de junho.'
+          : 'Só foi pastejado na seca nesta safra.';
       }
     }
     var leituraBox=leitura?('<div style="background:#f5f7f4;border-radius:8px;padding:8px 11px;font-size:10px;color:#555;line-height:1.5;margin-top:6px"><b style="color:#1B5E20">Leitura:</b> '+leitura+'</div>'):'';
@@ -8453,7 +8459,12 @@ function gerarPDFPastoSafra(){
       }).join('');
       return '<tr><td style="padding:6px 8px;font-size:11px;font-weight:700;color:'+_PS_COR[es]+'">'+es+'</td>'+cels+'</tr>';
     }).join('');
-    var thSaf=safras.map(function(sf){return '<th style="padding:6px 8px;font-size:11px;color:#1B5E20;text-align:center">'+sf+'</th>';}).join('');
+    var _hojeAnoT=new Date().getFullYear(); var _hojeMesT=new Date().getMonth()+1;
+    var _safraCorrT=(_hojeMesT>=7)?String(_hojeAnoT).slice(2)+'/'+String(_hojeAnoT+1).slice(2):String(_hojeAnoT-1).slice(2)+'/'+String(_hojeAnoT).slice(2);
+    var thSaf=safras.map(function(sf){
+      var label=sf===_safraCorrT?sf+' <span style=\"font-size:9px;color:#E65100;font-weight:700\">(em andamento)</span>':sf;
+      return '<th style=\"padding:6px 8px;font-size:11px;color:#1B5E20;text-align:center\">'+label+'</th>';
+    }).join('');
     fazComp='<div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:14px">'
       +'<div style="font-size:12px;font-weight:800;color:#1B5E20;margin-bottom:8px">Fazenda — pastejo por estação, safra a safra</div>'
       +'<table style="width:100%;border-collapse:collapse"><thead><tr><th style="padding:6px 8px;text-align:left"></th>'+thSaf+'</tr></thead><tbody>'+linhasFaz+'</tbody></table>'
@@ -8471,7 +8482,7 @@ function gerarPDFPastoSafra(){
     +_pdfTimbreCss()
     +'@media print{button{display:none!important}body{background:#fff}}'
     +'</style></head><body>'
-    +'<div class="cap"><div style="font-size:11px;letter-spacing:2px;opacity:.85;font-weight:700">GESTÃO PECUÁRIA LUCRATIVA</div><div style="font-size:22px;font-weight:900;margin-top:2px">Pasto por Safra</div><div style="font-size:11px;opacity:.9;margin-top:3px">'+faz+' · '+dtHoje+' · ano-safra 1º jul → 30 jun</div></div>'
+    +'<div class="cap" style="display:flex;align-items:center;gap:16px"><img src="'+LOGO_GPL+'" alt="GPL" style="height:52px;width:auto;filter:brightness(0) invert(1);flex-shrink:0"><div><div style="font-size:11px;letter-spacing:2px;opacity:.85;font-weight:700">GESTÃO PECUÁRIA LUCRATIVA</div><div style="font-size:22px;font-weight:900;margin-top:2px">Pasto por Safra</div><div style="font-size:11px;opacity:.9;margin-top:3px">'+faz+' · '+dtHoje+' · ano-safra 1º jul → 30 jun</div></div>'
     +'<div style="background:#fff;border-radius:12px;padding:10px 14px;margin:8px 0 12px;font-size:11px;color:#555;line-height:1.5">Compara quanto cada pasto foi usado — e com quanta carga (UA) — em cada estação, safra a safra. Nas <b style="color:#2E7D32">águas</b> o pasto aguenta mais animal e giro rápido; na <b style="color:#C62828">seca</b> a carga tem que baixar. Comparar a mesma estação de um ano pro outro mostra a carga de suporte real de cada área.'+legenda+'</div>'
     +fazComp
     +'<div style="font-size:12px;font-weight:800;color:#1B5E20;margin:8px 0 4px">Cada pasto, safra a safra</div>'
