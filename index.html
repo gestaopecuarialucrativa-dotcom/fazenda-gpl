@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 23/08/2026 v6.76 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 23/08/2026 v6.77 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -7333,7 +7333,16 @@ function _hTimeline(movsLote){
 // cada pasto (entrada→próxima entrada do mesmo lote; última = até hoje) e agrega
 // por pasto/piquete e por módulo. Calcula dias de ocupação e descanso médio (dias vazio).
 function _rotacaoStats(){
-  var movs=(S.rT||[]).filter(function(r){ return r.tipo==='mudanca_pasto'&&!r._apagado; })
+  // Mapa: início do ciclo de cada lote (por nome). Movimentos antes disso ficam pra trás.
+  var _inicioCiclo={};
+  (S.LOTES||[]).forEach(function(l){ if(l.dt_abertura) _inicioCiclo[l.nome]=String(l.dt_abertura).substring(0,10); });
+  var movs=(S.rT||[]).filter(function(r){
+      if(r.tipo!=='mudanca_pasto'||r._apagado) return false;
+      // se o lote tem início de ciclo, só conta movimentos DAQUELA data em diante
+      var ini=_inicioCiclo[r.lote];
+      if(ini){ var d=(r.dt||r.ts||'').substring(0,10); if(d && d<ini) return false; }
+      return true;
+    })
     // NORMALIZA a grafia dos piquetes (M1/P1, M01P01, M1P1 viram o MESMO id).
     // Sem isso, a mesma área escrita de dois jeitos vira dois piquetes e o
     // cálculo de descanso conta "vazio há X dias" errado.
@@ -7605,8 +7614,12 @@ function _rkpDiasEntre(isoA,isoB){
 // Monta, por área, a lista de ocupações: {entrada, saida, dias, lote, ua}
 function _rkpOcupacoesPorArea(){
   var _pf=window._pdfPasFiltro||{};
+  var _inicioCiclo={};
+  (S.LOTES||[]).forEach(function(l){ if(l.dt_abertura) _inicioCiclo[l.nome]=String(l.dt_abertura).substring(0,10); });
   var movs=(S.rT||[]).filter(function(r){
     if(r.tipo!=='mudanca_pasto'||r._apagado) return false;
+    var ini=_inicioCiclo[r.lote];
+    if(ini){ var dc=(r.dt||r.ts||'').substring(0,10); if(dc && dc<ini) return false; }
     if(!_pf.de&&!_pf.ate) return true;
     var dt=(r.dt||r.ts||'').substring(0,10);
     if(_pf.de&&dt<_pf.de) return false;
