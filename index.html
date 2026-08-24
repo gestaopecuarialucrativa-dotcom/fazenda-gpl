@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/08/2026 v6.87 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/08/2026 v6.88 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -8621,14 +8621,15 @@ function gerarPDFPastos(){
 
   var w=window.open('','_blank');
   w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Diagn\u00f3stico de Pastos \u2014 GPL</title>'
-    +'<style>body{font-family:Arial,sans-serif;padding:20px;color:#222}'
+    +'<style>body{font-family:Arial,"Segoe UI",Roboto,system-ui,sans-serif;padding:16px;color:#222;background:#eef1ec;max-width:900px;margin:0 auto}'
     +'.resumo{display:flex;gap:14px;margin:10px 0;font-size:12px;font-weight:700}'
-    +'.crit{font-size:10px;color:#666;margin-top:10px;line-height:1.5}'
+    +'.crit{font-size:10px;color:#666;margin-top:10px;line-height:1.5;padding:8px 10px;background:#fff;border-radius:8px;border-left:3px solid #2E7D32}'
+    +'.cap{background:linear-gradient(135deg,#1B5E20,#2E7D32);border-radius:14px;padding:16px 18px;color:#fff;margin-bottom:8px}'
     +'.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}@media(max-width:620px){.grid2{grid-template-columns:1fr}}'
     +_pdfTimbreCss()
-    +'@media print{button{display:none}}'
+    +'@media print{button{display:none}body{background:#fff}}'
     +'</style></head><body>'
-    +_pdfTimbre('Diagn\u00f3stico de Pastos', null, faz)
+    +'<div class="cap" style="display:flex;align-items:center;gap:14px"><img src="'+LOGO_GPL+'" alt="GPL" style="height:48px;width:auto;filter:brightness(0) invert(1);flex-shrink:0"><div><div style="font-size:10px;letter-spacing:2px;opacity:.85;font-weight:700">GESTÃO PECUÁRIA LUCRATIVA</div><div style="font-size:20px;font-weight:900;margin-top:1px">Diagn\u00f3stico de Pastos</div><div style="font-size:10px;opacity:.9;margin-top:2px">'+faz+'</div></div></div>'
     +'<div class="resumo"><span style="color:#1B5E20">'+resumo.verde+' produtivos</span>'
     +'<span style="color:#E65100">'+resumo.amarelo+' aten\u00e7\u00e3o</span>'
     +'<span style="color:#B71C1C">'+resumo.vermelho+' avaliar</span></div>'
