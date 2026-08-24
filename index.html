@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/08/2026 v6.82 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/08/2026 v6.83 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -7489,168 +7489,175 @@ function rHistRotacao(){
   }
   var filtro=sl?sl.value:'';
   var _atuais=(S.LOTES||[]).map(function(l){return l.nome;});
-  var movs=(S.rT||[]).filter(function(r){
-    if(r.tipo!=='mudanca_pasto'||r._apagado) return false;
-    if(r._vendido) return false; // registros marcados como de lote vendido não entram
-    // se não há filtro específico, mostra só movimentos de lotes que EXISTEM hoje
+  var todosMovs=(S.rT||[]).filter(function(r){
+    if(r.tipo!=='mudanca_pasto'||r._apagado||r._vendido) return false;
     if(!filtro && _atuais.indexOf(r.lote)<0) return false;
     return true;
   });
-  movs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
-  if(filtro) movs=movs.filter(function(m){return m.lote===filtro;});
+  todosMovs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
+  var movs=filtro?todosMovs.filter(function(m){return m.lote===filtro;}):todosMovs;
   var div=document.getElementById('hist-rotacao');
   if(!div) return;
   if(!movs.length){
-    div.innerHTML='<div style="color:#888;font-size:12px;text-align:center;padding:20px">Sem movimentações registradas.</div>';
+    div.innerHTML='<div style="color:#888;font-size:12px;text-align:center;padding:20px">Sem movimentacoes registradas.</div>';
     return;
   }
-  // Calcular dias que ficou em cada pasto (dt_saida - dt_entrada)
+  // monta trilha por lote
   var mapa={};
   movs.forEach(function(r,i){
     var rDt=(r.dt||r.ts||'').substring(0,10);
-    // Encontrar movimentação anterior do mesmo lote
     var prev=null;
-    for(var j=i-1;j>=0;j--){
-      if(movs[j].lote===r.lote){prev=movs[j];break;}
-    }
+    for(var j=i-1;j>=0;j--){ if(movs[j].lote===r.lote){prev=movs[j];break;} }
     var dtEnt=prev?(prev.dt||prev.ts||'').substring(0,10):rDt;
-    var dias=0;
-    if(dtEnt&&rDt&&dtEnt!==rDt){
-      dias=Math.max(0,Math.round((new Date(rDt+'T12:00:00')-new Date(dtEnt+'T12:00:00'))/864e5));
-    }
+    var dias=dtEnt&&rDt&&dtEnt!==rDt?Math.max(0,Math.round((new Date(rDt+'T12:00:00')-new Date(dtEnt+'T12:00:00'))/864e5)):0;
     if(!mapa[r.lote]) mapa[r.lote]=[];
-    mapa[r.lote].push({origem:r.origem,destino:r.destino,saida:rDt,dias:dias,n:r.n||r.usuario||'?'});
+    mapa[r.lote].push({origem:r.origem,destino:r.destino,saida:rDt,dias:dias});
   });
-
-  var out='';
+  function labelArea(id){ return (MAPA_AREAS.find(function(a){return a.id===id;})||{}).label||id||''; }
   var hojeR=new Date();
-  Object.keys(mapa).forEach(function(lt){
+  var lotes=Object.keys(mapa).map(function(lt){
     var arr=mapa[lt];
-    // monta a trilha de piquetes (ordem cronológica) a partir das movimentações
     var trilha=[];
     if(arr.length){
-      trilha.push({piq:arr[0].origem, dias:arr[0].dias, atual:false});
-      for(var k=0;k<arr.length-1;k++){ trilha.push({piq:arr[k].destino, dias:arr[k+1].dias, atual:false}); }
+      trilha.push({piq:arr[0].origem,dias:arr[0].dias,atual:false});
+      for(var k=0;k<arr.length-1;k++) trilha.push({piq:arr[k].destino,dias:arr[k+1].dias,atual:false});
       var ult=arr[arr.length-1];
       var diasAt=ult.saida?Math.max(0,Math.round((hojeR-new Date(ult.saida+'T12:00:00'))/864e5)):0;
-      trilha.push({piq:ult.destino, dias:diasAt, entrada:ult.saida, atual:true});
+      trilha.push({piq:ult.destino,dias:diasAt,entrada:ult.saida,atual:true});
     }
-    var enc=trilha.filter(function(t){return !t.atual;});
+    var enc=trilha.filter(function(t){return !t.atual&&t.dias>0;});
     var med=enc.length?Math.round(enc.reduce(function(s,t){return s+t.dias;},0)/enc.length):0;
-    out+='<div style="margin-bottom:16px">'
-      +'<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:#E8F5E9;border-radius:8px;margin-bottom:8px">'
-      +  '<span style="font-weight:800;font-size:13px;color:#1B5E20">'+lt+'</span>'
-      +  (med>0?'<span style="font-size:11px;color:#1B5E20">média '+med+' d/piquete</span>':'')
-      +'</div>';
-    trilha.forEach(function(t,idx){
-      var nome=(MAPA_AREAS.find(function(a){return a.id===t.piq;})||{}).label||t.piq||'—';
-      var ultimo=idx===trilha.length-1;
-      var corDot=t.atual?'#2E7D32':(t.dias<=7?'#A5D6A7':t.dias<=21?'#FFE082':'#EF9A9A');
-      var corNum=t.atual?'#1B5E20':(t.dias<=7?'#1B5E20':t.dias<=21?'#E65100':'#B71C1C');
-      out+='<div style="display:flex;gap:10px">'
-        +'<div style="display:flex;flex-direction:column;align-items:center">'
-        +  '<div style="width:'+(t.atual?15:11)+'px;height:'+(t.atual?15:11)+'px;border-radius:50%;background:'+corDot+';border:2px solid #fff;box-shadow:0 0 0 2px '+corDot+'"></div>'
-        +  (ultimo?'':'<div style="width:2px;flex:1;background:#d6e0d6;min-height:16px"></div>')
-        +'</div>'
-        +'<div style="flex:1;padding-bottom:'+(ultimo?0:14)+'px">'
-        +  '<div style="display:flex;justify-content:space-between;align-items:center">'
-        +    '<span style="font-size:13px;font-weight:700;color:#1B5E20">'+nome+(t.atual?' <span style="font-size:9px;background:#2E7D32;color:#fff;padding:1px 7px;border-radius:8px">ATUAL</span>':'')+'</span>'
-        +    '<span style="font-size:15px;font-weight:800;color:'+corNum+'">'+t.dias+' <span style="font-size:9px;color:#888;font-weight:600">dias</span></span>'
-        +  '</div>'
-        +  (t.atual&&t.entrada?'<div style="font-size:10px;color:#aaa;margin-top:1px">desde '+t.entrada.split('-').reverse().join('/')+'</div>':'')
-        +'</div></div>';
-    });
-    out+='</div>';
+    var atu=trilha[trilha.length-1]||{};
+    return {nome:lt,trilha:trilha,med:med,nPiq:trilha.length,atual:atu};
   });
-
-  // ── Classificação por pasto/piquete e por módulo (sempre todos os lotes) ──
+  // SVGs
+  var SVG_PIN='<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';
+  var SVG_CHV='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+  var SVG_MAP='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>';
+  // grid de cards 2 colunas
+  var cards=lotes.map(function(L){
+    var piqLabel=labelArea(L.atual.piq);
+    var diasAt=L.atual.dias;
+    var acima=diasAt>L.med*1.5&&L.med>0;
+    var cor=acima?'#E65100':'#2E7D32';
+    var tag=acima?'<span style="font-size:8px;background:#FFF3E0;color:#E65100;padding:1px 6px;border-radius:8px;font-weight:700;margin-left:4px">acima</span>':'';
+    return '<div onclick="_rotExpandir(this,\''+L.nome+'\')" style="background:#fff;border-radius:12px;border-left:4px solid '+cor+';padding:10px 11px;cursor:pointer">'
+      +'<div style="font-weight:900;font-size:14px;color:#1B5E20">'+L.nome+'</div>'
+      +'<div style="font-size:11px;color:#555;margin-top:4px;display:flex;align-items:center;gap:4px">'+SVG_PIN+piqLabel+' &middot; <b style="color:'+cor+'">'+diasAt+'d</b>'+tag+'</div>'
+      +'<div style="display:flex;gap:5px;margin-top:8px">'
+        +'<div style="flex:1;background:#E8F5E9;border-radius:7px;padding:5px;text-align:center"><div style="font-size:14px;font-weight:900;color:#1B5E20">'+(L.med||'--')+'<span style="font-size:8px;font-weight:600;color:#555">d</span></div><div style="font-size:8px;color:#666">MEDIA</div></div>'
+        +'<div style="flex:1;background:#E8F5E9;border-radius:7px;padding:5px;text-align:center"><div style="font-size:14px;font-weight:900;color:#1B5E20">'+L.nPiq+'</div><div style="font-size:8px;color:#666">PIQUETES</div></div>'
+      +'</div>'
+      +'<div style="font-size:9px;color:#2E7D32;font-weight:700;margin-top:7px;display:flex;align-items:center;gap:3px">ver trilha '+SVG_CHV+'</div>'
+      +'<div class="rot-trilha" data-lote="'+L.nome+'" style="display:none;margin-top:10px;border-top:1px solid #e8f5e9;padding-top:8px"></div>'
+      +'</div>';
+  }).join('');
+  var gridStyle=filtro?'margin-bottom:10px':'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px';
+  // tabela de classificacao
   var st=_rotacaoStats();
-  // Gráfico de barras horizontais (SVG leve). val=número, cor por status opcional.
-  function barras(itens, nomeCampo, modo){
-    var top=itens.slice().sort(function(a,b){return b.dias-a.dias;}).slice(0,12);
-    if(!top.length) return '';
-    var max=Math.max(1, Math.max.apply(null, top.map(function(p){return p.dias;})));
-    var bw=140, h=top.length*26+10;
-    var svg='<svg viewBox="0 0 320 '+h+'" style="width:100%;height:auto;max-width:520px" xmlns="http://www.w3.org/2000/svg">';
-    top.forEach(function(p,i){
-      var nm=(p[nomeCampo]||p.label||p.nome||'').substring(0,10);
-      var w=Math.round((p.dias/max)*bw);
-      var y=i*26+6;
-      var cor='#2E7D32';
-      if(modo==='status' && p.status){ cor = p.status.st==='vazio' ? '#43A047' : '#1565C0'; }
-      svg+='<text x="0" y="'+(y+13)+'" font-size="10" fill="#444">'+nm+'</text>';
-      svg+='<rect x="80" y="'+(y+3)+'" width="'+Math.max(2,w)+'" height="15" rx="3" fill="'+cor+'"/>';
-      svg+='<text x="'+(80+Math.max(2,w)+4)+'" y="'+(y+14)+'" font-size="10" font-weight="700" fill="#1B5E20">'+p.dias+'d</text>';
-    });
-    svg+='</svg>';
-    return svg;
-  }
-  function tabRank(titulo, itens, nomeCampo, sanfona){
+  function tabRank(titulo,itens,nomeCampo,sanfona){
     var byDias=itens.slice().sort(function(a,b){return b.dias-a.dias;});
     if(!byDias.length) return '';
+    var SVG_OK='<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>';
     function linhaItem(p,i,filho){
-      var nm=p[nomeCampo]||p.label||p.nome;
-      if(filho) nm=p.label||nm;
+      var nm=p[nomeCampo]||p.label||p.nome; if(filho) nm=p.label||nm;
       var tag='';
-      if(p.status){
-        tag = p.status.st==='vazio'
-          ? ' <span style="font-size:9px;color:#2E7D32;font-weight:700">🟢 vazio há '+p.status.dias+'d</span>'
-          : ' <span style="font-size:9px;color:#1565C0">ocupado há '+p.status.dias+'d</span>';
-      }
-      var podeAbrir = sanfona && p.ehModulo && p.itens && p.itens.length;
-      var seta = podeAbrir ? '<span style="color:#1B5E20;font-size:11px">▸</span> ' : (filho?'<span style="color:#ccc">└ </span>':'');
-      var onclick = podeAbrir ? ' onclick="feedRotToggle(this,\''+p.k+'\')" style="cursor:pointer"' : '';
-      var bg = filho ? 'background:#fafafa' : '';
-      return '<tr class="rot-row" data-k="'+(p.k||p.id||'')+'"'+onclick+' style="border-bottom:1px solid #f0f0f0;'+bg+'">'
+      if(p.status){ tag=p.status.st==='vazio'
+        ?'<span style="font-size:9px;color:#2E7D32;font-weight:700;display:inline-flex;align-items:center;gap:2px">'+SVG_OK+' vazio ha '+p.status.dias+'d</span>'
+        :'<span style="font-size:9px;color:#1565C0">ocupado ha '+p.status.dias+'d</span>'; }
+      var podeAbrir=sanfona&&p.ehModulo&&p.itens&&p.itens.length;
+      var seta=podeAbrir?'<span style="color:#1B5E20;font-size:11px">&#9658;</span> ':(filho?'<span style="color:#ccc">&#9492; </span>':'');
+      var oc=podeAbrir?' onclick="feedRotToggle(this,\''+p.k+'\')" style="cursor:pointer"':'';
+      var bg=filho?'background:#fafafa':'';
+      return '<tr class="rot-row" data-k="'+(p.k||p.id||'')+'"'+oc+' style="border-bottom:1px solid #f0f0f0;'+bg+'">'
         +'<td style="padding:6px 4px;text-align:center;color:#999;font-size:11px">'+(filho?'':(i+1))+'</td>'
-        +'<td style="padding:6px 4px;font-size:'+(filho?'11':'12')+'px;font-weight:600;'+(filho?'padding-left:14px;color:#555':'')+'">'+seta+nm+tag+'</td>'
+        +'<td style="padding:6px 4px;font-size:'+(filho?'11':'12')+'px;font-weight:600;'+(filho?'padding-left:14px;color:#555':'')+'">'+''+seta+nm+' '+tag+'</td>'
         +'<td style="padding:6px 4px;text-align:center;font-size:13px;font-weight:800;color:#1B5E20">'+p.dias+'</td>'
         +'<td style="padding:6px 4px;text-align:center;font-size:11px;color:#666">'+p.pass+'</td>'
         +'<td style="padding:6px 4px;text-align:center;font-size:11px;color:#666">'+p.media+'</td>'
-        +'<td style="padding:6px 4px;text-align:center;font-size:12px;font-weight:700;color:#1565C0">'+(p.descanso===null?'—':p.descanso)+'</td>'
+        +'<td style="padding:6px 4px;text-align:center;font-size:12px;font-weight:700;color:#1565C0">'+(p.descanso===null?'--':p.descanso)+'</td>'
         +'</tr>';
     }
     var linhas=byDias.map(function(p,i){
       var l=linhaItem(p,i,false);
-      if(sanfona && p.ehModulo && p.itens && p.itens.length){
-        // linhas-filhas escondidas (sanfona)
+      if(sanfona&&p.ehModulo&&p.itens&&p.itens.length){
         l+='<tbody class="rot-filhos" data-parent="'+p.k+'" style="display:none">'
-          + p.itens.map(function(f){return linhaItem(f,0,true);}).join('')
-          +'</tbody>';
+          +p.itens.map(function(f){return linhaItem(f,0,true);}).join('')+'</tbody>';
       }
       return l;
     }).join('');
     return '<div class="card" style="margin-top:10px;padding:12px">'
-      +'<div style="font-size:13px;font-weight:800;color:#1B5E20;margin-bottom:6px">'+titulo+'</div>'
+      +'<div style="font-size:13px;font-weight:800;color:#1B5E20;margin-bottom:6px;display:flex;align-items:center;gap:6px">'+SVG_MAP+titulo+'</div>'
       +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:340px">'
       +'<tr style="border-bottom:2px solid #1B5E20"><th style="padding:5px 4px;font-size:9px;color:#999">#</th>'
       +'<th style="padding:5px 4px;font-size:9px;color:#999;text-align:left">Local</th>'
       +'<th style="padding:5px 4px;font-size:9px;color:#999">Dias</th>'
       +'<th style="padding:5px 4px;font-size:9px;color:#999">Passag.</th>'
-      +'<th style="padding:5px 4px;font-size:9px;color:#999">Média</th>'
+      +'<th style="padding:5px 4px;font-size:9px;color:#999">Media</th>'
       +'<th style="padding:5px 4px;font-size:9px;color:#999">Descanso</th></tr>'
       +linhas+'</table></div>'
-      +(sanfona?'<div style="font-size:9px;color:#aaa;margin-top:5px">▸ Toque no módulo para ver os piquetes.</div>':'')
-      +'<div style="font-size:9px;color:#aaa;margin-top:3px">Ordenado por total de dias. 🟢 vazio há Xd = descansando agora (pronto pra receber gado). Descanso = média histórica de dias vazio entre passagens (— = sem ciclo medível).</div>'
+      +(sanfona?'<div style="font-size:9px;color:#aaa;margin-top:5px">Toque no modulo para ver os piquetes.</div>':'')
+      +'<div style="font-size:9px;color:#aaa;margin-top:3px">Ordenado por total de dias. Descanso = media historica de dias vazio entre passagens.</div>'
       +'</div>';
   }
-  // Seção de gráficos
-  out+='<div class="card" style="margin-top:10px;padding:12px">'
-    +'<div style="font-size:13px;font-weight:800;color:#1B5E20;margin-bottom:8px">📊 Dias de ocupação por pasto</div>'
-    +barras(st.pastos,'label','dias')
-    +'<div style="font-size:13px;font-weight:800;color:#1B5E20;margin:14px 0 8px">📊 Status atual (🟢 descansando · 🔵 ocupado)</div>'
-    +barras(st.pastos,'label','status')
-    +'<div style="font-size:9px;color:#aaa;margin-top:6px">Verde = pasto descansando agora · Azul = ocupado. Tamanho da barra = total de dias.</div>'
-    +'</div>';
-  out+=tabRank('🏆 Classificação por Pasto / Piquete', st.pastos, 'label', false);
-  out+=tabRank('🏆 Classificação por Módulo', st.modulos, 'nome', true);
-  if(st.pastos.length){
-    out+='<button onclick="gerarPDFRotacao()" style="width:100%;margin-top:12px;background:#1B5E20;color:#fff;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer">Gerar PDF da Rota\u00e7\u00e3o</button>'
-      +'<div style="background:#fff;border:1px solid #e0e7e0;border-radius:12px;padding:10px;margin-top:8px"><div style="font-size:12px;font-weight:700;color:#1B5E20;margin-bottom:6px">PDF por per\u00edodo (opcional)</div><div style="display:flex;gap:6px;flex-wrap:wrap"><label style="flex:1;min-width:110px;font-size:11px;color:#666">De<br><input type="date" id="rot-de" style="width:100%;padding:7px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label><label style="flex:1;min-width:110px;font-size:11px;color:#666">At\u00e9<br><input type="date" id="rot-ate" style="width:100%;padding:7px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label></div></div>';
-  }
+  var out='<div style="'+gridStyle+'">'+cards+'</div>';
+  out+=tabRank('Classificacao por Pasto / Piquete',st.pastos,'label',false);
+  out+=tabRank('Classificacao por Modulo',st.modulos,'nome',true);
   div.innerHTML=out;
 }
-// Sanfona: abre/fecha os piquetes de um módulo na tabela de classificação
+
+function _rotExpandir(card,nomeLote){
+  var area=card.querySelector('.rot-trilha[data-lote="'+nomeLote+'"]');
+  if(!area) return;
+  var aberto=area.style.display!=='none';
+  if(aberto){area.style.display='none';return;}
+  if(area.innerHTML){area.style.display='block';return;}
+  // monta trilha lazy
+  var movs=(S.rT||[]).filter(function(r){
+    return r.tipo==='mudanca_pasto'&&!r._apagado&&!r._vendido&&r.lote===nomeLote;
+  });
+  movs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
+  if(!movs.length){area.innerHTML='<div style="font-size:11px;color:#999">Sem movimentacoes.</div>';area.style.display='block';return;}
+  var arr=[];
+  movs.forEach(function(r,i){
+    var rDt=(r.dt||r.ts||'').substring(0,10);
+    var prev=null; for(var j=i-1;j>=0;j--){if(movs[j].lote===r.lote){prev=movs[j];break;}}
+    var dtEnt=prev?(prev.dt||prev.ts||'').substring(0,10):rDt;
+    var dias=dtEnt&&rDt&&dtEnt!==rDt?Math.max(0,Math.round((new Date(rDt+'T12:00:00')-new Date(dtEnt+'T12:00:00'))/864e5)):0;
+    arr.push({origem:r.origem,destino:r.destino,saida:rDt,dias:dias});
+  });
+  function labelA(id){return (MAPA_AREAS.find(function(a){return a.id===id;})||{}).label||id||'';}
+  var trilha=[];
+  trilha.push({piq:arr[0].origem,dias:arr[0].dias,atual:false});
+  for(var k=0;k<arr.length-1;k++) trilha.push({piq:arr[k].destino,dias:arr[k+1].dias,atual:false});
+  var ult=arr[arr.length-1];
+  var hojeT=new Date();
+  var diasAt=ult.saida?Math.max(0,Math.round((hojeT-new Date(ult.saida+'T12:00:00'))/864e5)):0;
+  trilha.push({piq:ult.destino,dias:diasAt,entrada:ult.saida,atual:true});
+  var html='';
+  trilha.forEach(function(t,idx){
+    var nome=labelA(t.piq);
+    var ultimo=idx===trilha.length-1;
+    var corDot=t.atual?'#2E7D32':(t.dias<=7?'#A5D6A7':t.dias<=21?'#FFE082':'#EF9A9A');
+    var corNum=t.atual?'#1B5E20':(t.dias<=7?'#1B5E20':t.dias<=21?'#E65100':'#B71C1C');
+    html+='<div style="display:flex;gap:8px">'
+      +'<div style="display:flex;flex-direction:column;align-items:center">'
+      +'<div style="width:'+(t.atual?14:10)+'px;height:'+(t.atual?14:10)+'px;border-radius:50%;background:'+corDot+';flex-shrink:0"></div>'
+      +(ultimo?'':'<div style="width:2px;flex:1;background:#d6e0d6;min-height:14px"></div>')
+      +'</div>'
+      +'<div style="flex:1;padding-bottom:'+(ultimo?0:12)+'px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center">'
+      +'<span style="font-size:12px;font-weight:700;color:#1B5E20">'+nome+(t.atual?' <span style="font-size:8px;background:#2E7D32;color:#fff;padding:1px 6px;border-radius:8px">ATUAL</span>':'')+'</span>'
+      +'<span style="font-size:14px;font-weight:800;color:'+corNum+'">'+t.dias+' <span style="font-size:9px;color:#888;font-weight:600">dias</span></span>'
+      +'</div>'
+      +(t.atual&&t.entrada?'<div style="font-size:10px;color:#aaa;margin-top:1px">desde '+t.entrada.split('-').reverse().join('/')+'</div>':'')
+      +'</div></div>';
+  });
+  area.innerHTML=html;
+  area.style.display='block';
+}
+
+
 function feedRotToggle(tr, k){
   var fb=document.querySelector('.rot-filhos[data-parent="'+k+'"]');
   if(!fb) return;
