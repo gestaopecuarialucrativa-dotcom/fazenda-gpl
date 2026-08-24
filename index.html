@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/08/2026 v6.84 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/08/2026 v6.85 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -8163,7 +8163,7 @@ function _pdfTimbreCss(){
     +'@media print{body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}'
     +'.gpl-tb{display:flex;justify-content:space-between;align-items:center;'
     +'border-bottom:3px solid #2E7D32;padding-bottom:10px;margin-bottom:4px}'
-    +'.gpl-tb .logo img{height:54px;width:auto;max-width:240px;object-fit:contain;display:block;filter:brightness(0) invert(1)}'
+    +'.gpl-tb .logo img{height:54px;width:auto;max-width:240px;object-fit:contain;display:block}'
     +'.gpl-tb .tit{font-size:18px;font-weight:800;color:#1B5E20;margin:0}'
     +'.gpl-tb .sub{font-size:11px;color:#2E7D32;font-weight:600;margin-top:1px}'
     +'.gpl-tb .meta{text-align:right;font-size:10px;color:#777;line-height:1.5}'
@@ -8656,16 +8656,44 @@ function gerarPDFRotacao(){
       +'</div>';
   }).join('');
 
-  // ---- STATUS DOS PASTOS ----
-  var maxD=Math.max(1,Math.max.apply(null,st.pastos.map(function(p){return p.dias;})));
-  var statusBars=st.pastos.slice().sort(function(a,b){return b.dias-a.dias;}).map(function(p){
-    var ocup=p.status&&p.status.st==='ocupado';
-    var cor=ocup?'#2E7D32':'#9CCC65';
-    var w=Math.max(4,Math.round(p.dias/maxD*100));
-    var stxt=p.status?(ocup?p.status.dias+'d ocup.':p.status.dias+'d desc.'):'';
-    return '<div style="display:flex;align-items:center;gap:8px;margin:5px 0"><div style="width:52px;font-size:10px;font-weight:700;color:#555;flex-shrink:0">'+p.label+'</div><div style="flex:1;background:#eef0ec;border-radius:4px;height:13px;overflow:hidden"><div style="width:'+w+'%;background:'+cor+';height:100%"></div></div><div style="width:66px;text-align:right;font-size:9px;font-weight:700;color:'+(ocup?'#2E7D32':'#7CB342')+';flex-shrink:0">'+stxt+'</div></div>';
-  }).join('');
-  var statusBloco='<div style="background:#fff;border-radius:14px;padding:16px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,.07)"><div style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Status dos pastos agora</div><div style="font-size:9px;color:#888;margin-bottom:10px"><span style="color:#2E7D32;font-weight:900">\u25a0</span> ocupado &nbsp; <span style="color:#9CCC65;font-weight:900">\u25a0</span> descansando \u00b7 tamanho da barra = total de dias de pastejo</div>'+statusBars+'</div>';
+  // ---- STATUS DOS PASTOS (pills por grupo: ocupado / descansando) ----
+  var _ocupados=st.pastos.filter(function(p){return p.status&&p.status.st==='ocupado';})
+    .sort(function(a,b){return b.status.dias-a.status.dias;});
+  var _descansando=st.pastos.filter(function(p){return !p.status||p.status.st==='vazio';})
+    .sort(function(a,b){return b.status.dias-a.status.dias;});
+  // pill de pasto ocupado (verde escuro; laranja se forçado)
+  var _forcados=st.pastos.filter(function(p){return p.dias>avgPastejo&&(p.descanso==null||p.descanso<avgDesc);}).map(function(p){return p.label;});
+  function _pill(p,modo){
+    var label=p.label;
+    var dias=p.status?p.status.dias:0;
+    if(modo==='ocup'){
+      var forc=_forcados.indexOf(label)>=0;
+      var bg=forc?'#FFF3E0':'#E8F5E9';
+      var border=forc?'1.5px solid #E65100':'1.5px solid #2E7D32';
+      var txtCol=forc?'#E65100':'#1B5E20';
+      var dotCol=forc?'#E65100':'#2E7D32';
+      return '<span style="background:'+bg+';border:'+border+';border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700;color:'+txtCol+';display:inline-flex;align-items:center;gap:4px;margin:3px 2px">'
+        +'<span style="width:6px;height:6px;border-radius:50%;background:'+dotCol+';display:inline-block;flex-shrink:0"></span>'
+        +label+' \u00b7 '+dias+'d'+(forc?' \u26a0':'')+'</span>';
+    } else {
+      return '<span style="background:#F1F8E9;border:1px solid #AED581;border-radius:20px;padding:3px 9px;font-size:10px;color:#558B2F;margin:2px 2px">'+label+' \u00b7 '+dias+'d</span>';
+    }
+  }
+  var _pillsOcup=_ocupados.map(function(p){return _pill(p,'ocup');}).join('');
+  var _pillsDesc=_descansando.slice(0,12).map(function(p){return _pill(p,'desc');}).join('')
+    +(_descansando.length>12?'<span style="font-size:10px;color:#aaa;margin-left:4px">+'+(_descansando.length-12)+' mais</span>':'');
+  var statusBars=''; // mantida por compatibilidade (não usada abaixo)
+  var statusBloco='<div style="background:#fff;border-radius:14px;padding:14px 16px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,.07)">'
+    +'<div style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Status dos pastos agora</div>'
+    +'<div style="font-size:9px;font-weight:700;color:#2E7D32;margin-bottom:5px;display:flex;align-items:center;gap:5px">'
+    +'<span style="width:8px;height:8px;border-radius:50%;background:#2E7D32;display:inline-block"></span>'
+    +'COM ANIMAIS ('+_ocupados.length+')</div>'
+    +'<div style="display:flex;flex-wrap:wrap;margin-bottom:12px">'+(_pillsOcup||'<span style=\\"font-size:11px;color:#aaa\\">nenhum</span>')+'</div>'
+    +'<div style="font-size:9px;font-weight:700;color:#7CB342;margin-bottom:5px;display:flex;align-items:center;gap:5px">'
+    +'<span style="width:8px;height:8px;border-radius:50%;background:#9CCC65;display:inline-block"></span>'
+    +'DESCANSANDO ('+_descansando.length+')</div>'
+    +'<div style="display:flex;flex-wrap:wrap">'+(_pillsDesc||'<span style=\\"font-size:11px;color:#aaa\\">nenhum</span>')+'</div>'
+    +'</div>';
 
   // ---- RANK ----
   function rankItem(p,modo){
@@ -8729,7 +8757,7 @@ function gerarPDFRotacao(){
     +_pdfTimbreCss()
     +'@media print{button{display:none!important}body{background:#fff}}'
     +'</style></head><body>'
-    +'<div class="cap"><div style="font-size:11px;letter-spacing:2px;opacity:.85;font-weight:700">GEST\u00c3O PECU\u00c1RIA LUCRATIVA</div><div style="font-size:22px;font-weight:900;margin-top:2px">Rota\u00e7\u00e3o dos Lotes</div><div style="font-size:11px;opacity:.9;margin-top:3px">'+faz+' \u00b7 '+dtHoje+'</div></div>'
+    +'<div class="cap" style="display:flex;align-items:center;gap:16px"><img src="'+LOGO_GPL+'" alt="GPL" style="height:52px;width:auto;filter:brightness(0) invert(1);flex-shrink:0"><div><div style="font-size:11px;letter-spacing:2px;opacity:.85;font-weight:700">GEST\u00c3O PECU\u00c1RIA LUCRATIVA</div><div style="font-size:22px;font-weight:900;margin-top:2px">Rota\u00e7\u00e3o dos Lotes</div><div style="font-size:11px;opacity:.9;margin-top:3px">'+faz+' \u00b7 '+dtHoje+'</div></div></div>'
     +alerta
     +'<div style="font-size:12px;font-weight:800;color:#1B5E20;margin:14px 0 6px">Rank dos pastos</div>'
     +rankDinamicoBloco
