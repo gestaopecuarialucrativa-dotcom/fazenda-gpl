@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/08/2026 v6.79 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/08/2026 v6.80 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1189,7 +1189,6 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <div class="card">
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
       <div class="stit" style="margin:0;flex:1"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Histórico de Rotação</div>
-      <button onclick="alinharHistoricoLotes()" style="background:#fff;color:#8a5a00;border:1.5px solid #FF8F00;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">Alinhar histórico</button>
       <button onclick="expHistCSV()" style="background:#1B5E20;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">CSV</button>
     </div>
     <select id="hist-lote-rot" onchange="rHistRotacao()" style="width:100%;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px;margin-bottom:10px">
@@ -8524,6 +8523,16 @@ function _consumoDias(dtA,dtB){
 
 // Monta os perfis de consumo por lote (reusado por tela e PDF)
 function _consumoPerfis(){
+  // Início do ciclo de cada lote (mesma regra da Rotação): trato ANTES do
+  // dt_abertura é de outro ciclo (lote anterior de mesmo nome) e NÃO entra.
+  // Sem isso, o consumo mistura o histórico do lote velho com o novo.
+  var _inicioCiclo={};
+  (S.LOTES||[]).forEach(function(l){
+    if(l.dt_abertura){
+      var _nm=String(l.nome||'').replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
+      _inicioCiclo[_nm]=String(l.dt_abertura).substring(0,10);
+    }
+  });
   var tratos=(S.rT||[]).filter(function(r){ return r.tipo==='trato'&&!r._apagado; });
   tratos.forEach(function(r){ if(!r.dt&&r.ts) r.dt=_regData(r); });
   var lotes=S.LOTES||[];
@@ -8532,6 +8541,9 @@ function _consumoPerfis(){
     var ln=t.lote||t.co||'?';
     // Normaliza: remove "(X animais)" que pode ter ficado gravado no nome
     ln=ln.replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
+    // Corta tratos anteriores ao início do ciclo do lote (histórico do lote antigo)
+    var _ini=_inicioCiclo[ln];
+    if(_ini){ var _d=(t.dt||t.ts||'').substring(0,10); if(_d && _d<_ini) return; }
     if(!porLote[ln]) porLote[ln]={lote:ln, sacos:0, kg:0, datas:[], prods:{}, cabUlt:0};
     var sacos=parseFloat(t.q||t.qtd||0)||0;
     var kg=parseFloat(t.kg_fornecido||0)||0;
