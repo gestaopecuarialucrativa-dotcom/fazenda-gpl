@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 23/08/2026 v6.77 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/08/2026 v6.78 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1185,11 +1185,12 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
 <div id="htab-rotacao-content" style="display:none">
   <div style="background:#fff;border:1px solid #e0e7e0;border-radius:12px;padding:10px;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:#1B5E20;margin-bottom:6px">PDF por período (opcional)</div><div style="display:flex;gap:6px;flex-wrap:wrap"><label style="flex:1;min-width:110px;font-size:11px;color:#666">De<br><input type="date" id="rot-de" style="width:100%;padding:7px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label><label style="flex:1;min-width:110px;font-size:11px;color:#666">Até<br><input type="date" id="rot-ate" style="width:100%;padding:7px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label></div></div>
-  <button onclick="gerarPDFRotacao()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📄 Gerar PDF da Rotação</button>
+  <button onclick="gerarPDFRotacao()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Gerar PDF da Rotação</button>
   <div class="card">
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-      <div class="stit" style="margin:0;flex:1">🔄 Histórico de Rotação</div>
-      <button onclick="expHistCSV()" style="background:#1B5E20;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">📥 CSV</button>
+      <div class="stit" style="margin:0;flex:1"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Histórico de Rotação</div>
+      <button onclick="alinharHistoricoLotes()" style="background:#fff;color:#8a5a00;border:1.5px solid #FF8F00;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">Alinhar histórico</button>
+      <button onclick="expHistCSV()" style="background:#1B5E20;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer">CSV</button>
     </div>
     <select id="hist-lote-rot" onchange="rHistRotacao()" style="width:100%;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px;margin-bottom:10px">
       <option value="">Todos os lotes</option>
@@ -7419,6 +7420,56 @@ function _rotacaoStats(){
   return { pastos:pastosArr, modulos:modsArr };
 }
 
+// Detecta nomes de lote nos registros que NÃO existem mais como lote atual (órfãos)
+// e deixa o usuário mapear cada um pra um lote atual, alinhando o histórico.
+function alinharHistoricoLotes(){
+  var atuais=(S.LOTES||[]).map(function(l){return l.nome;});
+  var vendidos=(S.LOTES_VENDIDOS||[]).map(function(l){return l.nome;});
+  // conta os nomes que aparecem nos movimentos/tratos
+  var nomesReg={};
+  (S.rT||[]).forEach(function(r){
+    if(r._apagado)return;
+    if(r.tipo==='mudanca_pasto'&&r.lote) nomesReg[r.lote]=(nomesReg[r.lote]||0)+1;
+    if(r.tipo==='trato'){ if(r.lote)nomesReg[r.lote]=(nomesReg[r.lote]||0)+1; if(r.co)nomesReg[r.co]=(nomesReg[r.co]||0)+1; }
+  });
+  // órfãos = nomes nos registros que não são lote atual
+  var orfaos=Object.keys(nomesReg).filter(function(nm){ return atuais.indexOf(nm)<0; });
+  if(!orfaos.length){ alert('Tudo alinhado! Todos os registros já batem com os lotes atuais.'); return; }
+  // monta a mensagem de escolha
+  var listaAtuais=atuais.join(', ');
+  var msg='Encontrei '+orfaos.length+' nome(s) de lote no histórico que não existem mais como lote atual:\n\n';
+  orfaos.forEach(function(o){ msg+='• "'+o+'" ('+nomesReg[o]+' registros)\n'; });
+  msg+='\nLotes atuais: '+listaAtuais+'\n\nVou perguntar, um por um, pra qual lote atual cada órfão deve ir (ou deixar como está / marcar como vendido).';
+  if(!confirm(msg)) return;
+  var trocas=0;
+  orfaos.forEach(function(orf){
+    var destino=prompt('O histórico de "'+orf+'" ('+nomesReg[orf]+' registros) deve ir para qual lote?\n\nDigite EXATAMENTE um nome atual: '+listaAtuais+'\n\nOu digite:\n• VENDIDO — pra marcar como lote vendido (some da rotação ativa)\n• (deixe em branco) — não mexer neste', '');
+    if(destino===null||destino.trim()==='') return;
+    destino=destino.trim();
+    if(destino.toUpperCase()==='VENDIDO'){
+      // marca os registros como de lote vendido (não some, mas fica identificável)
+      (S.rT||[]).forEach(function(r){
+        if(r.tipo==='mudanca_pasto'&&r.lote===orf){ r._vendido=true; }
+        if(r.tipo==='trato'){ if(r.lote===orf)r._vendido=true; if(r.co===orf)r._vendido=true; }
+      });
+      trocas++;
+      return;
+    }
+    if(atuais.indexOf(destino)<0){ alert('"'+destino+'" não é um lote atual. Pulei "'+orf+'".'); return; }
+    // renomeia os registros do órfão pro destino
+    (S.rT||[]).forEach(function(r){
+      if(r.tipo==='mudanca_pasto'&&r.lote===orf){ r.lote=destino; }
+      if(r.tipo==='trato'){ if(r.lote===orf)r.lote=destino; if(r.co===orf)r.co=destino; }
+    });
+    trocas++;
+  });
+  if(trocas>0){
+    salvar();
+    if(S.cfgGS)salvarNuvem(function(){});
+    alert('Histórico alinhado! '+trocas+' nome(s) ajustado(s).\n\nATENÇÃO: isto mudou os registros na memória. Pra ficar permanente na planilha, os movimentos precisam ser regravados pelo backend — me avise se ao recarregar voltar ao errado.');
+    try{rHistRotacao();}catch(e){}
+  }
+}
 function rHistRotacao(){
   var sl=document.getElementById('hist-lote-rot');
   if(sl&&sl.options.length<=1){
@@ -7427,7 +7478,14 @@ function rHistRotacao(){
     });
   }
   var filtro=sl?sl.value:'';
-  var movs=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
+  var _atuais=(S.LOTES||[]).map(function(l){return l.nome;});
+  var movs=(S.rT||[]).filter(function(r){
+    if(r.tipo!=='mudanca_pasto'||r._apagado) return false;
+    if(r._vendido) return false; // registros marcados como de lote vendido não entram
+    // se não há filtro específico, mostra só movimentos de lotes que EXISTEM hoje
+    if(!filtro && _atuais.indexOf(r.lote)<0) return false;
+    return true;
+  });
   movs.sort(function(a,b){return (a.dt||a.ts||'').localeCompare(b.dt||b.ts||'');});
   if(filtro) movs=movs.filter(function(m){return m.lote===filtro;});
   var div=document.getElementById('hist-rotacao');
