@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/08/2026 v6.80 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/08/2026 v6.82 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1035,7 +1035,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
         <button onclick="rRelFazendaPreview();setTimeout(function(){var el=document.getElementById('rel-fazenda-preview');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},100)" style="flex:1;padding:10px;background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">👁 Visualizar</button>
         <button onclick="gerarRelPDF()" style="flex:1;padding:10px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">📄 Rel. Técnico</button>
         <button onclick="gerarRelPreviewPDF()" style="flex:1;padding:10px;background:#1565C0;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🌿 Rel. Fazenda</button>
-        <button onclick="gerarPDFRelFazenda()" style="flex:1;padding:10px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">📄 Rel. PDF</button>
+        <button onclick="gerarPDFRelFazenda()" style="display:flex;align-items:center;justify-content:center;gap:7px;flex:1;padding:10px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Rel. PDF</button>
       </div>
     </div>
   </div>
@@ -1085,7 +1085,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
         <div style="flex:1"><div style="font-size:10px;color:#E65100;margin-bottom:2px">Frete da carga (R$)</div>
           <input type="number" id="cmp-frete" step="0.01" min="0" placeholder="sem frete" oninput="_compraSetFreteGeral(this.value)" style="width:100%;padding:9px;border:1px solid #FFCC80;border-radius:8px;font-size:12px"></div>
         <button onclick="rCompraCalc()" style="flex:1;padding:10px;background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🧮 Calcular</button>
-        <button onclick="gerarPDFCompra()" style="flex:1;padding:10px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">📄 Gerar PDF</button>
+        <button onclick="gerarPDFCompra()" style="display:flex;align-items:center;justify-content:center;gap:7px;flex:1;padding:10px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Gerar PDF</button>
       </div>
     </div>
     <div id="compra-resultado"></div>
@@ -1179,7 +1179,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
       <div id="taxa-piq-content"></div>
     </div>
   </div>
-  <button onclick="gerarPDFLotes()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px">📄 Gerar Relatório PDF</button>
+  <button onclick="gerarPDFLotes()" style="display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Gerar Relatório PDF</button>
   <div id="hist-lotes-cards"></div>
 </div>
 
@@ -1224,15 +1224,16 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     </div>
   </div>
   <div style="background:#fff;border:1px solid #e0e7e0;border-radius:12px;padding:10px;margin-bottom:8px"><div style="font-size:12px;font-weight:700;color:#1B5E20;margin-bottom:6px">PDF por período (opcional)</div><div style="display:flex;gap:6px;flex-wrap:wrap"><label style="flex:1;min-width:110px;font-size:11px;color:#666">De<br><input type="date" id="pas-de" style="width:100%;padding:7px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label><label style="flex:1;min-width:110px;font-size:11px;color:#666">Até<br><input type="date" id="pas-ate" style="width:100%;padding:7px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label></div></div>
-  <button onclick="gerarPDFPastos()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px">📄 Gerar Relatório PDF</button>
+  <button onclick="gerarPDFPastos()" style="display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Gerar Relatório PDF</button>
+  <button onclick="gerarPDFPastoSafra()" style="width:100%;padding:11px;background:#00695C;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:7px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"/><rect x="5" y="12" width="3" height="7"/><rect x="10.5" y="7" width="3" height="12"/><rect x="16" y="3" width="3" height="16"/></svg>Pasto por Safra (águas × seca)</button>
   <div id="hist-ranking-pastos"></div>
 </div>
 
 <div id="htab-cocho-content" style="display:none"></div>
 <div id="htab-consumo-content" style="display:none">
   <div style="margin:4px 0 10px"><div style="font-size:15px;font-weight:800;color:#1B5E20">Custo do suplemento</div><div style="font-size:12px;color:#777;margin-top:2px">Quanto cada lote e cada produto está custando</div></div>
-  <button onclick="gerarPDFConsumo()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">📄 PDF — consumo atual</button>
-  <div style="background:#fff;border:1px solid #e0e7e0;border-radius:12px;padding:10px;margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:#1B5E20;margin-bottom:6px">PDF do consumo por período</div><div style="display:flex;gap:6px;flex-wrap:wrap"><label style="flex:1;min-width:120px;font-size:11px;color:#666">De<br><input type="date" id="cp-de" style="width:100%;padding:8px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label><label style="flex:1;min-width:120px;font-size:11px;color:#666">Até<br><input type="date" id="cp-ate" style="width:100%;padding:8px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label></div><button onclick="gerarPDFConsumoPeriodo()" style="width:100%;padding:10px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px">📄 PDF do período</button></div>
+  <button onclick="gerarPDFConsumo()" style="display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>PDF — consumo atual</button>
+  <div style="background:#fff;border:1px solid #e0e7e0;border-radius:12px;padding:10px;margin-bottom:10px"><div style="font-size:12px;font-weight:700;color:#1B5E20;margin-bottom:6px">PDF do consumo por período</div><div style="display:flex;gap:6px;flex-wrap:wrap"><label style="flex:1;min-width:120px;font-size:11px;color:#666">De<br><input type="date" id="cp-de" style="width:100%;padding:8px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label><label style="flex:1;min-width:120px;font-size:11px;color:#666">Até<br><input type="date" id="cp-ate" style="width:100%;padding:8px;border:1px solid #c8d8c8;border-radius:8px;font-size:13px"></label></div><button onclick="gerarPDFConsumoPeriodo()" style="display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:10px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>PDF do período</button></div>
   <div id="hist-consumo"></div>
 </div>
 
@@ -7345,14 +7346,10 @@ function _hTimeline(movsLote){
 // cada pasto (entrada→próxima entrada do mesmo lote; última = até hoje) e agrega
 // por pasto/piquete e por módulo. Calcula dias de ocupação e descanso médio (dias vazio).
 function _rotacaoStats(){
-  // Mapa: início do ciclo de cada lote (por nome). Movimentos antes disso ficam pra trás.
-  var _inicioCiclo={};
-  (S.LOTES||[]).forEach(function(l){ if(l.dt_abertura) _inicioCiclo[l.nome]=String(l.dt_abertura).substring(0,10); });
+  // PASTO/ROTAÇÃO = histórico COMPLETO do pasto. Não corta por ciclo de lote:
+  // o pasto é permanente, a média e o descanso somam TODAS as passagens de gado.
   var movs=(S.rT||[]).filter(function(r){
       if(r.tipo!=='mudanca_pasto'||r._apagado) return false;
-      // se o lote tem início de ciclo, só conta movimentos DAQUELA data em diante
-      var ini=_inicioCiclo[r.lote];
-      if(ini){ var d=(r.dt||r.ts||'').substring(0,10); if(d && d<ini) return false; }
       return true;
     })
     // NORMALIZA a grafia dos piquetes (M1/P1, M01P01, M1P1 viram o MESMO id).
@@ -7685,12 +7682,10 @@ function _rkpDiasEntre(isoA,isoB){
 // Monta, por área, a lista de ocupações: {entrada, saida, dias, lote, ua}
 function _rkpOcupacoesPorArea(){
   var _pf=window._pdfPasFiltro||{};
-  var _inicioCiclo={};
-  (S.LOTES||[]).forEach(function(l){ if(l.dt_abertura) _inicioCiclo[l.nome]=String(l.dt_abertura).substring(0,10); });
+  // PASTO = histórico COMPLETO. Não corta por ciclo de lote (pasto é permanente).
+  // O filtro de PERÍODO (_pf) continua valendo — é o "PDF por data" que o usuário escolhe.
   var movs=(S.rT||[]).filter(function(r){
     if(r.tipo!=='mudanca_pasto'||r._apagado) return false;
-    var ini=_inicioCiclo[r.lote];
-    if(ini){ var dc=(r.dt||r.ts||'').substring(0,10); if(dc && dc<ini) return false; }
     if(!_pf.de&&!_pf.ate) return true;
     var dt=(r.dt||r.ts||'').substring(0,10);
     if(_pf.de&&dt<_pf.de) return false;
@@ -8285,6 +8280,200 @@ function _rkpGraficoModulosPDF(comHist){
     +'<div style="font-size:9px;color:#888;margin-bottom:10px"><span style="color:#7CB342;font-weight:900">\u25a0</span> com animais &nbsp;&nbsp; <span style="color:#A99F88;font-weight:900">\u25a0</span> descanso</div>'
     +'<div class="grid2">'+(blocos||'<div style="font-size:11px;color:#999;text-align:center">Sem dados.</div>')+'</div>'
     +'</div>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PASTO POR SAFRA / ESTAÇÃO — compara águas × seca ano a ano (ajuste de UA)
+// Ano-safra da pecuária: 1º jul → 30 jun. Usa o HISTÓRICO COMPLETO do pasto
+// (não corta por ciclo de lote). Rateia cada ocupação dia-a-dia para a estação
+// certa, então ocupação que cruza estação conta certo em cada uma.
+// ═══════════════════════════════════════════════════════════════
+function _psSafra(iso){
+  var y=+String(iso).substring(0,4), m=+String(iso).substring(5,7);
+  if(!y||!m) return '';
+  var ini=(m>=7)?y:(y-1);
+  return String(ini).slice(2)+'/'+String(ini+1).slice(2); // "25/26"
+}
+function _psEstacao(iso){
+  var m=+String(iso).substring(5,7);
+  if(!m) return '';
+  if(m>=11||m<=4) return 'Águas';
+  if(m===5)       return 'Trans. águas→seca';
+  if(m>=6&&m<=9)  return 'Seca';
+  return 'Trans. seca→águas'; // out
+}
+function _psAddDia(iso,n){ var d=new Date(iso+'T12:00:00'); d.setDate(d.getDate()+n); return d.toISOString().substring(0,10); }
+function _psDiasEntre(a,b){ if(!a||!b) return 0; return Math.max(0,Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/864e5)); }
+// Ordem fixa das estações dentro da safra (como a pecuária vive)
+var _PS_ORDEM=['Seca','Trans. seca→águas','Águas','Trans. águas→seca'];
+var _PS_COR={'Seca':'#C62828','Trans. seca→águas':'#F9A825','Águas':'#2E7D32','Trans. águas→seca':'#F9A825'};
+
+// Agrega o histórico de um pasto: {safra: {estacao: {dias, uaPeso, entradas}}}
+function _psAgregaPasto(ocupacoes){
+  var agg={};
+  (ocupacoes||[]).forEach(function(o){
+    var ent=o.entrada, sai=o.saida||TD; // ainda ocupado → conta até hoje
+    var tot=_psDiasEntre(ent,sai);
+    if(tot<=0){ // ocupação de 0 dias: conta 1 passagem no dia de entrada
+      var sf0=_psSafra(ent), es0=_psEstacao(ent); if(!sf0) return;
+      agg[sf0]=agg[sf0]||{};
+      agg[sf0][es0]=agg[sf0][es0]||{dias:0,uaPeso:0,ent:0};
+      agg[sf0][es0].ent++;
+      return;
+    }
+    var contou={};
+    for(var i=0;i<tot;i++){
+      var dia=_psAddDia(ent,i);
+      var sf=_psSafra(dia), es=_psEstacao(dia); if(!sf) continue;
+      agg[sf]=agg[sf]||{};
+      agg[sf][es]=agg[sf][es]||{dias:0,uaPeso:0,ent:0};
+      agg[sf][es].dias++;
+      agg[sf][es].uaPeso += (o.ua||0);
+      var ck=sf+'|'+es;
+      if(!contou[ck]){ agg[sf][es].ent++; contou[ck]=true; }
+    }
+  });
+  return agg;
+}
+
+function gerarPDFPastoSafra(){
+  var areas;
+  try{ areas=_rkpOcupacoesPorArea(); }catch(e){ alert('Não foi possível ler o histórico de pasto.'); return; }
+  var ids=Object.keys(areas||{});
+  if(!ids.length){ alert('Sem histórico de pasto para analisar ainda.'); return; }
+
+  // Monta, por pasto, a agregação safra→estação, e junta o set de safras existentes
+  var pastos=[]; var safrasSet={};
+  ids.forEach(function(id){
+    var a=areas[id];
+    var agg=_psAgregaPasto(a.ocupacoes||[]);
+    var temDado=Object.keys(agg).length>0;
+    if(!temDado) return;
+    Object.keys(agg).forEach(function(sf){ safrasSet[sf]=true; });
+    pastos.push({id:id, label:a.label||id, ha:a.ha||0, agg:agg});
+  });
+  if(!pastos.length){ alert('Sem histórico de pasto para analisar ainda.'); return; }
+  pastos.sort(function(x,y){ return String(x.label).localeCompare(String(y.label)); });
+  var safras=Object.keys(safrasSet).sort(); // "24/25","25/26","26/27"
+
+  var dtHoje=new Date().toLocaleDateString('pt-BR');
+  var faz=(CU&&CU.faz)||'Fazenda Estrela';
+
+  // ── legenda de estações ──
+  var legenda='<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;margin:6px 0 2px">'
+    +_PS_ORDEM.map(function(es){
+      return '<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:11px;height:11px;border-radius:3px;background:'+_PS_COR[es]+';display:inline-block"></span>'+es+'</span>';
+    }).join('')
+    +'</div>';
+
+  // ── um card por pasto ──
+  var cards=pastos.map(function(p){
+    // maior "dias" entre todas as barras deste pasto → escala local
+    var maxDias=1;
+    safras.forEach(function(sf){
+      _PS_ORDEM.forEach(function(es){
+        var c=p.agg[sf]&&p.agg[sf][es]; if(c&&c.dias>maxDias) maxDias=c.dias;
+      });
+    });
+
+    // uma linha por safra, com 4 barrinhas (estações)
+    var linhas=safras.map(function(sf){
+      if(!p.agg[sf]) return ''; // safra sem dado nesse pasto
+      var barras=_PS_ORDEM.map(function(es){
+        var c=p.agg[sf][es];
+        var dias=c?c.dias:0;
+        var uaMed=(c&&c.dias)?(c.uaPeso/c.dias):0;
+        var w=Math.max(dias>0?3:0, Math.round(dias/maxDias*100));
+        var rot=dias>0?(dias+'d'+(uaMed>0?(' · '+uaMed.toFixed(1)+'UA'):'')):'—';
+        return '<div style="display:flex;align-items:center;gap:6px;margin:2px 0">'
+          +'<div style="width:120px;font-size:9px;color:#666;text-align:right;flex-shrink:0">'+es+'</div>'
+          +'<div style="flex:1;background:#F0F0F0;border-radius:4px;height:14px;overflow:hidden"><div style="width:'+w+'%;background:'+_PS_COR[es]+';height:100%;border-radius:4px"></div></div>'
+          +'<div style="width:96px;font-size:9px;color:#333;font-weight:700;flex-shrink:0">'+rot+'</div>'
+          +'</div>';
+      }).join('');
+      return '<div style="margin:8px 0 4px"><div style="font-size:11px;font-weight:800;color:#1B5E20;margin-bottom:2px">Safra '+sf+'</div>'+barras+'</div>';
+    }).join('');
+
+    // ── leitura automática: compara UA das águas vs seca na safra mais recente ──
+    var ultima=safras.filter(function(sf){return p.agg[sf];}).slice(-1)[0];
+    var leitura='';
+    if(ultima){
+      var ag=p.agg[ultima]['Águas'], se=p.agg[ultima]['Seca'];
+      var uaAg=(ag&&ag.dias)?(ag.uaPeso/ag.dias):0;
+      var uaSe=(se&&se.dias)?(se.uaPeso/se.dias):0;
+      var diasAg=ag?ag.dias:0, diasSe=se?se.dias:0;
+      if(uaAg>0 && uaSe>0){
+        var dif=Math.round((uaAg-uaSe)/uaSe*100);
+        if(dif>10) leitura='Nas águas o '+p.label+' sustentou <b>'+dif+'% mais carga</b> que na seca (UA '+uaAg.toFixed(1)+' × '+uaSe.toFixed(1)+'). Na seca, aliviar o pasto.';
+        else if(dif<-10) leitura='Atenção: na seca a carga ficou ACIMA das águas neste pasto — risco de forçar o capim na pior época.';
+        else leitura='Carga parecida entre águas e seca (UA '+uaAg.toFixed(1)+' × '+uaSe.toFixed(1)+').';
+      } else if(diasAg>0 && diasSe===0){
+        leitura='Só foi pastejado nas águas nesta safra — sem uso na seca.';
+      } else if(diasSe>0 && diasAg===0){
+        leitura='Só foi pastejado na seca nesta safra.';
+      }
+    }
+    var leituraBox=leitura?('<div style="background:#f5f7f4;border-radius:8px;padding:8px 11px;font-size:10px;color:#555;line-height:1.5;margin-top:6px"><b style="color:#1B5E20">Leitura:</b> '+leitura+'</div>'):'';
+
+    return '<div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);break-inside:avoid;margin-bottom:12px">'
+      +'<div style="font-size:15px;font-weight:900;color:#1B5E20">'+p.label+(p.ha?(' <span style="font-size:10px;color:#888;font-weight:600">· '+p.ha+' ha</span>'):'')+'</div>'
+      +linhas
+      +leituraBox
+      +'</div>';
+  }).join('');
+
+  // ── comparativo por estação entre safras (visão fazenda) ──
+  var fazComp='';
+  if(safras.length>=2){
+    // soma dias por (safra,estacao) na fazenda toda
+    var somaFaz={};
+    pastos.forEach(function(p){
+      safras.forEach(function(sf){
+        _PS_ORDEM.forEach(function(es){
+          var c=p.agg[sf]&&p.agg[sf][es]; if(!c) return;
+          somaFaz[sf]=somaFaz[sf]||{}; somaFaz[sf][es]=somaFaz[sf][es]||{dias:0,uaPeso:0};
+          somaFaz[sf][es].dias+=c.dias; somaFaz[sf][es].uaPeso+=c.uaPeso;
+        });
+      });
+    });
+    var linhasFaz=_PS_ORDEM.map(function(es){
+      var cels=safras.map(function(sf){
+        var c=somaFaz[sf]&&somaFaz[sf][es];
+        var uaMed=(c&&c.dias)?(c.uaPeso/c.dias):0;
+        var txt=c?(c.dias+'d'+(uaMed>0?(' · '+uaMed.toFixed(1)+'UA'):'')):'—';
+        return '<td style="padding:6px 8px;font-size:11px;text-align:center;border-bottom:1px solid #f0f0f0">'+txt+'</td>';
+      }).join('');
+      return '<tr><td style="padding:6px 8px;font-size:11px;font-weight:700;color:'+_PS_COR[es]+'">'+es+'</td>'+cels+'</tr>';
+    }).join('');
+    var thSaf=safras.map(function(sf){return '<th style="padding:6px 8px;font-size:11px;color:#1B5E20;text-align:center">'+sf+'</th>';}).join('');
+    fazComp='<div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:14px">'
+      +'<div style="font-size:12px;font-weight:800;color:#1B5E20;margin-bottom:8px">Fazenda — pastejo por estação, safra a safra</div>'
+      +'<table style="width:100%;border-collapse:collapse"><thead><tr><th style="padding:6px 8px;text-align:left"></th>'+thSaf+'</tr></thead><tbody>'+linhasFaz+'</tbody></table>'
+      +'</div>';
+  }
+
+  var w=window.open('','_blank');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Pasto por Safra — GPL</title>'
+    +'<style>*{box-sizing:border-box}'
+    +'body{font-family:Arial,"Segoe UI",Roboto,system-ui,sans-serif;padding:18px;color:#222;background:#eef1ec;max-width:900px;margin:0 auto}'
+    +'.cap{background:linear-gradient(135deg,#00695C,#00897B);border-radius:16px;padding:18px 20px;color:#fff;margin-bottom:6px}'
+    +'.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:620px){.grid2{grid-template-columns:1fr}}'
+    +'.nota{font-size:10px;color:#666;margin-top:12px;line-height:1.5;padding:10px;background:#fff;border-radius:10px;border-left:3px solid #00897B}'
+    +'table th{border-bottom:2px solid #e0e7e0}'
+    +_pdfTimbreCss()
+    +'@media print{button{display:none!important}body{background:#fff}}'
+    +'</style></head><body>'
+    +'<div class="cap"><div style="font-size:11px;letter-spacing:2px;opacity:.85;font-weight:700">GESTÃO PECUÁRIA LUCRATIVA</div><div style="font-size:22px;font-weight:900;margin-top:2px">Pasto por Safra</div><div style="font-size:11px;opacity:.9;margin-top:3px">'+faz+' · '+dtHoje+' · ano-safra 1º jul → 30 jun</div></div>'
+    +'<div style="background:#fff;border-radius:12px;padding:10px 14px;margin:8px 0 12px;font-size:11px;color:#555;line-height:1.5">Compara quanto cada pasto foi usado — e com quanta carga (UA) — em cada estação, safra a safra. Nas <b style="color:#2E7D32">águas</b> o pasto aguenta mais animal e giro rápido; na <b style="color:#C62828">seca</b> a carga tem que baixar. Comparar a mesma estação de um ano pro outro mostra a carga de suporte real de cada área.'+legenda+'</div>'
+    +fazComp
+    +'<div style="font-size:12px;font-weight:800;color:#1B5E20;margin:8px 0 4px">Cada pasto, safra a safra</div>'
+    +'<div class="grid2">'+cards+'</div>'
+    +'<p class="nota">A carga (UA) de cada barra é a média ponderada pelos dias de ocupação naquela estação. UA = animais × peso ÷ 450. Uma ocupação que começa numa estação e termina em outra tem os dias divididos entre as duas. Safra da pecuária: 1º de julho a 30 de junho.</p>'
+    +'<button onclick="window.print()" style="background:#00695C;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:12px">Imprimir / Salvar PDF</button>'
+    +_pdfRodape()
+    +'</body></html>');
+  w.document.close();
+  setTimeout(function(){ try{w.print();}catch(e){} },500);
 }
 
 function gerarPDFPastos(){
@@ -10121,7 +10310,7 @@ function renderFCLista(lista, totalGeral, deFmt, ateFmt, faz){
   html+='<div style="background:#FFF3E0;border-radius:10px;padding:12px;margin-top:8px;border:1px solid #FFB300">';
   html+='<div style="font-size:14px;font-weight:700;color:#E65100;margin-bottom:8px">Total selecionado: R$ '+totalSel.toFixed(2).replace('.',',')+'</div>';
   if(!telDono)html+='<div style="font-size:11px;color:#888;margin-bottom:6px">Cadastre o WhatsApp do Dono em Config.</div>';
-  html+='<button onclick="gerarPDFFConta()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:6px">📄 Gerar PDF</button>';
+  html+='<button onclick="gerarPDFFConta()" style="display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Gerar PDF</button>';
   html+='<button onclick="marcarFCSelecionadosComoPago()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px">✅ Marcar selecionados como pago</button>';
   html+='</div>';
 
@@ -10918,7 +11107,7 @@ function executarPesquisa(){
     if(r.tipo==='diaria') return '<div style="background:#fff;border-radius:10px;padding:11px;margin-bottom:6px;border:1px solid #e0e0e0;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;font-weight:700">'+r.n+'</div><div style="font-size:11px;color:#666">'+r.srv+' · '+dtFmt+' · '+r.faz+'</div><div style="margin-top:3px">'+st+'</div></div><div style="font-size:16px;font-weight:800;color:#1B5E20">R$ '+(r.v||0).toFixed(2).replace('.',',')+'</div></div>';
     return '<div style="background:#fff;border-radius:10px;padding:11px;margin-bottom:6px;border:1px solid #e0e0e0;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:13px;font-weight:700">🍽 '+(r.resp||r.n||'—')+'</div><div style="font-size:11px;color:#666">Cantina · '+dtFmt+' · '+r.faz+'</div><div style="margin-top:3px">'+st+'</div></div><div style="font-size:16px;font-weight:800;color:#1B5E20">R$ '+(r.total||0).toFixed(2).replace('.',',')+'</div></div>';
   }).join('');
-  html += '<button onclick="gerarPDFPesquisa()" style="width:100%;padding:11px;background:#C62828;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px">📄 Gerar Relatório PDF</button>';
+  html += '<button onclick="gerarPDFPesquisa()" style="display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:11px;background:#C62828;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Gerar Relatório PDF</button>';
   el.innerHTML = html;
 }
 function gerarPDFPesquisa(){
