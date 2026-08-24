@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/08/2026 v6.88 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/08/2026 v6.89 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1956,9 +1956,15 @@ function enviarDado(d){
     var cbN='_ed_'+Date.now()+'_'+Math.floor(Math.random()*9999);
     var s=document.createElement('script');
     s.src=url+'?data='+encodeURIComponent(JSON.stringify(r))+'&callback='+cbN+'&t='+Date.now();
-    window[cbN]=function(){
+    window[cbN]=function(resp){
       delete window[cbN];
       if(s.parentNode)s.parentNode.removeChild(s);
+      // Verifica se o backend sinalizou erro — se sim, coloca na fila para reenvio
+      var respStr=typeof resp==='string'?resp:(resp?JSON.stringify(resp):'');
+      if(respStr && respStr.indexOf('erro:')===0){
+        console.warn('enviarDado: backend retornou erro, colocando na fila. Resp:', respStr);
+        S.queue.push(r); salvar();
+      }
       atualizarSync();
     };
     s.onerror=function(){
