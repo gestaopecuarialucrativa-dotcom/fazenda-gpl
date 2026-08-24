@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/08/2026 v6.78 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/08/2026 v6.79 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -6548,6 +6548,16 @@ function rListLotes(){
 
 function _isoBR(iso){iso=String(iso||'');var m=iso.match(/^(\d{4})-(\d{2})-(\d{2})/);return m?(m[3]+'/'+m[2]+'/'+m[1]):iso;}
 function _parseDataBRp(s){s=String(s||'').trim();var m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);if(m){var d=('0'+m[1]).slice(-2),mo=('0'+m[2]).slice(-2),y=m[3].length===2?('20'+m[3]):m[3];return y+'-'+mo+'-'+d;}var i=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(i)return s;return null;}
+// Chama o backend pra renomear o lote em TODAS as abas da planilha (permanente).
+function renomearLoteBackend(de, para, cb){
+  if(!S.cfgGS){ if(cb)cb(false); return; }
+  try{
+    fetch(S.cfgGS+'?acao=renomear_lote&de='+encodeURIComponent(de)+'&para='+encodeURIComponent(para)+'&t='+Date.now(),
+      {method:'GET',mode:'no-cors'})
+      .then(function(){ if(cb)cb(true); })
+      .catch(function(){ if(cb)cb(false); });
+  }catch(e){ if(cb)cb(false); }
+}
 function editarNomeLote(nomeEnc, faz){
   var nomeAtual = decodeURIComponent(nomeEnc);
   var novoNome = prompt('Novo nome para o lote "'+nomeAtual+'":', nomeAtual);
@@ -6584,6 +6594,8 @@ function editarNomeLote(nomeEnc, faz){
     if(r.lote===nomeAtual){ r.lote=novoNome; }
   });
   salvar();
+  // renomeia na PLANILHA (permanente, em todas as abas) — senão volta no reload
+  renomearLoteBackend(nomeAtual, novoNome, function(){});
   salvarNuvem(function(ok){
     var resumo = (_nMov+_nTrato+_nEscore>0)
       ? ' ('+_nMov+' movimentos, '+_nTrato+' tratos atualizados)'
@@ -7461,6 +7473,8 @@ function alinharHistoricoLotes(){
       if(r.tipo==='mudanca_pasto'&&r.lote===orf){ r.lote=destino; }
       if(r.tipo==='trato'){ if(r.lote===orf)r.lote=destino; if(r.co===orf)r.co=destino; }
     });
+    // persiste na planilha (todas as abas)
+    renomearLoteBackend(orf, destino, function(){});
     trocas++;
   });
   if(trocas>0){
