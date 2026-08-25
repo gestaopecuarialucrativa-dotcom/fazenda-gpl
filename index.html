@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/08/2026 v6.92 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/08/2026 v6.93 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -816,6 +816,19 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <div class="ok" id="ok-desp">✅ Despesa lançada!</div>
 </div>
 <div id="l-desp" style="margin-top:8px"></div>
+</div>
+
+<!-- CARD: SUGESTÃO DE CARGA POR MÓDULO -->
+<div id="carga-modulo-card" style="background:#fff;border-radius:14px;border:1px solid #e0e7e0;margin-bottom:12px;overflow:hidden">
+  <div onclick="var b=document.getElementById('carga-modulo-body');var a=document.getElementById('carga-modulo-arrow');b.style.display=b.style.display==='none'?'block':'none';a.style.transform=b.style.display==='none'?'rotate(0deg)':'rotate(180deg)';if(b.style.display==='block')rCargaModulo();"
+       style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer;background:#F1F8E9">
+    <div style="display:flex;align-items:center;gap:8px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 8v4l3 3"/></svg>
+      <span style="font-size:13px;font-weight:800;color:#1B5E20">Sugestão de Carga por Módulo</span>
+    </div>
+    <svg id="carga-modulo-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="2" style="transition:transform .3s;transform:rotate(0deg)"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+  <div id="carga-modulo-body" style="display:none;padding:12px 14px"></div>
 </div>
 
 </div><!-- fim pg-painel -->
@@ -1996,7 +2009,10 @@ enviarDado(r);showOk('ok-d');document.getElementById('d-val').value='';document.
 function envI(){const ins=[...document.querySelectorAll('#ins-l .ir')].map(r=>({p:r.querySelector('.ip').value,q:parseFloat(r.querySelector('.iq').value)||0,u:r.querySelector('.iu').value})).filter(x=>x.p&&x.q>0);if(!ins.length){alert('Adicione pelo menos um produto.');return;}const dt=(document.getElementById('i-data')||{}).value||TD;const dest=(document.getElementById('i-dest')||{}).value;/* v6.27: saída do depósito registra a movimentação mas NÃO baixa o q (só entrada e trato afetam saldo; evita dupla contagem) */ins.forEach(function(x){if(x.p&&S.EST[x.p]){if(!S.mEst)S.mEst=[];S.mEst.push({p:x.p,q:x.q,u:S.EST[x.p].u,t:'saida',dt:dt,loc:dest});}});salvarLocal();const r={tipo:'insumo',faz:(document.getElementById('i-faz')||{}).value,n:CU.n,dt,ins,dest};S.rD.push(r);enviarDado(r);showOk('ok-i');document.getElementById('i-dest').value='';document.getElementById('ins-l').innerHTML=`<div class="ir"><div style="flex:2"><div class="lbl">Produto</div><select class="ip" onchange="updInsInfo(this)"></select></div><div style="flex:1"><div class="lbl">Qtd</div><input type="number" class="iq" placeholder="0" min="0" step="0.5"></div><div style="flex:1"><div class="lbl">Unid.</div><select class="iu"><option>saco</option><option>kg</option><option>litro</option></select></div></div><div class="ins-info" style="display:none"></div>`;updInsProd();setTimeout(()=>{sp('home',false);rUlt();},1600);}
 function envT(){const co=(document.getElementById('t-cocho')||{}).value;const pr=(document.getElementById('t-prod')||{}).value;const q=parseFloat((document.getElementById('t-qtd')||{}).value)||0;if(!co||!pr||!q){alert('Selecione lote, produto e quantidade.');return;}const dt=(document.getElementById('t-data')||{}).value||TD;const faz=(document.getElementById('t-faz')||{}).value;const cab=parseInt((document.getElementById('t-cab')||{}).value)||0;/* v6.27: trato NÃO baixa mais o q direto — isso causava dupla contagem (o saldo já
    desconta o trato via _compraSaldoEst: q - tratado, igual à planilha). Só ENTRADA mexe no q. */
-const pps=(S.EST&&pr&&S.EST[pr]&&S.EST[pr].peso_saco)?S.EST[pr].peso_saco:30;const desp=parseFloat((document.getElementById('t-desp')||{}).value)||0;const r={tipo:'trato',faz,n:CU.n,dt,co,pr,q,unid:'saco',kg_fornecido:q*pps,desp_kg:desp,cab,sit:coSel,escore:esTSel,obs:(document.getElementById('t-obs')||{}).value,lote:co,prod:pr,qtd:q,un:'saco'};S.rT.push(r);enviarDado(r);showOk('ok-t');document.getElementById('t-qtd').value='';document.getElementById('t-cab').value='';document.getElementById('t-obs').value='';var de=document.getElementById('t-desp');if(de)de.value='';document.querySelectorAll('#pg-trato .bopt').forEach(b=>b.classList.remove('sel'));coSel='';esTSel='';setTimeout(()=>{sp('home',false);rUlt();},1600);}
+const pps=(S.EST&&pr&&S.EST[pr]&&S.EST[pr].peso_saco)?S.EST[pr].peso_saco:30;const desp=parseFloat((document.getElementById('t-desp')||{}).value)||0;// Inclui lote_id (ID único do lote) para corte preciso por ciclo no consumo
+var _coLoteObj=(S.LOTES||[]).find(function(l){return l.nome===co||l.nome===co.replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();});
+var _coLoteId=(_coLoteObj&&_coLoteObj.id)?_coLoteObj.id:'';
+const r={tipo:'trato',faz,n:CU.n,dt,co,pr,q,unid:'saco',kg_fornecido:q*pps,desp_kg:desp,cab,sit:coSel,escore:esTSel,obs:(document.getElementById('t-obs')||{}).value,lote:co,lote_id:_coLoteId,prod:pr,qtd:q,un:'saco'};S.rT.push(r);enviarDado(r);showOk('ok-t');document.getElementById('t-qtd').value='';document.getElementById('t-cab').value='';document.getElementById('t-obs').value='';var de=document.getElementById('t-desp');if(de)de.value='';document.querySelectorAll('#pg-trato .bopt').forEach(b=>b.classList.remove('sel'));coSel='';esTSel='';setTimeout(()=>{sp('home',false);rUlt();},1600);}
 function envEs(){if(!esSel){alert('Selecione o escore.');return;}const lote=(document.getElementById('es-cocho')||{}).value;let nanim=parseInt((document.getElementById('es-nanim')||{}).value)||0;if(!nanim){const lt=S.LOTES.find(l=>l.nome===lote);if(lt)nanim=lt.qtd;}const r={tipo:'escore',faz:(document.getElementById('es-faz')||{}).value,co:lote,dt:(document.getElementById('es-data')||{}).value||TD,es:esSel,cab:nanim,obs:(document.getElementById('es-obs')||{}).value,n:CU.n};S.rE.push(r);enviarDado(r);showOk('ok-es');esSel=0;document.querySelectorAll('.ec').forEach(c=>c.classList.remove('sel'));document.getElementById('es-box').style.display='none';document.getElementById('es-nanim').value='';document.getElementById('es-obs').value='';setTimeout(()=>{sp('home',false);rUlt();},1600);}
 // [cantina legacy removida: envCt]
 // Marca o momento da última edição de estoque e força envio imediato à
@@ -5457,6 +5473,128 @@ function rRenderDashboard(){
   cont.innerHTML=html;
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// SUGESTÃO DE CARGA POR MÓDULO
+// Compara UA atual do lote no módulo com a capacidade de suporte da
+// estação (seca / águas / transição — MATOPIBA).
+// Referências Embrapa Cerrado:
+//   Seca:       0.5–1.5 UA/ha  (alerta: >1.5)
+//   Transição:  2.0–3.0 UA/ha  (alerta: >3.0)
+//   Águas:      4.0–6.0 UA/ha  (alerta: >6.0)
+// ═══════════════════════════════════════════════════════════════════
+function rCargaModulo(){
+  var div=document.getElementById('carga-modulo-body');
+  if(!div) return;
+  var aloc=S.MAPA_ALOC||{};
+  var lotes=S.LOTES||[];
+
+  // Estação MATOPIBA pelo mês atual
+  var mes=new Date().getMonth()+1; // 1-12
+  var estacao, limAlerta, limIdeal;
+  if(mes>=6&&mes<=9){        estacao='Seca';         limAlerta=1.5; limIdeal=1.0; }
+  else if(mes===5){          estacao='Trans. águas→seca'; limAlerta=3.0; limIdeal=2.0; }
+  else if(mes===10){         estacao='Trans. seca→águas'; limAlerta=3.0; limIdeal=2.0; }
+  else {                     estacao='Águas';         limAlerta=6.0; limIdeal=4.5; }
+
+  // Agrupa piquetes por módulo e calcula UA atual
+  var modulos={};
+  MAPA_AREAS.filter(function(a){return a.tipo==='modulo';}).forEach(function(a){
+    var mk='M'+String(a.modulo).padStart(2,'0');
+    if(!modulos[mk]) modulos[mk]={num:a.modulo,ha:0,ua:0,piquetes:[],lotesAtivos:[]};
+    var lotNm=aloc[a.id];
+    var ua=0,qtd=0,peso=0;
+    if(lotNm){
+      var lotObj=lotes.find(function(l){return l.nome===lotNm;});
+      if(lotObj){ua=lotObj.qtd*lotObj.peso/450;qtd=lotObj.qtd;peso=lotObj.peso;}
+      if(!modulos[mk].lotesAtivos.includes(lotNm)) modulos[mk].lotesAtivos.push(lotNm);
+    }
+    modulos[mk].ha+=a.ha;
+    modulos[mk].ua+=ua;
+    modulos[mk].piquetes.push({label:a.label,ha:a.ha,lote:lotNm||'',ua:ua,qtd:qtd,peso:peso});
+  });
+
+  var keys=Object.keys(modulos).sort();
+  if(!keys.length){
+    div.innerHTML='<div style="font-size:12px;color:#888;text-align:center;padding:16px">Sem módulos cadastrados no mapa.</div>';
+    return;
+  }
+
+  // Módulos com animais e módulos vazios (candidatos a receber)
+  var vazios=keys.filter(function(k){return modulos[k].ua===0&&modulos[k].ha>0;});
+
+  // Calcular UA máxima que cada módulo vazio pode receber nesta estação
+  function uaMax(ha){ return Math.round(ha*limIdeal*10)/10; }
+
+  var html='<div style="font-size:10px;color:#555;margin-bottom:10px;background:#F9FBE7;border-radius:8px;padding:8px 10px">'
+    +'<b style="color:#1B5E20">Estação atual (MATOPIBA):</b> '+estacao
+    +' · Ideal: até <b>'+limIdeal+' UA/ha</b> · Alerta: acima de <b>'+limAlerta+' UA/ha</b>'
+    +'</div>';
+
+  keys.forEach(function(mk){
+    var m=modulos[mk];
+    var tx=m.ha>0?m.ua/m.ha:0;
+    var txStr=tx.toFixed(2);
+    var supera=tx>limAlerta;
+    var acima=tx>limIdeal&&!supera;
+    var ok=tx<=limIdeal&&tx>0;
+    var vazio=m.ua===0;
+    var cor=supera?'#C62828':acima?'#E65100':ok?'#2E7D32':'#aaa';
+    var bg=supera?'#FFEBEE':acima?'#FFF3E0':ok?'#F1F8E9':'#f5f5f5';
+    var status=supera?'SOBRECARREGADO':acima?'ACIMA DO IDEAL':ok?'OK':'SEM ANIMAIS';
+    // Pct do limite
+    var pct=limAlerta>0?Math.min(tx/limAlerta,1.35)*100:0;
+    var pctBar=Math.min(pct,100);
+    var pctExc=Math.max(0,pct-100);
+    // Sugestão de redistribuição
+    var sugestao='';
+    if(supera&&vazios.length){
+      // Quantos UA a mais do que o limite
+      var uaExc=m.ua-(limIdeal*m.ha);
+      var uaExcAnimal=uaExc>0?Math.ceil(uaExc/(m.piquetes.filter(function(p){return p.lote;}).reduce(function(a,p){return a+(p.peso||0);},0)/m.piquetes.filter(function(p){return p.lote;}).length/450||1)):0;
+      var destSugest=vazios.map(function(vk){
+        var cap=uaMax(modulos[vk].ha);
+        return 'Módulo '+modulos[vk].num+' ('+modulos[vk].ha.toFixed(0)+'ha · cabe até '+cap+' UA)';
+      }).join(', ');
+      sugestao='<div style="margin-top:6px;background:#FFF8E1;border-left:3px solid #FFB300;border-radius:4px;padding:6px 8px;font-size:10px;color:#555">'
+        +'<b style="color:#E65100">Sugestão:</b> Considerar transferir parte dos animais para: '+destSugest+'.</div>';
+    } else if(supera&&!vazios.length){
+      sugestao='<div style="margin-top:6px;background:#FFEBEE;border-left:3px solid #C62828;border-radius:4px;padding:6px 8px;font-size:10px;color:#C62828">'
+        +'Todos os módulos têm animais. Avaliar venda ou transferência para pasto avulso.</div>';
+    } else if(vazio&&m.ha>0){
+      sugestao='<div style="margin-top:4px;font-size:10px;color:#888">Capacidade disponível: até <b>'+uaMax(m.ha)+' UA</b> nesta estação.</div>';
+    }
+
+    html+='<div style="border:1px solid '+cor+'33;border-radius:10px;padding:10px 12px;margin-bottom:8px;background:'+bg+'">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">'
+      +'<span style="font-size:13px;font-weight:800;color:'+cor+'">Módulo '+m.num+'</span>'
+      +'<span style="font-size:10px;font-weight:700;color:'+cor+';background:'+cor+'18;padding:2px 8px;border-radius:10px">'+status+'</span>'
+      +'</div>'
+      +'<div style="font-size:11px;color:#555;margin-bottom:6px">'
+      +m.ha.toFixed(1)+'ha · <b>'+txStr+' UA/ha</b>'+(m.lotesAtivos.length?' · '+m.lotesAtivos.join(', '):'')
+      +'</div>'
+      // Barra de carga
+      +'<div style="background:#e0e0e0;border-radius:6px;height:8px;overflow:hidden;position:relative;margin-bottom:4px">'
+      +(pctBar>0?'<div style="width:'+pctBar+'%;background:'+(pct>100?'#C62828':pct>66?'#E65100':'#2E7D32')+';height:100%;border-radius:6px;transition:width .4s"></div>':'')
+      +'</div>'
+      +'<div style="display:flex;justify-content:space-between;font-size:9px;color:#999">'
+      +'<span>0</span><span>Ideal '+limIdeal+'</span><span>Alerta '+limAlerta+' UA/ha</span>'
+      +'</div>'
+      +sugestao
+      +'</div>';
+  });
+
+  // Resumo geral
+  var totalUA=keys.reduce(function(a,k){return a+modulos[k].ua;},0);
+  var totalHa=keys.reduce(function(a,k){return a+modulos[k].ha;},0);
+  var txGeral=totalHa>0?totalUA/totalHa:0;
+  html+='<div style="background:#E8F5E9;border-radius:8px;padding:8px 12px;font-size:11px;color:#1B5E20;margin-top:4px">'
+    +'<b>Fazenda:</b> '+totalUA.toFixed(1)+' UA em '+totalHa.toFixed(0)+'ha = <b>'+txGeral.toFixed(2)+' UA/ha</b> geral'
+    +(txGeral>limAlerta?' — <b style="color:#C62828">acima do limite da '+estacao+'</b>':txGeral>limIdeal?' — <b style="color:#E65100">acima do ideal</b>':totalUA>0?' — dentro do ideal':'')
+    +'</div>';
+
+  div.innerHTML=html;
+}
+
 function sp_relatorio_init(){
   rRelTab('fazenda');
   rRelFazendaPreview();
@@ -8877,11 +9015,17 @@ function _consumoPerfis(){
   // Início do ciclo de cada lote (mesma regra da Rotação): trato ANTES do
   // dt_abertura é de outro ciclo (lote anterior de mesmo nome) e NÃO entra.
   // Sem isso, o consumo mistura o histórico do lote velho com o novo.
-  var _inicioCiclo={};
+  // Mapa duplo: por ID (chave primária) e por nome (fallback para tratos antigos)
+  var _inicioCicloId={};  // id_lote → dt_abertura
+  var _inicioCiclo={};    // nome_lote → dt_abertura (fallback)
+  var _idParaNome={};     // id_lote → nome_lote (para lookup reverso)
   (S.LOTES||[]).forEach(function(l){
+    var _nm=String(l.nome||'').replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
+    if(l.id) _idParaNome[l.id]=_nm;
     if(l.dt_abertura){
-      var _nm=String(l.nome||'').replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
-      _inicioCiclo[_nm]=String(l.dt_abertura).substring(0,10);
+      var _ini=String(l.dt_abertura).substring(0,10);
+      if(l.id) _inicioCicloId[l.id]=_ini;
+      _inicioCiclo[_nm]=_ini;
     }
   });
   var tratos=(S.rT||[]).filter(function(r){ return r.tipo==='trato'&&!r._apagado; });
@@ -8892,8 +9036,10 @@ function _consumoPerfis(){
     var ln=t.lote||t.co||'?';
     // Normaliza: remove "(X animais)" que pode ter ficado gravado no nome
     ln=ln.replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
-    // Corta tratos anteriores ao início do ciclo do lote (histórico do lote antigo)
-    var _ini=_inicioCiclo[ln];
+    // Corta tratos anteriores ao início do ciclo: usa ID (preciso) ou nome (fallback)
+    var _ini=null;
+    if(t.lote_id && _inicioCicloId[t.lote_id]) _ini=_inicioCicloId[t.lote_id];
+    else _ini=_inicioCiclo[ln];
     if(_ini){ var _d=(t.dt||t.ts||'').substring(0,10); if(_d && _d<_ini) return; }
     if(!porLote[ln]) porLote[ln]={lote:ln, sacos:0, kg:0, datas:[], prods:{}, cabUlt:0};
     var sacos=parseFloat(t.q||t.qtd||0)||0;
