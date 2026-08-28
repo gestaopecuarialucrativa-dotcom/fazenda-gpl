@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/08/2026 v6.93 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/08/2026 v6.94 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1882,77 +1882,146 @@ function calcSaldo(){
   const est=S.EST&&nome?S.EST[nome]:null;
   const pps=(est&&est.peso_saco)?est.peso_saco:30;
   const opt=ps.options[ps.selectedIndex];
-  const cons=opt?parseFloat(opt.getAttribute('data-cons')):null; // recomendado/dia (kg)
+  const consRec=opt?parseFloat(opt.getAttribute('data-cons')):null; // kg recomendado/dia pelo fabricante
   const lNome=(document.getElementById('t-cocho')||{}).value||'';
   const faz=(document.getElementById('t-faz')||{}).value||'';
   const lote=(S.LOTES||[]).find(l=>l.nome===lNome&&(!faz||l.faz===faz));
 
+  // Saldo de estoque (funcionalidade original)
+  const salEl=document.getElementById('t-saldo');
+  if(salEl&&est&&nom){
+    const q=parseFloat(qs&&qs.value)||0;
+    const saldoAtual=parseFloat(est.q)||0;
+    const resto=saldoAtual-q;
+    salEl.textContent=(saldoAtual).toFixed(1)+' sacos em estoque'+(q>0?' → sobra: '+resto.toFixed(1)+' sc':'');
+    salEl.style.color=resto<(est.min||0)?'#C62828':'#2E7D32';
+  }
+
   if(!lNome||!nome){
-    ce.style.background='#E8F5E9'; ce.style.borderColor='#A5D6A7'; ce.style.color='#1B5E20';
+    ce.style.background='#E8F5E9';ce.style.borderColor='#A5D6A7';ce.style.color='#1B5E20';
     ce.innerHTML='Selecione lote e produto ↑';
     return;
   }
 
-  // ── Média REAL dos últimos 7 dias de trato desse lote (esse produto) ──
+  // ── Quantidade sendo colocada AGORA ──
+  var qtdAgora=parseFloat(qs&&qs.value)||0;
+  var kgAgora=qtdAgora*pps;
+
+  // ── Histórico: intervalo desde o último trato do mesmo produto nesse lote ──
   var hoje=new Date(TD+'T00:00:00');
-  var lim=new Date(hoje); lim.setDate(lim.getDate()-6); // janela de 7 dias (hoje + 6 atrás)
-  var kgPorDia={}; // data → kg fornecido
-  (S.rT||[]).forEach(function(r){
-    if(r.tipo!=='trato'||r._apagado)return;
-    var rl=r.lote||r.co||''; if(_baseLote?_baseLote(rl)!==_baseLote(lNome):rl!==lNome)return;
-    var rp=r.prod||r.pr||''; if(rp!==nome)return;
+  var todosTratos=(S.rT||[]).filter(function(r){
+    if(r.tipo!=='trato'||r._apagado)return false;
+    var rl=r.lote||r.co||'';
+    rl=rl.replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
+    var ln=lNome.replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
+    return rl===ln && (r.prod||r.pr||'')===nome;
+  }).sort(function(a,b){return (a.dt||'').localeCompare(b.dt||'');});
+
+  // Último trato registrado (para calcular intervalo e consumo médio)
+  var ultTrato=todosTratos.length?todosTratos[todosTratos.length-1]:null;
+  var diasDesdeUlt=null, kgUlt=0, consumoDia=null;
+  if(ultTrato&&ultTrato.dt){
+    var dtUlt=new Date(ultTrato.dt.substring(0,10)+'T00:00:00');
+    diasDesdeUlt=Math.max(1,Math.round((hoje-dtUlt)/864e5));
+    kgUlt=parseFloat(ultTrato.kg_fornecido)||(parseFloat(ultTrato.q||ultTrato.qtd||0)*pps)||0;
+    consumoDia=kgUlt/diasDesdeUlt; // kg/dia consumidos desde o último trato
+  }
+
+  // Média dos últimos 7 dias
+  var lim7=new Date(hoje); lim7.setDate(lim7.getDate()-6);
+  var kgPorDia={};
+  todosTratos.forEach(function(r){
     var d=(r.dt||'').substring(0,10); if(!d)return;
-    var dd=new Date(d+'T00:00:00'); if(dd<lim||dd>hoje)return;
-    var kgf=parseFloat(r.kg_fornecido)|| (parseFloat(r.q||r.qtd||0)*pps) ||0;
+    var dd=new Date(d+'T00:00:00'); if(dd<lim7||dd>hoje)return;
+    var kgf=parseFloat(r.kg_fornecido)||(parseFloat(r.q||r.qtd||0)*pps)||0;
     kgPorDia[d]=(kgPorDia[d]||0)+kgf;
   });
   var diasComTrato=Object.keys(kgPorDia).length;
-  var somaKg=0; Object.keys(kgPorDia).forEach(function(d){somaKg+=kgPorDia[d];});
-  var mediaDia = diasComTrato>0 ? somaKg/diasComTrato : 0;
+  var mediaDia7=diasComTrato>0?Object.values(kgPorDia).reduce(function(a,b){return a+b;},0)/diasComTrato:0;
 
-  // %PV da média real
-  var pvTxt='';
-  if(lote&&lote.peso&&lote.qtd&&mediaDia>0){
-    var pv=(mediaDia/(lote.peso*lote.qtd))*100;
-    pvTxt='<div style="font-size:10px;color:#888;margin-top:3px">'+pv.toFixed(2).replace('.',',')+'% PV · média '+diasComTrato+'d</div>';
+  // ── Monta o termômetro ──
+  var massaViva=lote&&lote.peso&&lote.qtd?lote.peso*lote.qtd:0;
+
+  function pvPct(kg){return massaViva>0?((kg/massaViva)*100).toFixed(3).replace('.',',')+'% PV':'';} 
+
+  // Bloco: o que o fabricante recomenda
+  var recHtml='';
+  if(consRec&&consRec>0){
+    var recSacos=(consRec/pps).toFixed(1);
+    var pvRec=pvPct(consRec);
+    recHtml='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #e0e7e0">'
+      +'<span style="font-size:10px;color:#777">Fabricante recomenda</span>'
+      +'<span style="font-size:12px;font-weight:800;color:#1B5E20">'+consRec.toFixed(1)+' kg'+' · '+recSacos+'sc'+( pvRec?' · '+pvRec:'')+'</span>'
+      +'</div>';
   }
 
-  if(diasComTrato===0){
-    // lote sem trato nos últimos 7 dias → mostra referência do fabricante
-    ce.style.background='#F5F5F5';ce.style.borderColor='#E0E0E0';ce.style.color='#333';
-    var refTxt = (cons&&cons>0) ? '<div style="font-size:20px;font-weight:900;line-height:1.1">'+(Math.round(cons/pps*10)/10).toFixed(1)+' sacos/dia</div><div style="font-size:11px;color:#777">recomendado pelo fabricante</div>' : '<div style="font-size:11px;color:#999">cadastre o % no Estoque p/ ver recomendação</div>';
-    ce.innerHTML='<div style="font-size:12px;color:#555;font-weight:500">Sem trato nos últimos 7 dias</div>'+refTxt;
-    return;
+  // Bloco: quantidade agora
+  var agoraHtml='';
+  if(qtdAgora>0&&consRec&&consRec>0){
+    var diff=kgAgora-consRec;
+    var pctDif=Math.round(Math.abs(diff)/consRec*100);
+    var noPonto=Math.abs(diff)<consRec*0.1;
+    var corAgora=noPonto?'#2E7D32':diff>0?'#C62828':'#E65100';
+    var statusTxt=noPonto?'No ponto':diff>0?'+'+pctDif+'% acima':'-'+pctDif+'% abaixo';
+    var pvAgora=pvPct(kgAgora);
+    agoraHtml='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #e0e7e0">'
+      +'<span style="font-size:10px;color:#777">Colocando agora</span>'
+      +'<span style="display:flex;align-items:center;gap:6px">'
+      +'<span style="font-size:12px;font-weight:800;color:#333">'+kgAgora.toFixed(1)+' kg'+( pvAgora?' · '+pvAgora:'')+'</span>'
+      +'<span style="font-size:10px;font-weight:800;color:'+corAgora+';background:'+corAgora+'18;padding:1px 7px;border-radius:8px">'+statusTxt+'</span>'
+      +'</span></div>';
+  } else if(qtdAgora>0){
+    var pvAgora2=pvPct(kgAgora);
+    agoraHtml='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #e0e7e0">'
+      +'<span style="font-size:10px;color:#777">Colocando agora</span>'
+      +'<span style="font-size:12px;font-weight:800;color:#333">'+kgAgora.toFixed(1)+' kg'+( pvAgora2?' · '+pvAgora2:'')+'</span>'
+      +'</div>';
   }
 
-  if(!cons||isNaN(cons)||cons<=0){
-    // tem histórico mas produto sem % → mostra a média real, sem comparar
-    ce.style.background='#F5F5F5';ce.style.borderColor='#E0E0E0';ce.style.color='#333';
-    ce.innerHTML='<div style="font-size:12px;color:#555">Média 7 dias</div>'
-      +'<div style="font-size:20px;font-weight:900">'+(Math.round(mediaDia/pps*10)/10).toFixed(1)+' sacos/dia</div>'
-      +(pvTxt||'<div style="font-size:11px;color:#999;margin-top:2px">cadastre o % no Estoque p/ ver acima/abaixo</div>');
-    return;
-  }
-
-  // ── Compara média real dos 7 dias vs recomendado ──
-  var diff=mediaDia-cons;
-  var noPonto=Math.abs(diff)<cons*0.05; // dentro de 5% = no ponto
-  var acima=diff>0;
-  if(noPonto){
-    ce.style.background='#E8F5E9';ce.style.borderColor='#43A047';ce.style.color='#2E7D32';
-    ce.innerHTML='<div style="font-size:22px;line-height:1">✅</div>'
-      +'<div style="font-size:13px;font-weight:800;margin:2px 0">No ponto! Trato certeiro 👏</div>'
-      +pvTxt;
+  // Bloco: consumo desde o último trato (termômetro de ritmo real)
+  var ritmoHtml='';
+  if(consumoDia!==null&&diasDesdeUlt!==null){
+    var pvCons=pvPct(consumoDia);
+    var diffRitmo=consRec&&consRec>0?consumoDia-consRec:null;
+    var corRitmo='#555';
+    var statusRitmo='';
+    if(diffRitmo!==null){
+      var pctR=Math.round(Math.abs(diffRitmo)/consRec*100);
+      var noPontoR=Math.abs(diffRitmo)<consRec*0.15;
+      corRitmo=noPontoR?'#2E7D32':diffRitmo>0?'#C62828':'#E65100';
+      statusRitmo=noPontoR?' · no ponto':diffRitmo>0?' · +'+pctR+'% acima':' · -'+pctR+'% abaixo';
+    }
+    ritmoHtml='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0">'
+      +'<span style="font-size:10px;color:#777">Consumo real (últimos '+diasDesdeUlt+'d)</span>'
+      +'<span style="font-size:11px;font-weight:700;color:'+corRitmo+'">'+consumoDia.toFixed(1)+' kg/dia'+( pvCons?' · '+pvCons:'')+statusRitmo+'</span>'
+      +'</div>';
+  } else if(diasComTrato>0){
+    var pvM=pvPct(mediaDia7);
+    ritmoHtml='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0">'
+      +'<span style="font-size:10px;color:#777">Média 7 dias</span>'
+      +'<span style="font-size:11px;font-weight:700;color:#555">'+mediaDia7.toFixed(1)+' kg/dia'+( pvM?' · '+pvM:'')+'</span>'
+      +'</div>';
   } else {
-    var pctDif=Math.round(Math.abs(diff)/cons*100);
-    var cor=acima?'#E65100':'#F57F17';
-    ce.style.background=acima?'#FFF3E0':'#FFFDE7';
-    ce.style.borderColor=acima?'#FB8C00':'#FBC02D';ce.style.color=cor;
-    ce.innerHTML='<div style="font-size:22px;font-weight:900;line-height:1">'+(acima?'+':'−')+pctDif+'%</div>'
-      +'<div style="font-size:12px;font-weight:700;margin:2px 0">'+(acima?'ACIMA do recomendado':'ABAIXO · cocho sobrando?')+'</div>'
-      +pvTxt;
+    ritmoHtml='<div style="font-size:10px;color:#aaa;padding:4px 0">Sem tratos anteriores deste produto.</div>';
   }
+
+  // Cor geral do card
+  var corCard='#1B5E20', bgCard='#E8F5E9', bordCard='#A5D6A7';
+  if(qtdAgora>0&&consRec&&consRec>0){
+    var dif2=kgAgora-consRec;
+    var np2=Math.abs(dif2)<consRec*0.1;
+    if(!np2&&dif2>0){bgCard='#FFEBEE';bordCard='#EF9A9A';corCard='#C62828';}
+    else if(!np2&&dif2<0){bgCard='#FFF3E0';bordCard='#FFCC80';corCard='#E65100';}
+  }
+
+  ce.style.background=bgCard;
+  ce.style.borderColor=bordCard;
+  ce.style.color=corCard;
+  ce.style.textAlign='left';
+  ce.style.display='block';
+  ce.innerHTML='<div style="width:100%">'+recHtml+agoraHtml+ritmoHtml+'</div>';
 }
+
 function sCob(t){cobT=t;document.getElementById('tgr').classList.toggle('on',t==='ref');document.getElementById('tgd').classList.toggle('on',t==='dia');document.getElementById('br').style.display=t==='ref'?'block':'none';document.getElementById('bd').style.display=t==='dia'?'block':'none';calcCt();}
 function addQ(r,d){QT[r]=Math.max(0,QT[r]+d);const m={cafe:'c',almoco:'a',janta:'j'};document.getElementById('q'+m[r]).textContent=QT[r];calcCt();}
 // [cantina legacy removida: calcCt]
