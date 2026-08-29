@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/08/2026 v6.94 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 28/08/2026 v6.95 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1879,147 +1879,124 @@ function calcSaldo(){
   const ce=document.getElementById('t-cons-calc');
   if(!ps||!ce)return;
   const nome=ps.value;
-  const est=S.EST&&nome?S.EST[nome]:null;
-  const pps=(est&&est.peso_saco)?est.peso_saco:30;
-  const opt=ps.options[ps.selectedIndex];
-  const consRec=opt?parseFloat(opt.getAttribute('data-cons')):null; // kg recomendado/dia pelo fabricante
   const lNome=(document.getElementById('t-cocho')||{}).value||'';
   const faz=(document.getElementById('t-faz')||{}).value||'';
-  const lote=(S.LOTES||[]).find(l=>l.nome===lNome&&(!faz||l.faz===faz));
 
-  // Saldo de estoque (funcionalidade original)
-  const salEl=document.getElementById('t-saldo');
-  if(salEl&&est&&nom){
-    const q=parseFloat(qs&&qs.value)||0;
-    const saldoAtual=parseFloat(est.q)||0;
-    const resto=saldoAtual-q;
-    salEl.textContent=(saldoAtual).toFixed(1)+' sacos em estoque'+(q>0?' → sobra: '+resto.toFixed(1)+' sc':'');
-    salEl.style.color=resto<(est.min||0)?'#C62828':'#2E7D32';
-  }
-
+  // Se não tem lote OU produto selecionado → limpa o card
   if(!lNome||!nome){
-    ce.style.background='#E8F5E9';ce.style.borderColor='#A5D6A7';ce.style.color='#1B5E20';
+    ce.style.cssText='padding:12px;background:#E8F5E9;border-radius:10px;font-size:13px;font-weight:700;color:#1B5E20;min-height:44px;border:2px solid #A5D6A7;text-align:center;display:flex;align-items:center;justify-content:center';
     ce.innerHTML='Selecione lote e produto ↑';
     return;
   }
 
-  // ── Quantidade sendo colocada AGORA ──
-  var qtdAgora=parseFloat(qs&&qs.value)||0;
-  var kgAgora=qtdAgora*pps;
+  const est=S.EST&&nome?S.EST[nome]:null;
+  const pps=(est&&est.peso_saco)?est.peso_saco:30;
+  const lote=(S.LOTES||[]).find(l=>l.nome===lNome&&(!faz||l.faz===faz));
+  const massaViva=lote&&lote.peso&&lote.qtd?lote.peso*lote.qtd:0;
 
-  // ── Histórico: intervalo desde o último trato do mesmo produto nesse lote ──
-  var hoje=new Date(TD+'T00:00:00');
-  var todosTratos=(S.rT||[]).filter(function(r){
+  // Quantidade colocada agora
+  const qtdAgora=parseFloat(qs&&qs.value)||0;
+  const kgAgora=qtdAgora*pps;
+
+  // Quantidade recomendada pelo fabricante (vem do data-cons do option)
+  const opt=ps.options[ps.selectedIndex];
+  const consRec=opt?parseFloat(opt.getAttribute('data-cons')):null;
+
+  // Histórico: último trato do mesmo produto+lote
+  const hoje=new Date(TD+'T00:00:00');
+  const todosTratos=(S.rT||[]).filter(function(r){
     if(r.tipo!=='trato'||r._apagado)return false;
-    var rl=r.lote||r.co||'';
-    rl=rl.replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
-    var ln=lNome.replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
-    return rl===ln && (r.prod||r.pr||'')===nome;
-  }).sort(function(a,b){return (a.dt||'').localeCompare(b.dt||'');});
+    const rl=String(r.lote||r.co||'').replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
+    const ln=lNome.replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
+    return rl===ln&&(r.prod||r.pr||'')===nome;
+  }).sort((a,b)=>(a.dt||'').localeCompare(b.dt||''));
 
-  // Último trato registrado (para calcular intervalo e consumo médio)
-  var ultTrato=todosTratos.length?todosTratos[todosTratos.length-1]:null;
-  var diasDesdeUlt=null, kgUlt=0, consumoDia=null;
+  const ultTrato=todosTratos.length?todosTratos[todosTratos.length-1]:null;
+  let consumoDia=null, diasDesdeUlt=null;
   if(ultTrato&&ultTrato.dt){
-    var dtUlt=new Date(ultTrato.dt.substring(0,10)+'T00:00:00');
+    const dtUlt=new Date(ultTrato.dt.substring(0,10)+'T00:00:00');
     diasDesdeUlt=Math.max(1,Math.round((hoje-dtUlt)/864e5));
-    kgUlt=parseFloat(ultTrato.kg_fornecido)||(parseFloat(ultTrato.q||ultTrato.qtd||0)*pps)||0;
-    consumoDia=kgUlt/diasDesdeUlt; // kg/dia consumidos desde o último trato
+    const kgUlt=parseFloat(ultTrato.kg_fornecido)||(parseFloat(ultTrato.q||ultTrato.qtd||0)*pps)||0;
+    consumoDia=kgUlt/diasDesdeUlt;
   }
 
-  // Média dos últimos 7 dias
-  var lim7=new Date(hoje); lim7.setDate(lim7.getDate()-6);
-  var kgPorDia={};
-  todosTratos.forEach(function(r){
-    var d=(r.dt||'').substring(0,10); if(!d)return;
-    var dd=new Date(d+'T00:00:00'); if(dd<lim7||dd>hoje)return;
-    var kgf=parseFloat(r.kg_fornecido)||(parseFloat(r.q||r.qtd||0)*pps)||0;
-    kgPorDia[d]=(kgPorDia[d]||0)+kgf;
-  });
-  var diasComTrato=Object.keys(kgPorDia).length;
-  var mediaDia7=diasComTrato>0?Object.values(kgPorDia).reduce(function(a,b){return a+b;},0)/diasComTrato:0;
+  // Monta o card — simples e direto para o vaqueiro
+  let html='<div style="width:100%;font-size:12px">';
 
-  // ── Monta o termômetro ──
-  var massaViva=lote&&lote.peso&&lote.qtd?lote.peso*lote.qtd:0;
-
-  function pvPct(kg){return massaViva>0?((kg/massaViva)*100).toFixed(3).replace('.',',')+'% PV':'';} 
-
-  // Bloco: o que o fabricante recomenda
-  var recHtml='';
-  if(consRec&&consRec>0){
-    var recSacos=(consRec/pps).toFixed(1);
-    var pvRec=pvPct(consRec);
-    recHtml='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #e0e7e0">'
-      +'<span style="font-size:10px;color:#777">Fabricante recomenda</span>'
-      +'<span style="font-size:12px;font-weight:800;color:#1B5E20">'+consRec.toFixed(1)+' kg'+' · '+recSacos+'sc'+( pvRec?' · '+pvRec:'')+'</span>'
-      +'</div>';
-  }
-
-  // Bloco: quantidade agora
-  var agoraHtml='';
-  if(qtdAgora>0&&consRec&&consRec>0){
-    var diff=kgAgora-consRec;
-    var pctDif=Math.round(Math.abs(diff)/consRec*100);
-    var noPonto=Math.abs(diff)<consRec*0.1;
-    var corAgora=noPonto?'#2E7D32':diff>0?'#C62828':'#E65100';
-    var statusTxt=noPonto?'No ponto':diff>0?'+'+pctDif+'% acima':'-'+pctDif+'% abaixo';
-    var pvAgora=pvPct(kgAgora);
-    agoraHtml='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #e0e7e0">'
-      +'<span style="font-size:10px;color:#777">Colocando agora</span>'
-      +'<span style="display:flex;align-items:center;gap:6px">'
-      +'<span style="font-size:12px;font-weight:800;color:#333">'+kgAgora.toFixed(1)+' kg'+( pvAgora?' · '+pvAgora:'')+'</span>'
-      +'<span style="font-size:10px;font-weight:800;color:'+corAgora+';background:'+corAgora+'18;padding:1px 7px;border-radius:8px">'+statusTxt+'</span>'
-      +'</span></div>';
-  } else if(qtdAgora>0){
-    var pvAgora2=pvPct(kgAgora);
-    agoraHtml='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #e0e7e0">'
-      +'<span style="font-size:10px;color:#777">Colocando agora</span>'
-      +'<span style="font-size:12px;font-weight:800;color:#333">'+kgAgora.toFixed(1)+' kg'+( pvAgora2?' · '+pvAgora2:'')+'</span>'
-      +'</div>';
-  }
-
-  // Bloco: consumo desde o último trato (termômetro de ritmo real)
-  var ritmoHtml='';
-  if(consumoDia!==null&&diasDesdeUlt!==null){
-    var pvCons=pvPct(consumoDia);
-    var diffRitmo=consRec&&consRec>0?consumoDia-consRec:null;
-    var corRitmo='#555';
-    var statusRitmo='';
-    if(diffRitmo!==null){
-      var pctR=Math.round(Math.abs(diffRitmo)/consRec*100);
-      var noPontoR=Math.abs(diffRitmo)<consRec*0.15;
-      corRitmo=noPontoR?'#2E7D32':diffRitmo>0?'#C62828':'#E65100';
-      statusRitmo=noPontoR?' · no ponto':diffRitmo>0?' · +'+pctR+'% acima':' · -'+pctR+'% abaixo';
+  // Linha 1: o que está colocando agora
+  if(qtdAgora>0){
+    let statusAgora='', corAgora='#555', bgAgora='transparent';
+    if(consRec&&consRec>0){
+      const dif=(kgAgora-consRec)/consRec*100;
+      const noPonto=Math.abs(dif)<15;
+      if(noPonto){
+        statusAgora='OK'; corAgora='#1B5E20'; bgAgora='#E8F5E9';
+      } else if(dif>0){
+        statusAgora='ALTO +'+Math.round(dif)+'%'; corAgora='#C62828'; bgAgora='#FFEBEE';
+      } else {
+        statusAgora='BAIXO '+Math.round(dif)+'%'; corAgora='#E65100'; bgAgora='#FFF3E0';
+      }
     }
-    ritmoHtml='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0">'
-      +'<span style="font-size:10px;color:#777">Consumo real (últimos '+diasDesdeUlt+'d)</span>'
-      +'<span style="font-size:11px;font-weight:700;color:'+corRitmo+'">'+consumoDia.toFixed(1)+' kg/dia'+( pvCons?' · '+pvCons:'')+statusRitmo+'</span>'
-      +'</div>';
-  } else if(diasComTrato>0){
-    var pvM=pvPct(mediaDia7);
-    ritmoHtml='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0">'
-      +'<span style="font-size:10px;color:#777">Média 7 dias</span>'
-      +'<span style="font-size:11px;font-weight:700;color:#555">'+mediaDia7.toFixed(1)+' kg/dia'+( pvM?' · '+pvM:'')+'</span>'
-      +'</div>';
-  } else {
-    ritmoHtml='<div style="font-size:10px;color:#aaa;padding:4px 0">Sem tratos anteriores deste produto.</div>';
+    html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #e0e7e0">'
+      +'<span style="color:#555">Colocando agora</span>'
+      +'<span style="display:flex;align-items:center;gap:5px">'
+      +'<b style="color:#222">'+kgAgora.toFixed(1)+' kg</b>'
+      +(statusAgora?'<span style="font-size:10px;font-weight:800;color:'+corAgora+';background:'+bgAgora+';padding:1px 6px;border-radius:6px">'+statusAgora+'</span>':'')
+      +'</span></div>';
   }
+
+  // Linha 2: consumo real desde o último trato
+  if(consumoDia!==null){
+    let statusCons='', corCons='#555', msgVaqueiro='';
+    if(consRec&&consRec>0){
+      const dif=(consumoDia-consRec)/consRec*100;
+      const noPonto=Math.abs(dif)<15;
+      if(noPonto){
+        statusCons='OK'; corCons='#1B5E20';
+        msgVaqueiro='Consumo conforme fabricante';
+      } else if(dif>0){
+        statusCons='ALTO +'+Math.round(dif)+'%'; corCons='#C62828';
+        msgVaqueiro='Consumo alto — avisar consultor';
+      } else {
+        statusCons='BAIXO '+Math.round(dif)+'%'; corCons='#E65100';
+        msgVaqueiro='Consumo baixo — avisar consultor';
+      }
+    }
+    html+='<div style="padding:3px 0'+(msgVaqueiro?';border-bottom:1px solid #e0e7e0':'')+'">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center">'
+      +'<span style="color:#555">Consumo real ('+diasDesdeUlt+'d)</span>'
+      +'<span style="display:flex;align-items:center;gap:5px">'
+      +'<b style="color:#222">'+consumoDia.toFixed(1)+' kg/dia</b>'
+      +(statusCons?'<span style="font-size:10px;font-weight:800;color:'+corCons+'">'+statusCons+'</span>':'')
+      +'</span></div>'
+      +(msgVaqueiro?'<div style="font-size:11px;font-weight:700;color:'+corCons+';margin-top:2px">'+msgVaqueiro+'</div>':'')
+      +'</div>';
+  } else if(qtdAgora===0&&(!consRec||consRec===0)){
+    html+='<div style="color:#aaa;font-size:11px;text-align:center;padding:4px 0">Sem histórico deste produto neste lote.</div>';
+  }
+
+  // Linha 3: recomendado pelo fabricante (referência, menor destaque)
+  if(consRec&&consRec>0){
+    html+='<div style="display:flex;justify-content:space-between;padding:3px 0;margin-top:2px">'
+      +'<span style="color:#aaa;font-size:10px">Fabricante recomenda</span>'
+      +'<span style="color:#aaa;font-size:10px">'+consRec.toFixed(1)+' kg</span>'
+      +'</div>';
+  }
+
+  html+='</div>';
 
   // Cor geral do card
-  var corCard='#1B5E20', bgCard='#E8F5E9', bordCard='#A5D6A7';
-  if(qtdAgora>0&&consRec&&consRec>0){
-    var dif2=kgAgora-consRec;
-    var np2=Math.abs(dif2)<consRec*0.1;
-    if(!np2&&dif2>0){bgCard='#FFEBEE';bordCard='#EF9A9A';corCard='#C62828';}
-    else if(!np2&&dif2<0){bgCard='#FFF3E0';bordCard='#FFCC80';corCard='#E65100';}
+  let bgCard='#E8F5E9', bordCard='#A5D6A7';
+  if(consumoDia!==null&&consRec&&consRec>0){
+    const dif=(consumoDia-consRec)/consRec*100;
+    if(Math.abs(dif)>=15){
+      bgCard=dif>0?'#FFEBEE':'#FFF3E0';
+      bordCard=dif>0?'#EF9A9A':'#FFCC80';
+    }
   }
 
-  ce.style.background=bgCard;
-  ce.style.borderColor=bordCard;
-  ce.style.color=corCard;
-  ce.style.textAlign='left';
-  ce.style.display='block';
-  ce.innerHTML='<div style="width:100%">'+recHtml+agoraHtml+ritmoHtml+'</div>';
+  ce.style.cssText='padding:10px 12px;background:'+bgCard+';border-radius:10px;font-size:12px;border:2px solid '+bordCard+';display:block;text-align:left';
+  ce.innerHTML=html;
 }
 
 function sCob(t){cobT=t;document.getElementById('tgr').classList.toggle('on',t==='ref');document.getElementById('tgd').classList.toggle('on',t==='dia');document.getElementById('br').style.display=t==='ref'?'block':'none';document.getElementById('bd').style.display=t==='dia'?'block':'none';calcCt();}
@@ -6926,7 +6903,11 @@ function excluirLote(nome,faz){
   try{updTLLotes();}catch(e){}
   showOk('ok-lt');
 }
-function updTratoLote(){const lNome=(document.getElementById('t-cocho')||{}).value||'';const faz=(document.getElementById('t-faz')||{}).value||'';const infoEl=document.getElementById('t-lote-info');const cabHid=document.getElementById('t-cab');const cabInfo=document.getElementById('t-cab-info');if(!lNome){if(infoEl)infoEl.style.display='none';if(cabInfo)cabInfo.textContent='Selecione o lote acima ↑';if(cabHid)cabHid.value=0;return;}const lote=(S.LOTES||[]).find(l=>l.nome===lNome&&(!faz||l.faz===faz));if(lote){if(infoEl){infoEl.style.display='block';infoEl.textContent=lote.qtd+' animais · '+lote.peso+' kg/cab · Total: '+(lote.qtd*lote.peso).toFixed(0)+' kg';}if(cabInfo)cabInfo.textContent=lote.qtd+' animais · '+lote.peso+' kg/cab';if(cabHid)cabHid.value=lote.qtd;const ps=document.getElementById('t-prod');if(ps){const fazProds=_prodTrato(faz);let opts='<option value="">Selecione...</option>';fazProds.forEach(p=>{const est=S.EST&&S.EST[p];const pct=est&&est.pct?est.pct:0;if(pct>0&&lote.peso&&lote.qtd){const cons=(pct/100)*lote.peso*lote.qtd;opts+=`<option value="${p}" data-cons="${cons.toFixed(1)}">${p} (Rec: ${cons.toFixed(1)} kg)</option>`;}else opts+=`<option value="${p}">${p}</option>`;});ps.innerHTML=opts;ps.value='';}try{calcSaldo();}catch(e){}}}
+function updTratoLote(){
+  // Limpa o termômetro ao trocar de lote
+  var ceReset=document.getElementById('t-cons-calc');
+  if(ceReset){ceReset.style.cssText='padding:12px;background:#E8F5E9;border-radius:10px;font-size:13px;font-weight:700;color:#1B5E20;min-height:44px;border:2px solid #A5D6A7;text-align:center;display:flex;align-items:center;justify-content:center';ceReset.innerHTML='Selecione lote e produto ↑';}
+  const lNome=(document.getElementById('t-cocho')||{}).value||'';const faz=(document.getElementById('t-faz')||{}).value||'';const infoEl=document.getElementById('t-lote-info');const cabHid=document.getElementById('t-cab');const cabInfo=document.getElementById('t-cab-info');if(!lNome){if(infoEl)infoEl.style.display='none';if(cabInfo)cabInfo.textContent='Selecione o lote acima ↑';if(cabHid)cabHid.value=0;return;}const lote=(S.LOTES||[]).find(l=>l.nome===lNome&&(!faz||l.faz===faz));if(lote){if(infoEl){infoEl.style.display='block';infoEl.textContent=lote.qtd+' animais · '+lote.peso+' kg/cab · Total: '+(lote.qtd*lote.peso).toFixed(0)+' kg';}if(cabInfo)cabInfo.textContent=lote.qtd+' animais · '+lote.peso+' kg/cab';if(cabHid)cabHid.value=lote.qtd;const ps=document.getElementById('t-prod');if(ps){const fazProds=_prodTrato(faz);let opts='<option value="">Selecione...</option>';fazProds.forEach(p=>{const est=S.EST&&S.EST[p];const pct=est&&est.pct?est.pct:0;if(pct>0&&lote.peso&&lote.qtd){const cons=(pct/100)*lote.peso*lote.qtd;opts+=`<option value="${p}" data-cons="${cons.toFixed(1)}">${p} (Rec: ${cons.toFixed(1)} kg)</option>`;}else opts+=`<option value="${p}">${p}</option>`;});ps.innerHTML=opts;ps.value='';}try{calcSaldo();}catch(e){}}}
 function updEsLote(){const lNome=(document.getElementById('es-cocho')||{}).value||'';const faz=(document.getElementById('es-faz')||{}).value||'';const infoEl=document.getElementById('es-lote-info');const hidEl=document.getElementById('es-nanim');const nInfo=document.getElementById('es-nanim-info');if(!lNome){if(infoEl)infoEl.style.display='none';if(nInfo)nInfo.textContent='Selecione o lote acima ↑';if(hidEl)hidEl.value=0;return;}const lote=(S.LOTES||[]).find(l=>l.nome===lNome&&(!faz||l.faz===faz));if(lote){if(infoEl){infoEl.style.display='block';infoEl.textContent=lote.qtd+' animais · '+lote.peso+' kg/cabeça';}if(nInfo)nInfo.textContent=lote.qtd+' animais · '+lote.peso+' kg/cab';if(hidEl)hidEl.value=lote.qtd;}}
 
 // ═══ PRODUTOS ═══
