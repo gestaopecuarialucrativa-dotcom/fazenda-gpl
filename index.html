@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 01/09/2026 v6.98 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 01/09/2026 v6.99 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -11387,131 +11387,6 @@ function filtrarPan(lista){
   });
 }
 
-function rPan(){
-  // Atualizar select de fazendas
-  var pf = document.getElementById('pf');
-  if(pf && pf.options.length <= 1){
-    getFL().forEach(function(f){
-      var o = document.createElement('option');
-      o.value = f; o.textContent = f;
-      pf.appendChild(o);
-    });
-  }
-  
-  var diarias = filtrarPan((S.rD||[]).filter(function(r){return r.tipo==='diaria';}));
-  var cantinas = filtrarPan(S.rC||[]);
-  
-  var totalD = diarias.reduce(function(a,r){return a+(r.v||0);},0);
-  var totalC = cantinas.reduce(function(a,r){return a+(r.total||0);},0);
-  
-  var todos = diarias.concat(cantinas);
-  var aValidar = todos.filter(function(r){return !r.validado && !r.reprovado;}).length;
-  var validados = todos.filter(function(r){return r.validado;}).length;
-  
-  document.getElementById('ps-d').textContent = 'R$ '+Math.round(totalD);
-  document.getElementById('ps-dn').textContent = diarias.length+' reg.';
-  document.getElementById('ps-c').textContent = 'R$ '+Math.round(totalC);
-  document.getElementById('ps-cn').textContent = cantinas.length+' reg.';
-  document.getElementById('ps-av').textContent = aValidar;
-  document.getElementById('ps-vd').textContent = validados;
-  
-  // Despesas
-  var df = document.getElementById('desp-faz');
-  if(df && df.options.length === 0){
-    df.innerHTML = '<option value="">Todas</option>'+getFL().map(function(f){return'<option>'+f+'</option>';}).join('');
-  }
-  rListDesp();
-  rPanLista();
-}
-
-function rPanLista(){
-  var el = document.getElementById('pan-lista');
-  if(!el) return;
-  
-  var lista;
-  if(panTab === 'd'){
-    lista = filtrarPan((S.rD||[]).filter(function(r){return r.tipo==='diaria';}));
-    lista = [...lista].sort(function(a,b){return (b.dt||'')>(a.dt||'')?1:-1;});
-    
-    if(!lista.length){
-      el.innerHTML='<div style="text-align:center;color:#888;padding:20px;font-size:13px">Nenhuma diária no período.</div>';
-      return;
-    }
-    
-    el.innerHTML = lista.map(function(r){
-      var gi = S.rD.indexOf(r);
-      var status = r.validado 
-        ? '<span style="background:#E8F5E9;color:#2E7D32;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700">✅ Validado</span>'
-        : r.reprovado
-        ? '<span style="background:#FFEBEE;color:#C62828;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700">❌ Reprovado</span>'
-        : '<span style="background:#FFF3E0;color:#E65100;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700">⏳ Pendente</span>';
-      var pago = r.pago
-        ? '<span style="background:#E3F2FD;color:#1565C0;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;margin-left:3px">💰 Pago</span>'
-        : '';
-      var dtFmt = (r.dt||'').split('-').reverse().join('/');
-      return '<div data-gi="'+gi+'" onclick="abrirDetalheLancamento(String.fromCharCode(114,68),parseInt(this.dataset.gi))" style="background:#fff;border-radius:12px;padding:13px;margin-bottom:8px;border:1px solid #e0e0e0;cursor:pointer;border-left:4px solid '+(r.validado?'#2E7D32':r.reprovado?'#C62828':'#FFB300')+';">'
-        +'<div style="display:flex;justify-content:space-between;align-items:flex-start">'
-        +'<div><div style="font-size:14px;font-weight:700">'+r.n+'</div>'
-        +'<div style="font-size:12px;color:#666;margin-top:2px">'+r.srv+'</div>'
-        +'<div style="font-size:11px;color:#aaa;margin-top:3px">'+dtFmt+' · '+r.faz+'</div>'
-        +'<div style="margin-top:5px">'+status+pago+'</div>'
-        +'</div>'
-        +'<div style="text-align:right"><div style="font-size:18px;font-weight:800;color:#1B5E20">R$ '+r.v.toFixed(2).replace('.',',')+'</div>'
-        +'<div style="font-size:11px;color:#aaa;margin-top:2px">toque para ver</div>'
-        +'</div></div></div>';
-    }).join('');
-    
-  } else {
-    // Cantina agrupada por dia
-    lista = filtrarPan(S.rC||[]);
-    
-    var porDia = {};
-    lista.forEach(function(r){
-      var k = (r.dt||'')+'|'+(r.faz||'');
-      if(!porDia[k]) porDia[k] = {dt:r.dt,faz:r.faz,regs:[],total:0};
-      porDia[k].regs.push(r);
-      porDia[k].total += r.total||0;
-    });
-    
-    var dias = Object.values(porDia).sort(function(a,b){return (b.dt||'')>(a.dt||'')?1:-1;});
-    
-    if(!dias.length){
-      el.innerHTML='<div style="text-align:center;color:#888;padding:20px;font-size:13px">Nenhuma cantina no período.</div>';
-      return;
-    }
-    var podeValidar = CU && (CU.r==='Consultor' || CU.r==='Dono');
-    var diasPend = dias.filter(function(d){ return !d.regs.every(function(r){return r.validado;}); });
-    var header = '';
-    if(podeValidar && diasPend.length){
-      header = '<button onclick="validarCantinaTudo()" style="width:100%;padding:12px;margin-bottom:10px;background:#2E7D32;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">✅ Marcar tudo como pago ('+diasPend.length+' dia'+(diasPend.length>1?'s':'')+')</button>';
-    }
-    el.innerHTML = header + dias.map(function(dia){
-      var dtFmt = (dia.dt||'').split('-').reverse().join('/');
-      var resp = [...new Set(dia.regs.map(function(r){return r.resp||r.n||'—';}))].join(', ');
-      var gi = S.rC.indexOf(dia.regs[0]);
-      var todoVal = dia.regs.every(function(r){return r.validado;});
-      var algRep = dia.regs.some(function(r){return r.reprovado;});
-      var status = todoVal
-        ? '<span style="background:#E8F5E9;color:#2E7D32;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700">Pago</span>'
-        : algRep
-        ? '<span style="background:#FFEBEE;color:#C62828;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700">❌ Recusado</span>'
-        : '<span style="background:#FFF3E0;color:#E65100;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700">⏳ A pagar</span>';
-      
-      var btnVal = (podeValidar && !todoVal)
-        ? '<button onclick="event.stopPropagation();validarCantinaDia(\''+dia.dt+'\',\''+(dia.faz||'').replace(/'/g,"\\'")+'\')" style="padding:6px 14px;background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">✅ Marcar como pago</button>'
-        : '';
-      return '<div data-dt="'+dia.dt+'" data-faz="'+dia.faz+'" onclick="_abrirCtDia(this)" style="background:#fff;border-radius:12px;padding:11px 12px;margin-bottom:7px;border:1px solid #e0e7e0;cursor:pointer;border-left:4px solid '+(todoVal?'#2E7D32':algRep?'#C62828':'#FFB300')+';">'
-        +'<div style="display:flex;justify-content:space-between;align-items:baseline">'
-        +'<div style="font-size:14px;font-weight:700">'+resp+'</div>'
-        +'<div style="font-size:18px;font-weight:800;color:#1B5E20">R$ '+dia.total.toFixed(2).replace('.',',')+'</div>'
-        +'</div>'
-        +'<div style="font-size:11px;color:#999;margin-top:2px">'+dia.regs.length+' refeições · '+dtFmt+' · '+dia.faz+'</div>'
-        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:7px;gap:8px">'+status+btnVal+'</div>'
-        +'</div>';
-    }).join('');
-  }
-}
-
 function abrirDetalheLancamento(arr, gi){
   var r = S[arr][gi];
   if(!r) return;
@@ -12120,7 +11995,11 @@ function salvarFeno(){
   // registrar movimentação
   if(!S.mFeno) S.mFeno=[];
   S.mFeno.push({tipo:tipo,q:qtdUnid,kg:kgFeno,mov:'saida',lote:lNome,dt:dt});
-  var r={tipo:'feno',faz:faz,n:CU.n,dt:dt,lote:lNome,tipo_feno:tipo,
+  // Pasto atual do lote (via MAPA_ALOC)
+  var _fnAloc=S.MAPA_ALOC||{};
+  var _fnPasto=Object.keys(_fnAloc).find(function(k){return _fnAloc[k]===lNome||_fnAloc[k]===lNome.replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();});
+  var _fnPastoLabel=_fnPasto?(function(){var a=MAPA_AREAS.find(function(x){return x.id===_fnPasto;});return a?a.label:_fnPasto;})():'';
+  var r={tipo:'feno',faz:faz,n:CU.n,dt:dt,lote:lNome,pasto:_fnPastoLabel,tipo_feno:tipo,
     qtd_unid:qtdUnid,kg_feno:kgFeno,custo:custoTrat,obs:obs,uid:uid};
   S.rT.push(r);
   salvar();
