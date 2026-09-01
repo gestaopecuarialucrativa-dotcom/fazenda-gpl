@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 01/09/2026 v7.01 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 01/09/2026 v7.02 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2206,8 +2206,9 @@ function salvarFenoCad(){
   // registrar entrada se qtd>0
   if(qtd>0){
     if(!S.mFeno) S.mFeno=[];
-    S.mFeno.push({tipo:tipo,q:qtd,kg:qtd*peso,mov:'entrada',dt:dt,forn:forn});
+    S.mFeno.push({tipo:tipo,q:qtd,kg:qtd*peso,mov:'entrada',dt:dt,forn:forn,_ts:Date.now()});
   }
+  window._fenEditTs=Date.now();
   salvar();
   _enviarFeno(tipo);
   ['fn-cad-tipo','fn-cad-peso','fn-cad-vkg','fn-cad-qtd','fn-cad-forn'].forEach(function(id){
@@ -6262,6 +6263,20 @@ function carregarNuvem(cb){
             // (que pode ainda não ter subido).
             var _editRecente = window._estEditTs && (Date.now()-window._estEditTs < 30000);
             if(!_editRecente){ S.EST = cfg.EST; }
+          }
+          // ── FENO — igual ao EST: usa planilha como fonte única ─────────────
+          if(cfg.FENO){
+            var _fenEditRecente = window._fenEditTs && (Date.now()-window._fenEditTs < 30000);
+            if(!_fenEditRecente){ S.FENO = cfg.FENO; }
+          }
+          if(cfg.mFeno && cfg.mFeno.length){
+            // Mescla movimentações da planilha com as locais (evita duplicar por UID)
+            var _mFenLocal = S.mFeno||[];
+            var _mFenPlan = cfg.mFeno;
+            // Mantém locais dos últimos 30s (ainda não subiram)
+            var _agora = Date.now();
+            var _mFenLocalRecente = _mFenLocal.filter(function(m){ return m._ts && (_agora-m._ts)<30000; });
+            S.mFeno = _mFenPlan.concat(_mFenLocalRecente);
           }
           if(cfg.SERVS&&cfg.SERVS.length)S.SERVS=cfg.SERVS;
           if(cfg.PRAGAS&&cfg.PRAGAS.length)S.PRAGAS=cfg.PRAGAS;
