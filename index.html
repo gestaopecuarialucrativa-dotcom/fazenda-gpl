@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 01/09/2026 v7.00 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 01/09/2026 v7.01 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2660,47 +2660,54 @@ function filtrar(lista,per){const now=new Date();const faz=(document.getElementB
 let perA='quinzena';
 function rPan(){
   try{
-    const lv=filtrar(S.rD.filter(r=>r.tipo==='diaria'&&!r._apagado&&!r.pago),perA);
-    const lc=filtrar(S.rC,perA);
-    const lt=filtrar(S.rT,perA);
-    const le=filtrar(S.rE,perA);
-    const td=lv.reduce((a,r)=>a+r.v,0);
-    const tc=lc.reduce((a,r)=>a+r.total,0);
-    // Cards de resumo — usa IDs do painel atual (prefixo ps-)
-    const _s=function(id,v){const e=document.getElementById(id);if(e)e.textContent=v;};
-    const _si=function(id,v){const e=document.getElementById(id);if(e)e.innerHTML=v;};
+    // Usa filtrarPan que já sabe o período/fazenda corretos
+    var lv=filtrarPan((S.rD||[]).filter(function(r){return r.tipo==='diaria'&&!r._apagado&&!r.pago;}));
+    var lc=filtrarPan(S.rC||[]);
+    var lt=filtrarPan((S.rT||[]).filter(function(r){return !r._apagado;}));
+    var le=filtrarPan((S.rE||[]).filter(function(r){return !r._apagado;}));
+    var td=lv.reduce(function(a,r){return a+(r.v||0);},0);
+    var tc=lc.reduce(function(a,r){return a+(r.total||0);},0);
+    function _s(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+    function _si(id,v){var e=document.getElementById(id);if(e)e.innerHTML=v;}
     _s('ps-d','R$ '+Math.round(td));
     _s('ps-dn',lv.length+' reg.');
     _s('ps-c','R$ '+Math.round(tc));
     _s('ps-cn',lc.length+' reg.');
     _s('ps-av',lt.length);
     if(le.length){
-      const m=(le.reduce((a,r)=>a+r.es,0)/le.length).toFixed(1);
-      _si('ps-vd',`<span style="color:${EC[Math.round(parseFloat(m))]}">${m}</span>`);
+      var m=(le.reduce(function(a,r){return a+r.es;},0)/le.length).toFixed(1);
+      _si('ps-vd','<span style="color:'+(EC[Math.round(parseFloat(m))]||'#555')+'">'+m+'</span>');
     } else { _s('ps-vd','—'); }
-    // Lista de lançamentos — usa pan-lista
-    const pe=CU&&(CU.r==='Consultor'||CU.r==='Dono');
-    const pl=document.getElementById('pan-lista');
+    // Lista de lançamentos
+    var pl=document.getElementById('pan-lista');
     if(pl){
-      const todos=[...lv.map(r=>({...r,_tp:'d'})),...lc.map(r=>({...r,_tp:'c'})),...lt.map(r=>({...r,_tp:'t'})),...le.map(r=>({...r,_tp:'e'}))];
-      todos.sort((a,b)=>(b.dt||'').localeCompare(a.dt||''));
-      pl.innerHTML=todos.length?todos.slice(0,30).map(r=>{
-        var cor='#1B5E20',icone='',resumo='';
-        if(r._tp==='d'){cor='#1565C0';resumo=r.n+' · '+(r.srv||'')+(r.v?' · R$ '+r.v:'');icone='👤';}
-        else if(r._tp==='c'){cor='#6A1B9A';resumo=(r.items||[]).map(i=>i.p).join(', ');icone='🛒';}
-        else if(r._tp==='t'){cor='#2E7D32';resumo=(r.lote||r.co||'')+(r.prod||r.pr?' · '+(r.prod||r.pr):'')+(r.q?' · '+r.q+' sc':'');icone='🌱';}
-        else if(r._tp==='e'){cor='#E65100';resumo=(r.co||'')+(r.es?' · E'+r.es:'');icone='📊';}
-        return '<div class="ri"><div class="rt"><span class="rn" style="color:'+cor+'">'+resumo+'</span></div><div class="rd">'+(r.dt||'').split('-').reverse().join('/')+(r.faz?' · '+r.faz:'')+'</div></div>';
+      var todos=[];
+      lv.forEach(function(r){todos.push({r:r,tp:'d'});});
+      lc.forEach(function(r){todos.push({r:r,tp:'c'});});
+      lt.forEach(function(r){todos.push({r:r,tp:'t'});});
+      le.forEach(function(r){todos.push({r:r,tp:'e'});});
+      todos.sort(function(a,b){return (b.r.dt||'').localeCompare(a.r.dt||'');});
+      pl.innerHTML=todos.length?todos.slice(0,30).map(function(x){
+        var r=x.r, tp=x.tp;
+        var cor='#1B5E20', resumo='';
+        if(tp==='d'){cor='#1565C0';resumo=(r.n||'')+(r.srv?' · '+r.srv:'')+(r.v?' · R$ '+r.v:'');}
+        else if(tp==='c'){cor='#6A1B9A';resumo=(r.items||[]).map(function(i){return i.p;}).join(', ');}
+        else if(tp==='t'){cor='#2E7D32';resumo=(r.lote||r.co||'')+(r.prod||r.pr?' · '+(r.prod||r.pr):'')+(r.q?' · '+r.q+' sc':'');}
+        else if(tp==='e'){cor='#E65100';resumo=(r.co||'')+(r.es?' · E'+r.es:'');}
+        return '<div class="ri"><div class="rt"><span class="rn" style="color:'+cor+'">'+resumo+'</span></div>'
+          +'<div class="rd">'+((r.dt||'').split('-').reverse().join('/'))+(r.faz?' · '+r.faz:'')+'</div></div>';
       }).join(''):'<div style="font-size:12px;color:#aaa;text-align:center;padding:16px">Sem lançamentos no período.</div>';
     }
-    // Despesas — se existirem os elementos
-    const despFil=filtrar(S.rDesp||[],perA);
-    const elDesp=document.getElementById('l-desp');
+    // Despesas
+    var despFil=filtrarPan(S.rDesp||[]);
+    var elDesp=document.getElementById('l-desp');
     if(elDesp){
-      elDesp.innerHTML=despFil.length?[...despFil].reverse().slice(0,10).map(r=>{
-        const venc=r.venc?r.venc.split('-').reverse().join('/'):'';
-        const cor=r.st==='pago'?'#2E7D32':'#C62828';
-        return '<div class="ri"><div class="rt"><span class="rn">'+r.desc+'</span><span style="font-size:13px;font-weight:700;color:'+cor+'">R$ '+(r.val||0)+'</span></div><div class="rd">'+(r.dt||'').split('-').reverse().join('/')+(venc?' · vence '+venc:'')+' · '+(r.st==='pago'?'Pago':'A pagar')+'</div></div>';
+      elDesp.innerHTML=despFil.length?[...despFil].reverse().slice(0,10).map(function(r){
+        var venc=r.venc?r.venc.split('-').reverse().join('/'):'';
+        var cor=r.st==='pago'?'#2E7D32':'#C62828';
+        return '<div class="ri"><div class="rt"><span class="rn">'+(r.desc||'')+'</span>'
+          +'<span style="font-size:13px;font-weight:700;color:'+cor+'">R$ '+(r.val||0)+'</span></div>'
+          +'<div class="rd">'+((r.dt||'').split('-').reverse().join('/'))+(venc?' · vence '+venc:'')+' · '+(r.st==='pago'?'Pago':'A pagar')+'</div></div>';
       }).join(''):'<div style="font-size:12px;color:#aaa;text-align:center;padding:8px">Sem despesas.</div>';
     }
   }catch(e){console.error('rPan:',e);}
