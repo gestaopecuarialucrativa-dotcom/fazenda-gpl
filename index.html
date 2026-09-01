@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 01/09/2026 v6.99 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 01/09/2026 v7.00 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2658,8 +2658,54 @@ function getSafra(){const now=new Date();const y=now.getMonth()>=6?now.getFullYe
 function filtrar(lista,per){const now=new Date();const faz=(document.getElementById('pf')||{}).value||'';if(per==='safra'){const sf=getSafra();return lista.filter(r=>{const dt=r.dt||r.data;const d=new Date(dt+'T00:00:00');if(faz&&r.faz!==faz)return false;return d>=sf.inicio&&d<=sf.fim;});}return lista.filter(r=>{const dt=r.dt||r.data;const d=new Date(dt+'T00:00:00');if(faz&&r.faz!==faz)return false;if(per==='dia')return dt===TD;if(per==='semana'){const s=new Date(now);s.setDate(now.getDate()-7);return d>=s;}if(per==='quinzena'){const s=new Date(now);s.setDate(now.getDate()-15);return d>=s;}return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});}
 
 let perA='quinzena';
-function rPan(){try{const lv=filtrar(S.rD.filter(r=>r.tipo==='diaria'&&!r._apagado&&!r.pago),perA);const lc=filtrar(S.rC,perA);const lt=filtrar(S.rT,perA);const le=filtrar(S.rE,perA);const td=lv.reduce((a,r)=>a+r.v,0);const tc=lc.reduce((a,r)=>a+r.total,0);document.getElementById('s-d').textContent='R$ '+Math.round(td);document.getElementById('s-ds').textContent=lv.length+' reg.';document.getElementById('s-c').textContent='R$ '+Math.round(tc);document.getElementById('s-cs').textContent=lc.length+' reg.';document.getElementById('s-t').textContent=lt.length;if(le.length){const m=(le.reduce((a,r)=>a+r.es,0)/le.length).toFixed(1);document.getElementById('s-e').innerHTML=`<span style="color:${EC[Math.round(parseFloat(m))]}">${m}</span>`;document.getElementById('s-es').textContent=le.length+' aval.';}else{document.getElementById('s-e').textContent='—';document.getElementById('s-es').textContent='sem reg.';}const despFil=filtrar(S.rDesp||[],perA);const pagar=despFil.filter(r=>r.st==='pagar');const pago=despFil.filter(r=>r.st==='pago');const totP=pagar.reduce((a,r)=>a+r.val,0);const totPg=pago.reduce((a,r)=>a+r.val,0);document.getElementById('s-dp').textContent='R$ '+Math.round(totP);document.getElementById('s-dpg').textContent='R$ '+Math.round(totPg);document.getElementById('s-dps').textContent=pagar.length+' lançadas';document.getElementById('s-dpgs').textContent=pago.length+' pagas';const pe=CU&&(CU.r==='Consultor'||CU.r==='Dono');document.getElementById('l-d').innerHTML=lv.length?[...lv].reverse().map(r=>{const gi=S.rD.indexOf(r);const av=r.av==='otimo'?'<span class="bdg bg">Ótimo</span>':r.av==='bom'?'<span class="bdg ba">Bom</span>':'<span class="bdg br">Ruim</span>';const pg=r.pago?` <span style="font-size:10px;color:#2E7D32;font-weight:600">✅ Paga</span>`:'';const lancou=r.lancadoPor?` <span style="font-size:10px;color:#888">por ${r.lancadoPor}</span>`:'';const bp=(!r.pago&&r.v>0)?`<button onclick="pagarDiaria(${gi})" style="margin-top:6px;width:100%;padding:8px;font-size:12px;font-weight:700;background:#2E7D32;color:#fff;border:none;border-radius:8px;cursor:pointer">✅ Marcar como paga</button>`:'';
-const bd=pe?`<button class="btn-del-reg" data-arr="rD" data-idx="${gi}" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer;margin-left:8px">🗑️</button>`:'';return`<div class="ri">${bd}<div class="rt"><span class="rn">${r.n}${av}</span><span class="rv">${r.pago?'<s style="color:#aaa">':''}R$ ${r.v.toFixed(2).replace('.',',')}${r.pago?'</s>':''}</span></div><div class="rd">${(r.dt||'').split('-').reverse().join('/')} · ${r.faz} · ${r.srv}${pg}${lancou}</div>${bp}</div>`;}).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';/* btn-pagar-diaria usa onclick inline */document.querySelectorAll('.btn-del-reg').forEach(btn=>btn.addEventListener('click',function(){feedExcluir(this.getAttribute('data-arr'),parseInt(this.getAttribute('data-idx')));}));document.getElementById('l-e').innerHTML=le.length?[...le].reverse().map(r=>{const gi=S.rE.indexOf(r);const del=pe?`<button class="btn-del-reg" data-arr="rE" data-idx="${gi}" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer">🗑️</button>`:'';return`<div class="ri">${del}<div class="rt"><span class="rn">${r.co||r.faz}</span><span style="font-size:14px;font-weight:700;color:${EC[r.es]}">${EI[r.es].em} E${r.es}</span></div><div class="rd">${(r.dt||'').split('-').reverse().join('/')} · ${r.faz} · ${r.cab||0} animais</div></div>`;}).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';document.getElementById('l-t').innerHTML=lt.length?[...lt].reverse().map(r=>{const gi=S.rT.indexOf(r);const del=pe?`<button class="btn-del-reg" data-arr="rT" data-idx="${gi}" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer">🗑️</button>`:'';return`<div class="ri">${del}<div class="rt"><span class="rn">${r.co||'—'}</span><span class="rv">${r.q} ${r.unid||'saco'}</span></div><div class="rd">${(r.dt||'').split('-').reverse().join('/')} · ${r.faz} · ${r.pr} · ${r.cab||0} cab</div></div>`;}).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';document.getElementById('l-ct').innerHTML=lc.length?[...lc].reverse().map(r=>{const gi=S.rC.indexOf(r);const del=pe?`<button class="btn-del-reg" data-arr="rC" data-idx="${gi}" style="float:right;padding:2px 8px;font-size:11px;background:none;border:1px solid #ffcdd2;color:#C62828;border-radius:5px;cursor:pointer">🗑️</button>`:'';return`<div class="ri">${del}<div class="rt"><span class="rn">${r.resp}</span><span class="rv">R$ ${r.total.toFixed(2).replace('.',',')}</span></div><div class="rd">${(r.dt||'').split('-').reverse().join('/')} · ${r.faz} · ${r.det}</div></div>`;}).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:10px">Nenhum.</div>';document.querySelectorAll('#l-e .btn-del-reg,#l-t .btn-del-reg,#l-ct .btn-del-reg').forEach(btn=>btn.addEventListener('click',function(){excluirRegistro(this.getAttribute('data-arr'),parseInt(this.getAttribute('data-idx')));}));rListDesp();rChart();}catch(e){console.error('rPan:',e);}}
+function rPan(){
+  try{
+    const lv=filtrar(S.rD.filter(r=>r.tipo==='diaria'&&!r._apagado&&!r.pago),perA);
+    const lc=filtrar(S.rC,perA);
+    const lt=filtrar(S.rT,perA);
+    const le=filtrar(S.rE,perA);
+    const td=lv.reduce((a,r)=>a+r.v,0);
+    const tc=lc.reduce((a,r)=>a+r.total,0);
+    // Cards de resumo — usa IDs do painel atual (prefixo ps-)
+    const _s=function(id,v){const e=document.getElementById(id);if(e)e.textContent=v;};
+    const _si=function(id,v){const e=document.getElementById(id);if(e)e.innerHTML=v;};
+    _s('ps-d','R$ '+Math.round(td));
+    _s('ps-dn',lv.length+' reg.');
+    _s('ps-c','R$ '+Math.round(tc));
+    _s('ps-cn',lc.length+' reg.');
+    _s('ps-av',lt.length);
+    if(le.length){
+      const m=(le.reduce((a,r)=>a+r.es,0)/le.length).toFixed(1);
+      _si('ps-vd',`<span style="color:${EC[Math.round(parseFloat(m))]}">${m}</span>`);
+    } else { _s('ps-vd','—'); }
+    // Lista de lançamentos — usa pan-lista
+    const pe=CU&&(CU.r==='Consultor'||CU.r==='Dono');
+    const pl=document.getElementById('pan-lista');
+    if(pl){
+      const todos=[...lv.map(r=>({...r,_tp:'d'})),...lc.map(r=>({...r,_tp:'c'})),...lt.map(r=>({...r,_tp:'t'})),...le.map(r=>({...r,_tp:'e'}))];
+      todos.sort((a,b)=>(b.dt||'').localeCompare(a.dt||''));
+      pl.innerHTML=todos.length?todos.slice(0,30).map(r=>{
+        var cor='#1B5E20',icone='',resumo='';
+        if(r._tp==='d'){cor='#1565C0';resumo=r.n+' · '+(r.srv||'')+(r.v?' · R$ '+r.v:'');icone='👤';}
+        else if(r._tp==='c'){cor='#6A1B9A';resumo=(r.items||[]).map(i=>i.p).join(', ');icone='🛒';}
+        else if(r._tp==='t'){cor='#2E7D32';resumo=(r.lote||r.co||'')+(r.prod||r.pr?' · '+(r.prod||r.pr):'')+(r.q?' · '+r.q+' sc':'');icone='🌱';}
+        else if(r._tp==='e'){cor='#E65100';resumo=(r.co||'')+(r.es?' · E'+r.es:'');icone='📊';}
+        return '<div class="ri"><div class="rt"><span class="rn" style="color:'+cor+'">'+resumo+'</span></div><div class="rd">'+(r.dt||'').split('-').reverse().join('/')+(r.faz?' · '+r.faz:'')+'</div></div>';
+      }).join(''):'<div style="font-size:12px;color:#aaa;text-align:center;padding:16px">Sem lançamentos no período.</div>';
+    }
+    // Despesas — se existirem os elementos
+    const despFil=filtrar(S.rDesp||[],perA);
+    const elDesp=document.getElementById('l-desp');
+    if(elDesp){
+      elDesp.innerHTML=despFil.length?[...despFil].reverse().slice(0,10).map(r=>{
+        const venc=r.venc?r.venc.split('-').reverse().join('/'):'';
+        const cor=r.st==='pago'?'#2E7D32':'#C62828';
+        return '<div class="ri"><div class="rt"><span class="rn">'+r.desc+'</span><span style="font-size:13px;font-weight:700;color:'+cor+'">R$ '+(r.val||0)+'</span></div><div class="rd">'+(r.dt||'').split('-').reverse().join('/')+(venc?' · vence '+venc:'')+' · '+(r.st==='pago'?'Pago':'A pagar')+'</div></div>';
+      }).join(''):'<div style="font-size:12px;color:#aaa;text-align:center;padding:8px">Sem despesas.</div>';
+    }
+  }catch(e){console.error('rPan:',e);}
+}
+
 function sPer(el,p){document.querySelectorAll('.pbtn').forEach(b=>b.classList.remove('on'));el.classList.add('on');perA=p;const si=document.getElementById('safra-info');if(si){if(p==='safra'){const sf=getSafra();si.style.display='block';si.textContent='🌾 Safra '+sf.label;}else si.style.display='none';}rPan();}
 function pagarDiaria(idx){
   var r=S.rD[idx]; if(!r) return;
