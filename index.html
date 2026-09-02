@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 01/09/2026 v7.06 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 01/09/2026 v7.07 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1300,6 +1300,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <div class="tgo"    id="htab-pastos"  onclick="sHistTab('pastos')"  style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 22V12"/><path d="M5 12S2 9 2 6a5 5 0 0 1 10 0c0 3-3 6-3 6H5z"/><path d="M14 12s3-3 3-6a5 5 0 0 1 10 0c0 3-3 6-3 6h-4z"/></svg>Pastos</div>
   <div class="tgo"    id="htab-consumo" onclick="sHistTab('consumo')" style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>Consumo</div>
   <div class="tgo"    id="htab-cocho"   onclick="sHistTab('cocho')"   style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M3 6h18M3 12h18M9 18h6"/><path d="M5 6v12M19 6v12"/></svg>Cocho</div>
+  <div class="tgo" id="htab-feno" onclick="sHistTab('feno')" style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10"/><path d="M12 2v10l4 4"/><path d="M2 12h10"/></svg>Feno</div>
 </div>
 
 <div id="htab-lotes-content">
@@ -1371,6 +1372,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 </div>
 
 <div id="htab-cocho-content" style="display:none"></div>
+<div id="htab-feno-content" style="display:none"></div>
 <div id="htab-consumo-content" style="display:none">
   <div style="margin:4px 0 10px"><div style="font-size:15px;font-weight:800;color:#1B5E20">Custo do suplemento</div><div style="font-size:12px;color:#777;margin-top:2px">Quanto cada lote e cada produto está custando</div></div>
   <button onclick="gerarPDFConsumo()" style="display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>PDF — consumo atual</button>
@@ -7529,7 +7531,7 @@ function rHistCocho(){
   el.innerHTML=out;
 }
 function sHistTab(tab){
-  ['lotes','rotacao','pastos','consumo','cocho'].forEach(function(t){
+  ['lotes','rotacao','pastos','consumo','cocho','feno'].forEach(function(t){
     var b=document.getElementById('htab-'+t);
     var c=document.getElementById('htab-'+t+'-content');
     if(b) b.classList.toggle('on', t===tab);
@@ -8968,6 +8970,144 @@ function _rkpGraficoModulosPDF(comHist){
     +'<div class="grid2">'+(blocos||'<div style="font-size:11px;color:#999;text-align:center">Sem dados.</div>')+'</div>'
     +'</div>';
 }
+
+// ═══ ABA FENO: histórico de feno por lote e pasto ═══
+function rHistFeno(){
+  var el=document.getElementById('htab-feno-content');
+  if(!el) return;
+  function _br(iso){ return iso&&iso.length>=10 ? iso.substring(8,10)+'/'+iso.substring(5,7)+'/'+iso.substring(0,4) : (iso||''); }
+
+  var tratosFeno=(S.rT||[]).filter(function(r){return r.tipo==='feno'&&!r._apagado;});
+  tratosFeno.sort(function(a,b){return (b.dt||'').localeCompare(a.dt||'');});
+
+  var out='<div style="margin:4px 0 10px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center">'
+    +'<div style="font-size:15px;font-weight:800;color:#33691E">Histórico de Feno</div>'
+    +'<button onclick="gerarPDFFeno()" style="padding:6px 12px;background:#33691E;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px">'
+    +'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>PDF</button>'
+    +'</div>'
+    +'<div style="font-size:12px;color:#777;margin-top:2px">Feno fornecido por lote, pasto e data</div></div>';
+
+  if(!tratosFeno.length){
+    el.innerHTML=out+'<div class="card" style="padding:16px;text-align:center;color:#888;font-size:13px">Nenhum trato de feno registrado ainda.</div>';
+    return;
+  }
+
+  // Agrupar por lote
+  var porLote={};
+  tratosFeno.forEach(function(r){
+    var ln=String(r.lote||'').replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
+    if(!porLote[ln]) porLote[ln]=[];
+    porLote[ln].push(r);
+  });
+
+  out+=Object.keys(porLote).sort().map(function(ln){
+    var tratos=porLote[ln];
+    var kgTotal=tratos.reduce(function(a,r){return a+(parseFloat(r.kg_feno)||0);},0);
+    var lote=(S.LOTES||[]).find(function(l){return l.nome===ln;});
+    var cab=lote?lote.qtd:0;
+    var linhas=tratos.slice(0,10).map(function(r){
+      var kg=parseFloat(r.kg_feno)||0;
+      var unid=parseFloat(r.qtd_unid)||0;
+      var tipo=r.tipo_feno||'—';
+      var pasto=r.pasto||r.sit||'—';
+      var fenEnt=S.FENO&&S.FENO[tipo]?S.FENO[tipo]:{u:'un',vkg:0};
+      var custo=kg*(fenEnt.vkg||0);
+      var gCab=cab>0&&kg>0?Math.round(kg/cab*1000):0;
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f0f0">'
+        +'<div>'
+        +'<div style="font-size:12px;font-weight:700;color:#33691E">'+_br((r.dt||'').substring(0,10))+'</div>'
+        +'<div style="font-size:11px;color:#666">'+tipo+(unid?' · '+unid+' '+(fenEnt.u||'un'):'')+(pasto!=='—'?' · '+pasto:'')+'</div>'
+        +(gCab>0?'<div style="font-size:10px;color:#888">'+gCab+' g/cab/dia</div>':'')
+        +'</div>'
+        +'<div style="text-align:right">'
+        +'<div style="font-size:13px;font-weight:800;color:#33691E">'+Math.round(kg)+' kg</div>'
+        +(custo>0?'<div style="font-size:10px;color:#C62828">R$ '+custo.toFixed(2)+'</div>':'')
+        +'</div></div>';
+    }).join('');
+    return '<div class="card" style="margin-bottom:8px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+      +'<div style="font-size:14px;font-weight:800;color:#1B5E20">'+ln+(cab?' <span style="font-size:11px;color:#888;font-weight:400">'+cab+' animais</span>':'')+'</div>'
+      +'<div style="font-size:12px;color:#33691E;font-weight:700">'+Math.round(kgTotal)+' kg total</div>'
+      +'</div>'+linhas+'</div>';
+  }).join('');
+
+  el.innerHTML=out;
+}
+
+function gerarPDFFeno(){
+  var faz=(CU&&CU.faz)||Object.keys(S.FAZ||{})[0]||'Fazenda Estrela';
+  var dtHoje=new Date().toLocaleDateString('pt-BR');
+  var tratosFeno=(S.rT||[]).filter(function(r){return r.tipo==='feno'&&!r._apagado;});
+  tratosFeno.sort(function(a,b){return (b.dt||'').localeCompare(a.dt||'');});
+  function _br(iso){ return iso&&iso.length>=10 ? iso.substring(8,10)+'/'+iso.substring(5,7)+'/'+iso.substring(0,4) : (iso||''); }
+
+  // Agrupar por lote
+  var porLote={};
+  tratosFeno.forEach(function(r){
+    var ln=String(r.lote||'').replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
+    if(!porLote[ln]) porLote[ln]=[];
+    porLote[ln].push(r);
+  });
+
+  var corpo=Object.keys(porLote).sort().map(function(ln){
+    var tratos=porLote[ln];
+    var kgTotal=tratos.reduce(function(a,r){return a+(parseFloat(r.kg_feno)||0);},0);
+    var custoTotal=tratos.reduce(function(a,r){
+      var kg=parseFloat(r.kg_feno)||0;
+      var tipo=r.tipo_feno||'';
+      var fenEnt=S.FENO&&S.FENO[tipo]?S.FENO[tipo]:{vkg:0};
+      return a+kg*(fenEnt.vkg||0);
+    },0);
+    var lote=(S.LOTES||[]).find(function(l){return l.nome===ln;});
+    var cab=lote?lote.qtd:0;
+    var linhas=tratos.map(function(r){
+      var kg=parseFloat(r.kg_feno)||0;
+      var unid=parseFloat(r.qtd_unid)||0;
+      var tipo=r.tipo_feno||'—';
+      var pasto=r.pasto||r.sit||'—';
+      var fenEnt=S.FENO&&S.FENO[tipo]?S.FENO[tipo]:{u:'un',vkg:0};
+      var custo=kg*(fenEnt.vkg||0);
+      var gCab=cab>0&&kg>0?Math.round(kg/cab*1000):0;
+      return '<tr>'
+        +'<td style="padding:5px 8px">'+_br((r.dt||'').substring(0,10))+'</td>'
+        +'<td style="padding:5px 8px">'+tipo+(unid?' ('+unid+' '+(fenEnt.u||'un')+')':'')+'</td>'
+        +'<td style="padding:5px 8px;text-align:center">'+pasto+'</td>'
+        +'<td style="padding:5px 8px;text-align:right;font-weight:700">'+Math.round(kg)+' kg</td>'
+        +'<td style="padding:5px 8px;text-align:center;color:#888">'+(gCab>0?gCab+' g':'—')+'</td>'
+        +'<td style="padding:5px 8px;text-align:right;color:#C62828">'+(custo>0?'R$ '+custo.toFixed(2):'—')+'</td>'
+        +'</tr>';
+    }).join('');
+    return '<div style="background:#fff;border-radius:10px;padding:12px;margin-bottom:10px;box-shadow:0 2px 6px rgba(0,0,0,.07)">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+      +'<div style="font-size:14px;font-weight:900;color:#1B5E20">'+ln+(cab?' · '+cab+' animais':'')+'</div>'
+      +'<div style="font-size:12px;color:#33691E;font-weight:700">'+Math.round(kgTotal)+' kg'+(custoTotal>0?' · R$ '+custoTotal.toFixed(2):'')+'</div>'
+      +'</div>'
+      +'<table style="width:100%;border-collapse:collapse;font-size:11px">'
+      +'<thead><tr style="background:#E8F5E9"><th style="padding:5px 8px;text-align:left">Data</th><th style="padding:5px 8px;text-align:left">Tipo</th><th style="padding:5px 8px;text-align:center">Pasto</th><th style="padding:5px 8px;text-align:right">Kg</th><th style="padding:5px 8px;text-align:center">g/cab/dia</th><th style="padding:5px 8px;text-align:right">Custo</th></tr></thead>'
+      +'<tbody>'+linhas+'</tbody></table></div>';
+  }).join('');
+
+  var kgGeral=tratosFeno.reduce(function(a,r){return a+(parseFloat(r.kg_feno)||0);},0);
+
+  var w=window.open('','_blank');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Relatório de Feno — GPL</title>'
+    +'<style>*{box-sizing:border-box}body{font-family:Arial,sans-serif;padding:16px;color:#222;background:#eef1ec;max-width:860px;margin:0 auto}'
+    +'@media print{button{display:none}body{background:#fff}}</style></head><body>'
+    +'<div style="display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#33691E,#558B2F);border-radius:12px;padding:14px 18px;color:#fff;margin-bottom:12px">'
+    +'<img src="'+LOGO_GPL+'" style="height:44px;width:auto;filter:brightness(0) invert(1);flex-shrink:0">'
+    +'<div><div style="font-size:10px;letter-spacing:2px;opacity:.8;font-weight:700">GESTÃO PECUÁRIA LUCRATIVA</div>'
+    +'<div style="font-size:18px;font-weight:900;margin-top:1px">Relatório de Feno</div>'
+    +'<div style="font-size:10px;opacity:.8;margin-top:2px">'+faz+' · '+dtHoje+'</div></div></div>'
+    +'<div style="background:#fff;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:11px;color:#555">'
+    +'Total fornecido: <b>'+Math.round(kgGeral)+' kg</b> em '+tratosFeno.length+' trato'+(tratosFeno.length!==1?'s':'')+'</div>'
+    +corpo
+    +'<button onclick="window.print()" style="background:#33691E;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:10px">Imprimir / Salvar PDF</button>'
+    +'</body></html>');
+  w.document.close();
+  setTimeout(function(){try{w.print();}catch(e){}},400);
+}
+
 
 // ═══════════════════════════════════════════════════════════════
 // PASTO POR SAFRA / ESTAÇÃO — compara águas × seca ano a ano (ajuste de UA)
