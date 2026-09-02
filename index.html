@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 01/09/2026 v7.07 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 01/09/2026 v7.08 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2405,7 +2405,7 @@ var _coLoteId=(_coLoteObj&&_coLoteObj.id)?_coLoteObj.id:'';
 var _coAloc=S.MAPA_ALOC||{};
 var _coPastoId=Object.keys(_coAloc).find(function(k){var ln=co.replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();return _coAloc[k]===co||_coAloc[k]===ln;});
 var _coPasto=_coPastoId?(function(){var a=MAPA_AREAS.find(function(x){return x.id===_coPastoId;});return a?a.label:_coPastoId;})():(coSel||'');
-const r={tipo:'trato',faz,n:CU.n,dt,co,pr,q,unid:'saco',kg_fornecido:q*pps,desp_kg:desp,cab,sit:coSel,pasto:_coPasto,escore:esTSel,obs:(document.getElementById('t-obs')||{}).value,lote:co,lote_id:_coLoteId,prod:pr,qtd:q,un:'saco'};S.rT.push(r);salvar();enviarDado(r);showOk('ok-t');document.getElementById('t-qtd').value='';document.getElementById('t-cab').value='';document.getElementById('t-obs').value='';var de=document.getElementById('t-desp');if(de)de.value='';setTimeout(function(){sp('home',false);rUlt();},1500);document.querySelectorAll('#pg-trato .bopt').forEach(b=>b.classList.remove('sel'));coSel='';esTSel='';setTimeout(()=>{sp('home',false);rUlt();},1600);}
+const r={tipo:'trato',faz,n:CU.n,dt,co,pr,q,unid:'saco',kg_fornecido:q*pps,desp_kg:desp,cab,sit:coSel,pasto:_coPasto,escore:esTSel,obs:(document.getElementById('t-obs')||{}).value,lote:co,lote_id:_coLoteId,prod:pr,qtd:q,un:'saco'};S.rT.push(r);salvar();enviarDado(r);showOk('ok-t');document.getElementById('t-qtd').value='';document.getElementById('t-cab').value='';document.getElementById('t-obs').value='';var de=document.getElementById('t-desp');if(de)de.value='';setTimeout(function(){sp('home',false);rUlt();var _sel=document.getElementById('t-cocho');if(_sel){_sel.disabled=false;_sel.style.background='';_sel.style.color='';}},1500);document.querySelectorAll('#pg-trato .bopt').forEach(b=>b.classList.remove('sel'));coSel='';esTSel='';setTimeout(()=>{sp('home',false);rUlt();},1600);}
 function envEs(){if(!esSel){alert('Selecione o escore.');return;}const lote=(document.getElementById('es-cocho')||{}).value;let nanim=parseInt((document.getElementById('es-nanim')||{}).value)||0;if(!nanim){const lt=S.LOTES.find(l=>l.nome===lote);if(lt)nanim=lt.qtd;}const r={tipo:'escore',faz:(document.getElementById('es-faz')||{}).value,co:lote,dt:(document.getElementById('es-data')||{}).value||TD,es:esSel,cab:nanim,obs:(document.getElementById('es-obs')||{}).value,n:CU.n};S.rE.push(r);enviarDado(r);showOk('ok-es');esSel=0;document.querySelectorAll('.ec').forEach(c=>c.classList.remove('sel'));document.getElementById('es-box').style.display='none';document.getElementById('es-nanim').value='';document.getElementById('es-obs').value='';setTimeout(()=>{sp('home',false);rUlt();},1600);}
 // [cantina legacy removida: envCt]
 // Marca o momento da última edição de estoque e força envio imediato à
@@ -12142,19 +12142,27 @@ function irParaTrato(){
     var b = document.getElementById('trato-back-btn');
     if(b) b.style.display = 'flex';
   }, 60);
-  // pré-selecionar lote se existir
+  var sel = document.getElementById('t-cocho');
   if(loteSelecionadoNoMapa){
     setTimeout(function(){
-      var sel = document.getElementById('t-cocho');
       if(!sel) return;
+      // Pré-selecionar e bloquear edição — vem do mapa, lote é certo
       for(var i=0;i<sel.options.length;i++){
         if(sel.options[i].text.indexOf(loteSelecionadoNoMapa)>=0){
           sel.selectedIndex=i;
+          sel.disabled=true;
+          sel.style.background='#f0f4f0';
+          sel.style.color='#555';
           try{updTratoLote();}catch(e){}
           break;
         }
       }
     }, 250);
+  } else {
+    // Veio direto (não do mapa) — lote livre para editar
+    if(sel){ sel.disabled=false; sel.style.background=''; sel.style.color=''; }
+  }
+}
   }
 }
 
