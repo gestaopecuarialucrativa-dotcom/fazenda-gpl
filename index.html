@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 01/09/2026 v7.12 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 01/09/2026 v7.13 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -7541,6 +7541,7 @@ function sHistTab(tab){
   else if(tab==='pastos') rHistRankingPastos();
   else if(tab==='consumo') rHistConsumo();
   else if(tab==='cocho') rHistCocho();
+  else if(tab==='feno') rHistFeno();
 }
 
 function rHistorico(){
@@ -9735,7 +9736,12 @@ function _consumoPerfis(){
     // cabeças: do lote atual, senão do último trato
     var loteObj=lotes.find(function(l){return l.nome===ln;});
     // Lote inativo: não existe em S.LOTES ou tem qtd=0 — não mostrar no Consumo
-    if(!loteObj||(loteObj.qtd||0)===0) return null;
+    // Exceto se teve trato nos últimos 60 dias (pode ter sido dado baixa recentemente)
+    if(!loteObj||(loteObj.qtd||0)===0){
+      var _ultDt=o.datas[o.datas.length-1]||'';
+      var _diasUlt=_ultDt?Math.round((new Date()-new Date(_ultDt+'T00:00:00'))/864e5):999;
+      if(_diasUlt>60) return null; // some se inativo há mais de 60 dias
+    }
     var cab=(loteObj&&loteObj.qtd)?loteObj.qtd:(o.cabUlt||0);
     var kgDia=o.kg/diasCorr;
     var kgCab=cab>0?o.kg/cab:0;
