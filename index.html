@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 01/09/2026 v7.04 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 01/09/2026 v7.05 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2731,7 +2731,7 @@ function rPanLista(){
       pl.innerHTML=rCs.map(function(r){
         var gi=S.rC.indexOf(r);
         var itens=(r.items||[]).map(function(i){return i.p+(i.q>1?' ×'+i.q:'');}).join(', ');
-        var bp='<button onclick="validarLancamento('rC','+gi+')" style="margin-top:6px;width:100%;padding:8px;font-size:12px;font-weight:700;background:#2E7D32;color:#fff;border:none;border-radius:8px;cursor:pointer">Validar</button>';
+                var bp='<button onclick="validarLancamento(\"rC\",'+gi+')" style="margin-top:6px;width:100%;padding:8px;font-size:12px;font-weight:700;background:#2E7D32;color:#fff;border:none;border-radius:8px;cursor:pointer">Validar</button>';
         return '<div class="ri"><div class="rt"><span class="rn">'+r.resp+'</span><b style="color:#6A1B9A">R$ '+(r.total||0)+'</b></div>'
           +'<div class="rd">'+((r.dt||'').split('-').reverse().join('/'))+((r.faz)?' · '+r.faz:'')+'</div>'
           +'<div style="font-size:11px;color:#555;margin-top:2px">'+itens+'</div>'
