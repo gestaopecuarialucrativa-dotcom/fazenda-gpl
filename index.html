@@ -2109,13 +2109,17 @@ function calcSaldo(){
     return rl===_lNomeBase&&(r.prod||r.pr||'')===nome;
   }).sort((a,b)=>(a.dt||'').localeCompare(b.dt||''));
   const ultTrato=tratsMesmo.length?tratsMesmo[tratsMesmo.length-1]:null;
+  const penultTrato=tratsMesmo.length>=2?tratsMesmo[tratsMesmo.length-2]:null;
 
-  let consumoDia=null, diasDesdeUlt=null;
-  if(ultTrato&&ultTrato.dt){
-    const dtUlt=new Date(ultTrato.dt.substring(0,10)+'T00:00:00');
-    diasDesdeUlt=Math.max(1,Math.round((hoje-dtUlt)/864e5));
-    const kgUlt=parseFloat(ultTrato.kg_fornecido)||(parseFloat(ultTrato.q||ultTrato.qtd||0)*pps)||0;
-    consumoDia=kgUlt/diasDesdeUlt;
+  // Consumo real = kg do PENÚLTIMO trato ÷ dias entre penúltimo e último.
+  // Só sobre tratos já registrados — NUNCA usa o que vai lançar agora.
+  let consumoDia=null, diasEntre=null;
+  if(ultTrato&&penultTrato&&ultTrato.dt&&penultTrato.dt){
+    const dtU=new Date(ultTrato.dt.substring(0,10)+'T00:00:00');
+    const dtP=new Date(penultTrato.dt.substring(0,10)+'T00:00:00');
+    diasEntre=Math.max(1,Math.round((dtU-dtP)/864e5));
+    const kgPen=parseFloat(penultTrato.kg_fornecido)||(parseFloat(penultTrato.q||penultTrato.qtd||0)*pps)||0;
+    consumoDia=kgPen/diasEntre;
   }
 
   // Sem histórico deste produto → esconde bloco
@@ -2141,10 +2145,14 @@ function calcSaldo(){
   if(qtdAgora>0){
     corpo+='<div style="height:5px;background:#e0e7e0;border-radius:3px;overflow:hidden;margin-top:5px"><div style="height:100%;border-radius:3px;background:'+barraCor+';width:'+barraW+'%"></div></div>';
   }
-  // Linha consumo real
-  corpo+='<div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;margin-top:6px">'
-    +'<span style="color:#65766a">Consumo real ('+diasDesdeUlt+'d)</span>'
-    +'<span style="font-weight:500;color:#1b2c1b">'+consumoDia.toFixed(0)+' kg/dia</span></div>';
+  // Linha consumo real (entre os 2 últimos tratos registrados)
+  if(consumoDia!==null){
+    corpo+='<div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;margin-top:6px">'
+      +'<span style="color:#65766a">Consumo real (entre 2 últimos)</span>'
+      +'<span style="font-weight:500;color:#1b2c1b">'+consumoDia.toFixed(0)+' kg/dia</span></div>';
+  } else {
+    corpo+='<div style="font-size:11px;color:#888;margin-top:6px">Consumo real: precisa de 2 tratos registrados</div>';
+  }
   // Linha fabricante
   if(consRec&&consRec>0){
     corpo+='<div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;margin-top:2px">'
@@ -2153,18 +2161,17 @@ function calcSaldo(){
   }
   corpo+='</div>';
 
-  // Aviso (ABAIXO / ACIMA / no previsto)
-  if(consRec&&consRec>0){
+  // Aviso (ABAIXO / ACIMA / no previsto) — só com consumo real calculado (2 tratos)
+  if(consRec&&consRec>0&&consumoDia!==null){
     const difH=(consumoDia-consRec)/consRec*100;
     let avTxt='', avCor='', avSvg='';
     if(Math.abs(difH)<15){ avTxt='consumo no previsto'; avCor='#33691E'; }
     else if(difH>0){ avTxt='consome ACIMA do previsto \u00b7 observar'; avCor='#B71C1C'; }
     else { avTxt='consome ABAIXO do previsto \u00b7 observar'; avCor='#E65100'; }
     let dtStr='';
-    if(ultTrato&&ultTrato.dt){
-      const dU=new Date(ultTrato.dt.substring(0,10)+'T00:00:00');
-      const dDiff=Math.round((hoje-dU)/864e5);
-      dtStr=dDiff===0?'último trato: hoje':dDiff===1?'último trato: ontem':'último trato: há '+dDiff+' dias';
+    if(penultTrato&&penultTrato.dt&&ultTrato&&ultTrato.dt){
+      const fmt=function(d){const p=d.substring(0,10).split('-');return p[2]+'/'+p[1];};
+      dtStr=fmt(penultTrato.dt)+' → '+fmt(ultTrato.dt)+' ('+diasEntre+(diasEntre>1?' dias':' dia')+')';
     }
     corpo+='<div style="padding:8px 11px;display:flex;align-items:flex-start;gap:7px">'
       +'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="'+avCor+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
