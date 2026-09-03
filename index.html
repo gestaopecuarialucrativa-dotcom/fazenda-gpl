@@ -434,7 +434,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
 <!-- TRATO -->
 <div id="pg-trato" class="pg" style="display:none">
-<button id="trato-back-btn" onclick="goBack()" style="display:none;align-items:center;gap:6px;background:none;border:none;color:#1B5E20;font-size:14px;font-weight:700;cursor:pointer;padding:4px 0;margin-bottom:10px">‹ Voltar ao mapa</button>
+<button id="trato-back-btn" onclick="var _m=document.getElementById('mapa-opcoes-modal');if(_m)_m.classList.remove('open');loteSelecionadoNoMapa='';pastoSelecionadoNoMapa='';goBack();" style="display:none;align-items:center;gap:6px;background:none;border:none;color:#1B5E20;font-size:14px;font-weight:700;cursor:pointer;padding:4px 0;margin-bottom:10px">&#8249; Voltar ao mapa</button>
 <div class="card" style="padding:14px">
 
   <!-- Linha 1: Data + Lote -->
