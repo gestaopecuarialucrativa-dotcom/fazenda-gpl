@@ -2045,7 +2045,8 @@ function calcSaldo(){
 
   const est=S.EST&&nome?S.EST[nome]:null;
   const pps=(est&&est.peso_saco)?est.peso_saco:30;
-  const lote=(S.LOTES||[]).find(l=>l.nome===lNome&&(!faz||l.faz===faz));
+  const _lNomeBase=lNome.replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
+  const lote=(S.LOTES||[]).find(l=>(l.nome===lNome||l.nome===_lNomeBase)&&(!faz||l.faz===faz));
   const massaViva=lote&&lote.peso&&lote.qtd?lote.peso*lote.qtd:0;
 
   // Quantidade colocada agora
