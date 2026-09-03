@@ -2062,9 +2062,12 @@ function calcSaldo(){
   const qtdAgora=parseFloat(qs&&qs.value)||0;
   const kgAgora=qtdAgora*pps;
 
-  // Quantidade recomendada pelo fabricante (vem do data-cons do option)
+  // Quantidade recomendada pelo fabricante — tenta data-cons do option, fallback no S.EST+lote
   const opt=ps.options[ps.selectedIndex];
-  const consRec=opt?parseFloat(opt.getAttribute('data-cons')):null;
+  let consRec=opt?parseFloat(opt.getAttribute('data-cons')):null;
+  if((!consRec||isNaN(consRec))&&est&&est.pct&&massaViva>0){
+    consRec=(est.pct/100)*massaViva;
+  }
 
   // Histórico: último trato do mesmo produto+lote
   const hoje=new Date(TD+'T00:00:00');
@@ -2143,7 +2146,35 @@ function calcSaldo(){
   if(consRec&&consRec>0){
     html+='<div style="display:flex;justify-content:space-between;padding:3px 0;margin-top:2px">'
       +'<span style="color:#aaa;font-size:10px">Fabricante recomenda</span>'
-      +'<span style="color:#aaa;font-size:10px">'+consRec.toFixed(1)+' kg</span>'
+      +'<span style="color:#aaa;font-size:10px">'+consRec.toFixed(1)+' kg (referência)</span>'
+      +'</div>';
+  }
+
+  // Linha 4: aviso histórico (ABAIXO/ACIMA/no previsto) — só se tem histórico do mesmo produto
+  if(consumoDia!==null&&consRec&&consRec>0){
+    const difAv=(consumoDia-consRec)/consRec*100;
+    let avTxt='', avCor='', avBg='', avBord='';
+    if(Math.abs(difAv)<15){
+      avTxt='consumo no previsto'; avCor='#33691E'; avBg='#F1F8E9'; avBord='#AED581';
+    } else if(difAv>0){
+      avTxt='consome ACIMA do previsto \u00b7 observar'; avCor='#B71C1C'; avBg='#FBE9E7'; avBord='#EF9A9A';
+    } else {
+      avTxt='consome ABAIXO do previsto \u00b7 observar'; avCor='#E65100'; avBg='#FFF3E0'; avBord='#FFCC80';
+    }
+    // Data do último trato
+    var dtAv='';
+    if(ultTrato&&ultTrato.dt){
+      var dU=new Date(ultTrato.dt.substring(0,10)+'T00:00:00');
+      var dH=new Date(TD+'T00:00:00');
+      var dDiff=Math.round((dH-dU)/864e5);
+      dtAv=dDiff===0?'último trato: hoje':dDiff===1?'último trato: ontem':'último trato: há '+dDiff+' dias';
+    }
+    html+='<div style="margin-top:6px;padding:6px 8px;background:'+avBg+';border:1px solid '+avBord+';border-radius:8px;display:flex;align-items:flex-start;gap:6px">'
+      +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="'+avCor+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+      +'<div>'
+      +'<div style="font-size:11px;font-weight:700;color:'+avCor+'">'+avTxt+'</div>'
+      +'<div style="font-size:10px;color:#65766a;margin-top:1px">base: '+nome+(dtAv?' \u00b7 '+dtAv:'')+'</div>'
+      +'</div>'
       +'</div>';
   }
 
