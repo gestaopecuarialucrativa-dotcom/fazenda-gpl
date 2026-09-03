@@ -476,15 +476,6 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   </div>
   <input type="hidden" id="t-cab" value="0">
 
-  <!-- Bloco de feedback histórico de consumo -->
-  <div id="t-feedback-consumo" style="display:none;border:1px solid #e0e7e0;border-radius:12px;overflow:hidden;margin-bottom:10px">
-    <div style="background:#f5f7f5;padding:6px 11px;font-size:11px;font-weight:600;color:#65766a;display:flex;align-items:center;gap:5px;border-bottom:1px solid #e0e7e0">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#65766a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      <span id="t-feedback-titulo">Histórico de consumo</span>
-    </div>
-    <div id="t-feedback-corpo"></div>
-  </div>
-
   <!-- Situação do cocho — ícones -->
   <div style="margin-bottom:10px">
     <div class="lbl">Situação do cocho antes</div>
@@ -2045,11 +2036,10 @@ function calcSaldo(){
   const lNome=(document.getElementById('t-cocho')||{}).value||'';
   const faz=(document.getElementById('t-faz')||{}).value||'';
 
-  // Se não tem lote OU produto selecionado → limpa o card e esconde feedback
+  // Se não tem lote OU produto selecionado → limpa o card
   if(!lNome||!nome){
     ce.style.cssText='padding:12px;background:#E8F5E9;border-radius:10px;font-size:13px;font-weight:700;color:#1B5E20;min-height:44px;border:2px solid #A5D6A7;text-align:center;display:flex;align-items:center;justify-content:center';
     ce.innerHTML='Selecione lote e produto ↑';
-    var _fb=document.getElementById('t-feedback-consumo');if(_fb)_fb.style.display='none';
     return;
   }
 
@@ -2192,74 +2182,6 @@ function calcSaldo(){
 
   ce.style.cssText='padding:10px 12px;background:'+bgCard+';border-radius:10px;font-size:12px;border:2px solid '+bordCard+';display:block;text-align:left';
   ce.innerHTML=html;
-
-  // ── Bloco feedback histórico (abaixo de Qtd+Consumo rec.) ──
-  var fbWrap=document.getElementById('t-feedback-consumo');
-  var fbCorpo=document.getElementById('t-feedback-corpo');
-  var fbTitulo=document.getElementById('t-feedback-titulo');
-  if(!fbWrap||!fbCorpo)return;
-
-  // Pegar loteObj para montar o nome do lote no título
-  var lNomeLimpo=lNome.replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
-  if(fbTitulo) fbTitulo.textContent='Histórico de consumo · '+lNomeLimpo;
-
-  // Busca tratos do lote com QUALQUER produto para checar último produto usado
-  var todosTratsLote=(S.rT||[]).filter(function(r){
-    if(r.tipo!=='trato'||r._apagado)return false;
-    var rl=String(r.lote||r.co||'').replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
-    return rl===lNomeLimpo;
-  }).sort(function(a,b){return (b.dt||'').localeCompare(a.dt||'');});
-  var ultProdLote=todosTratsLote.length?(todosTratsLote[0].prod||todosTratsLote[0].pr||''):'';
-
-  if(!lNome||!nome){fbWrap.style.display='none';return;}
-
-  // Produto trocado → sem histórico comparável
-  if(ultProdLote && ultProdLote!==nome){
-    fbWrap.style.display='block';
-    fbCorpo.innerHTML='<div style="padding:9px 11px;font-size:11px;color:#888;text-align:center;font-style:italic">Produto diferente do último trato — sem histórico para comparar</div>';
-    return;
-  }
-
-  // Sem histórico deste produto neste lote
-  if(!todosTratsLote.length||!ultProdLote){
-    fbWrap.style.display='none';
-    return;
-  }
-
-  // Monta o aviso com base no consumoDia já calculado acima
-  var avStatus='', avCor='', avBg='', avBordIco='', avMsg='';
-  if(consumoDia!==null&&consRec&&consRec>0){
-    var difHist=(consumoDia-consRec)/consRec*100;
-    if(Math.abs(difHist)<15){
-      avStatus='consumo no previsto'; avCor='#33691E'; avBg='#F1F8E9'; avBordIco='#AED581';
-    } else if(difHist>0){
-      avStatus='consome ACIMA do previsto · observar'; avCor='#B71C1C'; avBg='#FBE9E7'; avBordIco='#EF9A9A';
-    } else {
-      avStatus='consome ABAIXO do previsto · observar'; avCor='#E65100'; avBg='#FFF3E0'; avBordIco='#FFCC80';
-    }
-    // Data do último trato
-    var dtUltStr='';
-    if(todosTratsLote.length){
-      var dtUlt=todosTratsLote[0].dt||'';
-      if(dtUlt){
-        var dUlt=new Date(dtUlt.substring(0,10)+'T00:00:00');
-        var dHj=new Date(TD+'T00:00:00');
-        var diffDias=Math.round((dHj-dUlt)/864e5);
-        dtUltStr=diffDias===0?'último: hoje':diffDias===1?'último: ontem':'último: há '+diffDias+' dias';
-      }
-    }
-    fbWrap.style.display='block';
-    fbCorpo.innerHTML=
-      '<div style="padding:8px 11px;display:flex;align-items:flex-start;gap:8px;background:'+avBg+'">'+
-        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="'+avCor+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'+
-        '<div>'+
-          '<div style="font-size:12px;font-weight:700;color:'+avCor+'">'+avStatus+'</div>'+
-          '<div style="font-size:11px;color:#65766a;margin-top:1px">base: '+ultProdLote+(dtUltStr?' · '+dtUltStr:'')+'</div>'+
-        '</div>'+
-      '</div>';
-  } else {
-    fbWrap.style.display='none';
-  }
 }
 
 function sCob(t){cobT=t;document.getElementById('tgr').classList.toggle('on',t==='ref');document.getElementById('tgd').classList.toggle('on',t==='dia');document.getElementById('br').style.display=t==='ref'?'block':'none';document.getElementById('bd').style.display=t==='dia'?'block':'none';calcCt();}
