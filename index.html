@@ -476,6 +476,15 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   </div>
   <input type="hidden" id="t-cab" value="0">
 
+  <!-- Bloco de feedback histórico de consumo (largura total, igual ao modelo) -->
+  <div id="t-feedback-consumo" style="display:none;border-radius:12px;border:1px solid #e0e7e0;overflow:hidden;margin-bottom:10px">
+    <div style="background:#f5f7f5;padding:7px 11px;font-size:11px;font-weight:500;color:#65766a;border-bottom:1px solid #e0e7e0;display:flex;align-items:center;gap:5px">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#65766a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span id="t-feedback-titulo">Histórico de consumo</span>
+    </div>
+    <div id="t-feedback-corpo"></div>
+  </div>
+
   <!-- Situação do cocho — ícones -->
   <div style="margin-bottom:10px">
     <div class="lbl">Situação do cocho antes</div>
@@ -2031,15 +2040,19 @@ function calcSaldo(){
   const ps=document.getElementById('t-prod');
   const qs=document.getElementById('t-qtd');
   const ce=document.getElementById('t-cons-calc');
+  const fbWrap=document.getElementById('t-feedback-consumo');
+  const fbCorpo=document.getElementById('t-feedback-corpo');
+  const fbTitulo=document.getElementById('t-feedback-titulo');
   if(!ps||!ce)return;
   const nome=ps.value;
   const lNome=(document.getElementById('t-cocho')||{}).value||'';
   const faz=(document.getElementById('t-faz')||{}).value||'';
 
-  // Se não tem lote OU produto selecionado → limpa o card
+  // Se não tem lote OU produto → card simples e esconde bloco
   if(!lNome||!nome){
     ce.style.cssText='padding:12px;background:#E8F5E9;border-radius:10px;font-size:13px;font-weight:700;color:#1B5E20;min-height:44px;border:2px solid #A5D6A7;text-align:center;display:flex;align-items:center;justify-content:center';
     ce.innerHTML='Selecione lote e produto ↑';
+    if(fbWrap)fbWrap.style.display='none';
     return;
   }
 
@@ -2053,23 +2066,50 @@ function calcSaldo(){
   const qtdAgora=parseFloat(qs&&qs.value)||0;
   const kgAgora=qtdAgora*pps;
 
-  // Quantidade recomendada pelo fabricante — tenta data-cons do option, fallback no S.EST+lote
+  // Recomendado fabricante — data-cons do option, fallback S.EST+lote
   const opt=ps.options[ps.selectedIndex];
   let consRec=opt?parseFloat(opt.getAttribute('data-cons')):null;
   if((!consRec||isNaN(consRec))&&est&&est.pct&&massaViva>0){
     consRec=(est.pct/100)*massaViva;
   }
+  const sacosRec=(consRec&&pps>0)?consRec/pps:0;
 
-  // Histórico: último trato do mesmo produto+lote
-  const hoje=new Date(TD+'T00:00:00');
-  const todosTratos=(S.rT||[]).filter(function(r){
+  // Card estreito "Consumo rec." → só a recomendação
+  if(consRec&&consRec>0){
+    ce.style.cssText='padding:8px 10px;background:#E8F5E9;border-radius:10px;font-size:12px;font-weight:700;color:#1B5E20;min-height:44px;border:2px solid #A5D6A7;text-align:center;display:flex;align-items:center;justify-content:center';
+    ce.innerHTML=(sacosRec>0?Math.round(sacosRec)+' saco'+(Math.round(sacosRec)!=1?'s':'')+' · ':'')+consRec.toFixed(0)+' kg';
+  } else {
+    ce.style.cssText='padding:8px 10px;background:#E8F5E9;border-radius:10px;font-size:12px;font-weight:700;color:#1B5E20;min-height:44px;border:2px solid #A5D6A7;text-align:center;display:flex;align-items:center;justify-content:center';
+    ce.innerHTML='Sem % PV cadastrado';
+  }
+
+  if(!fbWrap||!fbCorpo){return;}
+  if(fbTitulo)fbTitulo.textContent='Histórico de consumo · '+_lNomeBase;
+
+  // Último produto usado no lote (qualquer produto)
+  const tratsLote=(S.rT||[]).filter(function(r){
     if(r.tipo!=='trato'||r._apagado)return false;
     const rl=String(r.lote||r.co||'').replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
-    const ln=lNome.replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
-    return rl===ln&&(r.prod||r.pr||'')===nome;
-  }).sort((a,b)=>(a.dt||'').localeCompare(b.dt||''));
+    return rl===_lNomeBase;
+  }).sort(function(a,b){return (b.dt||'').localeCompare(a.dt||'');});
+  const ultProdLote=tratsLote.length?(tratsLote[0].prod||tratsLote[0].pr||''):'';
 
-  const ultTrato=todosTratos.length?todosTratos[todosTratos.length-1]:null;
+  // Produto trocado → sem histórico comparável
+  if(ultProdLote && ultProdLote!==nome){
+    fbWrap.style.display='block';
+    fbCorpo.innerHTML='<div style="padding:8px 11px;font-size:11px;color:#888;text-align:center;font-style:italic">Produto diferente do último trato — sem histórico para comparar</div>';
+    return;
+  }
+
+  // Histórico do mesmo produto neste lote
+  const hoje=new Date(TD+'T00:00:00');
+  const tratsMesmo=(S.rT||[]).filter(function(r){
+    if(r.tipo!=='trato'||r._apagado)return false;
+    const rl=String(r.lote||r.co||'').replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();
+    return rl===_lNomeBase&&(r.prod||r.pr||'')===nome;
+  }).sort((a,b)=>(a.dt||'').localeCompare(b.dt||''));
+  const ultTrato=tratsMesmo.length?tratsMesmo[tratsMesmo.length-1]:null;
+
   let consumoDia=null, diasDesdeUlt=null;
   if(ultTrato&&ultTrato.dt){
     const dtUlt=new Date(ultTrato.dt.substring(0,10)+'T00:00:00');
@@ -2078,113 +2118,63 @@ function calcSaldo(){
     consumoDia=kgUlt/diasDesdeUlt;
   }
 
-  // Monta o card — simples e direto para o vaqueiro
-  let html='<div style="width:100%;font-size:12px">';
+  // Sem histórico deste produto → esconde bloco
+  if(!ultTrato){ fbWrap.style.display='none'; return; }
 
-  // Linha 1: o que está colocando agora
+  // ── Monta o bloco largura total (igual ao modelo) ──
+  let corpo='';
+
+  // Linha "Colocando agora" + badge + barra
+  let statusAg='', corAg='#1B5E20', bgBadgeAg='#E8F5E9', barraCor='#4CAF50', barraW=95;
+  if(consRec&&consRec>0&&qtdAgora>0){
+    const difAg=(kgAgora-consRec)/consRec*100;
+    if(Math.abs(difAg)<15){ statusAg='OK'; corAg='#33691E'; bgBadgeAg='#F1F8E9'; barraCor='#4CAF50'; barraW=95; }
+    else if(difAg>0){ statusAg='ALTO +'+Math.round(difAg)+'%'; corAg='#B71C1C'; bgBadgeAg='#FBE9E7'; barraCor='#E53935'; barraW=100; }
+    else { statusAg='BAIXO '+Math.round(difAg)+'%'; corAg='#E65100'; bgBadgeAg='#FFF3E0'; barraCor='#FF6F00'; barraW=Math.max(15,95+difAg); }
+  }
+  corpo+='<div style="padding:9px 11px 6px;border-bottom:1px solid #e0e7e0">';
+  corpo+='<div style="display:flex;align-items:center;justify-content:space-between;font-size:12px">'
+    +'<span style="color:#65766a">Colocando agora</span>'
+    +'<span style="font-weight:500;color:#1b2c1b">'+kgAgora.toFixed(0)+' kg'
+    +(statusAg?' &nbsp;<span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:'+bgBadgeAg+';color:'+corAg+'">'+statusAg+'</span>':'')
+    +'</span></div>';
   if(qtdAgora>0){
-    let statusAgora='', corAgora='#555', bgAgora='transparent';
-    if(consRec&&consRec>0){
-      const dif=(kgAgora-consRec)/consRec*100;
-      const noPonto=Math.abs(dif)<15;
-      if(noPonto){
-        statusAgora='OK'; corAgora='#1B5E20'; bgAgora='#E8F5E9';
-      } else if(dif>0){
-        statusAgora='ALTO +'+Math.round(dif)+'%'; corAgora='#C62828'; bgAgora='#FFEBEE';
-      } else {
-        statusAgora='BAIXO '+Math.round(dif)+'%'; corAgora='#E65100'; bgAgora='#FFF3E0';
-      }
-    }
-    html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #e0e7e0">'
-      +'<span style="color:#555">Colocando agora</span>'
-      +'<span style="display:flex;align-items:center;gap:5px">'
-      +'<b style="color:#222">'+kgAgora.toFixed(1)+' kg</b>'
-      +(statusAgora?'<span style="font-size:10px;font-weight:800;color:'+corAgora+';background:'+bgAgora+';padding:1px 6px;border-radius:6px">'+statusAgora+'</span>':'')
-      +'</span></div>';
+    corpo+='<div style="height:5px;background:#e0e7e0;border-radius:3px;overflow:hidden;margin-top:5px"><div style="height:100%;border-radius:3px;background:'+barraCor+';width:'+barraW+'%"></div></div>';
   }
-
-  // Linha 2: consumo real desde o último trato
-  if(consumoDia!==null){
-    let statusCons='', corCons='#555', msgVaqueiro='';
-    if(consRec&&consRec>0){
-      const dif=(consumoDia-consRec)/consRec*100;
-      const noPonto=Math.abs(dif)<15;
-      if(noPonto){
-        statusCons='OK'; corCons='#1B5E20';
-        msgVaqueiro='Consumo conforme fabricante';
-      } else if(dif>0){
-        statusCons='ALTO +'+Math.round(dif)+'%'; corCons='#C62828';
-        msgVaqueiro='Consumo alto — avisar consultor';
-      } else {
-        statusCons='BAIXO '+Math.round(dif)+'%'; corCons='#E65100';
-        msgVaqueiro='Consumo baixo — avisar consultor';
-      }
-    }
-    html+='<div style="padding:3px 0'+(msgVaqueiro?';border-bottom:1px solid #e0e7e0':'')+'">'
-      +'<div style="display:flex;justify-content:space-between;align-items:center">'
-      +'<span style="color:#555">Consumo real ('+diasDesdeUlt+'d)</span>'
-      +'<span style="display:flex;align-items:center;gap:5px">'
-      +'<b style="color:#222">'+consumoDia.toFixed(1)+' kg/dia</b>'
-      +(statusCons?'<span style="font-size:10px;font-weight:800;color:'+corCons+'">'+statusCons+'</span>':'')
-      +'</span></div>'
-      +(msgVaqueiro?'<div style="font-size:11px;font-weight:700;color:'+corCons+';margin-top:2px">'+msgVaqueiro+'</div>':'')
-      +'</div>';
-  } else if(qtdAgora===0&&(!consRec||consRec===0)){
-    html+='<div style="color:#aaa;font-size:11px;text-align:center;padding:4px 0">Sem histórico deste produto neste lote.</div>';
-  }
-
-  // Linha 3: recomendado pelo fabricante (referência, menor destaque)
+  // Linha consumo real
+  corpo+='<div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;margin-top:6px">'
+    +'<span style="color:#65766a">Consumo real ('+diasDesdeUlt+'d)</span>'
+    +'<span style="font-weight:500;color:#1b2c1b">'+consumoDia.toFixed(0)+' kg/dia</span></div>';
+  // Linha fabricante
   if(consRec&&consRec>0){
-    html+='<div style="display:flex;justify-content:space-between;padding:3px 0;margin-top:2px">'
-      +'<span style="color:#aaa;font-size:10px">Fabricante recomenda</span>'
-      +'<span style="color:#aaa;font-size:10px">'+consRec.toFixed(1)+' kg (referência)</span>'
-      +'</div>';
+    corpo+='<div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;margin-top:2px">'
+      +'<span style="color:#65766a">Fabricante recomenda</span>'
+      +'<span style="font-size:11px;color:#65766a">'+consRec.toFixed(0)+' kg (referência)</span></div>';
   }
+  corpo+='</div>';
 
-  // Linha 4: aviso histórico (ABAIXO/ACIMA/no previsto) — só se tem histórico do mesmo produto
-  if(consumoDia!==null&&consRec&&consRec>0){
-    const difAv=(consumoDia-consRec)/consRec*100;
-    let avTxt='', avCor='', avBg='', avBord='';
-    if(Math.abs(difAv)<15){
-      avTxt='consumo no previsto'; avCor='#33691E'; avBg='#F1F8E9'; avBord='#AED581';
-    } else if(difAv>0){
-      avTxt='consome ACIMA do previsto \u00b7 observar'; avCor='#B71C1C'; avBg='#FBE9E7'; avBord='#EF9A9A';
-    } else {
-      avTxt='consome ABAIXO do previsto \u00b7 observar'; avCor='#E65100'; avBg='#FFF3E0'; avBord='#FFCC80';
-    }
-    // Data do último trato
-    var dtAv='';
+  // Aviso (ABAIXO / ACIMA / no previsto)
+  if(consRec&&consRec>0){
+    const difH=(consumoDia-consRec)/consRec*100;
+    let avTxt='', avCor='', avSvg='';
+    if(Math.abs(difH)<15){ avTxt='consumo no previsto'; avCor='#33691E'; }
+    else if(difH>0){ avTxt='consome ACIMA do previsto \u00b7 observar'; avCor='#B71C1C'; }
+    else { avTxt='consome ABAIXO do previsto \u00b7 observar'; avCor='#E65100'; }
+    let dtStr='';
     if(ultTrato&&ultTrato.dt){
-      var dU=new Date(ultTrato.dt.substring(0,10)+'T00:00:00');
-      var dH=new Date(TD+'T00:00:00');
-      var dDiff=Math.round((dH-dU)/864e5);
-      dtAv=dDiff===0?'último trato: hoje':dDiff===1?'último trato: ontem':'último trato: há '+dDiff+' dias';
+      const dU=new Date(ultTrato.dt.substring(0,10)+'T00:00:00');
+      const dDiff=Math.round((hoje-dU)/864e5);
+      dtStr=dDiff===0?'último trato: hoje':dDiff===1?'último trato: ontem':'último trato: há '+dDiff+' dias';
     }
-    html+='<div style="margin-top:6px;padding:6px 8px;background:'+avBg+';border:1px solid '+avBord+';border-radius:8px;display:flex;align-items:flex-start;gap:6px">'
-      +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="'+avCor+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
-      +'<div>'
-      +'<div style="font-size:11px;font-weight:700;color:'+avCor+'">'+avTxt+'</div>'
-      +'<div style="font-size:10px;color:#65766a;margin-top:1px">base: '+nome+(dtAv?' \u00b7 '+dtAv:'')+'</div>'
-      +'</div>'
-      +'</div>';
+    corpo+='<div style="padding:8px 11px;display:flex;align-items:flex-start;gap:7px">'
+      +'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="'+avCor+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+      +'<div><div style="font-size:12px;font-weight:500;color:'+avCor+'">'+avTxt+'</div>'
+      +'<div style="font-size:11px;color:#65766a;margin-top:1px">base: '+nome+(dtStr?' \u00b7 '+dtStr:'')+'</div></div></div>';
   }
 
-  html+='</div>';
-
-  // Cor geral do card
-  let bgCard='#E8F5E9', bordCard='#A5D6A7';
-  if(consumoDia!==null&&consRec&&consRec>0){
-    const dif=(consumoDia-consRec)/consRec*100;
-    if(Math.abs(dif)>=15){
-      bgCard=dif>0?'#FFEBEE':'#FFF3E0';
-      bordCard=dif>0?'#EF9A9A':'#FFCC80';
-    }
-  }
-
-  ce.style.cssText='padding:10px 12px;background:'+bgCard+';border-radius:10px;font-size:12px;border:2px solid '+bordCard+';display:block;text-align:left';
-  ce.innerHTML=html;
+  fbWrap.style.display='block';
+  fbCorpo.innerHTML=corpo;
 }
-
 function sCob(t){cobT=t;document.getElementById('tgr').classList.toggle('on',t==='ref');document.getElementById('tgd').classList.toggle('on',t==='dia');document.getElementById('br').style.display=t==='ref'?'block':'none';document.getElementById('bd').style.display=t==='dia'?'block':'none';calcCt();}
 function addQ(r,d){QT[r]=Math.max(0,QT[r]+d);const m={cafe:'c',almoco:'a',janta:'j'};document.getElementById('q'+m[r]).textContent=QT[r];calcCt();}
 // [cantina legacy removida: calcCt]
