@@ -10408,7 +10408,14 @@ function _statusTratosHoje(){
     var tl=(S.rT||[]).filter(function(r){return r.tipo==='trato'&&!r._apagado&&_baseLote(r.lote||r.co)===nm;});
     var lancadoHoje=tl.some(function(r){return (r.dt||'').substring(0,10)===TD;});
     if(lancadoHoje){ out.push({lote:nm,status:'feito'}); return; }
-    if(!tl.length||!peso||!qtd){ out.push({lote:nm,status:'sem_dado'}); return; }
+    if(!tl.length){
+      // Lote nunca recebeu trato: não dá pra calcular previsão, mas ainda
+      // assim precisa aparecer como pendente (senão nunca chama atenção).
+      if(peso&&qtd){ out.push({lote:nm,status:'pendente',nunca:true}); }
+      else { out.push({lote:nm,status:'sem_dado'}); }
+      return;
+    }
+    if(!peso||!qtd){ out.push({lote:nm,status:'sem_dado'}); return; }
     var totalSacos=0, prodMap={}, ultDt='';
     tl.forEach(function(r){
       var q=parseFloat(r.q||r.qtd||0)||0; totalSacos+=q;
@@ -10459,14 +10466,15 @@ function rTratosHoje(){
   });
   pendentes.forEach(function(i){
     var refDtJs=(i.ultDt||'').replace(/'/g,'');
+    var subTxt=i.nunca?'Nunca lançado':(i.diasSemTrato+' dias sem trato · esperado durar '+i.diasDura);
     html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #eee">'
       +'<div style="display:flex;align-items:center;gap:8px;min-width:0">'
       +'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C62828" stroke-width="2" stroke-linecap="round" style="flex-shrink:0"><circle cx="12" cy="12" r="9"/></svg>'
-      +'<div style="min-width:0"><div style="font-size:13px;font-weight:700;color:#333">'+i.lote+'</div><div style="font-size:11px;color:#C62828">'+i.diasSemTrato+' dias sem trato · esperado durar '+i.diasDura+'</div></div>'
+      +'<div style="min-width:0"><div style="font-size:13px;font-weight:700;color:#333">'+i.lote+'</div><div style="font-size:11px;color:#C62828">'+subTxt+'</div></div>'
       +'</div>'
       +'<div style="display:flex;gap:5px;flex-shrink:0">'
       +'<button onclick="irParaTratoLote(\''+i.lote.replace(/'/g,"\\'")+'\')" style="font-size:11px;padding:6px 8px;background:#2E7D32;color:#fff;border:none;border-radius:7px;font-weight:700;cursor:pointer">Lançar</button>'
-      +'<button onclick="responderRacao(\''+i.lote.replace(/'/g,"\\'")+'\',\''+refDtJs+'\',\'tem_cocho\')" style="font-size:11px;padding:6px 8px;background:#fff;color:#2E7D32;border:1px solid #2E7D32;border-radius:7px;font-weight:700;cursor:pointer">Ainda tem</button>'
+      +(i.nunca?'':'<button onclick="responderRacao(\''+i.lote.replace(/'/g,"\\'")+'\',\''+refDtJs+'\',\'tem_cocho\')" style="font-size:11px;padding:6px 8px;background:#fff;color:#2E7D32;border:1px solid #2E7D32;border-radius:7px;font-weight:700;cursor:pointer">Ainda tem</button>')
       +'</div></div>';
   });
   if(resto.length){
