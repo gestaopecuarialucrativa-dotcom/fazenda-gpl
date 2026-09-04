@@ -8509,17 +8509,18 @@ function _rkpGraficos(comHist){
       var pct=Math.round((uaHa/maxUaHa2)*100);
       if(uaHa>0 && pct<6) pct=6;
       var cor=_corFaixa(uaHa);
-      var val=uaHa>0?_numBR(uaHa,2)+' UA/ha':'';
+      // Valor UA/ha fica FIXO à direita, fora da barra — sempre legível mesmo com barra curta
+      var val=uaHa>0?(_numBR(uaHa,2)+' UA/ha'):'vazio';
+      var corVal=uaHa>0?cor:'#999';
       return '<div style="display:flex;align-items:center;gap:8px">'
-        +'<div style="width:62px;font-size:11px;font-weight:700;color:#333;flex-shrink:0">'+labelEsq+'</div>'
-        +'<div style="flex:1;background:#F0F0F0;border-radius:8px;height:26px;position:relative;overflow:hidden">'
-        +  (uaHa>0
-              ? '<div style="width:'+pct+'%;background:'+cor+';height:100%;border-radius:8px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;box-sizing:border-box"><span style="font-size:11px;font-weight:700;color:#fff;white-space:nowrap">'+val+'</span></div>'
-              : '<div style="width:6%;background:'+cor+';height:100%;border-radius:8px"></div><span style="position:absolute;left:9px;top:0;height:100%;display:flex;align-items:center;font-size:11px;font-weight:700;color:#888">vazio</span>')
+        +'<div style="width:56px;font-size:11px;font-weight:700;color:#333;flex-shrink:0">'+labelEsq+'</div>'
+        +'<div style="flex:1;background:#F0F0F0;border-radius:8px;height:22px;position:relative;overflow:hidden">'
+        +  '<div style="width:'+(uaHa>0?pct:6)+'%;background:'+cor+';height:100%;border-radius:8px"></div>'
         +'</div>'
+        +'<div style="width:88px;text-align:right;font-size:12px;font-weight:800;color:'+corVal+';flex-shrink:0;white-space:nowrap">'+val+'</div>'
         +(chevron?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;transition:transform .15s"><polyline points="6 9 12 15 18 9"/></svg>':'<span style="width:14px;flex-shrink:0"></span>')
         +'</div>'
-        +(subLabel?'<div style="font-size:9px;color:#999;margin:2px 0 0 70px">'+subLabel+'</div>':'');
+        +(subLabel?'<div style="font-size:9px;color:#999;margin:2px 0 0 64px">'+subLabel+'</div>':'');
     }
     var linhasMod=modList.map(function(m){
       var uaHa=m.ha>0?m.ua/m.ha:0;
