@@ -364,6 +364,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
 <!-- PAINEL VAQUEIRO: gauge de dias no pasto (só para r='Vaqueiro') -->
 <div id="home-vaqueiro-panel" style="display:none;margin-top:10px;margin-bottom:12px">
+  <div id="vaq-offline-banner" style="display:none;margin-bottom:10px;padding:10px 12px;background:#FFF3E0;border-left:4px solid #FF6F00;border-radius:0 8px 8px 0;font-size:12px;color:#E65100;font-weight:700"></div>
   <div class="card" id="vaq-tratos-hoje-card" style="padding:14px;display:none;margin-bottom:10px">
     <div style="font-size:14px;font-weight:800;color:#1B5E20;margin-bottom:8px">✅ Tratos de hoje</div>
     <div id="vaq-tratos-hoje"></div>
@@ -3815,7 +3816,7 @@ function mostrarQR(faz,link){const m=document.getElementById('qr-modal');const t
 function fecharQR(){document.getElementById('qr-modal').classList.remove('open');}
 
 // ═══ SYNC ═══
-function atualizarSync(){const dot=document.getElementById('sdot');if(!navigator.onLine){if(dot)dot.className='sdot';}else if(S.queue.length>0){if(dot)dot.className='sdot sy';}else{if(dot)dot.className='sdot on';}const pl=document.getElementById('pend-list');if(pl)pl.innerHTML=S.queue.length?S.queue.map(r=>`<div class="ri"><div class="rt"><span class="rn">${r.tipo} <span class="bdg ba">pendente</span></span></div><div class="rd">${r.dt||'—'} · ${r.faz||''}</div></div>`).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:12px">Nenhum dado pendente. ✅</div>';}
+function atualizarSync(){const dot=document.getElementById('sdot');if(!navigator.onLine){if(dot)dot.className='sdot';}else if(S.queue.length>0){if(dot)dot.className='sdot sy';}else{if(dot)dot.className='sdot on';}const pl=document.getElementById('pend-list');if(pl)pl.innerHTML=S.queue.length?S.queue.map(r=>`<div class="ri"><div class="rt"><span class="rn">${r.tipo} <span class="bdg ba">pendente</span></span></div><div class="rd">${r.dt||'—'} · ${r.faz||''}</div></div>`).join(''):'<div style="font-size:12px;color:#888;text-align:center;padding:12px">Nenhum dado pendente. ✅</div>';try{ if(CU&&CU.r==='Vaqueiro') rVaqueiroPainel(); }catch(e){}}
 function syncAgora(silencioso){
   if(!navigator.onLine){
     if(!silencioso) alert('❌ Sem internet. Seus dados estão guardados no celular e serão enviados automaticamente quando você tiver sinal.');
@@ -8478,6 +8479,7 @@ function _rkpGraficos(comHist){
   // Barras grandes, cor por status, clicáveis (módulo expande os piquetes dele).
   var aloc=S.MAPA_ALOC||{};
   var lotesG=S.LOTES||[];
+  function _numBR(v,casas){ return (v||0).toLocaleString('pt-BR',{minimumFractionDigits:casas,maximumFractionDigits:casas}); }
   var mods={};
   MAPA_AREAS.filter(function(a){return a.tipo==='modulo';}).forEach(function(a){
     var mk=a.modulo;
@@ -8507,7 +8509,7 @@ function _rkpGraficos(comHist){
       var pct=Math.round((uaHa/maxUaHa2)*100);
       if(uaHa>0 && pct<6) pct=6;
       var cor=_corFaixa(uaHa);
-      var val=uaHa>0?uaHa.toFixed(2)+' UA/ha':'';
+      var val=uaHa>0?_numBR(uaHa,2)+' UA/ha':'';
       return '<div style="display:flex;align-items:center;gap:8px">'
         +'<div style="width:62px;font-size:11px;font-weight:700;color:#333;flex-shrink:0">'+labelEsq+'</div>'
         +'<div style="flex:1;background:#F0F0F0;border-radius:8px;height:26px;position:relative;overflow:hidden">'
@@ -8523,8 +8525,8 @@ function _rkpGraficos(comHist){
       var uaHa=m.ha>0?m.ua/m.ha:0;
       var sub=m.ocup+'/'+m.tot+' piquetes ocupados · média do módulo';
       var det=m.piquetes.map(function(pq){
-        return '<div style="font-size:11px;color:#555;padding:4px 0">'+pq.label+' · '+(pq.ha?pq.ha.toFixed(1):'0')+'ha · '
-          +(pq.lote?pq.lote+' · <b>Lotação instantânea:</b> '+pq.uaHa.toFixed(2)+' UA/ha':'<span style="color:#aaa">vazio</span>')+'</div>';
+        return '<div style="font-size:11px;color:#555;padding:4px 0">'+pq.label+' · '+(pq.ha?_numBR(pq.ha,1):'0')+'ha · '
+          +(pq.lote?pq.lote+' · <b>Lotação instantânea:</b> '+_numBR(pq.uaHa,2)+' UA/ha':'<span style="color:#aaa">vazio</span>')+'</div>';
       }).join('');
       return '<div style="margin-bottom:8px">'
         +'<div onclick="_rkpToggle(this)" style="cursor:pointer">'+_barraGrande('Módulo '+m.num, uaHa, sub, true)+'</div>'
@@ -8537,7 +8539,7 @@ function _rkpGraficos(comHist){
       +'</div>';
     if(pastosAvulsos.length){
       var linhasAv=pastosAvulsos.map(function(p){
-        return '<div style="margin-bottom:8px">'+_barraGrande(p.label, p.uaHa, p.ha?p.ha.toFixed(1)+'ha'+(p.lote?' · '+p.lote:''):'', false)+'</div>';
+        return '<div style="margin-bottom:8px">'+_barraGrande(p.label, p.uaHa, p.ha?_numBR(p.ha,1)+'ha'+(p.lote?' · '+p.lote:''):'', false)+'</div>';
       }).join('');
       out+='<div style="margin-bottom:14px">'
         +'<div style="font-size:11px;font-weight:700;color:#1B5E20;margin-bottom:8px">🌾 Pastos avulsos</div>'
@@ -10493,6 +10495,23 @@ function rVaqueiroPainel(){
   if(!isVaq){ panel.style.display='none'; var ctc=document.getElementById('vaq-tratos-hoje-card'); if(ctc)ctc.style.display='none'; return; }
   panel.style.display = 'block';
   try{ rTratosHoje(); }catch(e){ console.error('rTratosHoje:',e); }
+
+  // Aviso visível de "sem conexão / dados podem estar desatualizados" — antes só
+  // existia um badge pequeno no topo, fácil de não notar. Isso mostra bem
+  // na tela principal, junto do resto do que o vaqueiro olha todo dia.
+  var offBanner=document.getElementById('vaq-offline-banner');
+  if(offBanner){
+    var pend=(S.queue||[]).length;
+    if(!navigator.onLine){
+      offBanner.style.display='block';
+      offBanner.textContent='📡 Sem internet agora — os números aqui podem estar desatualizados. O que você lançar fica guardado no celular e envia sozinho quando voltar o sinal.'+(pend?' ('+pend+' aguardando envio)':'');
+    } else if(pend>0){
+      offBanner.style.display='block';
+      offBanner.textContent='⏳ '+pend+' lançamento(s) ainda não confirmado(s) na planilha. Vai tentar enviar sozinho.';
+    } else {
+      offBanner.style.display='none';
+    }
+  }
 
   var aloc  = S.MAPA_ALOC || {};
   var lotes = S.LOTES || [];
