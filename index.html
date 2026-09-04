@@ -2125,37 +2125,41 @@ function calcSaldo(){
   // Sem histórico deste produto → esconde bloco
   if(!ultTrato){ fbWrap.style.display='none'; return; }
 
-  // ── Monta o bloco largura total (igual ao modelo) ──
+  // kg/cab/dia e %PV do consumo real de cocho
+  const qtdAnim=lote&&lote.qtd?lote.qtd:0;
+  const kgCabDia=(consumoDia!==null&&qtdAnim>0)?(consumoDia/qtdAnim):null;
+  const pvCocho=(consumoDia!==null&&massaViva>0)?((consumoDia/massaViva)*100):null;
+
+  // ── Monta o bloco largura total ──
   let corpo='';
 
-  // Linha "Colocando agora" + badge + barra
-  let statusAg='', corAg='#1B5E20', bgBadgeAg='#E8F5E9', barraCor='#4CAF50', barraW=95;
-  if(consRec&&consRec>0&&qtdAgora>0){
-    const difAg=(kgAgora-consRec)/consRec*100;
-    if(Math.abs(difAg)<15){ statusAg='OK'; corAg='#33691E'; bgBadgeAg='#F1F8E9'; barraCor='#4CAF50'; barraW=95; }
-    else if(difAg>0){ statusAg='ALTO +'+Math.round(difAg)+'%'; corAg='#B71C1C'; bgBadgeAg='#FBE9E7'; barraCor='#E53935'; barraW=100; }
-    else { statusAg='BAIXO '+Math.round(difAg)+'%'; corAg='#E65100'; bgBadgeAg='#FFF3E0'; barraCor='#FF6F00'; barraW=Math.max(15,95+difAg); }
-  }
+  // Linha "Consumo no cocho" = dado REAL entre os 2 últimos tratos (não o que vai lançar)
   corpo+='<div style="padding:9px 11px 6px;border-bottom:1px solid #e0e7e0">';
-  corpo+='<div style="display:flex;align-items:center;justify-content:space-between;font-size:12px">'
-    +'<span style="color:#65766a">Colocando agora</span>'
-    +'<span style="font-weight:500;color:#1b2c1b">'+kgAgora.toFixed(0)+' kg'
-    +(statusAg?' &nbsp;<span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:'+bgBadgeAg+';color:'+corAg+'">'+statusAg+'</span>':'')
-    +'</span></div>';
-  if(qtdAgora>0){
-    corpo+='<div style="height:5px;background:#e0e7e0;border-radius:3px;overflow:hidden;margin-top:5px"><div style="height:100%;border-radius:3px;background:'+barraCor+';width:'+barraW+'%"></div></div>';
-  }
-  // Linha consumo real (entre os 2 últimos tratos registrados)
   if(consumoDia!==null){
-    corpo+='<div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;margin-top:6px">'
-      +'<span style="color:#65766a">Consumo real (entre 2 últimos)</span>'
-      +'<span style="font-weight:500;color:#1b2c1b">'+consumoDia.toFixed(0)+' kg/dia</span></div>';
+    // status vs recomendado do fabricante
+    let statusC='', corC='#1B5E20', bgBadgeC='#E8F5E9', barraCor='#4CAF50', barraW=95;
+    if(consRec&&consRec>0){
+      const difC=(consumoDia-consRec)/consRec*100;
+      if(Math.abs(difC)<15){ statusC='OK'; corC='#33691E'; bgBadgeC='#F1F8E9'; barraCor='#4CAF50'; barraW=95; }
+      else if(difC>0){ statusC='ALTO +'+Math.round(difC)+'%'; corC='#B71C1C'; bgBadgeC='#FBE9E7'; barraCor='#E53935'; barraW=100; }
+      else { statusC='BAIXO '+Math.round(difC)+'%'; corC='#E65100'; bgBadgeC='#FFF3E0'; barraCor='#FF6F00'; barraW=Math.max(15,95+difC); }
+    }
+    corpo+='<div style="display:flex;align-items:center;justify-content:space-between;font-size:12px">'
+      +'<span style="color:#65766a">Consumo no cocho</span>'
+      +'<span style="font-weight:500;color:#1b2c1b">'+consumoDia.toFixed(0)+' kg/dia'
+      +(statusC?' &nbsp;<span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:'+bgBadgeC+';color:'+corC+'">'+statusC+'</span>':'')
+      +'</span></div>';
+    corpo+='<div style="height:5px;background:#e0e7e0;border-radius:3px;overflow:hidden;margin-top:5px"><div style="height:100%;border-radius:3px;background:'+barraCor+';width:'+barraW+'%"></div></div>';
+    // Detalhe kg/cab/dia + %PV
+    corpo+='<div style="display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#65766a;margin-top:5px">'
+      +'<span>'+(kgCabDia!=null?kgCabDia.toFixed(2).replace('.',',')+' kg/cab/dia':'')+'</span>'
+      +'<span>'+(pvCocho!=null?pvCocho.toFixed(2).replace('.',',')+'% PV':'')+'</span></div>';
   } else {
-    corpo+='<div style="font-size:11px;color:#888;margin-top:6px">Consumo real: precisa de 2 tratos registrados</div>';
+    corpo+='<div style="font-size:12px;color:#888;padding:2px 0">Consumo no cocho: precisa de 2 tratos registrados</div>';
   }
-  // Linha fabricante
+  // Linha fabricante (referência)
   if(consRec&&consRec>0){
-    corpo+='<div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;margin-top:2px">'
+    corpo+='<div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;margin-top:5px">'
       +'<span style="color:#65766a">Fabricante recomenda</span>'
       +'<span style="font-size:11px;color:#65766a">'+consRec.toFixed(0)+' kg (referência)</span></div>';
   }
