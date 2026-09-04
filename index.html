@@ -434,7 +434,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
 <!-- TRATO -->
 <div id="pg-trato" class="pg" style="display:none">
-<button id="trato-back-btn" onclick="var _m=document.getElementById('mapa-opcoes-modal');if(_m)_m.classList.remove('open');loteSelecionadoNoMapa='';pastoSelecionadoNoMapa='';goBack();" style="display:none;align-items:center;gap:6px;background:none;border:none;color:#1B5E20;font-size:14px;font-weight:700;cursor:pointer;padding:4px 0;margin-bottom:10px">&#8249; Voltar ao mapa</button>
+<button id="trato-back-btn" onclick="var _m=document.getElementById('mapa-opcoes-modal');if(_m)_m.classList.remove('open');loteSelecionadoNoMapa='';pastoSelecionadoNoMapa='';sp('home',false);" style="display:none;align-items:center;gap:6px;background:none;border:none;color:#1B5E20;font-size:14px;font-weight:700;cursor:pointer;padding:4px 0;margin-bottom:10px">&#8249; Voltar</button>
 <div class="card" style="padding:14px">
 
   <!-- Linha 1: Data + Lote -->
@@ -7413,7 +7413,7 @@ function updTratoLote(){
   // Limpa o termômetro ao trocar de lote
   var ceReset=document.getElementById('t-cons-calc');
   if(ceReset){ceReset.style.cssText='padding:12px;background:#E8F5E9;border-radius:10px;font-size:13px;font-weight:700;color:#1B5E20;min-height:44px;border:2px solid #A5D6A7;text-align:center;display:flex;align-items:center;justify-content:center';ceReset.innerHTML='Selecione lote e produto ↑';}
-  const lNome=(document.getElementById('t-cocho')||{}).value||'';const faz=(document.getElementById('t-faz')||{}).value||'';const infoEl=document.getElementById('t-lote-info');const cabHid=document.getElementById('t-cab');const cabInfo=document.getElementById('t-cab-info');if(!lNome){if(infoEl)infoEl.style.display='none';if(cabInfo)cabInfo.textContent='Selecione o lote acima ↑';if(cabHid)cabHid.value=0;return;}const lote=(S.LOTES||[]).find(l=>l.nome===lNome&&(!faz||l.faz===faz));if(lote){if(infoEl){infoEl.style.display='block';infoEl.textContent=lote.qtd+' animais · '+lote.peso+' kg/cab · Total: '+(lote.qtd*lote.peso).toFixed(0)+' kg';}if(cabInfo)cabInfo.textContent=lote.qtd+' animais · '+lote.peso+' kg/cab';if(cabHid)cabHid.value=lote.qtd;const ps=document.getElementById('t-prod');if(ps){const fazProds=_prodTrato(faz);let opts='<option value="">Selecione...</option>';fazProds.forEach(p=>{const est=S.EST&&S.EST[p];const pct=est&&est.pct?est.pct:0;if(pct>0&&lote.peso&&lote.qtd){const cons=(pct/100)*lote.peso*lote.qtd;opts+=`<option value="${p}" data-cons="${cons.toFixed(1)}">${p} (Rec: ${cons.toFixed(1)} kg)</option>`;}else opts+=`<option value="${p}">${p}</option>`;});ps.innerHTML=opts;ps.value='';}try{calcSaldo();}catch(e){}}}
+  const lNome=(document.getElementById('t-cocho')||{}).value||'';const faz=(document.getElementById('t-faz')||{}).value||'';const infoEl=document.getElementById('t-lote-info');const cabHid=document.getElementById('t-cab');const cabInfo=document.getElementById('t-cab-info');if(!lNome){if(infoEl)infoEl.style.display='none';if(cabInfo)cabInfo.textContent='Selecione o lote acima ↑';if(cabHid)cabHid.value=0;return;}const _lb=lNome.replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();const lote=(S.LOTES||[]).find(l=>(l.nome===lNome||l.nome===_lb)&&(!faz||l.faz===faz));if(lote){if(infoEl){infoEl.style.display='block';infoEl.textContent=lote.qtd+' animais · '+lote.peso+' kg/cab · Total: '+(lote.qtd*lote.peso).toFixed(0)+' kg';}if(cabInfo)cabInfo.textContent=lote.qtd+' animais · '+lote.peso+' kg/cab';if(cabHid)cabHid.value=lote.qtd;const ps=document.getElementById('t-prod');if(ps){const _prodAtual=ps.value;const fazProds=_prodTrato(faz);let opts='<option value="">Selecione...</option>';fazProds.forEach(p=>{const est=S.EST&&S.EST[p];const pct=est&&est.pct?est.pct:0;if(pct>0&&lote.peso&&lote.qtd){const cons=(pct/100)*lote.peso*lote.qtd;opts+=`<option value="${p}" data-cons="${cons.toFixed(1)}">${p} (Rec: ${cons.toFixed(1)} kg)</option>`;}else opts+=`<option value="${p}">${p}</option>`;});ps.innerHTML=opts;ps.value=_prodAtual&&fazProds.indexOf(_prodAtual)>=0?_prodAtual:'';}try{calcSaldo();}catch(e){}}}
 function updEsLote(){const lNome=(document.getElementById('es-cocho')||{}).value||'';const faz=(document.getElementById('es-faz')||{}).value||'';const infoEl=document.getElementById('es-lote-info');const hidEl=document.getElementById('es-nanim');const nInfo=document.getElementById('es-nanim-info');if(!lNome){if(infoEl)infoEl.style.display='none';if(nInfo)nInfo.textContent='Selecione o lote acima ↑';if(hidEl)hidEl.value=0;return;}const lote=(S.LOTES||[]).find(l=>l.nome===lNome&&(!faz||l.faz===faz));if(lote){if(infoEl){infoEl.style.display='block';infoEl.textContent=lote.qtd+' animais · '+lote.peso+' kg/cabeça';}if(nInfo)nInfo.textContent=lote.qtd+' animais · '+lote.peso+' kg/cab';if(hidEl)hidEl.value=lote.qtd;}}
 
 // ═══ PRODUTOS ═══
@@ -12169,9 +12169,29 @@ function registrarStatusCocho(status){
   setTimeout(function(){if(t.parentNode)document.body.removeChild(t);},2500);
 }
 
+function limparFormTrato(){
+  // Zera todos os campos do formulário de trato
+  var q=document.getElementById('t-qtd');if(q)q.value='';
+  var ob=document.getElementById('t-obs');if(ob)ob.value='';
+  var de=document.getElementById('t-desp');if(de)de.value='';
+  var cab=document.getElementById('t-cab');if(cab)cab.value='0';
+  var prod=document.getElementById('t-prod');if(prod){prod.innerHTML='<option value="">Selecione...</option>';prod.value='';}
+  var info=document.getElementById('t-lote-info');if(info)info.style.display='none';
+  // Situação do cocho e escore
+  coSel='';esTSel='';
+  document.querySelectorAll('.tco-btn').forEach(function(b){b.style.background='#fff';b.style.borderWidth='2px';b.style.fontWeight='normal';});
+  document.querySelectorAll('.tes-btn').forEach(function(b){b.style.background='#fff';b.style.borderColor='#ddd';});
+  // Feedback de consumo
+  var fb=document.getElementById('t-feedback-consumo');if(fb)fb.style.display='none';
+  var ce=document.getElementById('t-cons-calc');if(ce){ce.style.cssText='padding:12px;background:#E8F5E9;border-radius:10px;font-size:13px;font-weight:700;color:#1B5E20;min-height:44px;border:2px solid #A5D6A7;text-align:center;display:flex;align-items:center;justify-content:center';ce.innerHTML='Selecione lote e produto ↑';}
+  // Data de hoje
+  var dt=document.getElementById('t-data');if(dt)dt.value=TD;
+}
+
 function irParaTrato(){
   fecharModalOpcoes();
-  sp('trato', true, 'mapa');
+  limparFormTrato();
+  sp('trato', true, 'home');
   setTimeout(function(){
     var b = document.getElementById('trato-back-btn');
     if(b) b.style.display = 'flex';
@@ -12181,16 +12201,19 @@ function irParaTrato(){
     setTimeout(function(){
       if(!sel) return;
       // Pré-selecionar e bloquear edição — vem do mapa, lote é certo
+      var achou=false;
       for(var i=0;i<sel.options.length;i++){
         if(sel.options[i].text.indexOf(loteSelecionadoNoMapa)>=0){
           sel.selectedIndex=i;
           sel.disabled=true;
           sel.style.background='#f0f4f0';
           sel.style.color='#555';
+          achou=true;
           try{updTratoLote();}catch(e){}
           break;
         }
       }
+      if(!achou){ sel.disabled=false; sel.style.background=''; sel.style.color=''; }
     }, 250);
   } else {
     // Veio direto (não do mapa) — lote livre para editar
