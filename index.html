@@ -364,6 +364,10 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
 <!-- PAINEL VAQUEIRO: gauge de dias no pasto (só para r='Vaqueiro') -->
 <div id="home-vaqueiro-panel" style="display:none;margin-top:10px;margin-bottom:12px">
+  <div class="card" id="vaq-tratos-hoje-card" style="padding:14px;display:none;margin-bottom:10px">
+    <div style="font-size:14px;font-weight:800;color:#1B5E20;margin-bottom:8px">✅ Tratos de hoje</div>
+    <div id="vaq-tratos-hoje"></div>
+  </div>
   <div class="card" style="padding:14px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div style="font-size:14px;font-weight:800;color:#1B5E20">🐄 Situação dos lotes</div>
@@ -1687,9 +1691,10 @@ function isV(u){return u.p.diaria||u.p.insumo||u.p.trato||u.p.escore;}
 function isA(u){return u.p.cantina||u.p.estoque||u.p.painel||u.p.config;}
 function buildActs(){
   var isDono = CU && (CU.r==='Dono' || CU.r==='Consultor');
+  var isVaqueiro = CU && CU.r==='Vaqueiro';
   var temDiaria = CU && CU.p && CU.p.diaria;
   var temInsumo = isDono && CU.p && CU.p.insumo;
-  var temEscore = CU && CU.p && CU.p.escore;
+  var temEscore = CU && CU.p && CU.p.escore && !isVaqueiro;
   // Contar quantos botões da segunda linha
   var segundaLinha = (temInsumo ? 1 : 0) + (temEscore ? 1 : 0);
   var btns = '';
@@ -8492,48 +8497,76 @@ function _rkpGraficos(comHist){
       +'</div>';
   }
 
-  // ── (a2) Carga por MÓDULO (soma dos piquetes de cada módulo) ──
-  // Usa a ocupação ATUAL (S.MAPA_ALOC + S.LOTES): soma UA e ha dos
-  // piquetes de cada módulo e divide. Pasto avulso não entra aqui.
+  // ── (a2) Carga por MÓDULO + PASTO AVULSO (ocupação atual) ──
+  // Barras grandes, cor por status, clicáveis (módulo expande os piquetes dele).
   var aloc=S.MAPA_ALOC||{};
   var lotesG=S.LOTES||[];
   var mods={};
   MAPA_AREAS.filter(function(a){return a.tipo==='modulo';}).forEach(function(a){
     var mk=a.modulo;
-    if(!mods[mk]) mods[mk]={num:mk, ha:0, ua:0, ocup:0, tot:0};
+    if(!mods[mk]) mods[mk]={num:mk, ha:0, ua:0, ocup:0, tot:0, piquetes:[]};
     mods[mk].ha+=(a.ha||0);
     mods[mk].tot++;
     var lnm=aloc[a.id];
-    if(lnm){
-      var lo=lotesG.find(function(l){return l.nome===lnm;});
-      if(lo){ mods[mk].ua += (lo.qtd*lo.peso/450); mods[mk].ocup++; }
-    }
+    var loP=lnm?lotesG.find(function(l){return l.nome===lnm;}):null;
+    var uaP=loP?(loP.qtd*loP.peso/450):0;
+    if(loP){ mods[mk].ua += uaP; mods[mk].ocup++; }
+    mods[mk].piquetes.push({label:a.label, ha:a.ha||0, lote:lnm||'', uaHa:(a.ha>0&&uaP>0)?(uaP/a.ha):0});
   });
-  var modList=Object.keys(mods).map(function(k){return mods[k];})
-    .sort(function(a,b){return a.num-b.num;});
-  if(modList.length){
-    var maxModUaHa=0;
-    modList.forEach(function(m){ var u=m.ha>0?m.ua/m.ha:0; if(u>maxModUaHa) maxModUaHa=u; });
-    if(maxModUaHa<=0) maxModUaHa=1;
-    var barrasMod=modList.map(function(m){
-      var uaHa=m.ha>0?m.ua/m.ha:0;
-      var pct=Math.round((uaHa/maxModUaHa)*100);
-      if(uaHa>0 && pct<2) pct=2;
-      var corMod=uaHa<=0?'#BDBDBD':(uaHa<1.5?'#F9A825':'#2E7D32');
-      var val=uaHa>0?uaHa.toFixed(2)+' UA/ha':'vazio';
-      var sub=m.ocup+'/'+m.tot+' piq.';
-      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">'
-        +'<div style="width:74px;font-size:10px;color:#555;text-align:right;flex-shrink:0">Módulo '+m.num+'<br><span style="font-size:8px;color:#999">'+sub+'</span></div>'
-        +'<div style="flex:1;background:#F0F0F0;border-radius:4px;height:16px;position:relative;overflow:hidden">'
-        +  '<div style="width:'+pct+'%;background:'+corMod+';height:100%;border-radius:4px"></div>'
+  var modList=Object.keys(mods).map(function(k){return mods[k];}).sort(function(a,b){return a.num-b.num;});
+  var pastosAvulsos=MAPA_AREAS.filter(function(a){return a.tipo==='pasto';}).map(function(a){
+    var lnm=aloc[a.id];
+    var loP=lnm?lotesG.find(function(l){return l.nome===lnm;}):null;
+    var uaP=loP?(loP.qtd*loP.peso/450):0;
+    return {id:a.id, label:a.label, ha:a.ha||0, lote:lnm||'', uaHa:(a.ha>0&&uaP>0)?(uaP/a.ha):0};
+  });
+  if(modList.length || pastosAvulsos.length){
+    var maxUaHa2=0;
+    modList.forEach(function(m){ var u=m.ha>0?m.ua/m.ha:0; if(u>maxUaHa2) maxUaHa2=u; });
+    pastosAvulsos.forEach(function(p){ if(p.uaHa>maxUaHa2) maxUaHa2=p.uaHa; });
+    if(maxUaHa2<=0) maxUaHa2=1;
+    function _corFaixa(uaHa){ return uaHa<=0?'#BDBDBD':(uaHa<1.5?'#F9A825':'#2E7D32'); }
+    function _barraGrande(labelEsq, uaHa, subLabel, chevron){
+      var pct=Math.round((uaHa/maxUaHa2)*100);
+      if(uaHa>0 && pct<6) pct=6;
+      var cor=_corFaixa(uaHa);
+      var val=uaHa>0?uaHa.toFixed(2):'';
+      return '<div style="display:flex;align-items:center;gap:8px">'
+        +'<div style="width:62px;font-size:11px;font-weight:700;color:#333;flex-shrink:0">'+labelEsq+'</div>'
+        +'<div style="flex:1;background:#F0F0F0;border-radius:8px;height:26px;position:relative;overflow:hidden">'
+        +  (uaHa>0
+              ? '<div style="width:'+pct+'%;background:'+cor+';height:100%;border-radius:8px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;box-sizing:border-box"><span style="font-size:11px;font-weight:700;color:#fff">'+val+'</span></div>'
+              : '<div style="width:6%;background:'+cor+';height:100%;border-radius:8px"></div><span style="position:absolute;left:9px;top:0;height:100%;display:flex;align-items:center;font-size:11px;font-weight:700;color:#888">vazio</span>')
         +'</div>'
-        +'<div style="width:64px;font-size:10px;color:#333;font-weight:700;flex-shrink:0">'+val+'</div>'
+        +(chevron?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;transition:transform .15s"><polyline points="6 9 12 15 18 9"/></svg>':'<span style="width:14px;flex-shrink:0"></span>')
+        +'</div>'
+        +(subLabel?'<div style="font-size:9px;color:#999;margin:2px 0 0 70px">'+subLabel+'</div>':'');
+    }
+    var linhasMod=modList.map(function(m){
+      var uaHa=m.ha>0?m.ua/m.ha:0;
+      var sub=m.ocup+'/'+m.tot+' piquetes ocupados';
+      var det=m.piquetes.map(function(pq){
+        return '<div style="font-size:11px;color:#555;padding:4px 0">'+pq.label+' · '+(pq.ha?pq.ha.toFixed(1):'0')+'ha · '
+          +(pq.lote?pq.lote+' · '+pq.uaHa.toFixed(2)+' UA/ha':'<span style="color:#aaa">vazio</span>')+'</div>';
+      }).join('');
+      return '<div style="margin-bottom:8px">'
+        +'<div onclick="_rkpToggle(this)" style="cursor:pointer">'+_barraGrande('Módulo '+m.num, uaHa, sub, true)+'</div>'
+        +'<div style="display:none;margin:4px 0 0 70px;padding-left:8px;border-left:2px solid #e0e7e0">'+det+'</div>'
         +'</div>';
     }).join('');
     out+='<div style="margin-bottom:14px">'
-      +'<div style="font-size:11px;font-weight:700;color:#1B5E20;margin-bottom:6px">🧩 Carga por módulo (ocupação atual)</div>'
-      +barrasMod
+      +'<div style="font-size:11px;font-weight:700;color:#1B5E20;margin-bottom:8px">🧩 Carga por módulo <span style="font-weight:400;color:#999">· toque pra ver os piquetes</span></div>'
+      +linhasMod
       +'</div>';
+    if(pastosAvulsos.length){
+      var linhasAv=pastosAvulsos.map(function(p){
+        return '<div style="margin-bottom:8px">'+_barraGrande(p.label, p.uaHa, p.ha?p.ha.toFixed(1)+'ha'+(p.lote?' · '+p.lote:''):'', false)+'</div>';
+      }).join('');
+      out+='<div style="margin-bottom:14px">'
+        +'<div style="font-size:11px;font-weight:700;color:#1B5E20;margin-bottom:8px">🌾 Pastos avulsos</div>'
+        +linhasAv
+        +'</div>';
+    }
   }
 
   // ── (b) Distribuição da saúde (quantos 🟢🟡🔴) ──
@@ -8559,6 +8592,17 @@ function _rkpGraficos(comHist){
   return out;
 }
 
+// Expande/recolhe os piquetes de um módulo no gráfico de aproveitamento dos pastos.
+// Recebe o elemento clicado (não usa id fixo, pra não colidir quando o mesmo
+// gráfico aparece em mais de uma tela ao mesmo tempo — ex: painel do vaqueiro e histórico).
+function _rkpToggle(headEl){
+  var det=headEl.nextElementSibling;
+  if(!det) return;
+  var open=det.style.display==='block';
+  det.style.display=open?'none':'block';
+  var chev=headEl.querySelector('svg');
+  if(chev) chev.style.transform=open?'rotate(0deg)':'rotate(180deg)';
+}
 function rHistRankingPastos(){
   var div=document.getElementById('hist-ranking-pastos');
   var cfg=_rkpCfg();
@@ -10366,11 +10410,94 @@ function responderRacao(loteNome, refDt, resposta){
     obs:'[Aviso de ração] '+obs
   };
   S.rT.push(r);
+  salvar();
   try{ enviarDado(r); }catch(e){}
   try{ rVaqueiroPainel(); }catch(e){}
   alert('✅ Obrigado! Sua resposta foi registrada e o consultor será avisado.');
 }
 
+// Calcula o status de trato de cada lote pra hoje, usando a MESMA previsão de
+// consumo do _calcAvisosRacao (sacos lançados ÷ consumo/dia previsto = quantos
+// dias deveria durar). Só marca "pendente" quando já passou desse prazo —
+// não aparece todo lote toda vez, só quando realmente é hora de checar.
+function _statusTratosHoje(){
+  var out=[];
+  if(!CU||CU.r!=='Vaqueiro') return out;
+  var lotes=S.LOTES||[];
+  function _baseLote(x){return String(x||'').split('(')[0].trim();}
+  var hoje=new Date(); hoje.setHours(12,0,0,0);
+  lotes.forEach(function(lote){
+    var nm=lote.nome, peso=lote.peso||0, qtd=lote.qtd||0;
+    var tl=(S.rT||[]).filter(function(r){return r.tipo==='trato'&&!r._apagado&&_baseLote(r.lote||r.co)===nm;});
+    var lancadoHoje=tl.some(function(r){return (r.dt||'').substring(0,10)===TD;});
+    if(lancadoHoje){ out.push({lote:nm,status:'feito'}); return; }
+    if(!tl.length||!peso||!qtd){ out.push({lote:nm,status:'sem_dado'}); return; }
+    var totalSacos=0, prodMap={}, ultDt='';
+    tl.forEach(function(r){
+      var q=parseFloat(r.q||r.qtd||0)||0; totalSacos+=q;
+      var pr=r.pr||r.prod||''; if(pr) prodMap[pr]=(prodMap[pr]||0)+q;
+      var d=(r.dt||'').substring(0,10); if(d>ultDt) ultDt=d;
+    });
+    if(totalSacos<=0){ out.push({lote:nm,status:'sem_dado'}); return; }
+    var prodNome=Object.keys(prodMap).sort(function(a,b){return prodMap[b]-prodMap[a];})[0]||'';
+    var est=(prodNome&&S.EST&&S.EST[prodNome])?S.EST[prodNome]:null;
+    var pct=est&&est.pct?est.pct:0;
+    var pSaco=est&&est.peso_saco?est.peso_saco:30;
+    if(pct<=0||pSaco<=0){ out.push({lote:nm,status:'sem_dado'}); return; }
+    var kgDia=(pct/100)*peso*qtd;
+    var sacosDia=pSaco>0?kgDia/pSaco:0;
+    if(sacosDia<=0){ out.push({lote:nm,status:'sem_dado'}); return; }
+    var diasDura=totalSacos/sacosDia;
+    if(!ultDt||ultDt.length!==10){ out.push({lote:nm,status:'sem_dado'}); return; }
+    var diasSemTrato=Math.max(0,Math.round((hoje-new Date(ultDt+'T12:00:00'))/864e5));
+    if(diasSemTrato>diasDura){
+      out.push({lote:nm,status:'pendente',diasSemTrato:diasSemTrato,diasDura:Math.round(diasDura),ultDt:ultDt});
+    } else {
+      out.push({lote:nm,status:'em_dia',diasRestantes:Math.max(0,Math.round(diasDura-diasSemTrato))});
+    }
+  });
+  return out;
+}
+function irParaTratoLote(nomeLote){
+  loteSelecionadoNoMapa=nomeLote;
+  irParaTrato();
+}
+function rTratosHoje(){
+  var card=document.getElementById('vaq-tratos-hoje-card');
+  var wrap=document.getElementById('vaq-tratos-hoje');
+  if(!card||!wrap) return;
+  if(!CU||CU.r!=='Vaqueiro'){ card.style.display='none'; return; }
+  var itens=_statusTratosHoje();
+  if(!itens.length){ card.style.display='none'; return; }
+  var feitos=itens.filter(function(i){return i.status==='feito';});
+  var pendentes=itens.filter(function(i){return i.status==='pendente';});
+  var resto=itens.filter(function(i){return i.status==='em_dia'||i.status==='sem_dado';});
+  if(!feitos.length&&!pendentes.length){ card.style.display='none'; return; }
+  var html='';
+  feitos.forEach(function(i){
+    html+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #eee">'
+      +'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+      +'<div><div style="font-size:13px;font-weight:700;color:#333">'+i.lote+'</div><div style="font-size:11px;color:#888">Lançado hoje</div></div>'
+      +'</div>';
+  });
+  pendentes.forEach(function(i){
+    var refDtJs=(i.ultDt||'').replace(/'/g,'');
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #eee">'
+      +'<div style="display:flex;align-items:center;gap:8px;min-width:0">'
+      +'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C62828" stroke-width="2" stroke-linecap="round" style="flex-shrink:0"><circle cx="12" cy="12" r="9"/></svg>'
+      +'<div style="min-width:0"><div style="font-size:13px;font-weight:700;color:#333">'+i.lote+'</div><div style="font-size:11px;color:#C62828">'+i.diasSemTrato+' dias sem trato · esperado durar '+i.diasDura+'</div></div>'
+      +'</div>'
+      +'<div style="display:flex;gap:5px;flex-shrink:0">'
+      +'<button onclick="irParaTratoLote(\''+i.lote.replace(/'/g,"\\'")+'\')" style="font-size:11px;padding:6px 8px;background:#2E7D32;color:#fff;border:none;border-radius:7px;font-weight:700;cursor:pointer">Lançar</button>'
+      +'<button onclick="responderRacao(\''+i.lote.replace(/'/g,"\\'")+'\',\''+refDtJs+'\',\'tem_cocho\')" style="font-size:11px;padding:6px 8px;background:#fff;color:#2E7D32;border:1px solid #2E7D32;border-radius:7px;font-weight:700;cursor:pointer">Ainda tem</button>'
+      +'</div></div>';
+  });
+  if(resto.length){
+    html+='<div style="font-size:11px;color:#888;padding:6px 0 0">'+resto.length+' lote'+(resto.length!==1?'s':'')+' em dia</div>';
+  }
+  wrap.innerHTML=html;
+  card.style.display='block';
+}
 function rVaqueiroPainel(){
   var panel = document.getElementById('home-vaqueiro-panel');
   var grid  = document.getElementById('vaq-gauge-grid');
@@ -10378,8 +10505,9 @@ function rVaqueiroPainel(){
 
   // Só mostrar para vaqueiro
   var isVaq = CU && CU.r === 'Vaqueiro';
-  if(!isVaq){ panel.style.display='none'; return; }
+  if(!isVaq){ panel.style.display='none'; var ctc=document.getElementById('vaq-tratos-hoje-card'); if(ctc)ctc.style.display='none'; return; }
   panel.style.display = 'block';
+  try{ rTratosHoje(); }catch(e){ console.error('rTratosHoje:',e); }
 
   var aloc  = S.MAPA_ALOC || {};
   var lotes = S.LOTES || [];
