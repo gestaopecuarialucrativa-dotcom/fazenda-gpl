@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 04/09/2026 v7.16 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 08/09/2026 v7.18 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2270,15 +2270,19 @@ function salvarFenoCad(){
   if(!tipo){alert('Informe o tipo de feno.');return;}
   if(!peso){alert('Informe o peso por unidade (kg).');return;}
   if(!S.FENO) S.FENO={};
-  S.FENO[tipo]={u:unid, peso_u:peso, vkg:vkg, q:qtd, forn:forn, dt_compra:dt};
-  // registrar entrada se qtd>0
-  if(qtd>0){
-    if(!S.mFeno) S.mFeno=[];
-    S.mFeno.push({tipo:tipo,q:qtd,kg:qtd*peso,mov:'entrada',dt:dt,forn:forn,_ts:Date.now()});
-  }
+  // Modelo B: a qtd digitada no cadastro é a 1ª COMPRA (entra no ledger de compras)
+  var _ant=S.FENO[tipo]||{};
+  var _comp=((_ant.comprado!=null?_ant.comprado:0))+qtd;
+  var _trat=(_ant.tratado||0);
+  S.FENO[tipo]={u:unid, peso_u:peso, vkg:vkg, forn:forn, dt_compra:dt, comprado:_comp, tratado:_trat, q:_comp-_trat};
   window._fenEditTs=Date.now();
   salvar();
-  _enviarFeno(tipo);
+  _enviarFeno(tipo);            // cadastro/ficha do tipo
+  if(qtd>0){                    // registra a compra no ledger 🌾 Compras Feno
+    if(!S.mFeno) S.mFeno=[];
+    S.mFeno.push({tipo:tipo,q:qtd,kg:qtd*peso,mov:'entrada',dt:dt,forn:forn,_ts:Date.now()});
+    _enviarFenoCompra(tipo,qtd,vkg,forn,dt);
+  }
   ['fn-cad-tipo','fn-cad-peso','fn-cad-vkg','fn-cad-qtd','fn-cad-forn'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.value='';
   });
@@ -2298,30 +2302,52 @@ function _enviarFeno(tipo){
   enviarDado(r);
 }
 
+// Modelo B: registra UMA compra de feno no ledger 🌾 Compras Feno (comprado sobe)
+function _enviarFenoCompra(tipo,qtd,vkg,forn,dt){
+  if(!tipo||!qtd) return;
+  var faz=(CU&&CU.fs&&CU.fs.length?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||''));
+  var r={tipo:'feno_compra', faz:faz, tipo_feno:tipo,
+    qtd_unid:qtd, vkg:(vkg||0), forn:(forn||''), dt:(dt||TD),
+    uid:'FC'+Date.now()+Math.floor(Math.random()*1000)};
+  enviarDado(r);
+}
+
 function abrirReposicaoFeno(tipo){
   if(!tipo||!S.FENO||!S.FENO[tipo]) return;
   var e=S.FENO[tipo];
-  var qtd=parseFloat(prompt('Quantos '+e.u+'(s) de "'+tipo+'" chegaram?')||'0')||0;
+  var qtd=parseFloat((prompt('Quantos '+e.u+'(s) de "'+tipo+'" chegaram?')||'0').replace(',','.'))||0;
   if(!qtd) return;
-  var vkg=parseFloat(prompt('Novo R$/kg (deixe 0 para manter '+e.vkg+'):','0')||'0')||0;
-  S.FENO[tipo].q=(S.FENO[tipo].q||0)+qtd;
-  if(vkg>0) S.FENO[tipo].vkg=vkg;
+  var vkg=parseFloat((prompt('R$/kg desta compra (deixe 0 para manter '+(e.vkg||0)+'):','0')||'0').replace(',','.'))||0;
+  var forn=prompt('Fornecedor (opcional):', e.forn||'')||'';
+  // Modelo B: a compra soma no COMPRADO; saldo = comprado − tratado
+  var _comp=(e.comprado!=null?e.comprado:(e.q||0))+qtd;
+  e.comprado=_comp;
+  e.tratado=(e.tratado||0);
+  e.q=_comp-e.tratado;
+  if(vkg>0) e.vkg=vkg;
+  if(forn) e.forn=forn;
+  e.dt_compra=TD;
   if(!S.mFeno) S.mFeno=[];
-  S.mFeno.push({tipo:tipo,q:qtd,kg:qtd*(e.peso_u||0),mov:'entrada',dt:TD,forn:''});
+  S.mFeno.push({tipo:tipo,q:qtd,kg:qtd*(e.peso_u||0),mov:'entrada',dt:TD,forn:forn});
+  window._fenEditTs=Date.now();
   salvar();
-  _enviarFeno(tipo);
+  _enviarFeno(tipo);                                    // atualiza ficha (preço/forn)
+  _enviarFenoCompra(tipo,qtd,(vkg>0?vkg:e.vkg),forn,TD); // registra a compra no ledger
   rEstFeno();
 }
 
 function baixarFeno(tipo, qtd_unid){
-  // Desconta qtd_unid do estoque de feno
+  // Modelo B: o trato AUMENTA o "tratado"; saldo = comprado − tratado (não zera contador)
   if(!S.FENO||!S.FENO[tipo]) return 0;
   var e=S.FENO[tipo];
-  var qtdReal=Math.min(qtd_unid, e.q||0);
-  S.FENO[tipo].q=Math.max(0,(e.q||0)-qtdReal);
-  var kgBaixado=qtdReal*(e.peso_u||0);
+  var comp=(e.comprado!=null?e.comprado:(e.q||0));
+  e.comprado=comp;
+  e.tratado=(e.tratado||0)+qtd_unid;
+  e.q=comp-e.tratado;
+  var kgBaixado=qtd_unid*(e.peso_u||0);
   if(!S.mFeno) S.mFeno=[];
-  S.mFeno.push({tipo:tipo,q:qtdReal,kg:kgBaixado,mov:'saida',dt:TD});
+  S.mFeno.push({tipo:tipo,q:qtd_unid,kg:kgBaixado,mov:'saida',dt:TD});
+  window._fenEditTs=Date.now();
   salvar();
   return kgBaixado;
 }
@@ -2340,6 +2366,8 @@ function rEstFeno(){
     } else {
       elSaldo.innerHTML=tipos.map(function(t){
         var e=fen[t];
+        var comprado=(e.comprado!=null?e.comprado:(e.q||0));
+        var tratado=(e.tratado!=null?e.tratado:0);
         var kg=(e.q||0)*(e.peso_u||0);
         var vUnit=e.vkg&&e.peso_u?e.vkg*e.peso_u:0;
         var baixo=(e.q||0)<2;
@@ -2359,6 +2387,13 @@ function rEstFeno(){
 
           +'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Repor</button>'
           +'</div></div></div>'
+          +'<div style="margin-top:9px;background:#f4f8f2;border:1px solid #dce7dc;border-radius:8px;padding:7px 9px;font-size:11px;color:#3a3a3a;display:flex;gap:5px;align-items:center;flex-wrap:wrap">'
+          +'<span style="background:#e8f2e8;color:#33691E;border-radius:6px;padding:2px 7px;font-weight:700">Comprado '+comprado+'</span>'
+          +'<span style="color:#888">−</span>'
+          +'<span style="background:#e8f2e8;color:#33691E;border-radius:6px;padding:2px 7px;font-weight:700">Tratado '+tratado+'</span>'
+          +'<span style="color:#888">=</span>'
+          +'<span>Saldo <b style="color:#33691E">'+(e.q||0)+' '+e.u+'</b></span>'
+          +'</div>'
           +'</div>';
       }).join('');
     }
@@ -2443,7 +2478,7 @@ var _coLoteId=(_coLoteObj&&_coLoteObj.id)?_coLoteObj.id:'';
 var _coAloc=S.MAPA_ALOC||{};
 var _coPastoId=Object.keys(_coAloc).find(function(k){var ln=co.replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();return _coAloc[k]===co||_coAloc[k]===ln;});
 var _coPasto=_coPastoId?(function(){var a=MAPA_AREAS.find(function(x){return x.id===_coPastoId;});return a?a.label:_coPastoId;})():(coSel||'');
-const r={tipo:'trato',faz,n:CU.n,dt,co,pr,q,unid:'saco',kg_fornecido:q*pps,desp_kg:desp,cab,sit:coSel,pasto:_coPasto,escore:esTSel,obs:(document.getElementById('t-obs')||{}).value,lote:co,lote_id:_coLoteId,prod:pr,qtd:q,un:'saco'};S.rT.push(r);salvar();enviarDado(r);showOk('ok-t');document.getElementById('t-qtd').value='';document.getElementById('t-cab').value='';document.getElementById('t-obs').value='';var de=document.getElementById('t-desp');if(de)de.value='';setTimeout(function(){sp('home',false);rUlt();var _sel=document.getElementById('t-cocho');if(_sel){_sel.disabled=false;_sel.style.background='';_sel.style.color='';}},1500);document.querySelectorAll('#pg-trato .bopt').forEach(b=>b.classList.remove('sel'));coSel='';esTSel='';setTimeout(()=>{sp('home',false);rUlt();},1600);}
+const r={tipo:'trato',faz,n:CU.n,dt,co,pr,q,unid:'saco',kg_fornecido:q*pps,desp_kg:desp,cab,sit:coSel,pasto:_coPasto,escore:esTSel,obs:(document.getElementById('t-obs')||{}).value,lote:co,lote_id:_coLoteId,peso_med:(_coLoteObj?parseFloat(_coLoteObj.peso)||0:0),qtd_anim:(_coLoteObj?parseFloat(_coLoteObj.qtd)||0:0),prod:pr,qtd:q,un:'saco'};S.rT.push(r);salvar();enviarDado(r);showOk('ok-t');document.getElementById('t-qtd').value='';document.getElementById('t-cab').value='';document.getElementById('t-obs').value='';var de=document.getElementById('t-desp');if(de)de.value='';setTimeout(function(){sp('home',false);rUlt();var _sel=document.getElementById('t-cocho');if(_sel){_sel.disabled=false;_sel.style.background='';_sel.style.color='';}},1500);document.querySelectorAll('#pg-trato .bopt').forEach(b=>b.classList.remove('sel'));coSel='';esTSel='';setTimeout(()=>{sp('home',false);rUlt();},1600);}
 function envEs(){if(!esSel){alert('Selecione o escore.');return;}const lote=(document.getElementById('es-cocho')||{}).value;let nanim=parseInt((document.getElementById('es-nanim')||{}).value)||0;if(!nanim){const lt=S.LOTES.find(l=>l.nome===lote);if(lt)nanim=lt.qtd;}const r={tipo:'escore',faz:(document.getElementById('es-faz')||{}).value,co:lote,dt:(document.getElementById('es-data')||{}).value||TD,es:esSel,cab:nanim,obs:(document.getElementById('es-obs')||{}).value,n:CU.n};S.rE.push(r);enviarDado(r);showOk('ok-es');esSel=0;document.querySelectorAll('.ec').forEach(c=>c.classList.remove('sel'));document.getElementById('es-box').style.display='none';document.getElementById('es-nanim').value='';document.getElementById('es-obs').value='';setTimeout(()=>{sp('home',false);rUlt();},1600);}
 // [cantina legacy removida: envCt]
 // Marca o momento da última edição de estoque e força envio imediato à
