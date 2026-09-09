@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 09/09/2026 v7.21 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 09/09/2026 v7.22 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -5505,26 +5505,53 @@ function _compraSaldoEst(){
 // diasCobre = quantos dias o saldo segura (kg/dia somado só dos lotes do plano).
 function _compraTotais(linhas){
   var saldoEst=_compraSaldoEst();
+  // Estoque agrupado por %PV EXATO cadastrado do produto: { pct: [{nome,saldo}] }
+  var estPorPct={};
+  Object.keys(S.EST||{}).forEach(function(q){
+    var e=S.EST[q]||{};
+    if(e.pct==null||e.pct===''||isNaN(parseFloat(e.pct)))return;
+    var k=parseFloat(e.pct);
+    if(!estPorPct[k])estPorPct[k]=[];
+    estPorPct[k].push({nome:q, saldo:(saldoEst[q]!=null?saldoEst[q]:0)});
+  });
+  function _grupoKey(prod,custom){
+    if(custom)return 'nome:'+prod;
+    var e=S.EST&&S.EST[prod];
+    if(e && e.pct!=null && e.pct!=='' && !isNaN(parseFloat(e.pct))) return 'pv:'+parseFloat(e.pct);
+    return 'nome:'+prod;
+  }
   var tot={};
   linhas.forEach(function(r){
-    if(!tot[r.prod])tot[r.prod]={s30:0,s60:0,s90:0,preco:r.preco,consDia:0,saco:r.saco,pct:r.pct};
-    tot[r.prod].s30+=r.s30; tot[r.prod].s60+=r.s60; tot[r.prod].s90+=r.s90;
-    tot[r.prod].consDia+=r.consDia;
-    if(r.preco>0)tot[r.prod].preco=r.preco;
-    if(r.custom)tot[r.prod].custom=true;
+    var key=_grupoKey(r.prod,r.custom);
+    if(!tot[key]){
+      var e=(!r.custom&&S.EST[r.prod])?S.EST[r.prod]:null;
+      var pctCad=(e && e.pct!=null && e.pct!=='' && !isNaN(parseFloat(e.pct)))?parseFloat(e.pct):null;
+      tot[key]={s30:0,s60:0,s90:0,preco:r.preco,consDia:0,saco:r.saco,pct:r.pct,pctCad:pctCad,custom:!!r.custom,_nomes:{}};
+    }
+    tot[key].s30+=r.s30; tot[key].s60+=r.s60; tot[key].s90+=r.s90;
+    tot[key].consDia+=r.consDia;
+    if(r.preco>0)tot[key].preco=r.preco;
+    tot[key]._nomes[r.prod]=1;
   });
   // produtos avulsos (digitados na hora) — quantidade fixa, sem desconto de estoque
   (typeof _compraAvulsos!=='undefined'?_compraAvulsos:[]).forEach(function(a){
     if(!a||!a.prod||!a.sacos)return;
     var p=a.prod.trim(); if(!p)return;
-    if(!tot[p])tot[p]={s30:0,s60:0,s90:0,preco:a.preco||0,consDia:0,saco:SACO_KG_PADRAO,avulso:true};
-    tot[p].s30+=a.sacos; tot[p].s60+=a.sacos; tot[p].s90+=a.sacos;
-    if(a.preco>0)tot[p].preco=a.preco;
-    tot[p].avulso=true;
+    var key='nome:'+p;
+    if(!tot[key])tot[key]={s30:0,s60:0,s90:0,preco:a.preco||0,consDia:0,saco:SACO_KG_PADRAO,pct:null,pctCad:null,avulso:true,_nomes:{}};
+    tot[key].s30+=a.sacos; tot[key].s60+=a.sacos; tot[key].s90+=a.sacos;
+    if(a.preco>0)tot[key].preco=a.preco;
+    tot[key]._nomes[p]=1; tot[key].avulso=true;
   });
-  Object.keys(tot).forEach(function(p){
-    var t=tot[p];
-    t.saldo=Math.max(0, (saldoEst[p]!=null?saldoEst[p]:0));
+  Object.keys(tot).forEach(function(k){
+    var t=tot[k];
+    t.nomeEscolhido=Object.keys(t._nomes).join(' / ');
+    // "Já tenho" = soma do estoque dos produtos com esse %PV EXATO (avulso/cotação = 0)
+    t.estLista=[]; t.saldo=0;
+    if(!t.avulso && !t.custom && t.pctCad!=null && estPorPct[t.pctCad]){
+      estPorPct[t.pctCad].forEach(function(x){ if(x.saldo>0){ t.estLista.push(x); t.saldo+=x.saldo; } });
+    }
+    t.saldo=Math.max(0, parseFloat(t.saldo.toFixed(2)));
     t.c30=Math.max(0, t.s30-t.saldo);
     t.c60=Math.max(0, t.s60-t.saldo);
     t.c90=Math.max(0, t.s90-t.saldo);
@@ -5595,12 +5622,23 @@ function rCompraCalc(){
       }
       return '<td style="text-align:center;font-size:13px;font-weight:800;color:#1B5E20;padding:1px 2px">'+sc+' sc'+r+'</td>';
     }).join('');
-    var nome=((t.avulso||t.custom)? p : _compraRotulo(p,t.pct))+(t.avulso?' <span style="font-size:9px;color:#E65100;font-weight:700">avulso</span>':(t.custom?' <span style="font-size:9px;color:#E65100;font-weight:700">cotação</span>':''));
+    var nome=(t.nomeEscolhido||'')+(t.avulso?' <span style="font-size:9px;color:#E65100;font-weight:700">avulso</span>':(t.custom?' <span style="font-size:9px;color:#E65100;font-weight:700">cotação</span>':''));
+    var _pvTxt=(t.pctCad!=null)?String(t.pctCad).replace('.',','):'';
+    var _pvSub=_pvTxt?('<div style="font-size:9px;color:#888;margin-bottom:4px">'+_pvTxt+'% PV</div>'):'<div style="margin-bottom:4px"></div>';
+    var _estBox='';
+    if(t.estLista && t.estLista.length){
+      _estBox='<div style="background:#f4f8f2;border:1px solid #dce7dc;border-radius:8px;padding:6px 8px;margin:2px 0 6px;font-size:10px;color:#3a3a3a">'
+        +'<div style="font-weight:700;margin-bottom:2px">Já tenho no estoque ('+_pvTxt+'%): <b style="color:#1B5E20">'+t.saldo+'</b></div>'
+        +t.estLista.map(function(x){return '• '+x.nome+' — '+x.saldo;}).join('<br>')
+        +'</div>';
+    }
     var alerta = t.avulso ? '' : ((t.diasCobre!=null&&t.diasCobre>=90)
-      ? '<div style="font-size:10px;color:#2E7D32;margin-top:5px">✅ Saldo ('+t.saldo+' sacos ≈ '+t.diasCobre+' dias) já cobre o período. Sem compra urgente.</div>'
-      : '<div style="font-size:10px;color:#E65100;margin-top:5px">⏳ '+t.saldo+' sacos no galpão ≈ '+(t.diasCobre==null?'—':t.diasCobre)+' dias de trato. Garanta a entrega em até '+(t.diasCobre==null?'—':t.diasCobre)+' dias.</div>');
+      ? '<div style="font-size:10px;color:#2E7D32;margin-top:5px">Saldo ('+t.saldo+' sacos ≈ '+t.diasCobre+' dias) já cobre o período. Sem compra urgente.</div>'
+      : '<div style="font-size:10px;color:#E65100;margin-top:5px">'+t.saldo+' sacos no galpão ≈ '+(t.diasCobre==null?'—':t.diasCobre)+' dias de trato. Garanta a entrega em até '+(t.diasCobre==null?'—':t.diasCobre)+' dias.</div>');
     out+='<div style="padding:8px 0;border-bottom:1px solid #f0f0f0">'
-      +'<div style="font-size:12px;font-weight:700;margin-bottom:4px">'+nome+'</div>'
+      +'<div style="font-size:12px;font-weight:700">'+nome+'</div>'
+      +_pvSub
+      +_estBox
       +'<table style="width:100%;border-collapse:collapse">'
       +'<tr><td style="padding:1px 2px"></td>'+ths+'</tr>'
       +'<tr><td style="font-size:10px;color:#666;padding:1px 2px">Preciso</td>'+lp+'</tr>'
@@ -5648,7 +5686,7 @@ function gerarPDFCompra(){
     }
     var _vBR = r.venda ? (r.venda.substring(8,10)+'/'+r.venda.substring(5,7)+'/'+r.venda.substring(0,4)) : '';
     var _celLote = '<td>'+r.lote+(r.venda?('<br><span style="font-size:8px;color:#E65100;font-weight:700">vende '+_vBR+'</span>'):'')+'</td>';
-    return '<tr>'+_celLote+'<td>'+(r.custom?r.prod:_compraRotulo(r.prod,r.pct))+'</td><td style="text-align:center">'+r.qtd+'</td>'
+    return '<tr>'+_celLote+'<td>'+r.prod+'</td><td style="text-align:center">'+r.qtd+'</td>'
       +'<td style="text-align:center">'+r.peso+'</td><td style="text-align:center">'+(r.pctReal!=null?r.pctReal.toFixed(2).replace('.',','):r.pct)+'%</td>'
       +'<td style="text-align:center">'+r.consDia.toFixed(1)+' kg</td>'
       +prazos.map(cel).join('')+'</tr>';
@@ -5668,15 +5706,17 @@ function gerarPDFCompra(){
       }
       return '<td style="text-align:center;font-weight:800;color:#1B5E20">'+sc+' sc'+linha+'</td>';
     }
-    var nome=((t.avulso||t.custom)? p : _compraRotulo(p,t.pct))+(t.custom?' (cotação)':'');
+    var _pvTxtP=(t.pctCad!=null)?(' <span style="color:#888;font-weight:400;font-size:9px">('+String(t.pctCad).replace('.',',')+'% PV)</span>'):'';
+    var nome=(t.nomeEscolhido||'')+_pvTxtP+(t.custom?' (cotação)':'');
     if(t.avulso){
-      return '<tr style="background:#FFF8E1;font-weight:700"><td colspan="6">'+nome+' <span style="color:#E65100;font-size:9px">(avulso)</span> — A comprar</td>'+prazos.map(cC).join('')+'</tr>';
+      return '<tr style="background:#FFF8E1;font-weight:700"><td colspan="6">'+(t.nomeEscolhido||'')+' <span style="color:#E65100;font-size:9px">(avulso)</span> — A comprar</td>'+prazos.map(cC).join('')+'</tr>';
     }
+    var _estTxt=(t.estLista&&t.estLista.length)?(' — '+t.estLista.map(function(x){return x.nome+' ('+x.saldo+')';}).join(', ')):'';
     var alerta = (t.diasCobre!=null&&t.diasCobre>=90)
-      ? '✅ Saldo ('+t.saldo+' sacos ≈ '+t.diasCobre+' dias) já cobre o período. Sem compra urgente.'
-      : '⏳ '+t.saldo+' sacos em estoque ≈ '+(t.diasCobre==null?'—':t.diasCobre)+' dias de trato — garanta a entrega em até '+(t.diasCobre==null?'—':t.diasCobre)+' dias.';
+      ? 'Saldo ('+t.saldo+' sacos ≈ '+t.diasCobre+' dias) já cobre o período. Sem compra urgente.'
+      : t.saldo+' sacos em estoque ≈ '+(t.diasCobre==null?'—':t.diasCobre)+' dias de trato — garanta a entrega em até '+(t.diasCobre==null?'—':t.diasCobre)+' dias.';
     return '<tr style="background:#F1F8E9"><td colspan="6" style="font-weight:700">'+nome+' — Preciso</td>'+prazos.map(cP).join('')+'</tr>'
-      +'<tr style="background:#F1F8E9"><td colspan="6" style="color:#999">Já tenho (saldo estoque)</td>'+prazos.map(cT).join('')+'</tr>'
+      +'<tr style="background:#F1F8E9"><td colspan="6" style="color:#999">Já tenho (saldo estoque)'+_estTxt+'</td>'+prazos.map(cT).join('')+'</tr>'
       +'<tr style="background:#E8F5E9;font-weight:700"><td colspan="6" style="text-align:right">A comprar</td>'+prazos.map(cC).join('')+'</tr>'
       +'<tr><td colspan="'+ncol+'" style="font-size:9px;color:#555;border:none;padding:2px 6px 8px">'+alerta+'</td></tr>';
   }).join('');
