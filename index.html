@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 09/09/2026 v7.19 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 09/09/2026 v7.20 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2277,11 +2277,14 @@ function salvarFenoCad(){
   S.FENO[tipo]={u:unid, peso_u:peso, vkg:vkg, forn:forn, dt_compra:dt, comprado:_comp, tratado:_trat, q:_comp-_trat};
   window._fenEditTs=Date.now();
   salvar();
-  _enviarFeno(tipo);            // cadastro/ficha do tipo
-  if(qtd>0){                    // registra a compra no ledger 🌾 Compras Feno
+  if(qtd>0){
+    // Compra inicial: UMA gravação só (feno_compra cria a ficha + registra a compra).
     if(!S.mFeno) S.mFeno=[];
     S.mFeno.push({tipo:tipo,q:qtd,kg:qtd*peso,mov:'entrada',dt:dt,forn:forn,_ts:Date.now()});
     _enviarFenoCompra(tipo,qtd,vkg,forn,dt);
+    setTimeout(_recarregarFenoDaPlanilha, 4000);
+  } else {
+    _enviarFeno(tipo);           // só cadastra a ficha do tipo (sem compra)
   }
   ['fn-cad-tipo','fn-cad-peso','fn-cad-vkg','fn-cad-qtd','fn-cad-forn'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.value='';
@@ -2305,11 +2308,19 @@ function _enviarFeno(tipo){
 // Modelo B: registra UMA compra de feno no ledger 🌾 Compras Feno (comprado sobe)
 function _enviarFenoCompra(tipo,qtd,vkg,forn,dt){
   if(!tipo||!qtd) return;
+  var e=(S.FENO&&S.FENO[tipo])||{};
   var faz=(CU&&CU.fs&&CU.fs.length?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||''));
   var r={tipo:'feno_compra', faz:faz, tipo_feno:tipo,
     qtd_unid:qtd, vkg:(vkg||0), forn:(forn||''), dt:(dt||TD),
+    u:(e.u||'rolo'), peso_u:(e.peso_u||0),
     uid:'FC'+Date.now()+Math.floor(Math.random()*1000)};
   enviarDado(r);
+}
+// Recarrega o feno DA PLANILHA (fonte única) — o saldo mostrado passa a ser o gravado.
+function _recarregarFenoDaPlanilha(){
+  if(!(S.cfgGS && navigator.onLine)) return;
+  window._fenEditTs=0; // libera o apply do cfg.FENO (não segura no cache)
+  try{ carregarNuvem(function(){ try{ rEstFeno(); }catch(e){} }); }catch(e){}
 }
 
 // Abre a tela "Registrar compra" (Modelo B) para um tipo que já existe.
@@ -2358,12 +2369,13 @@ function salvarFenoCompra(){
   e.dt_compra=dt;
   if(!S.mFeno) S.mFeno=[];
   S.mFeno.push({tipo:tipo,q:q,kg:q*(e.peso_u||0),mov:'entrada',dt:dt,forn:forn});
-  window._fenEditTs=Date.now();
   salvar();
-  _enviarFeno(tipo);                                       // atualiza ficha (preço/forn)
-  _enviarFenoCompra(tipo,q,(vkg>0?vkg:e.vkg),forn,dt);     // registra a compra no ledger
+  // UMA gravação só: feno_compra cria a ficha (se faltar) + registra a compra no ledger.
+  _enviarFenoCompra(tipo,q,(vkg>0?vkg:e.vkg),forn,dt);
   fecharRegistrarCompra();
   rEstFeno();
+  // Reconcilia com a planilha: em ~4s puxa o saldo GRAVADO. Se não gravou, volta ao real.
+  setTimeout(_recarregarFenoDaPlanilha, 4000);
 }
 
 function baixarFeno(tipo, qtd_unid){
