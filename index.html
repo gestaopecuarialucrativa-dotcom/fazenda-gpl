@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 08/09/2026 v7.18 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 09/09/2026 v7.19 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -811,7 +811,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     Feno — Cadastro (1ª entrada ou novo tipo)
   </div>
   <div style="font-size:10px;color:#33691E;background:#F1F8E9;border-radius:6px;padding:4px 8px;margin-bottom:8px;display:inline-block">novo tipo · 1ª entrada</div>
-  <div class="info-box" style="font-size:11px">Para repor um tipo de feno já cadastrado, use o botão <b>Repor</b> no Saldo de Feno abaixo.</div>
+  <div class="info-box" style="font-size:11px">Para uma nova compra de um tipo já cadastrado, use o botão <b>Registrar compra</b> no Saldo de Feno abaixo.</div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
     <div style="flex:2;min-width:140px"><div class="lbl">Tipo / Variedade</div><input type="text" id="fn-cad-tipo" placeholder="Ex: Piatã, Coastcross, Tifton 85"></div>
     <div style="flex:1;min-width:80px"><div class="lbl">Unidade</div><select id="fn-cad-unid"><option value="rolo">Rolo</option><option value="pacote">Pacote</option><option value="fardo">Fardo</option><option value="kg">kg (avulso)</option></select></div>
@@ -2312,27 +2312,57 @@ function _enviarFenoCompra(tipo,qtd,vkg,forn,dt){
   enviarDado(r);
 }
 
+// Abre a tela "Registrar compra" (Modelo B) para um tipo que já existe.
 function abrirReposicaoFeno(tipo){
   if(!tipo||!S.FENO||!S.FENO[tipo]) return;
   var e=S.FENO[tipo];
-  var qtd=parseFloat((prompt('Quantos '+e.u+'(s) de "'+tipo+'" chegaram?')||'0').replace(',','.'))||0;
-  if(!qtd) return;
-  var vkg=parseFloat((prompt('R$/kg desta compra (deixe 0 para manter '+(e.vkg||0)+'):','0')||'0').replace(',','.'))||0;
-  var forn=prompt('Fornecedor (opcional):', e.forn||'')||'';
+  window._fncTipo=tipo;
+  var g=function(id){return document.getElementById(id);};
+  if(g('fnc-tipo')) g('fnc-tipo').textContent=tipo+' · '+(e.peso_u||0)+' kg/'+(e.u||'rolo');
+  if(g('fnc-qtd')) g('fnc-qtd').value='';
+  if(g('fnc-vkg')) g('fnc-vkg').value=(e.vkg||'');
+  if(g('fnc-dt')) g('fnc-dt').value=TD;
+  if(g('fnc-forn')) g('fnc-forn').value=(e.forn||'');
+  updFncCalc();
+  var m=g('modal-fencompra'); if(m) m.classList.add('open');
+}
+function fecharRegistrarCompra(){ var m=document.getElementById('modal-fencompra'); if(m) m.classList.remove('open'); }
+function updFncCalc(){
+  var tipo=window._fncTipo; if(!tipo||!S.FENO||!S.FENO[tipo]) return;
+  var e=S.FENO[tipo];
+  var q=parseFloat((((document.getElementById('fnc-qtd')||{}).value)||'0').replace(',','.'))||0;
+  var vkg=parseFloat((((document.getElementById('fnc-vkg')||{}).value)||'0').replace(',','.'))||0;
+  if(!vkg) vkg=e.vkg||0;
+  var el=document.getElementById('fnc-calc'); if(!el) return;
+  if(q>0){
+    var kg=q*(e.peso_u||0); var custo=kg*vkg;
+    el.innerHTML='Compra: <b>'+q+' '+(e.u||'rolo')+'</b> · '+Math.round(kg)+' kg'+(custo>0?' · custo <b>R$ '+custo.toFixed(2).replace('.',',')+'</b>':'')+' → o Comprado sobe '+q+'.';
+    el.style.display='block';
+  } else { el.style.display='none'; }
+}
+function salvarFenoCompra(){
+  var tipo=window._fncTipo; if(!tipo||!S.FENO||!S.FENO[tipo]){alert('Tipo de feno não encontrado.');return;}
+  var e=S.FENO[tipo];
+  var q=parseFloat((((document.getElementById('fnc-qtd')||{}).value)||'0').replace(',','.'))||0;
+  if(!q||q<=0){alert('Informe quantos '+(e.u||'rolo')+'(s) você comprou.');return;}
+  var vkg=parseFloat((((document.getElementById('fnc-vkg')||{}).value)||'0').replace(',','.'))||0;
+  var forn=((document.getElementById('fnc-forn')||{}).value||'').trim();
+  var dt=((document.getElementById('fnc-dt')||{}).value)||TD;
   // Modelo B: a compra soma no COMPRADO; saldo = comprado − tratado
-  var _comp=(e.comprado!=null?e.comprado:(e.q||0))+qtd;
+  var _comp=(e.comprado!=null?e.comprado:(e.q||0))+q;
   e.comprado=_comp;
   e.tratado=(e.tratado||0);
   e.q=_comp-e.tratado;
   if(vkg>0) e.vkg=vkg;
   if(forn) e.forn=forn;
-  e.dt_compra=TD;
+  e.dt_compra=dt;
   if(!S.mFeno) S.mFeno=[];
-  S.mFeno.push({tipo:tipo,q:qtd,kg:qtd*(e.peso_u||0),mov:'entrada',dt:TD,forn:forn});
+  S.mFeno.push({tipo:tipo,q:q,kg:q*(e.peso_u||0),mov:'entrada',dt:dt,forn:forn});
   window._fenEditTs=Date.now();
   salvar();
-  _enviarFeno(tipo);                                    // atualiza ficha (preço/forn)
-  _enviarFenoCompra(tipo,qtd,(vkg>0?vkg:e.vkg),forn,TD); // registra a compra no ledger
+  _enviarFeno(tipo);                                       // atualiza ficha (preço/forn)
+  _enviarFenoCompra(tipo,q,(vkg>0?vkg:e.vkg),forn,dt);     // registra a compra no ledger
+  fecharRegistrarCompra();
   rEstFeno();
 }
 
@@ -2385,7 +2415,7 @@ function rEstFeno(){
           +'<div style="display:flex;gap:4px;margin-top:4px;justify-content:flex-end">'
           +'<button onclick="abrirReposicaoFeno(this.getAttribute(\'data-t\'))" data-t="'+t+'" style="padding:3px 10px;background:#33691E;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;display:flex;align-items:center;gap:3px">'
 
-          +'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Repor</button>'
+          +'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Registrar compra</button>'
           +'</div></div></div>'
           +'<div style="margin-top:9px;background:#f4f8f2;border:1px solid #dce7dc;border-radius:8px;padding:7px 9px;font-size:11px;color:#3a3a3a;display:flex;gap:5px;align-items:center;flex-wrap:wrap">'
           +'<span style="background:#e8f2e8;color:#33691E;border-radius:6px;padding:2px 7px;font-weight:700">Comprado '+comprado+'</span>'
@@ -12981,6 +13011,25 @@ function diagURL(){
 </div>
 
 <!-- ══ MODAL MUDANÇA DE PASTO ══ -->
+<div class="edit-modal" id="modal-fencompra">
+  <div class="edit-box">
+    <div style="font-size:15px;font-weight:800;color:#1B5E20;display:flex;align-items:center;gap:6px;margin-bottom:6px">🌾 Registrar compra</div>
+    <div id="fnc-tipo" style="display:inline-block;background:#e8f2e8;color:#33691E;font-size:11px;font-weight:700;border-radius:20px;padding:3px 10px;margin-bottom:12px">—</div>
+    <div style="display:flex;gap:10px">
+      <div style="flex:1;margin-bottom:12px"><div class="lbl">Quantos rolos comprou</div><input type="number" id="fnc-qtd" min="0" step="1" placeholder="Ex: 18" oninput="updFncCalc()" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #d7ddd5;border-radius:9px;font-size:14px"></div>
+      <div style="flex:1;margin-bottom:12px"><div class="lbl">R$/kg desta compra</div><input type="number" id="fnc-vkg" min="0" step="0.01" placeholder="0,60" oninput="updFncCalc()" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #d7ddd5;border-radius:9px;font-size:14px"></div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <div style="flex:1;margin-bottom:12px"><div class="lbl">Data da compra</div><input type="date" id="fnc-dt" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #d7ddd5;border-radius:9px;font-size:14px"></div>
+      <div style="flex:1;margin-bottom:12px"><div class="lbl">Fornecedor (opcional)</div><input type="text" id="fnc-forn" placeholder="Nome do fornecedor" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #d7ddd5;border-radius:9px;font-size:14px"></div>
+    </div>
+    <div id="fnc-calc" style="display:none;background:#f5f8f3;border:1px solid #dce7dc;border-radius:9px;padding:9px 11px;font-size:12px;color:#3a3a3a;margin-bottom:12px"></div>
+    <div style="display:flex;gap:8px">
+      <button onclick="fecharRegistrarCompra()" style="flex:1;background:#eee;color:#555;border:none;border-radius:11px;padding:12px;font-size:14px;font-weight:700;cursor:pointer">Cancelar</button>
+      <button onclick="salvarFenoCompra()" style="flex:2;background:#1B5E20;color:#fff;border:none;border-radius:11px;padding:12px;font-size:14px;font-weight:800;cursor:pointer">+ Registrar compra</button>
+    </div>
+  </div>
+</div>
 <div class="edit-modal" id="modal-mudanca-pasto">
   <div class="edit-box" style="max-width:340px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
