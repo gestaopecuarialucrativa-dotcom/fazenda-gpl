@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 09/09/2026 v7.20 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 09/09/2026 v7.21 ✅</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -4732,7 +4732,7 @@ var SACO_KG_PADRAO=30;
 function rCompraLotes(){
   var div=document.getElementById('compra-lotes');
   if(!div)return;
-  var lotes=(S.LOTES||[]).filter(function(l){return (l.qtd||0)>0;});
+  var lotes=_compraLotesOrdenados();
   var prods=Object.keys(S.EST||{});
   if(!lotes.length){
     div.innerHTML='<div style="font-size:12px;color:#888;text-align:center;padding:16px">Nenhum lote cadastrado.</div>';
@@ -4743,7 +4743,7 @@ function rCompraLotes(){
     return;
   }
   div.innerHTML=lotes.map(function(l,i){
-    var opts='<option value="">— não comprar —</option>'+prods.map(function(p){return '<option value="'+p.replace(/"/g,'&quot;')+'">'+p+'</option>';}).join('');
+    var opts='<option value="">— não comprar —</option>'+prods.map(function(p){return '<option value="'+p.replace(/"/g,'&quot;')+'">'+p+'</option>';}).join('')+'<option value="__outro__">Outro produto (digitar)</option>';
     return '<div class="card" style="padding:10px;margin-bottom:8px;background:#fafafa">'
       +'<div style="font-size:13px;font-weight:700;color:#1B5E20">'+l.nome+'</div>'
       +'<div style="font-size:10px;color:#888;margin-bottom:6px">'+l.qtd+' animais · '+l.peso+' kg médio</div>'
@@ -4754,6 +4754,10 @@ function rCompraLotes(){
       +    '<input type="number" id="cmp-pct-'+i+'" step="0.01" min="0" placeholder="0" oninput="delete _compraArred['+i+'];rCompraArred('+i+')" style="width:100%;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px"></div>'
       +  '<div style="flex:1;min-width:80px"><div style="font-size:10px;color:#666;margin-bottom:2px">R$/saco</div>'
       +    '<input type="number" id="cmp-preco-'+i+'" step="0.01" min="0" placeholder="0,00" oninput="rCompraArred('+i+')" style="width:100%;padding:7px;border:1px solid #ddd;border-radius:8px;font-size:12px"></div>'
+      +'</div>'
+      +'<div id="cmp-outrobox-'+i+'" style="display:none;margin-top:7px">'
+      +  '<div style="font-size:10px;color:#666;margin-bottom:2px;display:flex;align-items:center;gap:4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>Nome do produto (para cotação)</div>'
+      +  '<input type="text" id="cmp-prodnome-'+i+'" oninput="rCompraArred('+i+')" placeholder="Ex: SUPER PROTEICO 40 — Nutron" style="width:100%;box-sizing:border-box;padding:7px;border:1px solid #1B5E20;border-radius:8px;font-size:12px">'
       +'</div>'
       +'<div style="margin-top:7px;display:flex;align-items:center;gap:7px">'
       +  '<div style="font-size:10px;color:#666;white-space:nowrap">Vende em</div>'
@@ -5421,21 +5425,38 @@ function rCompraSyncPct(i){
   var inp=document.getElementById('cmp-pct-'+i);
   if(!sel||!inp)return;
   var p=sel.value;
-  if(p&&S.EST[p]&&S.EST[p].pct!=null){ inp.value=S.EST[p].pct; }
-  else { inp.value=''; }
+  var ob=document.getElementById('cmp-outrobox-'+i);
+  if(ob) ob.style.display=(p==='__outro__')?'block':'none';
+  if(p&&p!=='__outro__'&&S.EST[p]&&S.EST[p].pct!=null){ inp.value=S.EST[p].pct; }
+  else if(p!=='__outro__'){ inp.value=''; }
+  // '__outro__': mantém o %PV que ele digitar (produto novo, sem % cadastrado)
   delete _compraArred[i];          // trocou produto: recomeca a escolha
   rCompraArred(i);
 }
 
 // Calcula e devolve as linhas do plano (reuso por tela e PDF)
+// Lotes do planejamento: com gado, ORDENADOS por número (Lote 1,2,3...; "Compra" por último).
+// Usado por rCompraLotes E _compraPlano pro índice (i) bater igual nos dois.
+function _compraLotesOrdenados(){
+  return (S.LOTES||[]).filter(function(l){return (l.qtd||0)>0;}).sort(function(a,b){
+    var na=parseInt((String(a.nome||'').match(/\d+/)||[9999])[0]);
+    var nb=parseInt((String(b.nome||'').match(/\d+/)||[9999])[0]);
+    return na!==nb ? na-nb : String(a.nome||'').localeCompare(String(b.nome||''));
+  });
+}
 function _compraPlano(){
-  var lotes=(S.LOTES||[]).filter(function(l){return (l.qtd||0)>0;});
+  var lotes=_compraLotesOrdenados();
   var linhas=[];
   lotes.forEach(function(l,i){
     var sel=document.getElementById('cmp-prod-'+i);
     var inp=document.getElementById('cmp-pct-'+i);
     if(!sel||!sel.value)return; // lote sem produto escolhido = não entra
-    var prod=sel.value;
+    var prod=sel.value, custom=false;
+    if(prod==='__outro__'){
+      var _nm=((document.getElementById('cmp-prodnome-'+i)||{}).value||'').trim();
+      if(!_nm) return; // escolheu "Outro" mas não digitou o nome = não entra
+      prod=_nm; custom=true;
+    }
     var pct=parseFloat(inp&&inp.value)||0;
     if(pct<=0)return;
     var preco=parseFloat((document.getElementById('cmp-preco-'+i)||{}).value)||0;
@@ -5452,7 +5473,7 @@ function _compraPlano(){
     var _dEf=function(dias){ return _compraDiasAteVenda(i,dias); };
     function sacos(dias){ return Math.ceil((consDia*_dEf(dias))/saco); }
     linhas.push({
-      lote:l.nome, qtd:l.qtd, peso:l.peso, prod:prod, pct:pct, pctReal:pctReal,
+      lote:l.nome, qtd:l.qtd, peso:l.peso, prod:prod, custom:custom, pct:pct, pctReal:pctReal,
       arred:(_compraArred[i]!=null?_compraArred[i]:null), saco:saco, preco:preco,
       consDia:consDia,
       s30:sacos(30), s60:sacos(60), s90:sacos(90),
@@ -5490,6 +5511,7 @@ function _compraTotais(linhas){
     tot[r.prod].s30+=r.s30; tot[r.prod].s60+=r.s60; tot[r.prod].s90+=r.s90;
     tot[r.prod].consDia+=r.consDia;
     if(r.preco>0)tot[r.prod].preco=r.preco;
+    if(r.custom)tot[r.prod].custom=true;
   });
   // produtos avulsos (digitados na hora) — quantidade fixa, sem desconto de estoque
   (typeof _compraAvulsos!=='undefined'?_compraAvulsos:[]).forEach(function(a){
@@ -5538,7 +5560,7 @@ function rCompraCalc(){
         +'<div style="font-size:9px;color:#888">'+kg.toFixed(0)+' kg</div>'+custo+'</div>';
     }
     out+='<div style="padding:8px 0;border-bottom:1px solid #f0f0f0">'
-      +'<div style="font-size:12px;font-weight:700">'+r.lote+' · '+_compraRotulo(r.prod,r.pct)+'</div>'
+      +'<div style="font-size:12px;font-weight:700">'+r.lote+' · '+(r.custom?r.prod:_compraRotulo(r.prod,r.pct))+'</div>'
       +'<div style="font-size:10px;color:#888;margin-bottom:4px">'+r.qtd+' animais × '+r.peso+' kg × '+(r.pctReal!=null?r.pctReal.toFixed(2).replace('.',','):r.pct)+'% = '+r.consDia.toFixed(1)+' kg/dia · saco '+r.saco+' kg'+(r.preco>0?(' · '+fmtR(r.preco)+'/saco'):'')+(r.arred!=null?(' · <b>'+r.arred+' sc/dia</b>'):'')+'</div>'
       +(r.preco>0?('<div style="display:flex;gap:8px;margin-bottom:6px">'
         +'<div style="flex:1;background:#eef2ec;border-radius:7px;padding:6px 9px"><div style="font-size:9px;color:#888">custo/dia do lote</div><div style="font-weight:800;font-size:13px;color:#1B5E20">'+fmtR((r.consDia/r.saco)*r.preco)+'</div></div>'
@@ -5573,7 +5595,7 @@ function rCompraCalc(){
       }
       return '<td style="text-align:center;font-size:13px;font-weight:800;color:#1B5E20;padding:1px 2px">'+sc+' sc'+r+'</td>';
     }).join('');
-    var nome=(t.avulso? p : _compraRotulo(p,t.pct))+(t.avulso?' <span style="font-size:9px;color:#E65100;font-weight:700">avulso</span>':'');
+    var nome=((t.avulso||t.custom)? p : _compraRotulo(p,t.pct))+(t.avulso?' <span style="font-size:9px;color:#E65100;font-weight:700">avulso</span>':(t.custom?' <span style="font-size:9px;color:#E65100;font-weight:700">cotação</span>':''));
     var alerta = t.avulso ? '' : ((t.diasCobre!=null&&t.diasCobre>=90)
       ? '<div style="font-size:10px;color:#2E7D32;margin-top:5px">✅ Saldo ('+t.saldo+' sacos ≈ '+t.diasCobre+' dias) já cobre o período. Sem compra urgente.</div>'
       : '<div style="font-size:10px;color:#E65100;margin-top:5px">⏳ '+t.saldo+' sacos no galpão ≈ '+(t.diasCobre==null?'—':t.diasCobre)+' dias de trato. Garanta a entrega em até '+(t.diasCobre==null?'—':t.diasCobre)+' dias.</div>');
@@ -5626,7 +5648,7 @@ function gerarPDFCompra(){
     }
     var _vBR = r.venda ? (r.venda.substring(8,10)+'/'+r.venda.substring(5,7)+'/'+r.venda.substring(0,4)) : '';
     var _celLote = '<td>'+r.lote+(r.venda?('<br><span style="font-size:8px;color:#E65100;font-weight:700">vende '+_vBR+'</span>'):'')+'</td>';
-    return '<tr>'+_celLote+'<td>'+_compraRotulo(r.prod,r.pct)+'</td><td style="text-align:center">'+r.qtd+'</td>'
+    return '<tr>'+_celLote+'<td>'+(r.custom?r.prod:_compraRotulo(r.prod,r.pct))+'</td><td style="text-align:center">'+r.qtd+'</td>'
       +'<td style="text-align:center">'+r.peso+'</td><td style="text-align:center">'+(r.pctReal!=null?r.pctReal.toFixed(2).replace('.',','):r.pct)+'%</td>'
       +'<td style="text-align:center">'+r.consDia.toFixed(1)+' kg</td>'
       +prazos.map(cel).join('')+'</tr>';
@@ -5646,7 +5668,7 @@ function gerarPDFCompra(){
       }
       return '<td style="text-align:center;font-weight:800;color:#1B5E20">'+sc+' sc'+linha+'</td>';
     }
-    var nome=(t.avulso? p : _compraRotulo(p,t.pct));
+    var nome=((t.avulso||t.custom)? p : _compraRotulo(p,t.pct))+(t.custom?' (cotação)':'');
     if(t.avulso){
       return '<tr style="background:#FFF8E1;font-weight:700"><td colspan="6">'+nome+' <span style="color:#E65100;font-size:9px">(avulso)</span> — A comprar</td>'+prazos.map(cC).join('')+'</tr>';
     }
