@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 12/09/2026 v7.24</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 12/09/2026 v7.25</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1262,7 +1262,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
     <div style="font-size:10px;color:#666;margin-bottom:3px">Quem lançou</div>
     <select id="feed-user" onchange="feedSetUser(this.value)" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:8px"><option value="">Todos os usuários</option></select>
     <div style="font-size:10px;color:#666;margin-bottom:3px">Tipo de lançamento</div>
-    <select id="feed-tipo" onchange="feedSetTipo(this.value)" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:8px"><option value="">Todos os tipos</option><option value="Trato">Trato</option><option value="Movimentação">Movimentação</option><option value="Diária">Diária</option><option value="Cantina">Cantina</option><option value="Insumo">Insumo</option><option value="Escore">Escore</option><option value="Despesa">Despesa</option></select>
+    <select id="feed-tipo" onchange="feedSetTipo(this.value)" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:8px"><option value="">Todos os tipos</option><option value="Trato">Trato</option><option value="Feno">Feno</option><option value="Movimentação">Movimentação</option><option value="Diária">Diária</option><option value="Cantina">Cantina</option><option value="Insumo">Insumo</option><option value="Escore">Escore</option><option value="Despesa">Despesa</option></select>
     <div style="font-size:10px;color:#666;margin-bottom:3px">Lote</div>
     <select id="feed-lote" onchange="feedSetLote(this.value)" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:13px;margin-bottom:8px"><option value="">Todos os lotes</option></select>
     <div style="display:flex;gap:6px">
@@ -2442,9 +2442,12 @@ function rEstFeno(){
     }
   }
 
-  // Consumo por lote
+  // Consumo por lote — lê dos MOVIMENTOS de feno (S.mFeno, vindo da aba 🌾 Tratos Feno),
+  // não de S.rT (que é o trato normal e nunca tem feno). Cada saída com lote = 1 trato de feno.
   if(elCons){
-    var tratosFeno=(S.rT||[]).filter(function(r){return r.tipo==='feno'&&!r._apagado;});
+    var tratosFeno=(S.mFeno||[]).filter(function(m){return m&&m.mov==='saida'&&m.lote;}).map(function(m){
+      return {lote:m.lote, kg_feno:(parseFloat(m.kg)||0), tipo_feno:(m.tipo||''), dt:(m.dt||''), q:(parseFloat(m.q)||0)};
+    });
     if(!tratosFeno.length){
       elCons.innerHTML='<div style="font-size:12px;color:#aaa;text-align:center;padding:12px">Sem tratos de feno registrados.</div>';
     } else {
@@ -2935,6 +2938,13 @@ function _feedItens(){
     } else if(r.tipo==='trato'){
       it.push({arr:'rT',idx:i,ts:_feedTs(r),tipo:'Trato',cor:'#2E7D32',autor:r.n||'—',dt:r.dt,faz:r.faz,lote:_feedLoteCanon(r.co||r.lote||''),resumo:(r.co||r.lote||'')+' · '+(r.pr||r.prod||'')+' · '+(r.q||r.qtd||0)+' '+(r.unid||'saco')});
     }
+  });
+  // FENO — trato de feno vem de S.mFeno (saída com lote), aba 🌾 Tratos Feno. Só leitura no feed
+  // (excluir feno pela conferência = próximo passo, precisa ação no backend).
+  (S.mFeno||[]).forEach(function(m,i){ if(!m||m.mov!=='saida'||!m.lote)return;
+    var _uFn=(S.FENO&&S.FENO[m.tipo]&&S.FENO[m.tipo].u)||'rolo';
+    var _kgFn=parseFloat(m.kg)||0;
+    it.push({arr:'mFeno',idx:i,ts:_feedTs(m),tipo:'Feno',cor:'#558B2F',autor:(m.resp||'—'),dt:m.dt,faz:(m.faz||''),lote:_feedLoteCanon(m.lote||''),resumo:(m.lote||'')+' · '+(m.tipo||'')+' · '+(parseFloat(m.q)||0)+' '+_uFn+(_kgFn?(' · '+Math.round(_kgFn)+' kg'):'')});
   });
   (S.rE||[]).forEach(function(r,i){ if(r._apagado)return; it.push({arr:'rE',idx:i,ts:_feedTs(r),tipo:'Escore',cor:'#E65100',autor:r.n||'—',dt:r.dt,faz:r.faz,lote:_feedLoteCanon(r.co||''),resumo:(r.co||'')+' · E'+(r.es)+' · '+(r.cab||0)+' cab'}); });
   (S.rC||[]).forEach(function(r,i){ if(r._apagado)return; it.push({arr:'rC',idx:i,ts:_feedTs(r),tipo:'Cantina',cor:'#AD1457',autor:r.resp||'—',dt:r.dt,faz:r.faz,resumo:'R$ '+(parseFloat(r.total)||0).toFixed(2).replace('.',',')+(r.det?' · '+r.det:'')}); });
@@ -3850,7 +3860,9 @@ function rFeedConsultor(){
         (o.tipo==='Diária'?'<button onclick="feedEditarDiaria('+o.idx+')" style="padding:4px 9px;font-size:13px;background:#E8F5E9;color:#1B5E20;border:none;border-radius:6px;cursor:pointer;flex-shrink:0;margin-right:4px">✏️</button>':'')
       +(o.tipo==='Trato'?'<button onclick="feedEditarTrato('+o.idx+')" style="padding:4px 9px;font-size:13px;background:#E8F5E9;color:#1B5E20;border:none;border-radius:6px;cursor:pointer;flex-shrink:0;margin-right:4px">✏️</button>':'')
       +(o.tipo==='Movimentação'?'<button onclick="feedEditarMov('+o.idx+')" style="padding:4px 9px;font-size:13px;background:#E8F5E9;color:#1B5E20;border:none;border-radius:6px;cursor:pointer;flex-shrink:0;margin-right:4px">✏️</button>':'')
-      +'<button onclick="feedExcluir(\''+o.arr+'\','+o.idx+')" style="padding:4px 9px;font-size:13px;background:#FFEBEE;color:#C62828;border:none;border-radius:6px;cursor:pointer;flex-shrink:0">🗑️</button>'
+      +(o.tipo==='Feno'
+        ? '<span style="font-size:9px;color:#aaa;flex-shrink:0;align-self:center">planilha</span>'
+        : '<button onclick="feedExcluir(\''+o.arr+'\','+o.idx+')" style="padding:4px 9px;font-size:13px;background:#FFEBEE;color:#C62828;border:none;border-radius:6px;cursor:pointer;flex-shrink:0">🗑️</button>')
       )
       +'</div>';
   });
