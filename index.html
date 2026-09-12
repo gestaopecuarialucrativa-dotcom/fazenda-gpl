@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 09/09/2026 v7.22 ✅</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 12/09/2026 v7.24</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1240,6 +1240,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
           <input type="number" id="cmp-frete" step="0.01" min="0" placeholder="sem frete" oninput="_compraSetFreteGeral(this.value)" style="width:100%;padding:9px;border:1px solid #FFCC80;border-radius:8px;font-size:12px"></div>
         <button onclick="rCompraCalc()" style="flex:1;padding:10px;background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>Calcular</button>
         <button onclick="gerarPDFCompra()" style="display:flex;align-items:center;justify-content:center;gap:7px;flex:1;padding:10px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Gerar PDF</button>
+        <button onclick="salvarPedidoCompra()" style="display:flex;align-items:center;justify-content:center;gap:7px;flex:1;padding:10px;background:#F1F8E9;color:#33691E;border:1px solid #8BC34A;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Salvar pedido</button>
       </div>
     </div>
     <div id="compra-resultado"></div>
@@ -4758,6 +4759,8 @@ function rCompraLotes(){
       +'<div id="cmp-outrobox-'+i+'" style="display:none;margin-top:7px">'
       +  '<div style="font-size:10px;color:#666;margin-bottom:2px;display:flex;align-items:center;gap:4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>Nome do produto (para cotação)</div>'
       +  '<input type="text" id="cmp-prodnome-'+i+'" oninput="rCompraArred('+i+')" placeholder="Ex: SUPER PROTEICO 40 — Nutron" style="width:100%;box-sizing:border-box;padding:7px;border:1px solid #1B5E20;border-radius:8px;font-size:12px">'
+      +  '<div style="font-size:10px;color:#666;margin:6px 0 2px">Peso do saco (kg)</div>'
+      +  '<input type="number" id="cmp-prodpeso-'+i+'" step="0.1" min="0" value="30" oninput="rCompraArred('+i+')" placeholder="30" style="width:120px;box-sizing:border-box;padding:7px;border:1px solid #1B5E20;border-radius:8px;font-size:12px">'
       +'</div>'
       +'<div style="margin-top:7px;display:flex;align-items:center;gap:7px">'
       +  '<div style="font-size:10px;color:#666;white-space:nowrap">Vende em</div>'
@@ -5461,6 +5464,7 @@ function _compraPlano(){
     if(pct<=0)return;
     var preco=parseFloat((document.getElementById('cmp-preco-'+i)||{}).value)||0;
     var saco=(S.EST[prod]&&S.EST[prod].peso_saco)?S.EST[prod].peso_saco:SACO_KG_PADRAO;
+    if(custom){ var _ps=parseFloat((document.getElementById('cmp-prodpeso-'+i)||{}).value); saco=(_ps>0)?_ps:SACO_KG_PADRAO; } // produto digitado: peso do saco informado na tela
     var consDia=l.peso*(pct/100)*l.qtd; // kg/dia do lote (exato pelo %PV digitado)
     var pctReal=pct;
     // Se Rogerio escolheu arredondar a dose diaria em saco inteiro, o plano passa
@@ -5514,19 +5518,27 @@ function _compraTotais(linhas){
     if(!estPorPct[k])estPorPct[k]=[];
     estPorPct[k].push({nome:q, saldo:(saldoEst[q]!=null?saldoEst[q]:0)});
   });
-  function _grupoKey(prod,custom){
-    if(custom)return 'nome:'+prod;
+  function _grupoKey(prod,custom,pct){
+    // Digitado ("Outro produto"): se EXISTE estoque cadastrado naquele %PV, agrupa junto
+    // (pv:) e desconta o saldo daquele %PV — igual produto do cadastro. Se NÃO existe
+    // estoque naquele %PV, fica sozinho como cotação (nome:), sem desconto.
+    if(custom){
+      var pv=parseFloat(pct);
+      if(!isNaN(pv) && estPorPct[pv]) return 'pv:'+pv;
+      return 'nome:'+prod;
+    }
     var e=S.EST&&S.EST[prod];
     if(e && e.pct!=null && e.pct!=='' && !isNaN(parseFloat(e.pct))) return 'pv:'+parseFloat(e.pct);
     return 'nome:'+prod;
   }
   var tot={};
   linhas.forEach(function(r){
-    var key=_grupoKey(r.prod,r.custom);
+    var key=_grupoKey(r.prod,r.custom,r.pct);
     if(!tot[key]){
-      var e=(!r.custom&&S.EST[r.prod])?S.EST[r.prod]:null;
-      var pctCad=(e && e.pct!=null && e.pct!=='' && !isNaN(parseFloat(e.pct)))?parseFloat(e.pct):null;
-      tot[key]={s30:0,s60:0,s90:0,preco:r.preco,consDia:0,saco:r.saco,pct:r.pct,pctCad:pctCad,custom:!!r.custom,_nomes:{}};
+      var _ehPv=(String(key).indexOf('pv:')===0);
+      var pctCad=_ehPv?parseFloat(String(key).slice(3)):null;
+      // "custom" (tag cotação) só quando ficou sozinho por nome, sem estoque no %PV.
+      tot[key]={s30:0,s60:0,s90:0,preco:r.preco,consDia:0,saco:r.saco,pct:r.pct,pctCad:pctCad,custom:(!_ehPv&&!!r.custom),_nomes:{}};
     }
     tot[key].s30+=r.s30; tot[key].s60+=r.s60; tot[key].s90+=r.s90;
     tot[key].consDia+=r.consDia;
@@ -5659,6 +5671,40 @@ function rCompraCalc(){
   div.innerHTML=out;
 }
 
+// Salva o Planejamento atual numa aba de histórico (🛒 Pedidos Compra).
+// Uma linha por PRODUTO, com os três prazos (30/60/90) e o custo (mesma conta do PDF,
+// já com frete rateado). NÃO apaga nada — cada salvamento adiciona um pedido novo.
+function salvarPedidoCompra(){
+  var linhas=_compraPlano();
+  var temAvulso=(typeof _compraAvulsos!=='undefined')&&_compraAvulsos.some(function(a){return a&&a.prod&&a.sacos;});
+  if(!linhas.length && !temAvulso){ alert('Calcule um pedido antes de salvar (escolha o produto de pelo menos um lote).'); return; }
+  var tot=_compraTotais(linhas);
+  var prazos=[30,60,90];                                   // salva SEMPRE os três prazos
+  var freteSaco=_compraFreteSaco(tot,prazos);              // frete único rateado por saco
+  var itens=[];
+  Object.keys(tot).forEach(function(k){
+    var t=tot[k];
+    function _c(dd){ return dd===30?t.c30:(dd===60?t.c60:t.c90); }
+    function _custo(dd){ var sc=_c(dd); return +(((sc*(t.preco||0))+(sc*(freteSaco[dd]||0)))).toFixed(2); }
+    itens.push({
+      produto:(t.nomeEscolhido||''),
+      pct:(t.pctCad!=null?t.pctCad:(t.pct!=null?t.pct:'')),
+      sc30:t.c30, sc60:t.c60, sc90:t.c90,
+      jatenho:(t.saldo||0),
+      custo30:_custo(30), custo60:_custo(60), custo90:_custo(90),
+      cotacao:(t.custom?'sim':(t.avulso?'avulso':''))
+    });
+  });
+  if(!itens.length){ alert('Nada a salvar.'); return; }
+  var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
+  var resp=(CU&&CU.n)?CU.n:'';
+  var h=new Date();
+  var _p2=function(n){return ('0'+n).slice(-2);};
+  var dtBR=_p2(h.getDate())+'/'+_p2(h.getMonth()+1)+'/'+h.getFullYear();
+  var pedidoId='#'+_p2(h.getMonth()+1)+_p2(h.getDate())+'-'+_p2(h.getHours())+_p2(h.getMinutes());
+  enviarDado({ tipo:'pedido_compra', faz:faz, resp:resp, pedido:pedidoId, dt:dtBR, frete:(_compraFreteGeral||0), itens:itens });
+  alert('Pedido '+pedidoId+' enviado. Confira na aba "Pedidos Compra" da planilha.');
+}
 function gerarPDFCompra(){
   var linhas=_compraPlano();
   var temAvulso=(typeof _compraAvulsos!=='undefined')&&_compraAvulsos.some(function(a){return a&&a.prod&&a.sacos;});
