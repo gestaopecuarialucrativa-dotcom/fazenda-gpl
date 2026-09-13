@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 12/09/2026 v7.25</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 13/09/2026 v7.26</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -9231,7 +9231,9 @@ function rHistFeno(){
   if(!el) return;
   function _br(iso){ return iso&&iso.length>=10 ? iso.substring(8,10)+'/'+iso.substring(5,7)+'/'+iso.substring(0,4) : (iso||''); }
 
-  var tratosFeno=(S.rT||[]).filter(function(r){return r.tipo==='feno'&&!r._apagado;});
+  var tratosFeno=(S.mFeno||[]).filter(function(m){return m&&m.mov==='saida'&&m.lote;}).map(function(m){
+    return {lote:m.lote, kg_feno:(parseFloat(m.kg)||0), qtd_unid:(parseFloat(m.q)||0), tipo_feno:(m.tipo||''), pasto:(m.pasto||''), dt:(m.dt||'')};
+  });
   tratosFeno.sort(function(a,b){return (b.dt||'').localeCompare(a.dt||'');});
 
   var out='<div style="margin:4px 0 10px">'
@@ -9292,7 +9294,9 @@ function rHistFeno(){
 function gerarPDFFeno(){
   var faz=(CU&&CU.faz)||Object.keys(S.FAZ||{})[0]||'Fazenda Estrela';
   var dtHoje=new Date().toLocaleDateString('pt-BR');
-  var tratosFeno=(S.rT||[]).filter(function(r){return r.tipo==='feno'&&!r._apagado;});
+  var tratosFeno=(S.mFeno||[]).filter(function(m){return m&&m.mov==='saida'&&m.lote;}).map(function(m){
+    return {lote:m.lote, kg_feno:(parseFloat(m.kg)||0), qtd_unid:(parseFloat(m.q)||0), tipo_feno:(m.tipo||''), pasto:(m.pasto||''), dt:(m.dt||'')};
+  });
   tratosFeno.sort(function(a,b){return (b.dt||'').localeCompare(a.dt||'');});
   function _br(iso){ return iso&&iso.length>=10 ? iso.substring(8,10)+'/'+iso.substring(5,7)+'/'+iso.substring(0,4) : (iso||''); }
 
