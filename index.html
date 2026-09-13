@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 13/09/2026 v7.26</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 13/09/2026 v7.27</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2473,9 +2473,9 @@ function rEstFeno(){
           var fenEP=S.FENO&&S.FENO[tipFen];
           var custoDia=fenEP&&fenEP.vkg?kgDia*fenEP.vkg:0;
           consHtml='<div style="font-size:11px;color:#558B2F;margin-top:4px">'
-            +'<b>'+kgDia.toFixed(1)+'</b> kg/dia'+(gCab?' · <b>'+gCab+'</b> g/cab/dia':'')
+            +'<b>'+kgDia.toFixed(1).replace('.',',')+'</b> kg/dia'+(gCab?' · <b>'+_kgBR(gCab)+'</b> g/cab/dia':'')
             +' · últimos '+dias+'d'
-            +(custoDia>0?' · <b style="color:#C62828">R$ '+custoDia.toFixed(2)+'/dia</b>':'')
+            +(custoDia>0?' · <b style="color:#C62828">'+_rsBR(custoDia)+'/dia</b>':'')
             +'</div>';
         } else {
           consHtml='<div style="font-size:10px;color:#aaa;margin-top:2px">Aguardando 2º trato para calcular consumo.</div>';
@@ -2483,7 +2483,7 @@ function rEstFeno(){
         return '<div style="border:1px solid #e0ead0;border-radius:10px;padding:10px 12px;margin-bottom:6px">'
           +'<div style="display:flex;justify-content:space-between;align-items:center">'
           +'<div style="font-size:13px;font-weight:800;color:#33691E">'+ln+'</div>'
-          +'<div style="font-size:12px;color:#555"><b>'+Math.round(d.kgTotal)+' kg</b> · '+d.tratos.length+' trato'+(d.tratos.length>1?'s':'')+'</div>'
+          +'<div style="font-size:12px;color:#555"><b>'+_kgBR(d.kgTotal)+' kg</b> · '+d.tratos.length+' trato'+(d.tratos.length>1?'s':'')+'</div>'
           +'</div>'+consHtml+'</div>';
       }).join('');
     }
@@ -2502,7 +2502,7 @@ function rEstFeno(){
           +'</div>'
           +'<div class="rd">'+(m.dt||'').split('-').reverse().join('/')
           +' · '+(m.mov==='entrada'?'Entrada':(m.lote?'Trato → '+m.lote:'Saída'))
-          +(m.kg?' · '+Math.round(m.kg)+' kg':'')
+          +(m.kg?' · '+_kgBR(m.kg)+' kg':'')
           +'</div></div>';
       }).join('')
       :'<div style="font-size:12px;color:#888;text-align:center;padding:12px">Nenhuma.</div>';
@@ -2924,6 +2924,9 @@ function _feedLoteCanon(s){
   // agrupa o lote pelo nome real, ignorando "(X animais)" e espacos extras
   return String(s||'').replace(/\s*\(.*?\)\s*$/,'').trim();
 }
+// Formato brasileiro: milhar com ponto (kg/g inteiros) e R$ com vírgula.
+function _kgBR(n){ return (Math.round(parseFloat(n)||0)).toLocaleString('pt-BR'); }
+function _rsBR(n){ return 'R$ '+(parseFloat(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function _feedItens(){
   var it=[];
   (S.rD||[]).forEach(function(r,i){ if(r._apagado)return;
@@ -9274,17 +9277,17 @@ function rHistFeno(){
         +'<div>'
         +'<div style="font-size:12px;font-weight:700;color:#33691E">'+_br((r.dt||'').substring(0,10))+'</div>'
         +'<div style="font-size:11px;color:#666">'+tipo+(unid?' · '+unid+' '+(fenEnt.u||'un'):'')+(pasto!=='—'?' · '+pasto:'')+'</div>'
-        +(gCab>0?'<div style="font-size:10px;color:#888">'+gCab+' g/cab/dia</div>':'')
+        +(gCab>0?'<div style="font-size:10px;color:#888">'+_kgBR(gCab)+' g/cab/dia</div>':'')
         +'</div>'
         +'<div style="text-align:right">'
-        +'<div style="font-size:13px;font-weight:800;color:#33691E">'+Math.round(kg)+' kg</div>'
-        +(custo>0?'<div style="font-size:10px;color:#C62828">R$ '+custo.toFixed(2)+'</div>':'')
+        +'<div style="font-size:13px;font-weight:800;color:#33691E">'+_kgBR(kg)+' kg</div>'
+        +(custo>0?'<div style="font-size:10px;color:#C62828">'+_rsBR(custo)+'</div>':'')
         +'</div></div>';
     }).join('');
     return '<div class="card" style="margin-bottom:8px">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
       +'<div style="font-size:14px;font-weight:800;color:#1B5E20">'+ln+(cab?' <span style="font-size:11px;color:#888;font-weight:400">'+cab+' animais</span>':'')+'</div>'
-      +'<div style="font-size:12px;color:#33691E;font-weight:700">'+Math.round(kgTotal)+' kg total</div>'
+      +'<div style="font-size:12px;color:#33691E;font-weight:700">'+_kgBR(kgTotal)+' kg total</div>'
       +'</div>'+linhas+'</div>';
   }).join('');
 
@@ -9331,15 +9334,15 @@ function gerarPDFFeno(){
         +'<td style="padding:5px 8px">'+_br((r.dt||'').substring(0,10))+'</td>'
         +'<td style="padding:5px 8px">'+tipo+(unid?' ('+unid+' '+(fenEnt.u||'un')+')':'')+'</td>'
         +'<td style="padding:5px 8px;text-align:center">'+pasto+'</td>'
-        +'<td style="padding:5px 8px;text-align:right;font-weight:700">'+Math.round(kg)+' kg</td>'
-        +'<td style="padding:5px 8px;text-align:center;color:#888">'+(gCab>0?gCab+' g':'—')+'</td>'
-        +'<td style="padding:5px 8px;text-align:right;color:#C62828">'+(custo>0?'R$ '+custo.toFixed(2):'—')+'</td>'
+        +'<td style="padding:5px 8px;text-align:right;font-weight:700">'+_kgBR(kg)+' kg</td>'
+        +'<td style="padding:5px 8px;text-align:center;color:#888">'+(gCab>0?_kgBR(gCab)+' g':'—')+'</td>'
+        +'<td style="padding:5px 8px;text-align:right;color:#C62828">'+(custo>0?_rsBR(custo):'—')+'</td>'
         +'</tr>';
     }).join('');
     return '<div style="background:#fff;border-radius:10px;padding:12px;margin-bottom:10px;box-shadow:0 2px 6px rgba(0,0,0,.07)">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
       +'<div style="font-size:14px;font-weight:900;color:#1B5E20">'+ln+(cab?' · '+cab+' animais':'')+'</div>'
-      +'<div style="font-size:12px;color:#33691E;font-weight:700">'+Math.round(kgTotal)+' kg'+(custoTotal>0?' · R$ '+custoTotal.toFixed(2):'')+'</div>'
+      +'<div style="font-size:12px;color:#33691E;font-weight:700">'+_kgBR(kgTotal)+' kg'+(custoTotal>0?' · '+_rsBR(custoTotal):'')+'</div>'
       +'</div>'
       +'<table style="width:100%;border-collapse:collapse;font-size:11px">'
       +'<thead><tr style="background:#E8F5E9"><th style="padding:5px 8px;text-align:left">Data</th><th style="padding:5px 8px;text-align:left">Tipo</th><th style="padding:5px 8px;text-align:center">Pasto</th><th style="padding:5px 8px;text-align:right">Kg</th><th style="padding:5px 8px;text-align:center">g/cab/dia</th><th style="padding:5px 8px;text-align:right">Custo</th></tr></thead>'
@@ -9358,7 +9361,7 @@ function gerarPDFFeno(){
     +'<div style="font-size:18px;font-weight:900;margin-top:1px">Relatório de Feno</div>'
     +'<div style="font-size:10px;opacity:.8;margin-top:2px">'+faz+' · '+dtHoje+'</div></div></div>'
     +'<div style="background:#fff;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:11px;color:#555">'
-    +'Total fornecido: <b>'+Math.round(kgGeral)+' kg</b> em '+tratosFeno.length+' trato'+(tratosFeno.length!==1?'s':'')+'</div>'
+    +'Total fornecido: <b>'+_kgBR(kgGeral)+' kg</b> em '+tratosFeno.length+' trato'+(tratosFeno.length!==1?'s':'')+'</div>'
     +corpo
     +'<button onclick="window.print()" style="background:#33691E;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:10px">Imprimir / Salvar PDF</button>'
     +'</body></html>');
