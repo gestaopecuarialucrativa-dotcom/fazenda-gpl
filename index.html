@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 13/09/2026 v7.27</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 14/09/2026 v7.28</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1171,6 +1171,9 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <!-- RELATÓRIO ✅ -->
 <div id="pg-relatorio" class="pg" style="display:none">
 
+  <!-- RELATÓRIO DO DIA (topo, sempre visível) -->
+  <div id="rel-dia"></div>
+
   <!-- Seletor de relatório -->
   <div style="display:flex;gap:8px;margin-bottom:16px">
     <button id="rel-tab-fazenda" onclick="rRelTab('fazenda')" class="pbtn on" style="flex:1;padding:10px;font-size:12px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M12 22V12"/><path d="M5 12S2 9 2 6a5 5 0 0 1 10 0c0 3-3 6-3 6H5z"/><path d="M14 12s3-3 3-6a5 5 0 0 1 10 0c0 3-3 6-3 6h-4z"/></svg>Fazenda</button>
@@ -1677,7 +1680,7 @@ function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.di
     }var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'inline-block':'none';setTimeout(function(){try{rMapaMain();rMapa();}catch(e){}},1000);};setTimeout(_rmapa,100);}if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();rCfgDiaristas();rCfgPragas();// Popular fazendas no select de areas
 var arFaz=document.getElementById('ar-faz');if(arFaz&&arFaz.options.length<=1){arFaz.innerHTML='<option value="">Selecione...</option>'+Object.keys(S.FAZ||{}).map(function(f){return'<option value="'+f+'">'+(f.replace('Fazenda ','🏠 '))+'</option>';}).join('');if(arFaz.options.length===2)arFaz.selectedIndex=1;}rListAreas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';
   var _wppEl=document.getElementById('cfg-wpp');
-  if(_wppEl)_wppEl.value=S.wppAdmin||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();rEstFeno();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);
+  if(_wppEl)_wppEl.value=S.wppAdmin||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();rEstFeno();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='relatorio')setTimeout(function(){try{rRelatorioDia();}catch(e){console.error('rRelatorioDia:',e);}},60);
   if(id==='historico')setTimeout(function(){if(S.cfgGS&&navigator.onLine){carregarNuvem(function(){rHistorico();});}else{rHistorico();}},50);if(id==='diaria')setTimeout(function(){
     // Resetar seleções para novo lançamento
     srvSel=''; avSel='';
@@ -4736,6 +4739,107 @@ function rRelTab(aba){
     var rp=document.getElementById('rp-de'); if(rp&&!rp.value)rp.value=fmt(d1);
     var ra=document.getElementById('rp-ate'); if(ra&&!ra.value)ra.value=fmt(hoje);
   }
+}
+
+// ═══ RELATÓRIO DO DIA (aba Relatório) ═══
+// Números na hora (de graça, do próprio app) + botão que pede a análise pra IA
+// (backend, onde a chave fica segura). Tudo derivado dos dados já carregados.
+function _relDiaDados(){
+  var p2=function(n){return ('0'+n).slice(-2);};
+  var h=new Date(), o=new Date(Date.now()-864e5);
+  var iso=function(d){return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate());};
+  var ontemISO=iso(o), lim7=iso(new Date(Date.now()-7*864e5));
+  var canon=function(s){return String(s||'').replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();};
+  // Consumo de ontem (cocho)
+  var consumo=[];
+  (S.rT||[]).forEach(function(r){ if(r._apagado||r.tipo!=='trato')return; if((r.dt||'')!==ontemISO)return;
+    consumo.push({lote:canon(r.co||r.lote||''), prod:(r.pr||r.prod||''), sacos:(parseFloat(r.q||r.qtd)||0)}); });
+  // Diárias de ontem
+  var diarias=[];
+  (S.rD||[]).forEach(function(r){ if(r._apagado||r.tipo!=='diaria')return; if((r.dt||'')!==ontemISO)return;
+    diarias.push({quem:(r.n||r.lancadoPor||''), srv:(r.srv||''), pasto:(r.pasto||''), v:(parseFloat(r.v)||0)}); });
+  // Mudanças de pasto: última por lote (p/ pasto atual + dias) e as de ontem
+  var ultMud={}, mudancas=[];
+  (S.rT||[]).forEach(function(r){ if(r._apagado||r.tipo!=='mudanca_pasto')return; var ln=canon(r.lote||''); var dt=(r.dt||'');
+    if(ln&&(!ultMud[ln]||dt>ultMud[ln].dt)) ultMud[ln]={dt:dt,destino:(r.destino||'')};
+    if(dt===ontemISO) mudancas.push({lote:ln, de:(r.origem||''), para:(r.destino||'')}); });
+  // Onde está cada lote (com gado) + dias no pasto
+  var lotesPasto=(S.LOTES||[]).filter(function(l){return (l.qtd||0)>0;}).slice().sort(function(a,b){
+    var na=parseInt((String(a.nome||'').match(/\d+/)||[9999])[0]), nb=parseInt((String(b.nome||'').match(/\d+/)||[9999])[0]); return na-nb;
+  }).map(function(l){ var ln=canon(l.nome); var m=ultMud[ln]; var pasto=(m&&m.destino)?m.destino:(l.pasto||''); var dias=null;
+    if(m&&m.dt){ var dd=new Date(m.dt+'T00:00:00'); if(!isNaN(dd.getTime())) dias=Math.max(0,Math.round((h-dd)/864e5)); }
+    return {lote:l.nome, pasto:pasto||'—', dias:dias}; });
+  // Estoque: saldo (=q−tratado) + dias que cobre (média de sacos/dia dos últimos 7 dias)
+  var saldo=(typeof _compraSaldoEst==='function')?_compraSaldoEst():{}; var sac7={};
+  (S.rT||[]).forEach(function(r){ if(r._apagado||r.tipo!=='trato')return; if((r.dt||'')<lim7)return; var pr=(r.pr||r.prod||''); if(pr) sac7[pr]=(sac7[pr]||0)+(parseFloat(r.q||r.qtd)||0); });
+  var estoque=Object.keys(S.EST||{}).map(function(p){ var sd=(saldo[p]!=null?saldo[p]:0); var spd=(sac7[p]||0)/7; var dias=spd>0?Math.floor(sd/spd):null;
+    return {produto:p, saldo:Math.round(sd*10)/10, dias:dias}; }).sort(function(a,b){var da=a.dias==null?99999:a.dias, db=b.dias==null?99999:b.dias; return da-db;});
+  // Feno
+  var fenoR7={};
+  (S.mFeno||[]).forEach(function(m){ if(!m||m.mov!=='saida')return; if((m.dt||'')<lim7)return; fenoR7[m.tipo]=(fenoR7[m.tipo]||0)+(parseFloat(m.q)||0); });
+  var feno=Object.keys(S.FENO||{}).map(function(t){ var e=S.FENO[t]||{}; var q=(e.q!=null?e.q:0); var rpd=(fenoR7[t]||0)/7; var dias=rpd>0?Math.floor(q/rpd):null;
+    return {tipo:t, saldo:q, u:(e.u||'rolo'), dias:dias}; });
+  // Sem trato ontem
+  var semTrato=[];
+  (S.rT||[]).forEach(function(r){ if(r._apagado||r.tipo!=='sem_trato')return; if((r.dt||'')!==ontemISO)return; semTrato.push({lote:canon(r.lote||''), motivo:(r.motivo||'')}); });
+  // Gasto de ontem (diárias + despesas)
+  var gasto=0; diarias.forEach(function(x){gasto+=x.v;});
+  (S.rDesp||[]).forEach(function(r){ if(r._apagado)return; if((r.dt||'')!==ontemISO)return; gasto+=(parseFloat(r.val)||0); });
+  var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
+  return {fazenda:faz, hojeBR:p2(h.getDate())+'/'+p2(h.getMonth()+1)+'/'+h.getFullYear(), alerta:15,
+    consumo:consumo, diarias:diarias, lotesPasto:lotesPasto, mudancas:mudancas, estoque:estoque, feno:feno, semTrato:semTrato, gasto:Math.round(gasto*100)/100};
+}
+function rRelatorioDia(){
+  var el=document.getElementById('rel-dia'); if(!el)return;
+  var d=_relDiaDados(); el._dados=d;
+  var _b=(typeof _kgBR==='function')?_kgBR:function(n){return Math.round(parseFloat(n)||0);};
+  var _r=(typeof _rsBR==='function')?_rsBR:function(n){return 'R$ '+(parseFloat(n)||0).toFixed(2);};
+  var lin=function(a,b){return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:5px 0;border-bottom:1px solid #f2f2f2">'+a+'<span style="text-align:right">'+b+'</span></div>';};
+  var h3=function(t){return '<div style="font-size:11px;color:#33691E;text-transform:uppercase;letter-spacing:.5px;margin:12px 0 4px;font-weight:800">'+t+'</div>';};
+  var vazio=function(t){return '<div style="font-size:12px;color:#aaa;padding:4px 0">'+t+'</div>';};
+  var html='<div class="card" style="padding:12px 14px;margin-bottom:12px">'
+    +'<div style="font-size:14px;font-weight:800;color:#1B5E20">Relatório do Dia</div>'
+    +'<div style="font-size:11px;color:#888;margin-bottom:2px">'+d.fazenda+' · '+d.hojeBR+'</div>';
+  html+=h3('Consumo de ontem');
+  html+= d.consumo.length ? d.consumo.map(function(c){return lin('<span><b>'+c.lote+'</b> <span style="color:#888;font-size:11px">· '+c.prod+'</span></span>','<b>'+c.sacos+' sc</b>');}).join('') : vazio('Nenhum trato ontem.');
+  html+=h3('Diárias de ontem');
+  html+= d.diarias.length ? d.diarias.map(function(x){return lin('<span><b>'+(x.quem||'—')+'</b><div style="font-size:11px;color:#888">'+(x.srv||'—')+(x.pasto?' · '+x.pasto:'')+'</div></span>', _r(x.v));}).join('') : vazio('Nenhuma diária ontem.');
+  html+=h3('Onde está cada lote');
+  html+= d.lotesPasto.length ? d.lotesPasto.map(function(l){var dd=(l.dias==null?'':' · <span style="color:#1565C0;font-weight:700">há '+l.dias+' dia'+(l.dias===1?'':'s')+'</span>');return lin('<b>'+l.lote+'</b>','<span>'+l.pasto+dd+'</span>');}).join('') : vazio('Sem lotes com gado.');
+  if(d.mudancas.length){ html+=h3('Mudança de pasto ontem'); html+=d.mudancas.map(function(m){return lin('<b>'+m.lote+'</b>','<span style="color:#888;font-size:12px">'+(m.de?m.de+' → ':'→ ')+m.para+'</span>');}).join(''); }
+  html+=h3('Estoque');
+  html+= d.estoque.length ? d.estoque.map(function(e){var dtxt=(e.dias==null?'—':e.dias+' dias'); var al=(e.dias!=null&&e.dias<d.alerta);
+    var tag=al?'<span style="font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;background:#fff3e0;color:#E65100">programar compra</span>':'<span style="font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;background:#e3f0e3;color:#1B5E20">ok</span>';
+    return lin('<span><b>'+e.produto+'</b><div style="font-size:11px;color:#888">'+_b(e.saldo)+' sc · cobre '+dtxt+'</div></span>', tag);}).join('') : vazio('Sem estoque cadastrado.');
+  if(d.feno.length){ html+=h3('Feno'); html+=d.feno.map(function(f){var dtxt=(f.dias==null?'—':'cobre '+f.dias+' dias');return lin('<span><b>'+f.tipo+'</b><div style="font-size:11px;color:#888">'+_b(f.saldo)+' '+f.u+'</div></span>','<span style="font-size:11px;color:#888">'+dtxt+'</span>');}).join(''); }
+  if(d.semTrato.length){ html+=h3('Sem trato ontem'); html+=d.semTrato.map(function(s){return lin('<b>'+s.lote+'</b>'+(s.motivo?'<div style="font-size:10px;color:#888">'+s.motivo+'</div>':''),'<span style="font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;background:#fdeaea;color:#C62828">sem trato</span>');}).join(''); }
+  html+='<div style="background:#f4f8f2;border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:#33691E;margin-top:10px"><span>Gasto de ontem</span><span>'+_r(d.gasto)+'</span></div>';
+  html+='<button onclick="_relDiaGerarIA(this)" style="width:100%;margin-top:12px;padding:12px;border:none;border-radius:10px;font-size:13px;font-weight:800;color:#fff;background:#1B5E20;cursor:pointer">Gerar análise com IA</button>';
+  html+='<div style="font-size:10px;color:#888;text-align:center;margin-top:5px">Usa crédito da Anthropic (centavos). Sem crédito, os números acima já bastam.</div>';
+  html+='<div id="rel-dia-ia"></div></div>';
+  el.innerHTML=html;
+}
+function _relDiaGerarIA(btn){
+  var box=document.getElementById('rel-dia-ia'); if(!box)return;
+  if(!S.cfgGS){ box.innerHTML='<div style="background:#fff3e0;border-radius:8px;padding:10px 12px;margin-top:10px;font-size:12px;color:#E65100">Configure o Apps Script (Config.) antes.</div>'; return; }
+  var el=document.getElementById('rel-dia'); var d=(el&&el._dados)||_relDiaDados();
+  if(btn){ btn.disabled=true; btn.textContent='Gerando análise...'; }
+  box.innerHTML='<div style="font-size:12px;color:#888;padding:8px 0">Gerando análise com IA...</div>';
+  var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:'';
+  var url=getFazGasUrl(faz);
+  var cb='_relia_'+Date.now()+'_'+Math.floor(Math.random()*9999);
+  var s=document.createElement('script');
+  s.src=url+'?acao=relatorio_ia&data='+encodeURIComponent(JSON.stringify(d))+'&callback='+cb+'&t='+Date.now();
+  var _fim=function(){ if(btn){btn.disabled=false;btn.textContent='Gerar análise com IA';} if(s.parentNode)s.parentNode.removeChild(s); };
+  window[cb]=function(resp){ delete window[cb]; _fim();
+    if(resp&&resp.ok&&resp.texto){
+      box.innerHTML='<div style="background:#f4f8f2;border-left:3px solid #558B2F;border-radius:8px;padding:10px 12px;margin-top:10px;font-size:12.5px;line-height:1.5;white-space:pre-wrap">'+String(resp.texto).replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</div>';
+    } else {
+      var er=(resp&&resp.erro)?String(resp.erro):'não consegui gerar. Confira se tem crédito e a chave (ANTHROPIC_API_KEY) no backend.';
+      box.innerHTML='<div style="background:#fff3e0;border-radius:8px;padding:10px 12px;margin-top:10px;font-size:12px;color:#E65100">IA: '+er.replace(/</g,'&lt;')+'</div>';
+    } };
+  s.onerror=function(){ delete window[cb]; _fim(); box.innerHTML='<div style="background:#fdeaea;border-radius:8px;padding:10px 12px;margin-top:10px;font-size:12px;color:#C62828">Erro de conexão ao gerar a análise.</div>'; };
+  document.body.appendChild(s);
 }
 
 // ── PLANEJAMENTO DE COMPRA DE SUPLEMENTO ──
