@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 18/09/2026 v7.30</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 18/09/2026 v7.31</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -4787,11 +4787,23 @@ function _relDiaDados(per){
   (S.rT||[]).forEach(function(r){ if(r._apagado||r.tipo!=='trato')return; if((r.dt||'')<lim7)return; var pr=(r.pr||r.prod||''); if(pr) sac7[pr]=(sac7[pr]||0)+(parseFloat(r.q||r.qtd)||0); });
   var estoque=Object.keys(S.EST||{}).map(function(p){ var sd=(saldo[p]!=null?saldo[p]:0); var spd=(sac7[p]||0)/7; var dias=spd>0?Math.floor(sd/spd):null;
     return {produto:p, saldo:Math.round(sd*10)/10, dias:dias}; }).sort(function(a,b){var da=a.dias==null?99999:a.dias, db=b.dias==null?99999:b.dias; return da-db;});
-  // Feno (SEMPRE atual)
-  var fenoR7={};
-  (S.mFeno||[]).forEach(function(m){ if(!m||m.mov!=='saida')return; if((m.dt||'')<lim7)return; fenoR7[m.tipo]=(fenoR7[m.tipo]||0)+(parseFloat(m.q)||0); });
+  // Feno: saldo/cobertura (SEMPRE atual) + CONSUMO no período (kg, custo, R$/cab/dia)
+  var fenoR7={}, fenoKgPer={}, fenoQPer={}, fenoLotesPer={};
+  (S.mFeno||[]).forEach(function(m){ if(!m||m.mov!=='saida')return; var dt=(m.dt||'');
+    if(dt>=lim7) fenoR7[m.tipo]=(fenoR7[m.tipo]||0)+(parseFloat(m.q)||0);
+    if(noPer(dt)){
+      fenoKgPer[m.tipo]=(fenoKgPer[m.tipo]||0)+(parseFloat(m.kg)||0);
+      fenoQPer[m.tipo]=(fenoQPer[m.tipo]||0)+(parseFloat(m.q)||0);
+      if(m.lote){ if(!fenoLotesPer[m.tipo])fenoLotesPer[m.tipo]={}; fenoLotesPer[m.tipo][canon(m.lote)]=true; }
+    }
+  });
+  var diasPer=(per==='semana'?7:(per==='mes'?30:1));
+  var _cabDeLotes=function(setObj){ var tot=0; (S.LOTES||[]).forEach(function(l){ if(setObj[canon(l.nome)]) tot+=(parseFloat(l.qtd)||0); }); return tot; };
   var feno=Object.keys(S.FENO||{}).map(function(t){ var e=S.FENO[t]||{}; var q=(e.q!=null?e.q:0); var rpd=(fenoR7[t]||0)/7; var dias=rpd>0?Math.floor(q/rpd):null;
-    return {tipo:t, saldo:q, u:(e.u||'rolo'), dias:dias}; });
+    var kgPer=Math.round(fenoKgPer[t]||0); var vkg=(parseFloat(e.vkg)||0); var custoPer=Math.round((fenoKgPer[t]||0)*vkg*100)/100;
+    var cab=fenoLotesPer[t]?_cabDeLotes(fenoLotesPer[t]):0;
+    var cabDia=(cab>0&&diasPer>0&&custoPer>0)?Math.round((custoPer/cab/diasPer)*100)/100:null;
+    return {tipo:t, saldo:q, u:(e.u||'rolo'), dias:dias, kgPer:kgPer, custoPer:custoPer, cabDia:cabDia, cab:cab}; });
   // Sem trato no período
   var semTrato=[];
   (S.rT||[]).forEach(function(r){ if(r._apagado||r.tipo!=='sem_trato')return; if(!noPer(r.dt))return; semTrato.push({lote:canon(r.lote||''), motivo:(r.motivo||'')}); });
@@ -4835,7 +4847,15 @@ function rRelatorioDia(){
   body+= d.estoque.length ? d.estoque.map(function(e){var dtxt=(e.dias==null?'—':e.dias+' dias'); var al=(e.dias!=null&&e.dias<d.alerta);
     var tag=al?'<span style="font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;background:#fff3e0;color:#E65100">programar compra</span>':'<span style="font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;background:#e3f0e3;color:#1B5E20">ok</span>';
     return lin('<span><b>'+e.produto+'</b><div style="font-size:11px;color:#888">'+_b(e.saldo)+' sc · cobre '+dtxt+'</div></span>', tag);}).join('') : vazio('Sem estoque cadastrado.');
-  if(d.feno.length){ body+=h3('Feno (atual)'); body+=d.feno.map(function(f){var dtxt=(f.dias==null?'—':'cobre '+f.dias+' dias');return lin('<span><b>'+f.tipo+'</b><div style="font-size:11px;color:#888">'+_b(f.saldo)+' '+f.u+'</div></span>','<span style="font-size:11px;color:#888">'+dtxt+'</span>');}).join(''); }
+  if(d.feno.length){ body+=h3('Feno'); body+=d.feno.map(function(f){
+    var dtxt=(f.dias==null?'—':'cobre '+f.dias+' dias');
+    var cons;
+    if(f.kgPer>0){
+      cons='<div style="font-size:11px;color:#33691E;font-weight:700">Consumo: '+_b(f.kgPer)+' kg · '+_r(f.custoPer)+'</div>'
+         + (f.cabDia!=null?'<div style="font-size:11px;color:#888">'+_r(f.cabDia)+'/cab/dia · '+f.cab+' cab</div>':'');
+    } else { cons='<div style="font-size:11px;color:#aaa">sem consumo no período</div>'; }
+    return lin('<span><b>'+f.tipo+'</b><div style="font-size:11px;color:#888">'+_b(f.saldo)+' '+f.u+' · '+dtxt+'</div></span>','<span style="text-align:right">'+cons+'</span>');
+  }).join(''); }
   if(d.semTrato.length){ body+=h3('Sem trato'); body+=d.semTrato.map(function(s){return lin('<b>'+s.lote+'</b>'+(s.motivo?'<div style="font-size:10px;color:#888">'+s.motivo+'</div>':''),'<span style="font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;background:#fdeaea;color:#C62828">sem trato</span>');}).join(''); }
   body+='<div style="background:#f4f8f2;border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:#33691E;margin-top:10px"><span>Gasto '+(d.periodo==='dia'?'de ontem':'do período')+'</span><span>'+_r(d.gasto)+'</span></div>';
   body+='<div style="display:flex;gap:8px;margin-top:12px">';
