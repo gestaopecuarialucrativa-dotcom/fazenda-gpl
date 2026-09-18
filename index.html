@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 14/09/2026 v7.29</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 18/09/2026 v7.30</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -4838,12 +4838,12 @@ function rRelatorioDia(){
   if(d.feno.length){ body+=h3('Feno (atual)'); body+=d.feno.map(function(f){var dtxt=(f.dias==null?'—':'cobre '+f.dias+' dias');return lin('<span><b>'+f.tipo+'</b><div style="font-size:11px;color:#888">'+_b(f.saldo)+' '+f.u+'</div></span>','<span style="font-size:11px;color:#888">'+dtxt+'</span>');}).join(''); }
   if(d.semTrato.length){ body+=h3('Sem trato'); body+=d.semTrato.map(function(s){return lin('<b>'+s.lote+'</b>'+(s.motivo?'<div style="font-size:10px;color:#888">'+s.motivo+'</div>':''),'<span style="font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;background:#fdeaea;color:#C62828">sem trato</span>');}).join(''); }
   body+='<div style="background:#f4f8f2;border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:#33691E;margin-top:10px"><span>Gasto '+(d.periodo==='dia'?'de ontem':'do período')+'</span><span>'+_r(d.gasto)+'</span></div>';
-  body+='<div style="display:flex;gap:8px;margin-top:12px">'
-    +'<button onclick="_relDiaGerarIA(this)" style="flex:1;padding:11px;border:none;border-radius:10px;font-size:12.5px;font-weight:800;color:#fff;background:#1B5E20;cursor:pointer">Análise com IA</button>'
-    +'<button onclick="_relDiaGerarPDF()" style="flex:1;padding:11px;border:1px solid #8BC34A;border-radius:10px;font-size:12.5px;font-weight:800;color:#33691E;background:#F1F8E9;cursor:pointer">Gerar PDF</button>'
-    +'</div>';
-  body+='<div style="font-size:10px;color:#888;text-align:center;margin-top:5px">A IA usa crédito da Anthropic (centavos). Os números acima são de graça.</div>';
-  body+='<div id="rel-dia-ia"></div></div>';
+  body+='<div style="display:flex;gap:8px;margin-top:12px">';
+  body+='<button onclick="_relDiaGerarIA(this)" style="flex:1;padding:11px;border:none;border-radius:10px;font-size:12.5px;font-weight:800;color:#fff;background:#1B5E20;cursor:pointer">Gerar análise com IA</button>';
+  body+='<button onclick="_relDiaGerarPDF()" style="flex:1;padding:11px;border:1px solid #8BC34A;border-radius:10px;font-size:12.5px;font-weight:800;color:#33691E;background:#F1F8E9;cursor:pointer">Gerar PDF</button>';
+  body+='</div>';
+  body+='<div id="rel-dia-ia"></div>';
+  body+='</div>';
   el.innerHTML='<div class="card" style="margin-bottom:12px;overflow:hidden">'+head+body+'</div>';
 }
 function _relDiaGerarPDF(){
