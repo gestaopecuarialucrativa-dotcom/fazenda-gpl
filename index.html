@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/09/2026 v7.32</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/09/2026 v7.33</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -3014,6 +3014,81 @@ function feedExcluir(arr,idx){
   s.onerror=function(){ delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s); alert('⚠️ Erro de conexão. Nada foi removido.'); };
   document.body.appendChild(s);
 }
+// ── Chamada ao servidor: só mexe no app DEPOIS que a planilha confirmar ──
+function _feedServ(faz,acao,payload,okFn,msgNao){
+  if(!(S.cfgGS && navigator.onLine)){ alert('⚠️ Sem conexão. Isto precisa de internet para gravar na planilha.'); return; }
+  var url=getFazGasUrl(faz||'');
+  var cbN='_fsv_'+Date.now()+'_'+Math.floor(Math.random()*9999);
+  var s=document.createElement('script');
+  s.src=url+'?acao='+acao+'&data='+encodeURIComponent(JSON.stringify(payload))+'&callback='+cbN+'&t='+Date.now();
+  window[cbN]=function(res){ delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s);
+    if(res&&res.ok){ okFn(res); } else { alert('⚠️ '+(msgNao||'Não encontrei este lançamento na planilha — nada foi alterado.')); } };
+  s.onerror=function(){ delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s); alert('⚠️ Erro de conexão. Nada foi alterado.'); };
+  document.body.appendChild(s);
+}
+function _pNum(txt,def){ var v=prompt(txt,String(def)); if(v===null)return null; var n=parseFloat((''+v).trim().replace(',','.')); return (isNaN(n)||n<0)?NaN:n; }
+function _pData(atual){ var br=atual?atual.substring(8,10)+'/'+atual.substring(5,7)+'/'+atual.substring(0,4):''; var v=prompt('Data (dd/mm/aaaa):',br); if(v===null)return null; v=(''+v).trim(); var m=v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); if(!m)return ''; return m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2); }
+
+// FENO — edita/exclui a linha na aba 🌾 Tratos Feno (pelo UID) e recalcula o saldo
+function feedEditarFeno(idx){
+  var m=S.mFeno&&S.mFeno[idx]; if(!m){ alert('Registro não encontrado.'); return; }
+  var e=(S.FENO&&S.FENO[m.tipo])||{}; var u=e.u||'rolo';
+  var dtN=_pData(m.dt||''); if(dtN===null)return; if(!dtN){ alert('Data inválida. Use dd/mm/aaaa.'); return; }
+  var loteN=prompt('Lote:', m.lote||''); if(loteN===null)return; loteN=(''+loteN).trim(); if(!loteN){ alert('O lote não pode ficar vazio.'); return; }
+  var qN=_pNum('Quantidade ('+u+'):', parseFloat(m.q)||0); if(qN===null)return; if(isNaN(qN)){ alert('Quantidade inválida.'); return; }
+  var obsN=prompt('Obs (opcional):', m.obs||''); if(obsN===null)return;
+  var pesoU=parseFloat(e.peso_u)||((parseFloat(m.q)||0)>0?(parseFloat(m.kg)||0)/(parseFloat(m.q)):0);
+  var kgN=Math.round(qN*pesoU*100)/100, custoN=Math.round(kgN*(parseFloat(e.vkg)||0)*100)/100;
+  if(!confirm('Confirmar edição do feno?\n\nData: '+dtN.split('-').reverse().join('/')+'\nLote: '+loteN+'\nQtd: '+qN+' '+u+' = '+_kgBR(kgN)+' kg · '+_rsBR(custoN)))return;
+  _feedServ(m.faz,'feno_edit',{uid:m.uid||'',dt_old:m.dt||'',lote_old:m.lote||'',tipo:m.tipo||'',q_old:parseFloat(m.q)||0,
+    dt:dtN,lote:loteN,q:qN,kg:kgN,custo:custoN,obs:obsN,faz:m.faz||''},function(){
+    m.dt=dtN; m.lote=loteN; m.q=qN; m.kg=kgN; m.obs=obsN; salvarLocal();
+    try{rFeedConsultor();}catch(x){} alert('✅ Feno editado na planilha. Saldo recalculado.');
+  },'Não encontrei este trato de feno na planilha — nada foi alterado. Toque em "Carregar dados da nuvem" e tente de novo.');
+}
+function feedExcluirFeno(idx){
+  var m=S.mFeno&&S.mFeno[idx]; if(!m){ alert('Registro não encontrado.'); return; }
+  if(!confirm('⚠️ Excluir este trato de feno?\n\n'+(m.lote||'')+' · '+(m.tipo||'')+' · '+(parseFloat(m.q)||0)+' un · '+(m.dt||'').split('-').reverse().join('/')+'\n\nSerá removido do app e da planilha, e o saldo volta.'))return;
+  _feedServ(m.faz,'feno_del',{uid:m.uid||'',dt:m.dt||'',lote:m.lote||'',tipo:m.tipo||'',q:parseFloat(m.q)||0,faz:m.faz||''},function(){
+    S.mFeno.splice(idx,1); if(S.FENO&&S.FENO[m.tipo]&&S.FENO[m.tipo].q!=null)S.FENO[m.tipo].q=(parseFloat(S.FENO[m.tipo].q)||0)+(parseFloat(m.q)||0);
+    salvarLocal(); try{rFeedConsultor();}catch(x){} alert('✅ Trato de feno excluído da planilha.');
+  },'Não encontrei este trato de feno na planilha — nada foi removido. Toque em "Carregar dados da nuvem" e tente de novo.');
+}
+// CANTINA — edita a linha na aba Cantina
+function feedEditarCantina(idx){
+  var r=S.rC&&S.rC[idx]; if(!r){ alert('Registro não encontrado.'); return; }
+  var detN=prompt('Detalhe:', r.det||''); if(detN===null)return;
+  var tN=_pNum('Total (R$):', (parseFloat(r.total)||0).toFixed(2).replace('.',',')); if(tN===null)return; if(isNaN(tN)){ alert('Valor inválido.'); return; }
+  if(!confirm('Confirmar edição da cantina?\n\n'+detN+'\nTotal: '+_rsBR(tN)))return;
+  _feedServ(r.faz,'cantina_edit',{dt:r.dt||'',resp:r.resp||r.n||'',total_old:parseFloat(r.total)||0,det:detN,total:tN,faz:r.faz||''},function(){
+    r.det=detN; r.total=tN; salvar(); try{rFeedConsultor();}catch(x){} alert('✅ Cantina editada na planilha.');
+  });
+}
+// ESCORE / DESPESA / INSUMO — ficam no ⚙️ CONFIG da planilha (mesmo lugar que o excluir usa)
+function _feedSalvarConfig(msg){ salvar(); if(S.cfgGS)salvarNuvem(function(){}); try{rFeedConsultor();}catch(x){} try{rPan();}catch(x){} alert(msg); }
+function feedEditarEscore(idx){
+  var r=S.rE&&S.rE[idx]; if(!r){ alert('Registro não encontrado.'); return; }
+  var esN=_pNum('Escore (1 a 5):', r.es||0); if(esN===null)return; if(isNaN(esN)||esN<1||esN>5){ alert('Escore deve ser de 1 a 5.'); return; }
+  var cabN=_pNum('Nº de animais:', r.cab||0); if(cabN===null)return; if(isNaN(cabN)){ alert('Número inválido.'); return; }
+  var obsN=prompt('Obs:', r.obs||''); if(obsN===null)return;
+  if(!confirm('Confirmar edição do escore?\n\n'+(r.co||'')+' · E'+esN+' · '+cabN+' cab'))return;
+  r.es=esN; r.cab=cabN; r.obs=obsN; _feedSalvarConfig('✅ Escore editado.');
+}
+function feedEditarDespesa(idx){
+  var r=S.rDesp&&S.rDesp[idx]; if(!r){ alert('Registro não encontrado.'); return; }
+  var dN=prompt('Descrição:', r.desc||''); if(dN===null)return; dN=(''+dN).trim(); if(!dN){ alert('A descrição não pode ficar vazia.'); return; }
+  var vN=_pNum('Valor (R$):', (parseFloat(r.val)||0).toFixed(2).replace('.',',')); if(vN===null)return; if(isNaN(vN)){ alert('Valor inválido.'); return; }
+  if(!confirm('Confirmar edição da despesa?\n\n'+dN+'\n'+_rsBR(vN)))return;
+  r.desc=dN; r.val=vN; _feedSalvarConfig('✅ Despesa editada.');
+}
+function feedEditarInsumo(idx){
+  var r=S.rD&&S.rD[idx]; if(!r||r.tipo!=='insumo'){ alert('Registro não encontrado.'); return; }
+  var ins=(r.ins||[]).map(function(x){return {p:x.p,q:x.q,u:x.u};}); if(!ins.length){ alert('Este lançamento não tem produtos.'); return; }
+  for(var i=0;i<ins.length;i++){ var q=_pNum('Qtd de '+ins[i].p+' ('+(ins[i].u||'')+'):', ins[i].q); if(q===null)return; if(isNaN(q)){ alert('Quantidade inválida.'); return; } ins[i].q=q; }
+  if(!confirm('Confirmar edição do insumo?\n\n'+ins.map(function(x){return x.p+' '+x.q+(x.u||'');}).join('\n')))return;
+  r.ins=ins; _feedSalvarConfig('✅ Insumo editado.');
+}
+
 // Editar trato (produto + sacos). Só grava no app depois que a planilha confirma.
 function feedEditarTrato(idx){
   var r=S.rT[idx];
@@ -3869,11 +3944,13 @@ function rFeedConsultor(){
       +(o.faz?'<div style="font-size:10px;color:#999;margin-top:2px">'+o.faz+'</div>':'')
       +'</div>'
       +(
-        (o.tipo==='Diária'?'<button onclick="feedEditarDiaria('+o.idx+')" style="padding:4px 9px;font-size:13px;background:#E8F5E9;color:#1B5E20;border:none;border-radius:6px;cursor:pointer;flex-shrink:0;margin-right:4px">✏️</button>':'')
-      +(o.tipo==='Trato'?'<button onclick="feedEditarTrato('+o.idx+')" style="padding:4px 9px;font-size:13px;background:#E8F5E9;color:#1B5E20;border:none;border-radius:6px;cursor:pointer;flex-shrink:0;margin-right:4px">✏️</button>':'')
-      +(o.tipo==='Movimentação'?'<button onclick="feedEditarMov('+o.idx+')" style="padding:4px 9px;font-size:13px;background:#E8F5E9;color:#1B5E20;border:none;border-radius:6px;cursor:pointer;flex-shrink:0;margin-right:4px">✏️</button>':'')
+        (function(){
+          var fnE={'Diária':'feedEditarDiaria','Trato':'feedEditarTrato','Movimentação':'feedEditarMov','Feno':'feedEditarFeno',
+                   'Cantina':'feedEditarCantina','Escore':'feedEditarEscore','Despesa':'feedEditarDespesa','Insumo':'feedEditarInsumo'}[o.tipo];
+          return fnE?'<button onclick="'+fnE+'('+o.idx+')" style="padding:4px 9px;font-size:13px;background:#E8F5E9;color:#1B5E20;border:none;border-radius:6px;cursor:pointer;flex-shrink:0;margin-right:4px">✏️</button>':'';
+        })()
       +(o.tipo==='Feno'
-        ? '<span style="font-size:9px;color:#aaa;flex-shrink:0;align-self:center">planilha</span>'
+        ? '<button onclick="feedExcluirFeno('+o.idx+')" style="padding:4px 9px;font-size:13px;background:#FFEBEE;color:#C62828;border:none;border-radius:6px;cursor:pointer;flex-shrink:0">🗑️</button>'
         : '<button onclick="feedExcluir(\''+o.arr+'\','+o.idx+')" style="padding:4px 9px;font-size:13px;background:#FFEBEE;color:#C62828;border:none;border-radius:6px;cursor:pointer;flex-shrink:0">🗑️</button>')
       )
       +'</div>';
