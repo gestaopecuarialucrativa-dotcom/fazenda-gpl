@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/09/2026 v7.33</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/09/2026 v7.35</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1173,6 +1173,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
   <!-- RELATÓRIO DO DIA (topo, sempre visível) -->
   <div id="rel-dia"></div>
+  <div id="ia-perg"></div>
 
   <!-- Seletor de relatório -->
   <div style="display:flex;gap:8px;margin-bottom:16px">
@@ -1680,7 +1681,7 @@ function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.di
     }var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'inline-block':'none';setTimeout(function(){try{rMapaMain();rMapa();}catch(e){}},1000);};setTimeout(_rmapa,100);}if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();rCfgDiaristas();rCfgPragas();// Popular fazendas no select de areas
 var arFaz=document.getElementById('ar-faz');if(arFaz&&arFaz.options.length<=1){arFaz.innerHTML='<option value="">Selecione...</option>'+Object.keys(S.FAZ||{}).map(function(f){return'<option value="'+f+'">'+(f.replace('Fazenda ','🏠 '))+'</option>';}).join('');if(arFaz.options.length===2)arFaz.selectedIndex=1;}rListAreas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';
   var _wppEl=document.getElementById('cfg-wpp');
-  if(_wppEl)_wppEl.value=S.wppAdmin||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();rEstFeno();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='relatorio')setTimeout(function(){try{rRelatorioDia();}catch(e){console.error('rRelatorioDia:',e);}},60);
+  if(_wppEl)_wppEl.value=S.wppAdmin||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();rEstFeno();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='relatorio')setTimeout(function(){try{rRelatorioDia();}catch(e){console.error('rRelatorioDia:',e);}try{rIaPerg();}catch(e){console.error('rIaPerg:',e);}},60);
   if(id==='historico')setTimeout(function(){if(S.cfgGS&&navigator.onLine){carregarNuvem(function(){rHistorico();});}else{rHistorico();}},50);if(id==='diaria')setTimeout(function(){
     // Resetar seleções para novo lançamento
     srvSel=''; avSel='';
@@ -2616,6 +2617,12 @@ function salvarReposicao(nome){
   S.mEst.push({p:nome,q:q,u:d.u||'saco',t:'entrada',dt:dt,preco:(!isNaN(preco)?preco:null)});
   _estoqueEditado();
   _enviarEstoque(nome);
+  // Histórico da compra COM DATA na planilha (aba 📥 Compras Insumo)
+  try{
+    var _fzC=(CU&&CU.fs&&CU.fs.length?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||''));
+    var _pr=(!isNaN(preco)&&preco>0)?preco:0;
+    enviarDado({tipo:'estoque_compra',faz:_fzC,n:(CU&&CU.n)||'',dt:dt,produto:nome,q:q,u:d.u||'saco',preco:_pr,total:Math.round(q*_pr*100)/100});
+  }catch(eCmp){}
   fecharReposicao();
   rEst();
   showOk('\u2705 Entrada de '+q+' '+(d.u||'saco')+' registrada.');
@@ -3026,104 +3033,63 @@ function _feedServ(faz,acao,payload,okFn,msgNao){
   s.onerror=function(){ delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s); alert('⚠️ Erro de conexão. Nada foi alterado.'); };
   document.body.appendChild(s);
 }
-function _pNum(txt,def){ var v=prompt(txt,String(def)); if(v===null)return null; var n=parseFloat((''+v).trim().replace(',','.')); return (isNaN(n)||n<0)?NaN:n; }
-function _pData(atual){ var br=atual?atual.substring(8,10)+'/'+atual.substring(5,7)+'/'+atual.substring(0,4):''; var v=prompt('Data (dd/mm/aaaa):',br); if(v===null)return null; v=(''+v).trim(); var m=v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); if(!m)return ''; return m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2); }
+function _num(v){ var n=parseFloat(String(v==null?'':v).trim().replace(',','.')); return isNaN(n)?NaN:n; }
 
-// FENO — edita/exclui a linha na aba 🌾 Tratos Feno (pelo UID) e recalcula o saldo
-function feedEditarFeno(idx){
-  var m=S.mFeno&&S.mFeno[idx]; if(!m){ alert('Registro não encontrado.'); return; }
-  var e=(S.FENO&&S.FENO[m.tipo])||{}; var u=e.u||'rolo';
-  var dtN=_pData(m.dt||''); if(dtN===null)return; if(!dtN){ alert('Data inválida. Use dd/mm/aaaa.'); return; }
-  var loteN=prompt('Lote:', m.lote||''); if(loteN===null)return; loteN=(''+loteN).trim(); if(!loteN){ alert('O lote não pode ficar vazio.'); return; }
-  var qN=_pNum('Quantidade ('+u+'):', parseFloat(m.q)||0); if(qN===null)return; if(isNaN(qN)){ alert('Quantidade inválida.'); return; }
-  var obsN=prompt('Obs (opcional):', m.obs||''); if(obsN===null)return;
-  var pesoU=parseFloat(e.peso_u)||((parseFloat(m.q)||0)>0?(parseFloat(m.kg)||0)/(parseFloat(m.q)):0);
-  var kgN=Math.round(qN*pesoU*100)/100, custoN=Math.round(kgN*(parseFloat(e.vkg)||0)*100)/100;
-  if(!confirm('Confirmar edição do feno?\n\nData: '+dtN.split('-').reverse().join('/')+'\nLote: '+loteN+'\nQtd: '+qN+' '+u+' = '+_kgBR(kgN)+' kg · '+_rsBR(custoN)))return;
-  _feedServ(m.faz,'feno_edit',{uid:m.uid||'',dt_old:m.dt||'',lote_old:m.lote||'',tipo:m.tipo||'',q_old:parseFloat(m.q)||0,
-    dt:dtN,lote:loteN,q:qN,kg:kgN,custo:custoN,obs:obsN,faz:m.faz||''},function(){
-    m.dt=dtN; m.lote=loteN; m.q=qN; m.kg=kgN; m.obs=obsN; salvarLocal();
-    try{rFeedConsultor();}catch(x){} alert('✅ Feno editado na planilha. Saldo recalculado.');
-  },'Não encontrei este trato de feno na planilha — nada foi alterado. Toque em "Carregar dados da nuvem" e tente de novo.');
-}
-function feedExcluirFeno(idx){
-  var m=S.mFeno&&S.mFeno[idx]; if(!m){ alert('Registro não encontrado.'); return; }
-  if(!confirm('⚠️ Excluir este trato de feno?\n\n'+(m.lote||'')+' · '+(m.tipo||'')+' · '+(parseFloat(m.q)||0)+' un · '+(m.dt||'').split('-').reverse().join('/')+'\n\nSerá removido do app e da planilha, e o saldo volta.'))return;
-  _feedServ(m.faz,'feno_del',{uid:m.uid||'',dt:m.dt||'',lote:m.lote||'',tipo:m.tipo||'',q:parseFloat(m.q)||0,faz:m.faz||''},function(){
-    S.mFeno.splice(idx,1); if(S.FENO&&S.FENO[m.tipo]&&S.FENO[m.tipo].q!=null)S.FENO[m.tipo].q=(parseFloat(S.FENO[m.tipo].q)||0)+(parseFloat(m.q)||0);
-    salvarLocal(); try{rFeedConsultor();}catch(x){} alert('✅ Trato de feno excluído da planilha.');
-  },'Não encontrei este trato de feno na planilha — nada foi removido. Toque em "Carregar dados da nuvem" e tente de novo.');
-}
-// CANTINA — edita a linha na aba Cantina
-function feedEditarCantina(idx){
-  var r=S.rC&&S.rC[idx]; if(!r){ alert('Registro não encontrado.'); return; }
-  var detN=prompt('Detalhe:', r.det||''); if(detN===null)return;
-  var tN=_pNum('Total (R$):', (parseFloat(r.total)||0).toFixed(2).replace('.',',')); if(tN===null)return; if(isNaN(tN)){ alert('Valor inválido.'); return; }
-  if(!confirm('Confirmar edição da cantina?\n\n'+detN+'\nTotal: '+_rsBR(tN)))return;
-  _feedServ(r.faz,'cantina_edit',{dt:r.dt||'',resp:r.resp||r.n||'',total_old:parseFloat(r.total)||0,det:detN,total:tN,faz:r.faz||''},function(){
-    r.det=detN; r.total=tN; salvar(); try{rFeedConsultor();}catch(x){} alert('✅ Cantina editada na planilha.');
+// ── JANELA DE EDIÇÃO (igual para todos os lançamentos) ──
+// campos: [{id,label,tipo:'text'|'number'|'date'|'select',valor,opts,meia}] · calc(vals)→texto · onOk(vals)→false mantém aberta
+function _feedModal(titulo, sub, campos, calc, onOk){
+  var m=document.getElementById('modal-feed-edit');
+  if(!m){ m=document.createElement('div'); m.id='modal-feed-edit';
+    m.style.cssText='display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center;padding:16px';
+    document.body.appendChild(m); }
+  var esc=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');};
+  var inSt='width:100%;padding:10px;border:1.5px solid #ddd;border-radius:9px;font-size:14px;box-sizing:border-box;background:#fff';
+  var html='', linha=[];
+  var fecharLinha=function(){ if(linha.length){ html+='<div style="display:flex;gap:8px">'+linha.join('')+'</div>'; linha=[]; } };
+  campos.forEach(function(c){
+    var inp;
+    if(c.tipo==='select'){ inp='<select id="fe-'+c.id+'" style="'+inSt+'">'+(c.opts||[]).map(function(o){return '<option value="'+esc(o)+'"'+(String(o)===String(c.valor)?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select>'; }
+    else { inp='<input id="fe-'+c.id+'" type="'+(c.tipo==='number'?'text':(c.tipo||'text'))+'"'+(c.tipo==='number'?' inputmode="decimal"':'')+' value="'+esc(c.valor)+'" style="'+inSt+'">'; }
+    var bloco='<div style="flex:1;min-width:0;margin-bottom:10px"><div style="font-size:11px;color:#666;margin-bottom:3px;font-weight:600">'+esc(c.label)+'</div>'+inp+'</div>';
+    if(c.meia){ linha.push(bloco); if(linha.length===2) fecharLinha(); } else { fecharLinha(); html+=bloco; }
   });
+  fecharLinha();
+  m.innerHTML='<div style="background:#fff;border-radius:16px;max-width:420px;width:100%;max-height:90vh;overflow:auto;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,.3)">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px"><span style="font-size:16px;font-weight:800;color:#1B5E20">'+esc(titulo)+'</span>'
+    +'<span onclick="_feedModalFechar()" style="cursor:pointer;font-size:22px;color:#888">×</span></div>'
+    +(sub?'<div style="font-size:12px;color:#65766a;margin-bottom:12px">'+esc(sub)+'</div>':'<div style="height:10px"></div>')
+    +html
+    +'<div id="fe-calc" style="display:none;background:#f4f8f2;border-radius:8px;padding:9px 11px;font-size:12.5px;color:#33691E;font-weight:700;margin-bottom:12px"></div>'
+    +'<div style="display:flex;gap:8px"><button onclick="_feedModalFechar()" style="flex:1;padding:12px;background:#f0f0f0;color:#555;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Cancelar</button>'
+    +'<button id="fe-salvar" style="flex:1;padding:12px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer">Salvar</button></div></div>';
+  var ler=function(){ var v={}; campos.forEach(function(c){ var el=document.getElementById('fe-'+c.id); v[c.id]=el?el.value:''; }); return v; };
+  var atual=function(){ var el=document.getElementById('fe-calc'); if(!el||!calc)return; var t=calc(ler()); el.style.display=t?'block':'none'; el.textContent=t||''; };
+  campos.forEach(function(c){ var el=document.getElementById('fe-'+c.id); if(el){ el.oninput=atual; el.onchange=atual; } });
+  atual();
+  document.getElementById('fe-salvar').onclick=function(){ var r=onOk(ler()); if(r!==false) _feedModalFechar(); };
+  m.style.display='flex';
 }
-// ESCORE / DESPESA / INSUMO — ficam no ⚙️ CONFIG da planilha (mesmo lugar que o excluir usa)
-function _feedSalvarConfig(msg){ salvar(); if(S.cfgGS)salvarNuvem(function(){}); try{rFeedConsultor();}catch(x){} try{rPan();}catch(x){} alert(msg); }
-function feedEditarEscore(idx){
-  var r=S.rE&&S.rE[idx]; if(!r){ alert('Registro não encontrado.'); return; }
-  var esN=_pNum('Escore (1 a 5):', r.es||0); if(esN===null)return; if(isNaN(esN)||esN<1||esN>5){ alert('Escore deve ser de 1 a 5.'); return; }
-  var cabN=_pNum('Nº de animais:', r.cab||0); if(cabN===null)return; if(isNaN(cabN)){ alert('Número inválido.'); return; }
-  var obsN=prompt('Obs:', r.obs||''); if(obsN===null)return;
-  if(!confirm('Confirmar edição do escore?\n\n'+(r.co||'')+' · E'+esN+' · '+cabN+' cab'))return;
-  r.es=esN; r.cab=cabN; r.obs=obsN; _feedSalvarConfig('✅ Escore editado.');
-}
-function feedEditarDespesa(idx){
-  var r=S.rDesp&&S.rDesp[idx]; if(!r){ alert('Registro não encontrado.'); return; }
-  var dN=prompt('Descrição:', r.desc||''); if(dN===null)return; dN=(''+dN).trim(); if(!dN){ alert('A descrição não pode ficar vazia.'); return; }
-  var vN=_pNum('Valor (R$):', (parseFloat(r.val)||0).toFixed(2).replace('.',',')); if(vN===null)return; if(isNaN(vN)){ alert('Valor inválido.'); return; }
-  if(!confirm('Confirmar edição da despesa?\n\n'+dN+'\n'+_rsBR(vN)))return;
-  r.desc=dN; r.val=vN; _feedSalvarConfig('✅ Despesa editada.');
-}
-function feedEditarInsumo(idx){
-  var r=S.rD&&S.rD[idx]; if(!r||r.tipo!=='insumo'){ alert('Registro não encontrado.'); return; }
-  var ins=(r.ins||[]).map(function(x){return {p:x.p,q:x.q,u:x.u};}); if(!ins.length){ alert('Este lançamento não tem produtos.'); return; }
-  for(var i=0;i<ins.length;i++){ var q=_pNum('Qtd de '+ins[i].p+' ('+(ins[i].u||'')+'):', ins[i].q); if(q===null)return; if(isNaN(q)){ alert('Quantidade inválida.'); return; } ins[i].q=q; }
-  if(!confirm('Confirmar edição do insumo?\n\n'+ins.map(function(x){return x.p+' '+x.q+(x.u||'');}).join('\n')))return;
-  r.ins=ins; _feedSalvarConfig('✅ Insumo editado.');
-}
+function _feedModalFechar(){ var m=document.getElementById('modal-feed-edit'); if(m) m.style.display='none'; }
+function _feedDepois(msg){ try{rFeedConsultor();}catch(x){} try{rPan();}catch(x){} if(msg) alert(msg); }
+function _feedSalvarConfig(msg){ salvar(); if(S.cfgGS)salvarNuvem(function(){}); _feedDepois(msg); }
 
-// Editar trato (produto + sacos). Só grava no app depois que a planilha confirma.
+// TRATO (cocho) — aba 🛠️ Tratos
 function feedEditarTrato(idx){
-  var r=S.rT[idx];
-  if(!r||r.tipo!=='trato'){ alert('Registro não encontrado.'); return; }
+  var r=S.rT[idx]; if(!r||r.tipo!=='trato'){ alert('Registro não encontrado.'); return; }
   if(!(S.cfgGS && navigator.onLine)){ alert('⚠️ Sem conexão. A edição precisa de internet para gravar na planilha.'); return; }
   var prodOld=r.pr||r.prod||'', qOld=parseFloat(r.q||r.qtd)||0;
-  var prodNew=prompt('Produto:', prodOld);
-  if(prodNew===null) return;
-  prodNew=(''+prodNew).trim();
-  if(!prodNew){ alert('O produto não pode ficar vazio.'); return; }
-  var qStr=prompt('Quantidade (sacos):', String(qOld));
-  if(qStr===null) return;
-  var qNew=parseFloat((''+qStr).replace(',','.'));
-  if(isNaN(qNew)||qNew<0){ alert('Quantidade inválida.'); return; }
-  if(prodNew===prodOld && Math.abs(qNew-qOld)<0.01){ return; }
-  if(!confirm('Confirmar edição deste trato?\n\nProduto: '+prodNew+'\nQtd: '+qNew+' saco(s)')) return;
-  var payload={dt:r.dt||'',n:r.n||'',lote:r.co||r.lote||'',prod_old:prodOld,q_old:qOld,prod_new:prodNew,q_new:qNew,faz:r.faz||''};
-  var url=getFazGasUrl(r.faz||'');
-  var cbN='_etr_'+Date.now();
-  var s=document.createElement('script');
-  s.src=url+'?acao=trato_edit&data='+encodeURIComponent(JSON.stringify(payload))+'&callback='+cbN+'&t='+Date.now();
-  window[cbN]=function(res){
-    delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s);
-    if(res && res.ok){
-      r.pr=prodNew; r.prod=prodNew; r.q=qNew; r.qtd=qNew; salvar();
-      try{rFeedConsultor();}catch(e){}
-      alert('✅ Trato editado na planilha.');
-    } else {
-      alert('⚠️ Não encontrei este trato na planilha para editar — nada foi alterado. Pode ser duplicado ou ainda não sincronizado.');
-    }
-  };
-  s.onerror=function(){ delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s); alert('⚠️ Erro de conexão. Nada foi alterado.'); };
-  document.body.appendChild(s);
+  var prods=Object.keys(S.EST||{}); if(prodOld&&prods.indexOf(prodOld)<0) prods.unshift(prodOld);
+  _feedModal('Editar trato', (r.co||r.lote||'')+' · '+(r.dt||'').split('-').reverse().join('/')+' · '+(r.n||''),
+    [{id:'prod',label:'Produto',tipo:'select',valor:prodOld,opts:prods},{id:'q',label:'Quantidade (sacos)',tipo:'number',valor:qOld}],
+    null,
+    function(v){ var qNew=_num(v.q); if(isNaN(qNew)||qNew<0){ alert('Quantidade inválida.'); return false; }
+      if(v.prod===prodOld && Math.abs(qNew-qOld)<0.01) return;
+      _feedServ(r.faz,'trato_edit',{dt:r.dt||'',n:r.n||'',lote:r.co||r.lote||'',prod_old:prodOld,q_old:qOld,prod_new:v.prod,q_new:qNew,faz:r.faz||''},function(){
+        r.pr=v.prod; r.prod=v.prod; r.q=qNew; r.qtd=qNew; salvar(); _feedDepois('✅ Trato editado na planilha.');
+      },'Não encontrei este trato na planilha para editar — nada foi alterado. Pode ser duplicado ou ainda não sincronizado.');
+    });
 }
-// Editar movimentação de pasto (lote/origem/destino). Vive no CONFIG → grava direto no app + nuvem.
+// MOVIMENTAÇÃO de pasto — ⚙️ CONFIG
 function _feedNormArea(v){
   var s=String(v||'').trim().toUpperCase();
   s=s.replace(/^M(\d{1,2})\/P(\d{1,2})$/i,function(_,m,p){return 'M'+String(parseInt(m)).padStart(2,'0')+'P'+String(parseInt(p)).padStart(2,'0');});
@@ -3132,68 +3098,93 @@ function _feedNormArea(v){
   return s;
 }
 function feedEditarMov(idx){
-  var r=S.rT[idx];
-  if(!r||r.tipo!=='mudanca_pasto'){ alert('Registro não encontrado.'); return; }
-  var loteOld=r.lote||'', origOld=r.origem||'', destOld=r.destino||'';
-  var loteNew=prompt('Lote:', loteOld);
-  if(loteNew===null) return;
-  loteNew=(''+loteNew).trim();
-  if(!loteNew){ alert('O lote não pode ficar vazio.'); return; }
-  var origNew=prompt('Origem — de onde saiu (ex: M02P04). Deixe vazio se for entrada:', origOld);
-  if(origNew===null) return;
-  origNew=_feedNormArea(origNew);
-  var destNew=prompt('Destino — para onde foi (ex: M02P02):', destOld);
-  if(destNew===null) return;
-  destNew=_feedNormArea(destNew);
-  if(!destNew){ alert('O destino não pode ficar vazio.'); return; }
-  if(loteNew===loteOld && origNew===origOld && destNew===destOld){ return; }
-  if(!confirm('Confirmar edição desta movimentação?\n\nLote: '+loteNew+'\nOrigem: '+(origNew||'(entrada)')+'\nDestino: '+destNew+'\n\nIsto afeta o cálculo de ocupação dos pastos.')) return;
-  r.lote=loteNew; r.origem=origNew; r.destino=destNew;
-  salvar();
-  if(S.cfgGS) salvarNuvem(function(){});
-  try{rFeedConsultor();}catch(e){} try{rPan();}catch(e){}
-  alert('✅ Movimentação editada.');
+  var r=S.rT[idx]; if(!r||r.tipo!=='mudanca_pasto'){ alert('Registro não encontrado.'); return; }
+  _feedModal('Editar movimentação', (r.dt||'').split('-').reverse().join('/')+' · afeta a ocupação dos pastos',
+    [{id:'lote',label:'Lote',valor:r.lote||''},{id:'orig',label:'Origem (vazio se entrada)',valor:r.origem||'',meia:true},{id:'dest',label:'Destino',valor:r.destino||'',meia:true}],
+    null,
+    function(v){ var lo=(v.lote||'').trim(), o=_feedNormArea(v.orig), d=_feedNormArea(v.dest);
+      if(!lo){ alert('O lote não pode ficar vazio.'); return false; } if(!d){ alert('O destino não pode ficar vazio.'); return false; }
+      r.lote=lo; r.origem=o; r.destino=d; _feedSalvarConfig('✅ Movimentação editada.'); });
 }
-// Editar diária (valor + serviço). Só grava no app DEPOIS que a planilha confirmar,
-// porque o carregar lê as diárias da aba 👤 Diárias (fonte da verdade).
+// DIÁRIA — aba 👤 Diárias
 function feedEditarDiaria(idx){
-  var r=S.rD[idx];
-  if(!r||r.tipo!=='diaria'){ alert('Registro não encontrado.'); return; }
+  var r=S.rD[idx]; if(!r||r.tipo!=='diaria'){ alert('Registro não encontrado.'); return; }
+  if(!(S.cfgGS && navigator.onLine)){ alert('⚠️ Sem conexão. A edição precisa de internet para gravar na planilha.'); return; }
   var nOld=r.n||'', srvOld=r.srv||'', vOld=parseFloat(r.v)||0;
-  var nNew=prompt('Nome do colaborador:', nOld);
-  if(nNew===null) return;
-  nNew=(''+nNew).trim(); if(!nNew){alert('Nome não pode ficar vazio.');return;}
-  var srvNew=prompt('Serviço:', srvOld);
-  if(srvNew===null) return;
-  srvNew=(''+srvNew).trim();
-  if(!srvNew){ alert('O serviço não pode ficar vazio.'); return; }
-  var vStr=prompt('Valor (R$):', vOld.toFixed(2).replace('.',','));
-  if(vStr===null) return;
-  var vNew=parseFloat((''+vStr).replace(',','.'));
-  if(isNaN(vNew)||vNew<0){ alert('Valor inválido.'); return; }
-  if(nNew===nOld && srvNew===srvOld && Math.abs(vNew-vOld)<0.01){ return; }
-  if(!confirm('Confirmar edição?\n\nNome: '+nNew+'\nServiço: '+srvNew+'\nValor: R$ '+vNew.toFixed(2).replace('.',','))) return;
-  if(!(S.cfgGS && navigator.onLine)){
-    alert('⚠️ Sem conexão com a planilha. A edição precisa de internet para gravar na nuvem (senão volta ao antigo no próximo carregamento). Tente de novo quando estiver online.');
-    return;
-  }
-  var payload={dt:r.dt,n:r.n,n_old:nOld,n_new:nNew,srv_old:srvOld,v_old:vOld,srv_new:srvNew,v_new:vNew,faz:r.faz||''};
-  var url=getFazGasUrl(r.faz||'');
-  var cbN='_ediD_'+Date.now();
-  var s=document.createElement('script');
-  s.src=url+'?acao=editar_diaria&data='+encodeURIComponent(JSON.stringify(payload))+'&callback='+cbN+'&t='+Date.now();
-  window[cbN]=function(res){
-    delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s);
-    if(res && res.ok){
-      r.n=nNew; r.srv=srvNew; r.v=vNew; salvar();
-      try{rFeedConsultor();}catch(e){}
-      alert('✅ Diária editada na planilha.');
-    } else {
-      alert('⚠️ Não encontrei essa diária na planilha para editar — nada foi alterado. Pode ser lançamento duplicado (mesmo dia/nome/serviço/valor) ou ainda não sincronizado.');
-    }
-  };
-  s.onerror=function(){ delete window[cbN]; if(s.parentNode)s.parentNode.removeChild(s); alert('⚠️ Erro de conexão. Nada foi alterado.'); };
-  document.body.appendChild(s);
+  var servs=(S.SERVS||[]).slice(); if(srvOld&&servs.indexOf(srvOld)<0) servs.unshift(srvOld);
+  _feedModal('Editar diária', (r.dt||'').split('-').reverse().join('/'),
+    [{id:'n',label:'Colaborador',valor:nOld},{id:'srv',label:'Serviço',tipo:'select',valor:srvOld,opts:servs,meia:true},{id:'v',label:'Valor (R$)',tipo:'number',valor:vOld.toFixed(2).replace('.',','),meia:true}],
+    null,
+    function(v){ var nNew=(v.n||'').trim(), vNew=_num(v.v);
+      if(!nNew){ alert('O nome não pode ficar vazio.'); return false; } if(isNaN(vNew)||vNew<0){ alert('Valor inválido.'); return false; }
+      if(nNew===nOld && v.srv===srvOld && Math.abs(vNew-vOld)<0.01) return;
+      _feedServ(r.faz,'editar_diaria',{dt:r.dt,n:r.n,n_old:nOld,n_new:nNew,srv_old:srvOld,v_old:vOld,srv_new:v.srv,v_new:vNew,faz:r.faz||''},function(){
+        r.n=nNew; r.srv=v.srv; r.v=vNew; salvar(); _feedDepois('✅ Diária editada na planilha.');
+      },'Não encontrei essa diária na planilha para editar — nada foi alterado. Pode ser duplicada ou ainda não sincronizada.');
+    });
+}
+// FENO — aba 🌾 Tratos Feno (pelo UID) + recalcula saldo
+function feedEditarFeno(idx){
+  var m=S.mFeno&&S.mFeno[idx]; if(!m){ alert('Registro não encontrado.'); return; }
+  var e=(S.FENO&&S.FENO[m.tipo])||{}; var u=e.u||'rolo';
+  var pesoU=parseFloat(e.peso_u)||((parseFloat(m.q)||0)>0?(parseFloat(m.kg)||0)/(parseFloat(m.q)):0), vkg=parseFloat(e.vkg)||0;
+  var lotes=(S.LOTES||[]).map(function(l){return l.nome;}); if(m.lote&&lotes.indexOf(m.lote)<0) lotes.unshift(m.lote);
+  _feedModal('Editar trato de feno', (m.tipo||'')+' · '+(m.resp||''),
+    [{id:'dt',label:'Data',tipo:'date',valor:m.dt||'',meia:true},{id:'lote',label:'Lote',tipo:'select',valor:m.lote||'',opts:lotes,meia:true},
+     {id:'q',label:'Quantidade ('+u+')',tipo:'number',valor:parseFloat(m.q)||0,meia:true},{id:'obs',label:'Obs',valor:m.obs||'',meia:true}],
+    function(v){ var q=_num(v.q); if(isNaN(q))return ''; var kg=q*pesoU; return '= '+_kgBR(kg)+' kg · '+_rsBR(kg*vkg)+' (recalculado pelo cadastro do feno)'; },
+    function(v){ var qN=_num(v.q); if(isNaN(qN)||qN<0){ alert('Quantidade inválida.'); return false; } if(!v.dt){ alert('Informe a data.'); return false; }
+      var kgN=Math.round(qN*pesoU*100)/100, custoN=Math.round(kgN*vkg*100)/100;
+      _feedServ(m.faz,'feno_edit',{uid:m.uid||'',dt_old:m.dt||'',lote_old:m.lote||'',tipo:m.tipo||'',q_old:parseFloat(m.q)||0,
+        dt:v.dt,lote:v.lote,q:qN,kg:kgN,custo:custoN,obs:v.obs,faz:m.faz||''},function(){
+        m.dt=v.dt; m.lote=v.lote; m.q=qN; m.kg=kgN; m.obs=v.obs; salvarLocal(); _feedDepois('✅ Feno editado na planilha. Saldo recalculado.');
+      },'Não encontrei este trato de feno na planilha — nada foi alterado. Toque em "Carregar dados da nuvem" e tente de novo.');
+    });
+}
+function feedExcluirFeno(idx){
+  var m=S.mFeno&&S.mFeno[idx]; if(!m){ alert('Registro não encontrado.'); return; }
+  if(!confirm('⚠️ Excluir este trato de feno?\n\n'+(m.lote||'')+' · '+(m.tipo||'')+' · '+(parseFloat(m.q)||0)+' un · '+(m.dt||'').split('-').reverse().join('/')+'\n\nSerá removido do app e da planilha, e o saldo volta.'))return;
+  _feedServ(m.faz,'feno_del',{uid:m.uid||'',dt:m.dt||'',lote:m.lote||'',tipo:m.tipo||'',q:parseFloat(m.q)||0,faz:m.faz||''},function(){
+    S.mFeno.splice(idx,1); if(S.FENO&&S.FENO[m.tipo]&&S.FENO[m.tipo].q!=null)S.FENO[m.tipo].q=(parseFloat(S.FENO[m.tipo].q)||0)+(parseFloat(m.q)||0);
+    salvarLocal(); _feedDepois('✅ Trato de feno excluído da planilha.');
+  },'Não encontrei este trato de feno na planilha — nada foi removido. Toque em "Carregar dados da nuvem" e tente de novo.');
+}
+// CANTINA — aba Cantina
+function feedEditarCantina(idx){
+  var r=S.rC&&S.rC[idx]; if(!r){ alert('Registro não encontrado.'); return; }
+  _feedModal('Editar cantina', (r.dt||'').split('-').reverse().join('/')+' · '+(r.resp||r.n||''),
+    [{id:'det',label:'Detalhe',valor:r.det||''},{id:'t',label:'Total (R$)',tipo:'number',valor:(parseFloat(r.total)||0).toFixed(2).replace('.',',')}],
+    null,
+    function(v){ var tN=_num(v.t); if(isNaN(tN)||tN<0){ alert('Valor inválido.'); return false; }
+      _feedServ(r.faz,'cantina_edit',{dt:r.dt||'',resp:r.resp||r.n||'',total_old:parseFloat(r.total)||0,det:v.det,total:tN,faz:r.faz||''},function(){
+        r.det=v.det; r.total=tN; salvar(); _feedDepois('✅ Cantina editada na planilha.'); });
+    });
+}
+// ESCORE / DESPESA / INSUMO — ⚙️ CONFIG da planilha (mesmo lugar que o excluir usa)
+function feedEditarEscore(idx){
+  var r=S.rE&&S.rE[idx]; if(!r){ alert('Registro não encontrado.'); return; }
+  _feedModal('Editar escore', (r.co||'')+' · '+(r.dt||'').split('-').reverse().join('/'),
+    [{id:'es',label:'Escore',tipo:'select',valor:String(r.es||3),opts:['1','2','3','4','5'],meia:true},{id:'cab',label:'Nº de animais',tipo:'number',valor:r.cab||0,meia:true},{id:'obs',label:'Obs',valor:r.obs||''}],
+    null,
+    function(v){ var cab=_num(v.cab); if(isNaN(cab)||cab<0){ alert('Número de animais inválido.'); return false; }
+      r.es=parseInt(v.es); r.cab=cab; r.obs=v.obs; _feedSalvarConfig('✅ Escore editado.'); });
+}
+function feedEditarDespesa(idx){
+  var r=S.rDesp&&S.rDesp[idx]; if(!r){ alert('Registro não encontrado.'); return; }
+  _feedModal('Editar despesa', r.venc?('Vencimento '+String(r.venc).split('-').reverse().join('/')):'',
+    [{id:'desc',label:'Descrição',valor:r.desc||''},{id:'val',label:'Valor (R$)',tipo:'number',valor:(parseFloat(r.val)||0).toFixed(2).replace('.',',')}],
+    null,
+    function(v){ var d=(v.desc||'').trim(), vl=_num(v.val); if(!d){ alert('A descrição não pode ficar vazia.'); return false; } if(isNaN(vl)||vl<0){ alert('Valor inválido.'); return false; }
+      r.desc=d; r.val=vl; _feedSalvarConfig('✅ Despesa editada.'); });
+}
+function feedEditarInsumo(idx){
+  var r=S.rD&&S.rD[idx]; if(!r||r.tipo!=='insumo'){ alert('Registro não encontrado.'); return; }
+  var ins=r.ins||[]; if(!ins.length){ alert('Este lançamento não tem produtos.'); return; }
+  _feedModal('Editar insumo', (r.dt||'').split('-').reverse().join('/')+(r.dest?' · → '+r.dest:''),
+    ins.map(function(x,i){ return {id:'q'+i,label:x.p+' ('+(x.u||'')+')',tipo:'number',valor:x.q}; }),
+    null,
+    function(v){ var novos=[]; for(var i=0;i<ins.length;i++){ var q=_num(v['q'+i]); if(isNaN(q)||q<0){ alert('Quantidade inválida em '+ins[i].p+'.'); return false; } novos.push({p:ins[i].p,q:q,u:ins[i].u}); }
+      r.ins=novos; _feedSalvarConfig('✅ Insumo editado.'); });
 }
 // Calcula o GMD (ganho médio diário) de um lote usando as 2 pesagens mais recentes do histórico.
 // Retorna média do lote e detalhe por animal. Compara só animais (brincos) presentes nas duas datas.
@@ -3947,11 +3938,11 @@ function rFeedConsultor(){
         (function(){
           var fnE={'Diária':'feedEditarDiaria','Trato':'feedEditarTrato','Movimentação':'feedEditarMov','Feno':'feedEditarFeno',
                    'Cantina':'feedEditarCantina','Escore':'feedEditarEscore','Despesa':'feedEditarDespesa','Insumo':'feedEditarInsumo'}[o.tipo];
-          return fnE?'<button onclick="'+fnE+'('+o.idx+')" style="padding:4px 9px;font-size:13px;background:#E8F5E9;color:#1B5E20;border:none;border-radius:6px;cursor:pointer;flex-shrink:0;margin-right:4px">✏️</button>':'';
+          return fnE?'<button onclick="'+fnE+'('+o.idx+')" style="padding:4px 9px;font-size:13px;background:#E8F5E9;color:#1B5E20;border:none;border-radius:6px;cursor:pointer;flex-shrink:0;margin-right:4px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:block"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>':'';
         })()
       +(o.tipo==='Feno'
-        ? '<button onclick="feedExcluirFeno('+o.idx+')" style="padding:4px 9px;font-size:13px;background:#FFEBEE;color:#C62828;border:none;border-radius:6px;cursor:pointer;flex-shrink:0">🗑️</button>'
-        : '<button onclick="feedExcluir(\''+o.arr+'\','+o.idx+')" style="padding:4px 9px;font-size:13px;background:#FFEBEE;color:#C62828;border:none;border-radius:6px;cursor:pointer;flex-shrink:0">🗑️</button>')
+        ? '<button onclick="feedExcluirFeno('+o.idx+')" style="padding:4px 9px;font-size:13px;background:#FFEBEE;color:#C62828;border:none;border-radius:6px;cursor:pointer;flex-shrink:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#C62828" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>'
+        : '<button onclick="feedExcluir(\''+o.arr+'\','+o.idx+')" style="padding:4px 9px;font-size:13px;background:#FFEBEE;color:#C62828;border:none;border-radius:6px;cursor:pointer;flex-shrink:0"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#C62828" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:block"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>')
       )
       +'</div>';
   });
@@ -4898,6 +4889,106 @@ function _relDiaDados(per){
     hojeBR:p2(h.getDate())+'/'+p2(h.getMonth()+1)+'/'+h.getFullYear(), alerta:15,
     consumo:consumo, diarias:diarias, lotesPasto:lotesPasto, mudancas:mudancas, estoque:estoque, feno:feno, semTrato:semTrato, gasto:Math.round(gasto*100)/100};
 }
+// ── PERGUNTE À IA (consultor) — responde com os números da fazenda (últimos 30 dias) ──
+var _iaPergUlt=null, _iaPergRodando=false, _iaSaldo=null, _iaSaldoPedido=false;
+function _iaSaldoChamar(acao,payload,cbOk){
+  if(!(S.cfgGS&&navigator.onLine))return;
+  var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
+  var cb='_ias_'+Date.now()+'_'+Math.floor(Math.random()*9999);
+  var s=document.createElement('script');
+  s.src=getFazGasUrl(faz)+'?acao='+acao+(payload?'&data='+encodeURIComponent(JSON.stringify(payload)):'')+'&callback='+cb+'&t='+Date.now();
+  window[cb]=function(r){ delete window[cb]; if(s.parentNode)s.parentNode.removeChild(s); if(r&&r.ok&&r.saldo){ _iaSaldo=r.saldo; rIaPerg(); if(cbOk)cbOk(); } else if(acao==='ia_credito'){ alert('⚠️ Não consegui gravar o crédito: '+((r&&r.erro)||'erro')); } };
+  s.onerror=function(){ delete window[cb]; if(s.parentNode)s.parentNode.removeChild(s); if(acao==='ia_credito')alert('⚠️ Erro de conexão. Nada foi gravado.'); };
+  document.body.appendChild(s);
+}
+function _iaRecarreguei(){
+  _feedModal('Crédito da IA','Digite o saldo que aparece no painel da Anthropic (console.anthropic.com → Billing), em dólar.',
+    [{id:'c',label:'Saldo atual (US$)',tipo:'number',valor:(_iaSaldo&&_iaSaldo.saldo!=null)?String(_iaSaldo.saldo.toFixed(2)).replace('.',','):''}],
+    null,
+    function(v){ var c=_num(v.c); if(isNaN(c)||c<0){ alert('Valor inválido.'); return false; }
+      _iaSaldoChamar('ia_credito',{credito:c},function(){ alert('✅ Crédito gravado: US$ '+c.toFixed(2).replace('.',',')); }); });
+}
+function _iaSaldoHtml(){
+  var ico='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M16 12.5h2"/><path d="M2 10h20"/></svg>';
+  var usd=function(n){return 'US$ '+(parseFloat(n)||0).toFixed(2).replace('.',',');};
+  var bt='<span onclick="_iaRecarreguei()" style="margin-left:8px;flex-shrink:0;font-size:11px;font-weight:700;color:#33691E;background:#fff;border:1px solid #C5E1A5;border-radius:20px;padding:4px 9px;cursor:pointer">Recarreguei</span>';
+  var box=function(inner){return '<div style="display:flex;align-items:center;justify-content:space-between;background:#F1F8E9;border-radius:10px;padding:8px 10px;margin-top:12px"><div style="flex:1;min-width:0">'+inner+'</div>'+bt+'</div>';};
+  if(!_iaSaldo) return box('<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#888">'+ico+'Saldo da IA: carregando…</div>');
+  if(_iaSaldo.credito==null) return box('<div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#1B5E20">'+ico+'Saldo da IA: informe o crédito</div><div style="font-size:10.5px;color:#65766a;margin-top:3px">Toque em Recarreguei e digite o saldo do painel da Anthropic.</div>');
+  var sd=Math.max(0,_iaSaldo.saldo||0), cr=_iaSaldo.credito||0, pct=cr>0?Math.max(0,Math.min(100,Math.round(sd/cr*100))):0, baixo=sd<1;
+  var med=_iaSaldo.usos>0?_iaSaldo.gasto/_iaSaldo.usos:0.004, rest=med>0?Math.floor(sd/med):0;
+  return box('<div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:'+(baixo?'#E65100':'#1B5E20')+'">'+ico+'Saldo estimado: '+usd(sd)+' de '+usd(cr)+'</div>'
+    +'<div style="height:6px;background:#dfe8dc;border-radius:4px;overflow:hidden;margin-top:5px"><div style="height:100%;width:'+pct+'%;background:'+(baixo?'#EF6C00':'#2E7D32')+'"></div></div>'
+    +'<div style="font-size:10.5px;color:#65766a;margin-top:4px">≈ '+rest.toLocaleString('pt-BR')+' perguntas · '+_iaSaldo.usos+' usadas · média US$ '+med.toFixed(4).replace('.',',')+' cada</div>');
+}
+function _iaPergDados(){
+  var d=_relDiaDados('mes');
+  var canon=function(s){return String(s||'').replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();};
+  var p2=function(n){return ('0'+n).slice(-2);}, iso=function(x){return x.getFullYear()+'-'+p2(x.getMonth()+1)+'-'+p2(x.getDate());};
+  var lim=iso(new Date(Date.now()-29*864e5));
+  var sup={}, fen={};
+  (S.rT||[]).forEach(function(r){ if(r._apagado||r.tipo!=='trato'||(r.dt||'')<lim)return; var lo=canon(r.co||r.lote), pr=r.pr||r.prod||''; if(!lo||!pr)return;
+    if(!sup[lo])sup[lo]={}; sup[lo][pr]=(sup[lo][pr]||0)+(parseFloat(r.q||r.qtd)||0); });
+  (S.mFeno||[]).forEach(function(m){ if(!m||m.mov!=='saida'||!m.lote||(m.dt||'')<lim)return; var lo=canon(m.lote);
+    if(!fen[lo])fen[lo]={kg:0,un:0,tratos:0}; fen[lo].kg+=parseFloat(m.kg)||0; fen[lo].un+=parseFloat(m.q)||0; fen[lo].tratos++; });
+  var pasto={}; (d.lotesPasto||[]).forEach(function(x){ pasto[canon(x.lote)]=x; });
+  var lotes=(S.LOTES||[]).filter(function(l){return (l.qtd||0)>0;}).map(function(l){
+    var lo=canon(l.nome), cab=parseFloat(l.qtd)||0, s=sup[lo]||{}, kgSup=0;
+    var sacos=Object.keys(s).map(function(pr){ var ps=(S.EST&&S.EST[pr]&&parseFloat(S.EST[pr].peso_saco))||30; kgSup+=s[pr]*ps; return pr+': '+s[pr]+' sc'; });
+    var f=fen[lo]||null, pa=pasto[lo]||{};
+    return {lote:lo, animais:cab, peso_medio_kg:parseFloat(l.peso)||null, pasto:pa.pasto||l.pasto||'', dias_no_pasto:(pa.dias!=null?pa.dias:null),
+      suplemento_30d:sacos, suplemento_g_cab_dia:(cab?Math.round(kgSup/cab/30*1000):null),
+      feno_30d:f?{rolos:f.un, kg:Math.round(f.kg), tratos:f.tratos, kg_cab_dia:(cab?Math.round(f.kg/cab/30*100)/100:null)}:null};
+  });
+  return {fazenda:d.fazenda, hoje:d.hojeBR, periodo:'últimos 30 dias', lotes:lotes,
+    estoque:d.estoque, feno_estoque:d.feno, mudancas_pasto:d.mudancas, sem_trato:d.semTrato,
+    gasto_diarias_despesas:d.gasto, diarias:(d.diarias||[]).length};
+}
+function rIaPerg(){
+  var el=document.getElementById('ia-perg'); if(!el)return;
+  if(!(CU&&CU.r==='Consultor')){ el.innerHTML=''; return; }
+  var esc=function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');};
+  var atalhos=['A estratégia do feno está boa?','Qual o consumo de cada lote?','O que preciso comprar esta semana?'];
+  var h='<div class="card" style="margin-bottom:12px;padding:12px 14px">'
+    +'<div style="font-size:14px;font-weight:800;color:#1B5E20">Pergunte à IA</div>'
+    +'<div style="font-size:11px;color:#888;margin-top:2px">Responde com os dados da fazenda: lotes, pastos, tratos, feno, estoque, diárias (últimos 30 dias).</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:6px;margin:10px 0">'
+    +atalhos.map(function(a){return '<span onclick="_iaPerguntar(\''+a.replace(/'/g,"\\'")+'\')" style="font-size:11.5px;background:#F1F8E9;color:#33691E;border:1px solid #C5E1A5;padding:5px 9px;border-radius:20px;cursor:pointer">'+esc(a)+'</span>';}).join('')
+    +'</div>'
+    +'<div style="display:flex;gap:6px"><input id="ia-perg-in" type="text" placeholder="Escreva sua pergunta…" onkeydown="if(event.key===\'Enter\')_iaPerguntar()" style="flex:1;min-width:0;padding:10px;border:1.5px solid #ddd;border-radius:9px;font-size:13px">'
+    +'<button id="ia-perg-bt" onclick="_iaPerguntar()" style="padding:10px 14px;background:#1B5E20;color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:800;cursor:pointer">Perguntar</button></div>'
+    +'<div id="ia-perg-resp">';
+  if(_iaPergUlt){
+    h+='<div style="font-size:12px;font-weight:700;color:#555;margin-top:12px">'+esc(_iaPergUlt.q)+'</div>';
+    if(_iaPergUlt.a!=null) h+='<div style="background:#f4f8f2;border-left:3px solid #558B2F;border-radius:8px;padding:10px 12px;margin-top:6px;font-size:12.5px;line-height:1.5;white-space:pre-wrap">'+esc(_iaPergUlt.a)+'</div>';
+    else if(_iaPergUlt.erro) h+='<div style="background:#fff3e0;border-radius:8px;padding:10px 12px;margin-top:6px;font-size:12px;color:#E65100">'+esc(_iaPergUlt.erro)+'</div>';
+    else h+='<div style="font-size:12px;color:#888;margin-top:6px">Pensando…</div>';
+  }
+  h+='</div>'+_iaSaldoHtml()+'</div>';
+  el.innerHTML=h;
+  if(!_iaSaldo&&!_iaSaldoPedido){ _iaSaldoPedido=true; _iaSaldoChamar('ia_saldo',null); }
+}
+function _iaPerguntar(txt){
+  if(_iaPergRodando)return;
+  var inp=document.getElementById('ia-perg-in');
+  var q=String(txt!=null?txt:(inp?inp.value:'')).trim();
+  if(!q){ if(inp)inp.focus(); return; }
+  if(!(S.cfgGS&&navigator.onLine)){ _iaPergUlt={q:q,erro:'Sem internet. A pergunta precisa de conexão.'}; rIaPerg(); return; }
+  var dados; try{ dados=_iaPergDados(); }catch(e){ dados={}; }
+  _iaPergUlt={q:q}; _iaPergRodando=true; rIaPerg();
+  var bt=document.getElementById('ia-perg-bt'); if(bt){bt.disabled=true;bt.textContent='...';}
+  var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
+  var cb='_iaq_'+Date.now()+'_'+Math.floor(Math.random()*9999);
+  var s=document.createElement('script');
+  s.src=getFazGasUrl(faz)+'?acao=pergunta_ia&data='+encodeURIComponent(JSON.stringify({pergunta:q,dados:dados}))+'&callback='+cb+'&t='+Date.now();
+  var fim=function(){ _iaPergRodando=false; if(s.parentNode)s.parentNode.removeChild(s); rIaPerg(); };
+  window[cb]=function(r){ delete window[cb];
+    if(r&&r.saldo) _iaSaldo=r.saldo;
+    if(r&&r.ok&&r.texto) _iaPergUlt={q:q,a:r.texto}; else _iaPergUlt={q:q,erro:'IA: '+((r&&r.erro)||'não consegui responder. Confira crédito e chave no backend.')};
+    fim(); };
+  s.onerror=function(){ delete window[cb]; _iaPergUlt={q:q,erro:'Erro de conexão ao perguntar.'}; fim(); };
+  document.body.appendChild(s);
+}
 function _relDiaToggle(){ _relDiaOpen=!_relDiaOpen; rRelatorioDia(); }
 function _relDiaSetPer(p){ _relDiaPer=p; _relDiaOpen=true; rRelatorioDia(); }
 function rRelatorioDia(){
@@ -4986,6 +5077,7 @@ function _relDiaGerarIA(btn){
   s.src=url+'?acao=relatorio_ia&data='+encodeURIComponent(JSON.stringify(d))+'&callback='+cb+'&t='+Date.now();
   var _fim=function(){ if(btn){btn.disabled=false;btn.textContent='Gerar análise com IA';} if(s.parentNode)s.parentNode.removeChild(s); };
   window[cb]=function(resp){ delete window[cb]; _fim();
+    if(resp&&resp.saldo){ _iaSaldo=resp.saldo; try{rIaPerg();}catch(e){} }
     if(resp&&resp.ok&&resp.texto){
       box.innerHTML='<div style="background:#f4f8f2;border-left:3px solid #558B2F;border-radius:8px;padding:10px 12px;margin-top:10px;font-size:12.5px;line-height:1.5;white-space:pre-wrap">'+String(resp.texto).replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</div>';
     } else {
