@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/09/2026 v7.35</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 25/09/2026 v7.37</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -4925,24 +4925,56 @@ function _iaPergDados(){
   var d=_relDiaDados('mes');
   var canon=function(s){return String(s||'').replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();};
   var p2=function(n){return ('0'+n).slice(-2);}, iso=function(x){return x.getFullYear()+'-'+p2(x.getMonth()+1)+'-'+p2(x.getDate());};
-  var lim=iso(new Date(Date.now()-29*864e5));
-  var sup={}, fen={};
-  (S.rT||[]).forEach(function(r){ if(r._apagado||r.tipo!=='trato'||(r.dt||'')<lim)return; var lo=canon(r.co||r.lote), pr=r.pr||r.prod||''; if(!lo||!pr)return;
-    if(!sup[lo])sup[lo]={}; sup[lo][pr]=(sup[lo][pr]||0)+(parseFloat(r.q||r.qtd)||0); });
-  (S.mFeno||[]).forEach(function(m){ if(!m||m.mov!=='saida'||!m.lote||(m.dt||'')<lim)return; var lo=canon(m.lote);
-    if(!fen[lo])fen[lo]={kg:0,un:0,tratos:0}; fen[lo].kg+=parseFloat(m.kg)||0; fen[lo].un+=parseFloat(m.q)||0; fen[lo].tratos++; });
+  var r2=function(n){return Math.round((parseFloat(n)||0)*100)/100;};
+  var hojeISO=iso(new Date()), lim30=iso(new Date(Date.now()-29*864e5)), lim7=iso(new Date(Date.now()-6*864e5));
+  var prSaco=function(pr){return (S.EST&&S.EST[pr]&&parseFloat(S.EST[pr].preco_saco))||0;};
+  var psSaco=function(pr){return (S.EST&&S.EST[pr]&&parseFloat(S.EST[pr].peso_saco))||30;};
+  var vkg=function(t){return (S.FENO&&S.FENO[t]&&parseFloat(S.FENO[t].vkg))||0;};
+  // Acumula suplemento e feno por lote em 2 janelas: 30 e 7 dias
+  var sup={}, fen={}, fenPrim={};
+  var novo=function(){return {sacos:{},kg:0,rs:0};};
+  (S.rT||[]).forEach(function(r){ if(r._apagado||r.tipo!=='trato')return; var dt=r.dt||''; if(dt<lim30)return;
+    var lo=canon(r.co||r.lote), pr=r.pr||r.prod||'', q=parseFloat(r.q||r.qtd)||0; if(!lo||!pr)return;
+    if(!sup[lo])sup[lo]={d30:novo(),d7:novo()};
+    ['d30','d7'].forEach(function(w){ if(w==='d7'&&dt<lim7)return; var o=sup[lo][w]; o.sacos[pr]=(o.sacos[pr]||0)+q; o.kg+=q*psSaco(pr); o.rs+=q*prSaco(pr); }); });
+  (S.mFeno||[]).forEach(function(m){ if(!m||m.mov!=='saida'||!m.lote)return; var lo=canon(m.lote), dt=m.dt||'';
+    if(!fenPrim[lo]||dt<fenPrim[lo]) fenPrim[lo]=dt;
+    if(dt<lim30)return;
+    if(!fen[lo])fen[lo]={d30:{un:0,kg:0,rs:0,tratos:0},d7:{un:0,kg:0,rs:0,tratos:0}};
+    ['d30','d7'].forEach(function(w){ if(w==='d7'&&dt<lim7)return; var o=fen[lo][w], kg=parseFloat(m.kg)||0; o.un+=parseFloat(m.q)||0; o.kg+=kg; o.rs+=kg*vkg(m.tipo); o.tratos++; }); });
+  var diasEntre=function(a,b){ return Math.max(1,Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/864e5)+1); };
   var pasto={}; (d.lotesPasto||[]).forEach(function(x){ pasto[canon(x.lote)]=x; });
+  var totCab=0, totRs30=0;
   var lotes=(S.LOTES||[]).filter(function(l){return (l.qtd||0)>0;}).map(function(l){
-    var lo=canon(l.nome), cab=parseFloat(l.qtd)||0, s=sup[lo]||{}, kgSup=0;
-    var sacos=Object.keys(s).map(function(pr){ var ps=(S.EST&&S.EST[pr]&&parseFloat(S.EST[pr].peso_saco))||30; kgSup+=s[pr]*ps; return pr+': '+s[pr]+' sc'; });
-    var f=fen[lo]||null, pa=pasto[lo]||{};
+    var lo=canon(l.nome), cab=parseFloat(l.qtd)||0, pa=pasto[lo]||{}; totCab+=cab;
+    var su=sup[lo], fe=fen[lo];
+    var jan=function(o,dias,tipo){ if(!o)return null;
+      var x={dias_da_janela:dias};
+      if(tipo==='sup'){ x.sacos=o.sacos; x.kg=Math.round(o.kg); x.valor_R$=r2(o.rs); x.g_cab_dia=cab?Math.round(o.kg/cab/dias*1000):null; x.R$_cab_dia=cab?r2(o.rs/cab/dias):null; }
+      else { x.rolos=o.un; x.kg=Math.round(o.kg); x.valor_R$=r2(o.rs); x.tratos=o.tratos; x.kg_cab_dia=cab?r2(o.kg/cab/dias):null; x.R$_cab_dia=cab?r2(o.rs/cab/dias):null; }
+      return x; };
+    var feno=null;
+    if(fe){ feno={ultimos_30_dias:jan(fe.d30,30,'fen'), ultimos_7_dias:jan(fe.d7,7,'fen'), primeiro_trato_de_feno:fenPrim[lo]||null};
+      if(fenPrim[lo]&&fenPrim[lo]>lim30){ var dd=diasEntre(fenPrim[lo],hojeISO); feno.desde_o_primeiro_trato={dias:dd, kg_cab_dia:cab?r2(fe.d30.kg/cab/dd):null, R$_cab_dia:cab?r2(fe.d30.rs/cab/dd):null}; } }
+    var rs30=(su?su.d30.rs:0)+(fe?fe.d30.rs:0); totRs30+=rs30;
     return {lote:lo, animais:cab, peso_medio_kg:parseFloat(l.peso)||null, pasto:pa.pasto||l.pasto||'', dias_no_pasto:(pa.dias!=null?pa.dias:null),
-      suplemento_30d:sacos, suplemento_g_cab_dia:(cab?Math.round(kgSup/cab/30*1000):null),
-      feno_30d:f?{rolos:f.un, kg:Math.round(f.kg), tratos:f.tratos, kg_cab_dia:(cab?Math.round(f.kg/cab/30*100)/100:null)}:null};
+      suplemento:su?{ultimos_30_dias:jan(su.d30,30,'sup'), ultimos_7_dias:jan(su.d7,7,'sup')}:null,
+      feno:feno,
+      custo_nutricao_30_dias:{valor_R$:r2(rs30), R$_cab_dia:cab?r2(rs30/cab/30):null}};
   });
-  return {fazenda:d.fazenda, hoje:d.hojeBR, periodo:'últimos 30 dias', lotes:lotes,
-    estoque:d.estoque, feno_estoque:d.feno, mudancas_pasto:d.mudancas, sem_trato:d.semTrato,
-    gasto_diarias_despesas:d.gasto, diarias:(d.diarias||[]).length};
+  var estoque=(d.estoque||[]).map(function(e){ var pc=prSaco(e.produto); return {produto:e.produto, saldo_sacos:e.saldo, preco_saco_R$:pc||null, valor_em_estoque_R$:pc?r2(e.saldo*pc):null, cobre_dias_pelo_ritmo_7_dias:e.dias}; });
+  var feno_estoque=Object.keys(S.FENO||{}).map(function(t){ var e=S.FENO[t]||{}, q=parseFloat(e.q)||0, r7=0, r30=0;
+    (S.mFeno||[]).forEach(function(m){ if(!m||m.mov!=='saida'||m.tipo!==t)return; var dt=m.dt||''; if(dt>=lim30)r30+=parseFloat(m.q)||0; if(dt>=lim7)r7+=parseFloat(m.q)||0; });
+    return {tipo:t, saldo:q, unidade:e.u||'rolo', kg_por_unidade:parseFloat(e.peso_u)||null, R$_kg:parseFloat(e.vkg)||null,
+      valor_em_estoque_R$:r2(q*(parseFloat(e.peso_u)||0)*(parseFloat(e.vkg)||0)),
+      consumo_ultimos_7_dias:r7, consumo_ultimos_30_dias:r30,
+      cobre_dias_pelo_ritmo_7_dias:(r7>0?Math.floor(q/(r7/7)):null), cobre_dias_pelo_ritmo_30_dias:(r30>0?Math.floor(q/(r30/30)):null)}; });
+  return {fazenda:d.fazenda, hoje:d.hojeBR,
+    bases:'Cada número traz a janela: ultimos_30_dias (média do mês), ultimos_7_dias (ritmo atual) e desde_o_primeiro_trato (quando o lote começou a receber feno há menos de 30 dias). Valores em R$ usam o preço do saco do estoque e o R$/kg do cadastro do feno.',
+    rebanho:{cabecas_com_gado:totCab, custo_nutricao_30_dias_R$:r2(totRs30), R$_cab_dia_medio:totCab?r2(totRs30/totCab/30):null},
+    lotes:lotes, estoque:estoque, feno_estoque:feno_estoque,
+    mudancas_pasto_30_dias:d.mudancas, sem_trato_30_dias:d.semTrato,
+    diarias_e_despesas_30_dias_R$:d.gasto, qtd_diarias_30_dias:(d.diarias||[]).length};
 }
 function rIaPerg(){
   var el=document.getElementById('ia-perg'); if(!el)return;
@@ -4960,13 +4992,37 @@ function rIaPerg(){
     +'<div id="ia-perg-resp">';
   if(_iaPergUlt){
     h+='<div style="font-size:12px;font-weight:700;color:#555;margin-top:12px">'+esc(_iaPergUlt.q)+'</div>';
-    if(_iaPergUlt.a!=null) h+='<div style="background:#f4f8f2;border-left:3px solid #558B2F;border-radius:8px;padding:10px 12px;margin-top:6px;font-size:12.5px;line-height:1.5;white-space:pre-wrap">'+esc(_iaPergUlt.a)+'</div>';
+    if(_iaPergUlt.a!=null){ h+='<div style="background:#f4f8f2;border-left:3px solid #558B2F;border-radius:8px;padding:10px 12px;margin-top:6px;font-size:12.5px;line-height:1.5;white-space:pre-wrap">'+esc(_iaPergUlt.a)+'</div>';
+      h+='<button onclick="_iaPergPDF()" style="width:100%;margin-top:8px;padding:10px;border:1px solid #8BC34A;border-radius:10px;font-size:12.5px;font-weight:800;color:#33691E;background:#F1F8E9;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">'
+        +'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#33691E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13h6M9 17h4"/></svg>Gerar PDF desta resposta</button>'; }
     else if(_iaPergUlt.erro) h+='<div style="background:#fff3e0;border-radius:8px;padding:10px 12px;margin-top:6px;font-size:12px;color:#E65100">'+esc(_iaPergUlt.erro)+'</div>';
     else h+='<div style="font-size:12px;color:#888;margin-top:6px">Pensando…</div>';
   }
   h+='</div>'+_iaSaldoHtml()+'</div>';
   el.innerHTML=h;
   if(!_iaSaldo&&!_iaSaldoPedido){ _iaSaldoPedido=true; _iaSaldoChamar('ia_saldo',null); }
+}
+function _iaPergPDF(){
+  if(!_iaPergUlt||_iaPergUlt.a==null){ alert('Faça uma pergunta primeiro.'); return; }
+  var esc=function(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');};
+  var out='', lista=false;
+  String(_iaPergUlt.a).split(/\r?\n/).forEach(function(ln){ var t=ln.trim();
+    if(/^[-•]\s+/.test(t)){ if(!lista){out+='<ul style="margin:4px 0 8px;padding-left:18px">';lista=true;} out+='<li style="margin:2px 0;font-size:12.5px;line-height:1.55">'+esc(t.replace(/^[-•]\s+/,''))+'</li>'; return; }
+    if(lista){out+='</ul>';lista=false;}
+    if(!t){ out+='<div style="height:6px"></div>'; return; }
+    if(/^[A-ZÀ-Ú0-9 ,()\/-]{4,}:?$/.test(t)||/^[A-ZÀ-Ú][^.!?]{0,40}:$/.test(t)) out+='<div style="font-size:12px;font-weight:800;color:#33691E;margin:12px 0 4px;text-transform:uppercase;letter-spacing:.4px">'+esc(t.replace(/:$/,''))+'</div>';
+    else out+='<div style="font-size:12.5px;line-height:1.55;margin:2px 0">'+esc(t)+'</div>';
+  });
+  if(lista)out+='</ul>';
+  var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
+  var p2=function(n){return ('0'+n).slice(-2);}, h=new Date(), hoje=p2(h.getDate())+'/'+p2(h.getMonth()+1)+'/'+h.getFullYear();
+  var c='<div style="background:#F1F8E9;border-radius:8px;padding:9px 12px;margin:6px 0 10px"><div style="font-size:10px;font-weight:800;color:#558B2F;letter-spacing:.5px">PERGUNTA</div><div style="font-size:13.5px;font-weight:700;color:#1B5E20;margin-top:2px">'+esc(_iaPergUlt.q)+'</div></div>'+out
+    +'<div style="font-size:10px;color:#999;margin-top:14px;border-top:1px solid #eee;padding-top:6px">Análise gerada por IA com os dados do app (últimos 30 dias). Validar no campo antes de decidir.</div>';
+  var css=(typeof _pdfTimbreCss==='function')?_pdfTimbreCss():'';
+  var timbre=(typeof _pdfTimbre==='function')?_pdfTimbre('Análise da IA', hoje, faz):'<h2>Análise da IA</h2>';
+  var rodape=(typeof _pdfRodape==='function')?_pdfRodape():'';
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;padding:18px;color:#222;max-width:760px;margin:0 auto}'+css+'</style></head><body>'+timbre+c+rodape+'</body></html>';
+  if(typeof pdfModalAbrir==='function') pdfModalAbrir('Análise da IA', html); else alert('Gerador de PDF não encontrado.');
 }
 function _iaPerguntar(txt){
   if(_iaPergRodando)return;
@@ -4975,6 +5031,11 @@ function _iaPerguntar(txt){
   if(!q){ if(inp)inp.focus(); return; }
   if(!(S.cfgGS&&navigator.onLine)){ _iaPergUlt={q:q,erro:'Sem internet. A pergunta precisa de conexão.'}; rIaPerg(); return; }
   var dados; try{ dados=_iaPergDados(); }catch(e){ dados={}; }
+  // Limite de tamanho do link do Google: se passar, tira os detalhes menos importantes
+  var _tam=function(){ return encodeURIComponent(JSON.stringify({pergunta:q,dados:dados})).length; };
+  if(_tam()>7000){ delete dados.mudancas_pasto_30_dias; delete dados.sem_trato_30_dias; }
+  if(_tam()>7000){ (dados.lotes||[]).forEach(function(l){ if(l.suplemento&&l.suplemento.ultimos_7_dias) delete l.suplemento.ultimos_7_dias.sacos; }); }
+  if(_tam()>7000){ (dados.lotes||[]).forEach(function(l){ if(l.suplemento) delete l.suplemento.ultimos_7_dias; }); }
   _iaPergUlt={q:q}; _iaPergRodando=true; rIaPerg();
   var bt=document.getElementById('ia-perg-bt'); if(bt){bt.disabled=true;bt.textContent='...';}
   var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
