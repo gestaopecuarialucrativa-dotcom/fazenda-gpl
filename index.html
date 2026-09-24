@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 25/09/2026 v7.38</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 26/09/2026 v7.39</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2048,13 +2048,19 @@ function confirmarTrocaProduto(sel){
   calcSaldo();
 }
 
-// ═══ CONSUMO NO COCHO: previsto (com autorização do consultor), real e próxima data ═══
-// S.PV_AUT      = {'Lote 04||Protegem': {pct:0.2, dt, por, ref}}  → % autorizado só p/ aquele lote+produto
-// S.PV_ALERTA_OK= {'Lote 04||Protegem': '2026-09-24'}             → consultor marcou "manter/ciente" p/ aquele intervalo
-// Os dois vêm da aba 🎯 Consumo Autorizado (carregar). Tolerância: 20%.
-var CONS_TOL=0.20;
+// ═══ CONSUMO NO COCHO: previsto (autorização/orientação do consultor), real e próxima data ═══
+// S.PV_AUT      = {'Lote 04||Protegem': {pct, dt, por, ref}}     → % autorizado só p/ aquele lote+produto
+// S.PV_ALERTA_OK= {'Lote 04||Protegem': '2026-09-24'}            → "só ciente" daquele intervalo
+// S.ORIENT      = {'Lote 04||Protegem': {id,sacos,freq,recado,dt,por,vistos:[]}} → orientação ativa
+// Abas: 🎯 Consumo Autorizado e 📋 Orientações Trato (histórico de TODAS as decisões).
+// Regra da fazenda: DOMINGO não tem trato (o sábado cobre o domingo).
+var CONS_TOL=0.20, DIA_FOLGA=0;
+var FREQ_OPTS=[['Todo dia',1],['Dia sim, dia não',2],['A cada 3 dias',3],['A cada 4 dias',4],['A cada 5 dias',5],['A cada 7 dias',7]];
+function _freqTxt(n){ n=parseInt(n)||1; var o=FREQ_OPTS.find(function(x){return x[1]===n;}); return o?o[0]:('A cada '+n+' dias'); }
 function _lbCons(s){ return String(s||'').replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim(); }
 function _pvChave(lote,prod){ return _lbCons(lote)+'||'+prod; }
+function _ppsProd(prod){ return ((S.EST||{})[prod]&&parseFloat(S.EST[prod].peso_saco))||30; }
+function _orientAtiva(lote,prod){ var o=(S.ORIENT||{})[_pvChave(lote,prod)]; return (o&&parseFloat(o.sacos)>0)?o:null; }
 function _pvPrevisto(lote,prod){
   var a=(S.PV_AUT||{})[_pvChave(lote,prod)];
   if(a&&parseFloat(a.pct)>0) return {pct:parseFloat(a.pct), autorizado:true, dt:a.dt||''};
@@ -2064,22 +2070,24 @@ function _pvPrevisto(lote,prod){
 function _loteObjCons(lote){ var b=_lbCons(lote); return (S.LOTES||[]).find(function(l){return l.nome===lote||l.nome===b;})||null; }
 // Consumo real = kg do penúltimo DIA de trato ÷ dias até o último dia de trato (agrupa lançamentos do mesmo dia)
 function _consumoReal(lote,prod){
-  var b=_lbCons(lote), pps=((S.EST||{})[prod]&&parseFloat(S.EST[prod].peso_saco))||30, dias={};
+  var b=_lbCons(lote), pps=_ppsProd(prod), dias={};
   (S.rT||[]).forEach(function(r){ if(r.tipo!=='trato'||r._apagado)return; if(_lbCons(r.lote||r.co)!==b)return; if((r.prod||r.pr||'')!==prod)return;
     var d=(r.dt||'').substring(0,10); if(d.length!==10)return;
     dias[d]=(dias[d]||0)+(parseFloat(r.kg_fornecido)||((parseFloat(r.q||r.qtd)||0)*pps)); });
   var ds=Object.keys(dias).sort(); if(ds.length<2) return null;
   var de=ds[ds.length-2], ate=ds[ds.length-1];
   var n=Math.max(1,Math.round((new Date(ate+'T12:00:00')-new Date(de+'T12:00:00'))/864e5));
+  // domingo é folga: um intervalo sáb→seg conta 2 dias de consumo, que é o real
   return {kgDia:dias[de]/n, dias:n, de:de, ate:ate, ref:ate};
 }
 function _avaliaConsumo(lote,prod){
   var lo=_loteObjCons(lote); if(!lo||!lo.peso||!lo.qtd||!prod) return null;
-  var massa=parseFloat(lo.peso)*parseFloat(lo.qtd), prev=_pvPrevisto(lote,prod);
-  var out={lote:_lbCons(lote), prod:prod, cab:parseFloat(lo.qtd), massa:massa, prevPct:prev.pct, autorizado:prev.autorizado,
+  var massa=parseFloat(lo.peso)*parseFloat(lo.qtd), prev=_pvPrevisto(lote,prod), ori=_orientAtiva(lote,prod);
+  var out={lote:_lbCons(lote), prod:prod, cab:parseFloat(lo.qtd), massa:massa, prevPct:prev.pct, autorizado:prev.autorizado, orientado:!!ori,
     prevKgDia:prev.pct>0?(prev.pct/100)*massa:0, chave:_pvChave(lote,prod), status:'sem_dado'};
-  var r=_consumoReal(lote,prod); if(!r||!prev.pct) { out.real=r; return out; }
-  out.real=r; out.realPct=r.kgDia/massa*100; out.dif=(out.realPct-prev.pct)/prev.pct;
+  if(ori){ out.prevKgDia=parseFloat(ori.sacos)*_ppsProd(prod)/(parseInt(ori.freq)||1); out.prevPct=out.prevKgDia/massa*100; }
+  var r=_consumoReal(lote,prod); out.real=r; if(!r||!out.prevKgDia) return out;
+  out.realPct=r.kgDia/massa*100; out.dif=(r.kgDia-out.prevKgDia)/out.prevKgDia;
   out.status= out.dif>CONS_TOL?'acima':(out.dif<-CONS_TOL?'abaixo':'ok');
   return out;
 }
@@ -2088,7 +2096,6 @@ function _ultProdLote(lote){
   (S.rT||[]).forEach(function(r){ if(r.tipo!=='trato'||r._apagado)return; if(_lbCons(r.lote||r.co)!==b)return; if(!u||(r.dt||'')>=(u.dt||''))u=r; });
   return u?(u.prod||u.pr||''):'';
 }
-// Lista para o consultor: lotes acima/abaixo ainda não marcados como "ciente" para aquele intervalo
 function _alertasConsumo(){
   var out=[];
   (S.LOTES||[]).forEach(function(l){ if(!(l.qtd>0))return; var pr=_ultProdLote(l.nome); if(!pr)return;
@@ -2106,97 +2113,242 @@ function _enviarAlertaConsumo(a){
     lote:a.lote, prod:a.prod, real_pct:f(a.realPct,2), prev_pct:f(a.prevPct,2), real_kg:f(a.real.kgDia,0), prev_kg:f(a.prevKgDia,0),
     de:a.real.de, ate:a.real.ate, dif:Math.round(a.dif*100)}); }catch(e){}
 }
+// ── Datas e domingo de folga ──
+function _dow(iso){ return new Date(iso+'T12:00:00').getDay(); }
 function _dataBRSemana(iso){
   var d=new Date(iso+'T12:00:00'), dn=['DOMINGO','SEGUNDA','TERÇA','QUARTA','QUINTA','SEXTA','SÁBADO'];
   return dn[d.getDay()]+', '+('0'+d.getDate()).slice(-2)+'/'+('0'+(d.getMonth()+1)).slice(-2);
 }
 function _somaDias(iso,n){ var d=new Date(iso+'T12:00:00'); d.setDate(d.getDate()+n); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
-// Próxima data: kg colocado ÷ kg/dia previsto (com autorização, se houver)
+function _diffDias(a,b){ return Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/864e5); }
+function _semFolga(iso){ return _dow(iso)===DIA_FOLGA ? _somaDias(iso,-1) : iso; }   // domingo → sábado
+function _proxValido(iso,freq){ var d=_somaDias(iso,freq); return _dow(d)===DIA_FOLGA?_somaDias(d,1):d; } // depois de um trato: pula o domingo p/ segunda
+// Quantos sacos colocar num dia de trato da orientação (sábado cobre o domingo quando precisa)
+function _sacosDoDia(ori,iso){
+  var sacos=parseFloat(ori.sacos)||0, freq=parseInt(ori.freq)||1;
+  var bruto=_somaDias(iso,freq); if(_dow(bruto)!==DIA_FOLGA) return {sacos:sacos, cobreFolga:false};
+  var cob=_diffDias(iso,_somaDias(bruto,1));   // até segunda
+  return {sacos:Math.ceil(sacos*cob/freq), cobreFolga:true};
+}
+// Próxima data. Com orientação: pela frequência. Sem: kg colocado ÷ kg/dia previsto. Nunca no domingo.
 function _proxTrato(lote,prod,kgColocado,dt){
-  var lo=_loteObjCons(lote); var prev=_pvPrevisto(lote,prod);
+  var ori=_orientAtiva(lote,prod), lo=_loteObjCons(lote);
+  if(ori){
+    var freq=parseInt(ori.freq)||1, sd=_sacosDoDia(ori,dt), cob=sd.cobreFolga?_diffDias(dt,_somaDias(_somaDias(dt,freq),1)):freq;
+    var prox=_semFolga(_somaDias(dt,cob)); if(prox<=dt) prox=_somaDias(dt,1);
+    var q=_sacosDoDia(ori,prox);
+    return {data:prox, orientacao:ori, sacosProx:q.sacos, cobreFolga:q.cobreFolga, kgDia:parseFloat(ori.sacos)*_ppsProd(prod)/freq};
+  }
+  var prev=_pvPrevisto(lote,prod);
   if(!lo||!lo.peso||!lo.qtd||!prev.pct||!(kgColocado>0)) return null;
   var kgDia=(prev.pct/100)*parseFloat(lo.peso)*parseFloat(lo.qtd); if(!(kgDia>0))return null;
   var diasDura=kgColocado/kgDia, n=Math.max(1,Math.round(diasDura));
-  return {data:_somaDias(dt,n), dias:n, diasDura:diasDura, kgDia:kgDia, pct:prev.pct, autorizado:prev.autorizado};
+  var data=_somaDias(dt,n), mov=false; if(_dow(data)===DIA_FOLGA){ data=_somaDias(data,-1); mov=true; if(data<=dt) data=_somaDias(dt,1); }
+  return {data:data, dias:n, diasDura:diasDura, kgDia:kgDia, pct:prev.pct, autorizado:prev.autorizado, movidoFolga:mov};
 }
+function _fmtN(n,c){ return (parseFloat(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:c,maximumFractionDigits:c}); }
 function _tratoProximoAviso(r){
-  var pps=((S.EST||{})[r.pr]&&parseFloat(S.EST[r.pr].peso_saco))||30;
-  var kg=parseFloat(r.kg_fornecido)||(parseFloat(r.q)||0)*pps;
+  var kg=parseFloat(r.kg_fornecido)||(parseFloat(r.q)||0)*_ppsProd(r.pr);
   var px=_proxTrato(r.co||r.lote, r.pr, kg, r.dt||TD);
   var av=_avaliaConsumo(r.co||r.lote, r.pr);
   if(av&&av.status==='acima') _enviarAlertaConsumo(av);
   if(!px) return;
-  var f=function(n,c){return (parseFloat(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:c,maximumFractionDigits:c});};
   var nome=((CU&&CU.n)||'').split(' ')[0];
   var m=document.getElementById('modal-prox-trato');
   if(!m){ m=document.createElement('div'); m.id='modal-prox-trato';
     m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px';
     document.body.appendChild(m); }
+  var linha;
+  if(px.orientacao){
+    linha='Orientação do consultor: '+_fmtN(px.orientacao.sacos,0)+' saco'+(parseFloat(px.orientacao.sacos)>1?'s':'')+' · '+_freqTxt(px.orientacao.freq).toLowerCase()
+      +'<br><b>Nesse dia: '+_fmtN(px.sacosProx,0)+' saco'+(px.sacosProx>1?'s':'')+(px.cobreFolga?' (cobre o domingo)':'')+'</b>';
+  } else {
+    linha=_fmtN(kg,0)+' kg ÷ '+_fmtN(px.kgDia,0)+' kg por dia = dura '+(px.diasDura<1?'menos de 1 dia':(_fmtN(px.diasDura,1)+' dia'+(px.diasDura>=1.95?'s':'')))
+      +(px.autorizado?' · % autorizado pelo consultor':'')+(px.movidoFolga?'<br><b>Domingo é folga: o trato fica no sábado.</b>':'');
+  }
   var aviso='';
-  if(av&&av.status==='acima') aviso='<div style="background:#FFF3E0;color:#8a4a00;border-radius:10px;padding:10px 12px;margin-top:12px;font-size:12.5px;text-align:left;line-height:1.45"><b style="color:#E65100">Atenção:</b> este lote está comendo acima do previsto ('+f(av.realPct,2)+'% PV, previsto '+f(av.prevPct,2)+'%). Não aumente a quantidade por conta própria: fale com o consultor. Ele já foi avisado.</div>';
+  if(av&&av.status==='acima'&&!px.orientacao) aviso='<div style="background:#FFF3E0;color:#8a4a00;border-radius:10px;padding:10px 12px;margin-top:12px;font-size:12.5px;text-align:left;line-height:1.45"><b style="color:#E65100">Atenção:</b> este lote está comendo acima do previsto ('+_fmtN(av.realPct,2)+'% PV, previsto '+_fmtN(av.prevPct,2)+'%). Não aumente a quantidade por conta própria: fale com o consultor. Ele já foi avisado.</div>';
   m.innerHTML='<div style="background:#1B5E20;color:#fff;border-radius:18px;max-width:400px;width:100%;padding:22px 18px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.35)">'
     +'<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M9 16l2 2 4-4"/></svg>'
     +'<div style="font-size:14px;opacity:.9;margin-top:6px">'+(nome?nome+', t':'T')+'rato do '+_lbCons(r.co||r.lote)+' salvo.</div>'
     +'<div style="font-size:25px;font-weight:900;margin:8px 0 6px;line-height:1.15">Próximo trato:<br>'+_dataBRSemana(px.data)+'</div>'
-    +'<div style="font-size:12px;opacity:.88">'+f(kg,0)+' kg ÷ '+f(px.kgDia,0)+' kg por dia = dura '+(px.diasDura<1?'menos de 1 dia':(f(px.diasDura,1)+' dia'+(px.diasDura>=1.95?'s':'')))+(px.autorizado?' · % autorizado pelo consultor':'')+'</div>'
+    +'<div style="font-size:12.5px;opacity:.9;line-height:1.5">'+linha+'</div>'
     +aviso
     +'<button onclick="document.getElementById(\'modal-prox-trato\').style.display=\'none\'" style="margin-top:16px;width:100%;padding:13px;background:#fff;color:#1B5E20;border:none;border-radius:12px;font-size:15px;font-weight:900;cursor:pointer">Entendi</button></div>';
   m.style.display='flex';
 }
-// Aviso pro vaqueiro na tela de trato (antes de lançar)
+// Topo da tela de trato: orientação (se houver) ou aviso de consumo acima
 function _consAvisoTrato(lote,prod){
+  var ori=_orientAtiva(lote,prod);
+  if(ori){
+    var hoje=_sacosDoDia(ori,TD);
+    return '<div style="display:flex;gap:10px;background:#E8F5E9;border:2px solid #66BB6A;border-radius:12px;padding:12px;margin:8px 8px 4px">'
+      +'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>'
+      +'<div><div style="font-size:13.5px;font-weight:900;color:#1B5E20">Orientação do consultor</div>'
+      +'<div style="font-size:14px;font-weight:900;color:#1b2c1b;margin-top:3px">'+_fmtN(ori.sacos,0)+' saco'+(parseFloat(ori.sacos)>1?'s':'')+' · '+_freqTxt(ori.freq).toUpperCase()+'</div>'
+      +(hoje.cobreFolga?'<div style="font-size:12.5px;color:#1B5E20;margin-top:3px"><b>Hoje: '+_fmtN(hoje.sacos,0)+' sacos</b> (cobre o domingo, que é folga)</div>':'')
+      +(ori.recado?'<div style="font-size:12px;color:#33691E;margin-top:3px">Recado: '+String(ori.recado).replace(/</g,'&lt;')+'</div>':'')
+      +'</div></div>';
+  }
   var a=_avaliaConsumo(lote,prod); if(!a||a.status!=='acima') return '';
   _enviarAlertaConsumo(a);
-  var f=function(n,c){return (parseFloat(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:c,maximumFractionDigits:c});};
   return '<div style="display:flex;gap:10px;background:#FFF3E0;border:2px solid #FFB74D;border-radius:12px;padding:12px;margin:8px 8px 4px">'
     +'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E65100" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>'
     +'<div><div style="font-size:13.5px;font-weight:900;color:#E65100">'+a.lote+' comendo ACIMA do previsto</div>'
-    +'<div style="font-size:12px;color:#6d4c00;margin-top:3px;line-height:1.45">Está em <b>'+f(a.realPct,2)+'% PV</b> ('+f(a.real.kgDia,0)+' kg/dia). O previsto é <b>'+f(a.prevPct,2)+'% PV</b> ('+f(a.prevKgDia,0)+' kg/dia).<br>Coloque a quantidade de sempre e <b>fale com o consultor</b> antes de aumentar. O consultor já foi avisado.</div></div></div>';
+    +'<div style="font-size:12px;color:#6d4c00;margin-top:3px;line-height:1.45">Está em <b>'+_fmtN(a.realPct,2)+'% PV</b> ('+_fmtN(a.real.kgDia,0)+' kg/dia). O previsto é <b>'+_fmtN(a.prevPct,2)+'% PV</b> ('+_fmtN(a.prevKgDia,0)+' kg/dia).<br>Coloque a quantidade de sempre e <b>fale com o consultor</b> antes de aumentar. O consultor já foi avisado.</div></div></div>';
 }
-// Card do consultor (Painel)
+// Sugestão pra chegar no previsto (% cadastrado/autorizado)
+function _sugestaoOrient(a){
+  var pps=_ppsProd(a.prod), alvo=(a.orientado?((_pvPrevisto(a.lote,a.prod).pct/100)*a.massa):a.prevKgDia); if(!(alvo>0)) return null;
+  if(alvo>=pps*0.75) return {sacos:Math.max(1,Math.round(alvo/pps)), freq:1};
+  return {sacos:1, freq:Math.max(1,Math.min(7,Math.round(pps/alvo)))};
+}
+// ── Painel do consultor ──
+var _consAl={};
 function rConsAlertas(){
   var el=document.getElementById('cons-alertas'); if(!el)return;
   if(!(CU&&CU.r==='Consultor')){ el.innerHTML=''; return; }
-  var f=function(n,c){return (parseFloat(n)||0).toLocaleString('pt-BR',{minimumFractionDigits:c,maximumFractionDigits:c});};
   var fd=function(s){return s?s.substring(8,10)+'/'+s.substring(5,7):'';};
-  var esc=function(s){return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");};
-  var al=_alertasConsumo(), aut=S.PV_AUT||{}, h='';
+  var esc=function(s){return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');};
+  var al=_alertasConsumo(), aut=S.PV_AUT||{}, ori=S.ORIENT||{}, h=''; _consAl={};
   al.forEach(function(a){
-    var acima=a.status==='acima';
+    _consAl[a.chave]=a;
+    var acima=a.status==='acima', sg=_sugestaoOrient(a), pps=_ppsProd(a.prod);
     h+='<div style="background:#fff;border:1px solid #e0e7e0;border-left:4px solid '+(acima?'#E65100':'#F9A825')+';border-radius:12px;padding:12px;margin-bottom:8px">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="color:#1B5E20;font-size:13.5px">'+a.lote+' · '+a.prod+'</b>'
       +'<span style="font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px;background:'+(acima?'#FFF3E0':'#FFFDE7')+';color:'+(acima?'#E65100':'#8a6d00')+'">'+(acima?'+':'')+Math.round(a.dif*100)+'%</span></div>'
-      +'<div style="font-size:12.5px;margin-top:6px">Real <b>'+f(a.realPct,2)+'% PV</b> ('+f(a.real.kgDia,0)+' kg/dia) · previsto <b>'+f(a.prevPct,2)+'% PV</b> ('+f(a.prevKgDia,0)+' kg/dia)'+(a.autorizado?' <span style="font-size:10.5px;color:#558B2F">(autorizado)</span>':'')+'</div>'
+      +'<div style="font-size:12.5px;margin-top:6px">Real <b>'+_fmtN(a.realPct,2)+'% PV</b> ('+_fmtN(a.real.kgDia,0)+' kg/dia) · '+(a.orientado?'orientado':'previsto')+' <b>'+_fmtN(a.prevPct,2)+'% PV</b> ('+_fmtN(a.prevKgDia,0)+' kg/dia)'+(a.autorizado?' <span style="font-size:10.5px;color:#558B2F">(autorizado)</span>':'')+'</div>'
       +'<div style="font-size:11px;color:#7a7a7a;margin-top:2px">base: tratos de '+fd(a.real.de)+' → '+fd(a.real.ate)+' ('+a.real.dias+' dia'+(a.real.dias>1?'s':'')+') · '+a.cab+' cab</div>'
-      +'<div style="display:flex;gap:8px;margin-top:10px">'
-      +(acima?'<button onclick="_pvAut(\''+esc(a.lote)+'\',\''+esc(a.prod)+'\',\'autorizar\','+(Math.round(a.realPct*100)/100)+',\''+a.real.ref+'\')" style="flex:1;padding:10px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-weight:800;font-size:12.5px;cursor:pointer">Autorizar '+f(a.realPct,2)+'%</button>':'')
-      +'<button onclick="_pvAut(\''+esc(a.lote)+'\',\''+esc(a.prod)+'\',\'manter\',0,\''+a.real.ref+'\')" style="flex:1;padding:10px;background:#fff;color:#1B5E20;border:1.5px solid #1B5E20;border-radius:10px;font-weight:800;font-size:12.5px;cursor:pointer">'+(acima?'Manter '+f(a.prevPct,2)+'%':'Ciente')+'</button>'
+      +(sg?'<div style="background:#F1F8E9;border-radius:8px;padding:8px 10px;font-size:12px;color:#33691E;margin-top:8px">Pra chegar no previsto: <b>'+sg.sacos+' saco'+(sg.sacos>1?'s':'')+' ('+_fmtN(sg.sacos*pps,0)+' kg) · '+_freqTxt(sg.freq).toLowerCase()+'</b> ≈ '+_fmtN(sg.sacos*pps/sg.freq,0)+' kg/dia</div>':'')
+      +'<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'
+      +'<button onclick="_orientAbrir(\''+esc(a.chave)+'\')" style="flex:1;min-width:120px;padding:10px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-weight:800;font-size:12.5px;cursor:pointer">Orientar vaqueiro</button>'
+      +(acima&&!a.orientado?'<button onclick="_pvAut(\''+esc(a.chave)+'\',\'autorizar\','+(Math.round(a.realPct*100)/100)+')" style="flex:1;min-width:120px;padding:10px;background:#fff;color:#1B5E20;border:1.5px solid #1B5E20;border-radius:10px;font-weight:800;font-size:12.5px;cursor:pointer">Autorizar '+_fmtN(a.realPct,2)+'%</button>':'')
+      +'<button onclick="_pvAut(\''+esc(a.chave)+'\',\'manter\',0)" style="flex:1;min-width:120px;padding:10px;background:#fff;color:#1B5E20;border:1.5px solid #1B5E20;border-radius:10px;font-weight:800;font-size:12.5px;cursor:pointer">Só ciente</button>'
       +'</div></div>';
   });
+  var ko=Object.keys(ori);
+  if(ko.length){
+    h+='<div style="background:#fff;border:1px solid #e0e7e0;border-left:4px solid #2E7D32;border-radius:12px;padding:10px 12px;margin-bottom:8px"><div style="font-size:12px;font-weight:800;color:#1B5E20;margin-bottom:4px">Orientações ativas</div>';
+    ko.forEach(function(k){ var p=k.split('||'), o=ori[k], vis=(o.vistos||[]).join(', ');
+      h+='<div style="font-size:12px;padding:6px 0;border-top:1px solid #f2f2f2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span><b>'+p[0]+'</b> · '+p[1]+'<br><b style="color:#1B5E20">'+_fmtN(o.sacos,0)+' saco'+(parseFloat(o.sacos)>1?'s':'')+' · '+_freqTxt(o.freq).toLowerCase()+'</b> <span style="color:#999">desde '+fd(o.dt)+'</span></span>'
+        +'<span style="display:flex;gap:5px;flex-shrink:0"><span onclick="_orientAbrir(\''+esc(k)+'\')" style="font-size:11px;font-weight:700;color:#1B5E20;border:1px solid #A5D6A7;border-radius:20px;padding:3px 8px;cursor:pointer">alterar</span>'
+        +'<span onclick="_orientEncerrar(\''+esc(k)+'\')" style="font-size:11px;font-weight:700;color:#C62828;border:1px solid #FFCDD2;border-radius:20px;padding:3px 8px;cursor:pointer">encerrar</span></span></div>'
+        +'<div style="font-size:10.5px;color:'+(vis?'#558B2F':'#E65100')+';margin-top:2px">'+(vis?'Visto por: '+vis:'Vaqueiro ainda não viu')+'</div></div>'; });
+    h+='</div>';
+  }
   var ks=Object.keys(aut);
   if(ks.length){
     h+='<div style="background:#fff;border:1px solid #e0e7e0;border-radius:12px;padding:10px 12px;margin-bottom:8px"><div style="font-size:12px;font-weight:800;color:#1B5E20;margin-bottom:4px">% autorizado por lote</div>';
     ks.forEach(function(k){ var p=k.split('||'), v=aut[k];
-      h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;padding:5px 0;border-top:1px solid #f2f2f2"><span><b>'+p[0]+'</b> · '+p[1]+' · '+f(v.pct,2)+'% PV <span style="color:#999">desde '+fd(v.dt)+'</span></span>'
-        +'<span onclick="_pvAut(\''+esc(p[0])+'\',\''+esc(p[1])+'\',\'remover\',0,\'\')" style="flex-shrink:0;font-size:11px;font-weight:700;color:#C62828;border:1px solid #FFCDD2;border-radius:20px;padding:3px 8px;cursor:pointer">voltar ao cadastro</span></div>'; });
+      h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;padding:5px 0;border-top:1px solid #f2f2f2"><span><b>'+p[0]+'</b> · '+p[1]+' · '+_fmtN(v.pct,2)+'% PV <span style="color:#999">desde '+fd(v.dt)+'</span></span>'
+        +'<span onclick="_pvAut(\''+esc(k)+'\',\'remover\',0)" style="flex-shrink:0;font-size:11px;font-weight:700;color:#C62828;border:1px solid #FFCDD2;border-radius:20px;padding:3px 8px;cursor:pointer">voltar ao cadastro</span></div>'; });
     h+='</div>';
   }
   el.innerHTML=h?('<div style="font-size:13px;font-weight:800;color:#1B5E20;margin:2px 0 8px">Consumo no cocho</div>'+h):'';
 }
-function _pvAut(lote,prod,acao,pct,ref){
-  var f=function(n){return (parseFloat(n)||0).toFixed(2).replace('.',',');};
-  var msg=acao==='autorizar'?('Autorizar '+f(pct)+'% PV para '+lote+' · '+prod+'?\n\nO aviso some para o vaqueiro e a data do próximo trato passa a usar esse %.'):
-          acao==='remover'?('Voltar '+lote+' · '+prod+' ao % do cadastro?'):('Manter o % previsto para '+lote+' · '+prod+'?');
-  if(!confirm(msg))return;
+// Foto do momento (vai pro histórico da planilha)
+function _consFoto(chave){
+  var p=chave.split('||'), a=_consAl[chave]||_avaliaConsumo(p[0],p[1])||{lote:p[0],prod:p[1]};
+  return {lote:p[0], prod:p[1], cab:a.cab||'', real_kg:a.real?Math.round(a.real.kgDia*10)/10:'', real_pct:a.realPct!=null?Math.round(a.realPct*1000)/1000:'',
+    prev_kg:a.prevKgDia?Math.round(a.prevKgDia*10)/10:'', prev_pct:a.prevPct?Math.round(a.prevPct*1000)/1000:'', ref:a.real?a.real.ref:''};
+}
+function _consChamar(acao,payload,ok){
   if(!(S.cfgGS&&navigator.onLine)){ alert('⚠️ Sem conexão. Isto precisa de internet para gravar na planilha.'); return; }
   var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
-  var cb='_pva_'+Date.now()+'_'+Math.floor(Math.random()*9999), s=document.createElement('script');
-  s.src=getFazGasUrl(faz)+'?acao=pv_aut&data='+encodeURIComponent(JSON.stringify({lote:lote,prod:prod,acao:acao,pct:pct,ref:ref,por:(CU&&CU.n)||''}))+'&callback='+cb+'&t='+Date.now();
+  var cb='_cc_'+Date.now()+'_'+Math.floor(Math.random()*9999), s=document.createElement('script');
+  s.src=getFazGasUrl(faz)+'?acao='+acao+'&data='+encodeURIComponent(JSON.stringify(payload))+'&callback='+cb+'&t='+Date.now();
   window[cb]=function(r){ delete window[cb]; if(s.parentNode)s.parentNode.removeChild(s);
-    if(r&&r.ok){ S.PV_AUT=r.aut||{}; S.PV_ALERTA_OK=r.alertaOk||{}; salvarLocal(); rConsAlertas(); alert('✅ Gravado na planilha.'); }
+    if(r&&r.ok){ if(r.aut)S.PV_AUT=r.aut; if(r.alertaOk)S.PV_ALERTA_OK=r.alertaOk; if(r.orient)S.ORIENT=r.orient; salvarLocal(); try{rConsAlertas();}catch(e){} if(ok)ok(r); }
     else alert('⚠️ Não consegui gravar: '+((r&&r.erro)||'erro')); };
   s.onerror=function(){ delete window[cb]; if(s.parentNode)s.parentNode.removeChild(s); alert('⚠️ Erro de conexão. Nada foi gravado.'); };
   document.body.appendChild(s);
+}
+function _pvAut(chave,acao,pct){
+  var p=chave.split('||');
+  var msg=acao==='autorizar'?('Autorizar '+_fmtN(pct,2)+'% PV para '+p[0]+' · '+p[1]+'?\n\nO aviso some para o vaqueiro e a data do próximo trato passa a usar esse %.'):
+          acao==='remover'?('Voltar '+p[0]+' · '+p[1]+' ao % do cadastro?'):('Só ciente: '+p[0]+' · '+p[1]+'.\nO vaqueiro não recebe nada. Confirmar?');
+  if(!confirm(msg))return;
+  var f=_consFoto(chave); f.acao=acao; f.pct=pct; f.por=(CU&&CU.n)||'';
+  _consChamar('pv_aut',f,function(){ alert('✅ Gravado na planilha.'); });
+}
+function _orientAbrir(chave){
+  var p=chave.split('||'), atual=(S.ORIENT||{})[chave], a=_consAl[chave]||_avaliaConsumo(p[0],p[1]);
+  var sg=(a&&_sugestaoOrient(a))||{sacos:1,freq:1}, pps=_ppsProd(p[1]), lo=_loteObjCons(p[0]);
+  var massa=lo&&lo.peso&&lo.qtd?parseFloat(lo.peso)*parseFloat(lo.qtd):0, prev=_pvPrevisto(p[0],p[1]);
+  _feedModal('Orientação · '+p[0], p[1]+(a&&a.real?' · real '+_fmtN(a.real.kgDia,0)+' kg/dia':'')+' · previsto '+_fmtN((prev.pct/100)*massa,0)+' kg/dia',
+    [{id:'sacos',label:'Quantos sacos por trato',tipo:'number',valor:atual?atual.sacos:sg.sacos,meia:true},
+     {id:'freq',label:'De quanto em quanto tempo',tipo:'select',valor:_freqTxt(atual?atual.freq:sg.freq),opts:FREQ_OPTS.map(function(x){return x[0];}),meia:true},
+     {id:'recado',label:'Recado pro vaqueiro (opcional)',valor:atual?(atual.recado||''):''}],
+    function(v){ var s=_num(v.sacos), fr=(FREQ_OPTS.find(function(x){return x[0]===v.freq;})||[0,1])[1]; if(isNaN(s)||s<=0)return '';
+      var kgd=s*pps/fr; return '= '+_fmtN(kgd,0)+' kg/dia'+(massa?' · '+_fmtN(kgd/massa*100,2)+'% PV (previsto '+_fmtN(prev.pct,2)+'%)':'')+(fr===1?' · sábado: '+_fmtN(s*2,0)+' sacos (domingo é folga)':''); },
+    function(v){ var s=_num(v.sacos), fr=(FREQ_OPTS.find(function(x){return x[0]===v.freq;})||[0,1])[1];
+      if(isNaN(s)||s<=0){ alert('Informe quantos sacos.'); return false; }
+      var f=_consFoto(chave); f.acao='orientar'; f.sacos=s; f.freq=fr; f.recado=(v.recado||'').trim(); f.por=(CU&&CU.n)||'';
+      _consChamar('orient',f,function(){ alert('✅ Orientação enviada. O vaqueiro vê no próximo login.'); }); });
+}
+function _orientEncerrar(chave){
+  var p=chave.split('||');
+  if(!confirm('Encerrar a orientação de '+p[0]+' · '+p[1]+'?\n\nO lote volta a seguir o % previsto.'))return;
+  var f=_consFoto(chave); f.acao='encerrar'; f.por=(CU&&CU.n)||'';
+  _consChamar('orient',f,function(){ alert('✅ Orientação encerrada.'); });
+}
+// ── Vaqueiro: tela de orientação ao entrar no app ──
+var _orientMostradaSessao={};
+function _orientVistoLocal(){ try{ return JSON.parse(localStorage.getItem('gpl_orient_visto')||'{}'); }catch(e){ return {}; } }
+function _orientPendentes(){
+  if(!(CU&&CU.r==='Vaqueiro')) return [];
+  var vl=_orientVistoLocal(), out=[];
+  Object.keys(S.ORIENT||{}).forEach(function(k){ var o=S.ORIENT[k]; if(!o||!o.id)return;
+    var p=k.split('||'), lo=_loteObjCons(p[0]); if(lo&&CU.fs&&CU.fs.length&&lo.faz&&CU.fs.indexOf(lo.faz)<0) return;
+    if((o.vistos||[]).indexOf(CU.n)>=0||vl[o.id+'|'+CU.n]) return;
+    out.push({chave:k,lote:p[0],prod:p[1],o:o}); });
+  return out;
+}
+function _orientProxData(lote,prod){
+  var b=_lbCons(lote), ult='';
+  (S.rT||[]).forEach(function(r){ if(r.tipo!=='trato'||r._apagado)return; if(_lbCons(r.lote||r.co)!==b||(r.prod||r.pr||'')!==prod)return; var d=(r.dt||'').substring(0,10); if(d>ult)ult=d; });
+  if(!ult) return {data:TD, sacos:_sacosDoDia(_orientAtiva(lote,prod),TD)};
+  var px=_proxTrato(lote,prod,0,ult); if(!px) return null;
+  var d=px.data<TD?TD:px.data; return {data:d, sacos:_sacosDoDia(px.orientacao,d)};
+}
+function _orientMostrarLogin(){
+  var pend=_orientPendentes().filter(function(x){return !_orientMostradaSessao[x.o.id];}); if(!pend.length) return;
+  pend.forEach(function(x){ _orientMostradaSessao[x.o.id]=1; });
+  var nome=((CU&&CU.n)||'').split(' ')[0];
+  var itens=pend.map(function(x){ var pd=_orientProxData(x.lote,x.prod), o=x.o;
+    var qd=pd&&pd.sacos?pd.sacos:{sacos:o.sacos,cobreFolga:false};
+    return '<div style="background:rgba(255,255,255,.12);border-radius:10px;padding:10px 12px;margin-top:10px;text-align:left">'
+      +'<div style="font-size:13px;opacity:.9">'+x.lote+' · '+x.prod+'</div>'
+      +'<div style="font-size:20px;font-weight:900;margin:4px 0">'+_fmtN(o.sacos,0)+' saco'+(parseFloat(o.sacos)>1?'s':'')+' · '+_freqTxt(o.freq).toUpperCase()+'</div>'
+      +(pd?'<div style="font-size:12.5px;opacity:.9">Próximo trato: <b>'+(pd.data===TD?'hoje, ':'')+_dataBRSemana(pd.data).toLowerCase()+' · '+_fmtN(qd.sacos,0)+' saco'+(qd.sacos>1?'s':'')+(qd.cobreFolga?' (cobre o domingo)':'')+'</b></div>':'')
+      +(o.recado?'<div style="font-size:12px;opacity:.85;margin-top:4px">Recado: '+String(o.recado).replace(/</g,'&lt;')+'</div>':'')
+      +'</div>'; }).join('');
+  var m=document.getElementById('modal-orient');
+  if(!m){ m=document.createElement('div'); m.id='modal-orient';
+    m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10001;display:flex;align-items:center;justify-content:center;padding:16px';
+    document.body.appendChild(m); }
+  window._orientPendIds=pend.map(function(x){return x.o.id;});
+  m.innerHTML='<div style="background:#1B5E20;color:#fff;border-radius:18px;max-width:420px;width:100%;max-height:90vh;overflow:auto;padding:18px;box-shadow:0 10px 40px rgba(0,0,0,.35)">'
+    +'<div style="display:flex;align-items:center;gap:8px;font-size:16px;font-weight:900"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>'+(nome?nome+', o':'O')+'rientação do consultor</div>'
+    +itens
+    +'<div style="font-size:11.5px;opacity:.8;margin-top:10px">Domingo é folga: quando precisar, o sábado leva a quantidade do domingo.</div>'
+    +'<button onclick="_orientEntendi()" style="margin-top:14px;width:100%;padding:13px;background:#fff;color:#1B5E20;border:none;border-radius:12px;font-size:15px;font-weight:900;cursor:pointer">Entendi</button></div>';
+  m.style.display='flex';
+}
+function _orientEntendi(){
+  var m=document.getElementById('modal-orient'); if(m) m.style.display='none';
+  var ids=window._orientPendIds||[]; if(!ids.length) return;
+  var vl=_orientVistoLocal(); ids.forEach(function(id){ vl[id+'|'+CU.n]=new Date().toISOString(); });
+  Object.keys(S.ORIENT||{}).forEach(function(k){ var o=S.ORIENT[k]; if(o&&ids.indexOf(o.id)>=0){ if(!o.vistos)o.vistos=[]; if(o.vistos.indexOf(CU.n)<0)o.vistos.push(CU.n); } }); try{salvarLocal();}catch(e){}
+  try{ localStorage.setItem('gpl_orient_visto',JSON.stringify(vl)); }catch(e){}
+  if(S.cfgGS&&navigator.onLine){
+    var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
+    var cb='_ov_'+Date.now(), s=document.createElement('script');
+    s.src=getFazGasUrl(faz)+'?acao=orient_visto&data='+encodeURIComponent(JSON.stringify({ids:ids,n:CU.n}))+'&callback='+cb+'&t='+Date.now();
+    window[cb]=function(){ delete window[cb]; if(s.parentNode)s.parentNode.removeChild(s); };
+    s.onerror=function(){ delete window[cb]; if(s.parentNode)s.parentNode.removeChild(s); };
+    document.body.appendChild(s);
+  }
 }
 
 function calcSaldo(){
@@ -7151,7 +7303,7 @@ function carregarNuvem(cb){
           else if(!S.LOTES||!S.LOTES.length)S.LOTES=DEFAULT.LOTES;
           if(cfg.AREAS)S.AREAS=cfg.AREAS;
           if(cfg.PROD_GEN)S.PROD_GEN=cfg.PROD_GEN;
-          if(cfg.PV_AUT)S.PV_AUT=cfg.PV_AUT; if(cfg.PV_ALERTA_OK)S.PV_ALERTA_OK=cfg.PV_ALERTA_OK;
+          if(cfg.PV_AUT)S.PV_AUT=cfg.PV_AUT; if(cfg.PV_ALERTA_OK)S.PV_ALERTA_OK=cfg.PV_ALERTA_OK; if(cfg.ORIENT)S.ORIENT=cfg.ORIENT;
           if(cfg.PESAGEM){S.PESAGEM=cfg.PESAGEM;try{_reconstruirHistoricoPorBrinco();}catch(e){}}
           if(cfg.MAPA_ALOC){
             var aloc={};
@@ -11203,6 +11355,12 @@ function _statusTratosHoje(){
     var est=(prodNome&&S.EST&&S.EST[prodNome])?S.EST[prodNome]:null;
     var pct=prodNome?_pvPrevisto(nm,prodNome).pct:0;
     var pSaco=est&&est.peso_saco?est.peso_saco:30;
+    if(prodNome&&_orientAtiva(nm,prodNome)){
+      var _pxO=_proxTrato(nm,prodNome,0,ultDt);
+      if(_pxO&&TD>=_pxO.data){ out.push({lote:nm,status:'pendente',diasSemTrato:Math.max(0,Math.round((hoje-new Date(ultDt+'T12:00:00'))/864e5)),diasDura:_diffDias(ultDt,_pxO.data),ultDt:ultDt}); }
+      else { out.push({lote:nm,status:'em_dia',diasRestantes:_pxO?_diffDias(TD,_pxO.data):0}); }
+      return;
+    }
     if(pct<=0||pSaco<=0){ out.push({lote:nm,status:'sem_dado'}); return; }
     var kgDia=(pct/100)*peso*qtd;
     var sacosDia=pSaco>0?kgDia/pSaco:0;
@@ -11260,6 +11418,7 @@ function rTratosHoje(){
   card.style.display='block';
 }
 function rVaqueiroPainel(){
+  try{ setTimeout(function(){ try{_orientMostrarLogin();}catch(e){console.error('orient',e);} },500); }catch(e){}
   var panel = document.getElementById('home-vaqueiro-panel');
   var grid  = document.getElementById('vaq-gauge-grid');
   if(!panel || !grid) return;
