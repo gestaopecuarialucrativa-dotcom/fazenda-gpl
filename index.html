@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 18/09/2026 v7.31</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/09/2026 v7.32</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2200,7 +2200,13 @@ function sCob(t){cobT=t;document.getElementById('tgr').classList.toggle('on',t==
 function addQ(r,d){QT[r]=Math.max(0,QT[r]+d);const m={cafe:'c',almoco:'a',janta:'j'};document.getElementById('q'+m[r]).textContent=QT[r];calcCt();}
 // [cantina legacy removida: calcCt]
 // ═══ ENVIOS ═══
-function getFazGasUrl(faz){if(faz&&S.FAZ[faz]&&S.FAZ[faz].gasUrl)return S.FAZ[faz].gasUrl;return S.cfgGS||'';}
+function getFazGasUrl(faz){
+  // Fazenda do DEFAULT: o link vem SEMPRE do código (nunca de link antigo salvo na nuvem/celular).
+  // Link antigo = implantação antiga = código velho = feno caindo na aba errada "feno".
+  if(faz&&DEFAULT.FAZ&&DEFAULT.FAZ[faz]&&DEFAULT.FAZ[faz].gasUrl)return DEFAULT.FAZ[faz].gasUrl;
+  if(faz&&S.FAZ[faz]&&S.FAZ[faz].gasUrl)return S.FAZ[faz].gasUrl;
+  return S.cfgGS||'';
+}
 function _uid(){return 'u'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
 function enviarDado(d){
   if(!d||!d.tipo)return;
