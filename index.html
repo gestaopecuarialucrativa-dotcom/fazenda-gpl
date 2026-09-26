@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 26/09/2026 v7.40</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 26/09/2026 v7.41</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2372,21 +2372,39 @@ function _bolDados(qual){
     if(!sup[lo])sup[lo]={kg:0,sacos:0,prods:{}}; sup[lo].sacos+=q; sup[lo].kg+=parseFloat(r.kg_fornecido)||q*_ppsProd(pr); sup[lo].prods[pr]=(sup[lo].prods[pr]||0)+q; totSac+=q; });
   (S.mFeno||[]).forEach(function(m){ if(!m||m.mov!=='saida'||!m.lote||!noP(m.dt))return; var lo=_lbCons(m.lote);
     if(!fen[lo])fen[lo]={kg:0,un:0}; fen[lo].kg+=parseFloat(m.kg)||0; fen[lo].un+=parseFloat(m.q)||0; totRol+=parseFloat(m.q)||0; });
-  var totCab=0;
-  var lotes=(S.LOTES||[]).filter(function(l){return l.qtd>0;}).map(function(l){
-    var lo=_lbCons(l.nome), cab=parseFloat(l.qtd)||0, s=sup[lo], f=fen[lo]; totCab+=cab;
+  var totCab=0, vendas=[];
+  // Lotes ativos + lotes VENDIDOS dentro da semana (continuam no boletim com a marca de venda)
+  var base=(S.LOTES||[]).filter(function(l){return l.qtd>0;}).map(function(l){return {l:l, vendido:null};});
+  (S.LOTES_VENDIDOS||[]).forEach(function(l){ var dv=(l.dt_baixa||'').substring(0,10); if(dv&&dv>=j.ini&&dv<=j.fimDados) base.push({l:l, vendido:dv}); });
+  var lotes=base.map(function(x){
+    var l=x.l, lo=_lbCons(l.nome), s=sup[lo], f=fen[lo];
+    if(x.vendido){ // lote vendido: só o que foi lançado até o dia da venda
+      s=null; f=null;
+      (S.rT||[]).forEach(function(r){ var dt=(r.dt||'').substring(0,10); if(r._apagado||r.tipo!=='trato'||dt<j.ini||dt>x.vendido||_lbCons(r.lote||r.co)!==lo)return;
+        var q=parseFloat(r.q||r.qtd)||0, pr0=r.pr||r.prod||''; if(!s)s={kg:0,sacos:0}; s.sacos+=q; s.kg+=parseFloat(r.kg_fornecido)||q*_ppsProd(pr0); });
+      (S.mFeno||[]).forEach(function(m){ var dt=(m.dt||'').substring(0,10); if(!m||m.mov!=='saida'||!m.lote||dt<j.ini||dt>x.vendido||_lbCons(m.lote)!==lo)return;
+        if(!f)f={kg:0,un:0}; f.kg+=parseFloat(m.kg)||0; f.un+=parseFloat(m.q)||0; });
+    }
+    var vendSem=(l.vendas||[]).filter(function(v){ var d=(v.dt||'').substring(0,10); return d>=j.ini&&d<=j.fimDados; });
+    var qVendSem=vendSem.reduce(function(a,v){return a+(parseInt(v.qtd)||0);},0);
+    var cab = x.vendido ? (parseFloat(l.qtd)||qVendSem) : (parseFloat(l.qtd)||0)+qVendSem;   // cabeças no início da semana
+    var diasL = x.vendido ? Math.max(1,Math.min(j.dias,_diffDias(j.ini,x.vendido)+1)) : j.dias;
+    if(!x.vendido) totCab+=parseFloat(l.qtd)||0;
+    vendSem.forEach(function(v){ vendas.push({lote:lo, qtd:parseInt(v.qtd)||0, dt:(v.dt||'').substring(0,10), total:!v.parcial}); });
+    if(x.vendido&&!vendSem.length) vendas.push({lote:lo, qtd:cab, dt:x.vendido, total:true});
     var pr=_ultProdLote(l.nome), prevKg=0;
     if(pr){ var ori=_orientAtiva(lo,pr); if(ori) prevKg=parseFloat(ori.sacos)*_ppsProd(pr)/(parseInt(ori.freq)||1);
       else { var pp=_pvPrevisto(lo,pr).pct; if(pp&&l.peso) prevKg=(pp/100)*parseFloat(l.peso)*cab; } }
-    var kgDia=s?s.kg/j.dias:0, dif=(prevKg>0&&s)?(kgDia-prevKg)/prevKg:null;
-    return {lote:lo, pasto:pasto[lo]||l.pasto||'—', cab:cab, prod:pr, sacos:s?s.sacos:0,
-      gCabDia:(s&&cab)?Math.round(s.kg/cab/j.dias*1000):null, fenoKgCabDia:(f&&cab)?Math.round(f.kg/cab/j.dias*100)/100:null, fenoRolos:f?f.un:0, dif:dif, orientado:!!(pr&&_orientAtiva(lo,pr))};
+    var kgDia=s?s.kg/diasL:0, dif=(prevKg>0&&s)?(kgDia-prevKg)/prevKg:null;
+    var marca = x.vendido ? ('vendido em '+x.vendido.substring(8,10)+'/'+x.vendido.substring(5,7)) : (qVendSem?('venda parcial: '+qVendSem+' cab'):'');
+    return {lote:lo, pasto:x.vendido?'vendido':(pasto[lo]||l.pasto||'—'), cab:cab, prod:pr, sacos:s?s.sacos:0, dias:diasL, vendido:!!x.vendido, marca:marca,
+      gCabDia:(s&&cab)?Math.round(s.kg/cab/diasL*1000):null, fenoKgCabDia:(f&&cab)?Math.round(f.kg/cab/diasL*100)/100:null, fenoRolos:f?f.un:0, dif:dif, orientado:!!(pr&&_orientAtiva(lo,pr))};
   }).sort(function(a,b){ var na=parseInt((a.lote.match(/\d+/)||[9999])[0]), nb=parseInt((b.lote.match(/\d+/)||[9999])[0]); return na-nb; });
   var estoque=(rd.estoque||[]).map(function(e){return {nome:e.produto, saldo:e.saldo+' saco'+(e.saldo===1?'':'s'), dias:e.dias, comprar:(e.dias!=null&&e.dias<15)};});
   (rd.feno||[]).forEach(function(f){ estoque.push({nome:'Feno '+f.tipo, saldo:f.saldo+' '+f.u+(f.saldo===1?'':'s'), dias:f.dias, comprar:(f.dias!=null&&f.dias<15)}); });
   var mud=(S.rT||[]).filter(function(r){return !r._apagado&&r.tipo==='mudanca_pasto'&&noP(r.dt);}).map(function(r){return {lote:_lbCons(r.lote), de:r.origem||'', para:r.destino||'', dt:r.dt};});
   var ori=Object.keys(S.ORIENT||{}).map(function(k){ var o=S.ORIENT[k], p=k.split('||'); return {lote:p[0], prod:p[1], sacos:o.sacos, freq:o.freq, dt:o.dt, vistos:o.vistos||[]}; });
-  return {fazenda:rd.fazenda, janela:j, cab:totCab, nLotes:lotes.length, sacos:totSac, rolos:totRol, lotes:lotes, estoque:estoque, mudancas:mud, orientacoes:ori};
+  return {fazenda:rd.fazenda, janela:j, cab:totCab, nLotes:lotes.filter(function(x){return !x.vendido;}).length, sacos:totSac, rolos:totRol, lotes:lotes, estoque:estoque, mudancas:mud, orientacoes:ori, vendas:vendas};
 }
 function _bolRecadoGet(ini){ return ((S.BOL_RECADOS||{})[ini])||''; }
 function _bolRecadoSet(ini,t){ if(!S.BOL_RECADOS)S.BOL_RECADOS={}; S.BOL_RECADOS[ini]=t; try{salvarLocal();}catch(e){} }
@@ -2434,13 +2452,15 @@ function _bolGerarPDF(){
   var th='style="text-align:left;color:#65766a;font-weight:700;border-bottom:1.5px solid #dfe8dc;padding:4px 3px;font-size:10.5px"', thr=th.replace('text-align:left','text-align:right');
   var td='style="padding:5px 3px;border-bottom:1px solid #f0f0f0;font-size:11px"', tdr=td.replace('padding','text-align:right;padding');
   var kpi=function(v,l){return '<div style="flex:1;background:#F1F8E9;border-radius:8px;padding:8px 6px;text-align:center"><b style="display:block;font-size:17px;color:#1B5E20">'+v+'</b><span style="font-size:9.5px;color:#65766a">'+l+'</span></div>';};
-  var c='<div style="display:flex;gap:8px;margin:12px 0">'+kpi(_fmtN(d.cab,0),'cabeças')+kpi(d.nLotes,'lotes')+kpi(_fmtN(d.sacos,0),'sacos de suplemento')+kpi(_fmtN(d.rolos,0),'rolos de feno')+'</div>';
+  var c='<div style="display:flex;gap:8px;margin:12px 0">'+kpi(_fmtN(d.cab,0),'cabeças hoje'+((d.vendas||[]).length?'<br>+'+_fmtN(d.vendas.reduce(function(a,v){return a+v.qtd;},0),0)+' vendidas':''))+kpi(d.nLotes,'lotes')+kpi(_fmtN(d.sacos,0),'sacos de suplemento')+kpi(_fmtN(d.rolos,0),'rolos de feno')+'</div>';
   c+=sec('Nutrição por lote')+'<table style="width:100%;border-collapse:collapse"><tr><th '+th+'>Lote</th><th '+th+'>Pasto</th><th '+thr+'>Cab</th><th '+thr+'>Suplemento<br>g/cab/dia</th><th '+thr+'>Feno<br>kg/cab/dia</th><th '+thr+'>vs previsto</th></tr>';
   d.lotes.forEach(function(l){
     var vs=l.dif==null?'<span style="color:#999">—</span>':(Math.abs(l.dif)<=CONS_TOL?'<b style="color:#2E7D32">no previsto</b>':'<b style="color:#E65100">'+(l.dif>0?'+':'−')+Math.round(Math.abs(l.dif)*100)+'%</b>');
-    c+='<tr><td '+td+'><b>'+esc(l.lote)+'</b>'+(l.prod?'<div style="font-size:9.5px;color:#888">'+esc(l.prod)+(l.orientado?' · orientado':'')+'</div>':'')+'</td><td '+td+'>'+esc(l.pasto)+'</td><td '+tdr+'>'+l.cab+'</td><td '+tdr+'>'+(l.gCabDia!=null?_fmtN(l.gCabDia,0):'—')+'</td><td '+tdr+'>'+(l.fenoKgCabDia!=null?_fmtN(l.fenoKgCabDia,2):'—')+'</td><td '+tdr+'>'+vs+'</td></tr>';
+    c+='<tr><td '+td+'><b>'+esc(l.lote)+'</b>'+(l.prod?'<div style="font-size:9.5px;color:#888">'+esc(l.prod)+(l.orientado?' · orientado':'')+'</div>':'')+(l.marca?'<div style="font-size:9.5px;color:#1565C0;font-weight:700">'+esc(l.marca)+'</div>':'')+'</td><td '+td+'>'+esc(l.pasto)+'</td><td '+tdr+'>'+l.cab+'</td><td '+tdr+'>'+(l.gCabDia!=null?_fmtN(l.gCabDia,0):'—')+'</td><td '+tdr+'>'+(l.fenoKgCabDia!=null?_fmtN(l.fenoKgCabDia,2):'—')+'</td><td '+tdr+'>'+vs+'</td></tr>';
   });
-  c+='</table><div style="font-size:9.5px;color:#999;margin-top:3px">Médias de '+j.dias+' dia'+(j.dias>1?'s':'')+' ('+fd(j.ini)+' a '+fd(j.fimDados)+'). "vs previsto" compara com o % cadastrado ou com a orientação do consultor.</div>';
+  c+='</table><div style="font-size:9.5px;color:#999;margin-top:3px">Médias de '+j.dias+' dia'+(j.dias>1?'s':'')+' ('+fd(j.ini)+' a '+fd(j.fimDados)+'); lote vendido: até o dia da venda. Cabeças do início da semana. "vs previsto" compara com o % cadastrado ou com a orientação do consultor.</div>';
+  if(d.vendas&&d.vendas.length) c+=sec('Vendas da semana')+'<div style="background:#E3F2FD;border-left:3px solid #1565C0;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.55">'
+    +d.vendas.map(function(v){return '<b>'+esc(v.lote)+'</b>: '+v.qtd+' cabeça'+(v.qtd===1?'':'s')+' vendida'+(v.qtd===1?'':'s')+' em '+fd(v.dt)+(v.total?' (lote todo)':' (parte do lote)');}).join('<br>')+'</div>';
   c+=sec('Estoque')+'<table style="width:100%;border-collapse:collapse"><tr><th '+th+'>Produto</th><th '+thr+'>Saldo</th><th '+thr+'>Cobre</th><th '+thr+'></th></tr>'
     +d.estoque.map(function(e){ return '<tr><td '+td+'>'+esc(e.nome)+'</td><td '+tdr+'>'+esc(e.saldo)+'</td><td '+tdr+'>'+(e.dias==null?'—':e.dias+' dia'+(e.dias===1?'':'s'))+'</td><td '+tdr+'>'+(e.comprar?'<b style="color:#E65100">comprar</b>':'<b style="color:#2E7D32">ok</b>')+'</td></tr>'; }).join('')+'</table>';
   if(d.mudancas.length) c+=sec('Movimentação de pasto')+'<div style="font-size:11px;line-height:1.6">'+d.mudancas.map(function(m){return '<b>'+esc(m.lote)+'</b>: '+esc(m.de||'entrada')+' → '+esc(m.para)+' <span style="color:#999">('+fd(m.dt)+')</span>';}).join(' · ')+'</div>';
