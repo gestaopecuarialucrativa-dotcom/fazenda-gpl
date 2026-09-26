@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 26/09/2026 v7.39</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 26/09/2026 v7.40</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1175,6 +1175,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   <!-- RELATÓRIO DO DIA (topo, sempre visível) -->
   <div id="rel-dia"></div>
   <div id="ia-perg"></div>
+  <div id="bol-sem"></div>
 
   <!-- Seletor de relatório -->
   <div style="display:flex;gap:8px;margin-bottom:16px">
@@ -1682,7 +1683,7 @@ function sp(id,back,prev){document.querySelectorAll('.pg').forEach(p=>p.style.di
     }var be=document.getElementById('btn-mapa-editor');if(be)be.style.display=(CU&&(CU.r==='Consultor'||CU.r==='Dono'))?'inline-block':'none';setTimeout(function(){try{rMapaMain();rMapa();}catch(e){}},1000);};setTimeout(_rmapa,100);}if(id==='config')setTimeout(()=>{try{rFazCfg();rUcfg();rServL();rLinksUsuarios();rPixDiaristas();rCfgDiaristas();rCfgPragas();// Popular fazendas no select de areas
 var arFaz=document.getElementById('ar-faz');if(arFaz&&arFaz.options.length<=1){arFaz.innerHTML='<option value="">Selecione...</option>'+Object.keys(S.FAZ||{}).map(function(f){return'<option value="'+f+'">'+(f.replace('Fazenda ','🏠 '))+'</option>';}).join('');if(arFaz.options.length===2)arFaz.selectedIndex=1;}rListAreas();const gs=document.getElementById('cfg-gs');if(gs)gs.value=S.cfgGS||'';
   var _wppEl=document.getElementById('cfg-wpp');
-  if(_wppEl)_wppEl.value=S.wppAdmin||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();rEstFeno();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='relatorio')setTimeout(function(){try{rRelatorioDia();}catch(e){console.error('rRelatorioDia:',e);}try{rIaPerg();}catch(e){console.error('rIaPerg:',e);}},60);
+  if(_wppEl)_wppEl.value=S.wppAdmin||'';const pc=document.getElementById('p-c');if(pc)pc.value=S.PR.cafe;const pa=document.getElementById('p-a');if(pa)pa.value=S.PR.almoco;const pj=document.getElementById('p-j');if(pj)pj.value=S.PR.janta;}catch(e){console.error(e);}},50);if(id==='estoque')setTimeout(()=>{try{popAll();rEst();rEstFeno();}catch(e){}},50);if(id==='consultor')setTimeout(()=>{popAll();rConsultor();},50);if(id==='relatorio')setTimeout(function(){try{rRelatorioDia();}catch(e){console.error('rRelatorioDia:',e);}try{rIaPerg();}catch(e){console.error('rIaPerg:',e);}try{rBoletim();}catch(e){console.error('rBoletim:',e);}},60);
   if(id==='historico')setTimeout(function(){if(S.cfgGS&&navigator.onLine){carregarNuvem(function(){rHistorico();});}else{rHistorico();}},50);if(id==='diaria')setTimeout(function(){
     // Resetar seleções para novo lançamento
     srvSel=''; avSel='';
@@ -2349,6 +2350,111 @@ function _orientEntendi(){
     s.onerror=function(){ delete window[cb]; if(s.parentNode)s.parentNode.removeChild(s); };
     document.body.appendChild(s);
   }
+}
+
+// ═══ BOLETIM SEMANAL DO PROPRIETÁRIO (sem valores em R$) ═══
+// Semana de segunda a sábado (domingo é folga). Números do app; recado escrito pelo consultor (IA só sugere).
+var _bolSem='atual';
+function _bolJanela(qual){
+  var h=new Date(TD+'T12:00:00'), dw=h.getDay(); // 0=dom
+  var segAtual=_somaDias(TD, -((dw+6)%7));
+  var ini=qual==='passada'?_somaDias(segAtual,-7):segAtual;
+  var sab=_somaDias(ini,5);
+  var fimDados=qual==='passada'?_somaDias(ini,6):TD;          // passada inclui o domingo (o gado come no domingo)
+  var dias=qual==='passada'?7:Math.max(1,_diffDias(ini,TD)+1);
+  return {ini:ini, fim:sab, fimDados:fimDados, dias:dias};
+}
+function _bolDados(qual){
+  var j=_bolJanela(qual), noP=function(dt){ dt=(dt||'').substring(0,10); return dt>=j.ini&&dt<=j.fimDados; };
+  var rd=_relDiaDados('mes'), pasto={}; (rd.lotesPasto||[]).forEach(function(x){ pasto[_lbCons(x.lote)]=x.pasto; });
+  var sup={}, fen={}, totSac=0, totRol=0;
+  (S.rT||[]).forEach(function(r){ if(r._apagado||r.tipo!=='trato'||!noP(r.dt))return; var lo=_lbCons(r.lote||r.co), pr=r.pr||r.prod||'', q=parseFloat(r.q||r.qtd)||0;
+    if(!sup[lo])sup[lo]={kg:0,sacos:0,prods:{}}; sup[lo].sacos+=q; sup[lo].kg+=parseFloat(r.kg_fornecido)||q*_ppsProd(pr); sup[lo].prods[pr]=(sup[lo].prods[pr]||0)+q; totSac+=q; });
+  (S.mFeno||[]).forEach(function(m){ if(!m||m.mov!=='saida'||!m.lote||!noP(m.dt))return; var lo=_lbCons(m.lote);
+    if(!fen[lo])fen[lo]={kg:0,un:0}; fen[lo].kg+=parseFloat(m.kg)||0; fen[lo].un+=parseFloat(m.q)||0; totRol+=parseFloat(m.q)||0; });
+  var totCab=0;
+  var lotes=(S.LOTES||[]).filter(function(l){return l.qtd>0;}).map(function(l){
+    var lo=_lbCons(l.nome), cab=parseFloat(l.qtd)||0, s=sup[lo], f=fen[lo]; totCab+=cab;
+    var pr=_ultProdLote(l.nome), prevKg=0;
+    if(pr){ var ori=_orientAtiva(lo,pr); if(ori) prevKg=parseFloat(ori.sacos)*_ppsProd(pr)/(parseInt(ori.freq)||1);
+      else { var pp=_pvPrevisto(lo,pr).pct; if(pp&&l.peso) prevKg=(pp/100)*parseFloat(l.peso)*cab; } }
+    var kgDia=s?s.kg/j.dias:0, dif=(prevKg>0&&s)?(kgDia-prevKg)/prevKg:null;
+    return {lote:lo, pasto:pasto[lo]||l.pasto||'—', cab:cab, prod:pr, sacos:s?s.sacos:0,
+      gCabDia:(s&&cab)?Math.round(s.kg/cab/j.dias*1000):null, fenoKgCabDia:(f&&cab)?Math.round(f.kg/cab/j.dias*100)/100:null, fenoRolos:f?f.un:0, dif:dif, orientado:!!(pr&&_orientAtiva(lo,pr))};
+  }).sort(function(a,b){ var na=parseInt((a.lote.match(/\d+/)||[9999])[0]), nb=parseInt((b.lote.match(/\d+/)||[9999])[0]); return na-nb; });
+  var estoque=(rd.estoque||[]).map(function(e){return {nome:e.produto, saldo:e.saldo+' saco'+(e.saldo===1?'':'s'), dias:e.dias, comprar:(e.dias!=null&&e.dias<15)};});
+  (rd.feno||[]).forEach(function(f){ estoque.push({nome:'Feno '+f.tipo, saldo:f.saldo+' '+f.u+(f.saldo===1?'':'s'), dias:f.dias, comprar:(f.dias!=null&&f.dias<15)}); });
+  var mud=(S.rT||[]).filter(function(r){return !r._apagado&&r.tipo==='mudanca_pasto'&&noP(r.dt);}).map(function(r){return {lote:_lbCons(r.lote), de:r.origem||'', para:r.destino||'', dt:r.dt};});
+  var ori=Object.keys(S.ORIENT||{}).map(function(k){ var o=S.ORIENT[k], p=k.split('||'); return {lote:p[0], prod:p[1], sacos:o.sacos, freq:o.freq, dt:o.dt, vistos:o.vistos||[]}; });
+  return {fazenda:rd.fazenda, janela:j, cab:totCab, nLotes:lotes.length, sacos:totSac, rolos:totRol, lotes:lotes, estoque:estoque, mudancas:mud, orientacoes:ori};
+}
+function _bolRecadoGet(ini){ return ((S.BOL_RECADOS||{})[ini])||''; }
+function _bolRecadoSet(ini,t){ if(!S.BOL_RECADOS)S.BOL_RECADOS={}; S.BOL_RECADOS[ini]=t; try{salvarLocal();}catch(e){} }
+function rBoletim(){
+  var el=document.getElementById('bol-sem'); if(!el)return;
+  if(!(CU&&CU.r==='Consultor')){ el.innerHTML=''; return; }
+  var jp=_bolJanela('passada'), ja=_bolJanela('atual'), j=_bolSem==='passada'?jp:ja;
+  var fd=function(s){return s.substring(8,10)+'/'+s.substring(5,7);};
+  var chip=function(q,t,jj){ var on=_bolSem===q; return '<div onclick="_bolSem=\''+q+'\';rBoletim();" style="flex:1;text-align:center;font-size:12px;font-weight:700;padding:8px 0;border-radius:8px;cursor:pointer;background:'+(on?'#1B5E20':'#f0f0f0')+';color:'+(on?'#fff':'#555')+'">'+t+'<br><span style="font-weight:400;font-size:10.5px">'+fd(jj.ini)+' a '+fd(jj.fim)+'</span></div>'; };
+  var txt=String(_bolRecadoGet(j.ini)).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  el.innerHTML='<div class="card" style="margin-bottom:12px;padding:12px 14px">'
+    +'<div style="font-size:14px;font-weight:800;color:#1B5E20">Boletim semanal do proprietário</div>'
+    +'<div style="font-size:11px;color:#888;margin:2px 0 10px">Semana de segunda a sábado · sem valores em R$</div>'
+    +'<div style="display:flex;gap:6px">'+chip('passada','Semana passada',jp)+chip('atual','Esta semana',ja)+'</div>'
+    +'<div style="font-size:11px;color:#666;margin:10px 0 3px;font-weight:600">Recado do consultor (vai no boletim)</div>'
+    +'<textarea id="bol-recado" oninput="_bolRecadoSet(\''+j.ini+'\',this.value)" rows="4" placeholder="Escreva o que o proprietário precisa saber desta semana…" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid #ddd;border-radius:9px;font-size:12.5px;font-family:inherit;line-height:1.45">'+txt+'</textarea>'
+    +'<div style="display:flex;gap:8px;margin-top:10px">'
+    +'<button id="bol-ia-bt" onclick="_bolSugerirIA()" style="flex:1;padding:11px;border:1px solid #8BC34A;border-radius:10px;font-size:12.5px;font-weight:800;color:#33691E;background:#F1F8E9;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#33691E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8H20l-4.9 3.6 1.9 5.8L12 14.6 7 18.2l1.9-5.8L4 8.8h6.1z"/></svg>Sugerir recado com IA</button>'
+    +'<button onclick="_bolGerarPDF()" style="flex:1;padding:11px;border:none;border-radius:10px;font-size:12.5px;font-weight:800;color:#fff;background:#1B5E20;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Gerar boletim (PDF)</button>'
+    +'</div></div>';
+}
+function _bolSugerirIA(){
+  if(!(S.cfgGS&&navigator.onLine)){ alert('⚠️ Sem internet. A sugestão da IA precisa de conexão.'); return; }
+  var d=_bolDados(_bolSem), bt=document.getElementById('bol-ia-bt'); if(bt){bt.disabled=true;bt.lastChild.textContent='Escrevendo…';}
+  var dados={fazenda:d.fazenda, semana:d.janela.ini+' a '+d.janela.fim, dias_considerados:d.janela.dias, cabecas:d.cab, lotes:d.lotes, estoque:d.estoque, mudancas_de_pasto:d.mudancas, orientacoes_do_consultor:d.orientacoes};
+  var perg='Escreva o RECADO DO CONSULTOR para o PROPRIETÁRIO da fazenda sobre esta semana. 3 a 6 linhas, texto corrido, primeira pessoa (eu, o consultor), tom próximo e profissional. '
+    +'NÃO cite valores em R$ nem custos. Destaque o que importa pro dono: consumo dos lotes em relação ao previsto, o que já foi orientado à equipe, estoque que precisa comprar (com prazo) e mudanças de pasto relevantes. Sem listas, sem títulos, sem assinatura.';
+  var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
+  var cb='_bia_'+Date.now(), s=document.createElement('script');
+  s.src=getFazGasUrl(faz)+'?acao=pergunta_ia&data='+encodeURIComponent(JSON.stringify({pergunta:perg,dados:dados}))+'&callback='+cb+'&t='+Date.now();
+  var fim=function(){ if(s.parentNode)s.parentNode.removeChild(s); var b=document.getElementById('bol-ia-bt'); if(b){b.disabled=false;b.lastChild.textContent='Sugerir recado com IA';} };
+  window[cb]=function(r){ delete window[cb]; fim(); if(r&&r.saldo){ _iaSaldo=r.saldo; try{rIaPerg();}catch(e){} }
+    if(r&&r.ok&&r.texto){ var t=document.getElementById('bol-recado'); var atual=t?t.value.trim():'';
+      if(atual&&!confirm('Trocar o recado que já está escrito pela sugestão da IA?')) return;
+      if(t){ t.value=r.texto.trim(); } _bolRecadoSet(d.janela.ini,r.texto.trim()); }
+    else alert('IA: '+((r&&r.erro)||'não consegui sugerir agora.')); };
+  s.onerror=function(){ delete window[cb]; fim(); alert('Erro de conexão ao pedir a sugestão.'); };
+  document.body.appendChild(s);
+}
+function _bolGerarPDF(){
+  var d=_bolDados(_bolSem), j=d.janela, esc=function(t){return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;');};
+  var fd=function(s){return s?s.substring(8,10)+'/'+s.substring(5,7):'';};
+  var rec=(document.getElementById('bol-recado')||{}).value; if(rec==null) rec=_bolRecadoGet(j.ini); rec=String(rec||'').trim();
+  var sec=function(t){return '<div style="font-size:11px;font-weight:800;color:#33691E;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 5px">'+t+'</div>';};
+  var th='style="text-align:left;color:#65766a;font-weight:700;border-bottom:1.5px solid #dfe8dc;padding:4px 3px;font-size:10.5px"', thr=th.replace('text-align:left','text-align:right');
+  var td='style="padding:5px 3px;border-bottom:1px solid #f0f0f0;font-size:11px"', tdr=td.replace('padding','text-align:right;padding');
+  var kpi=function(v,l){return '<div style="flex:1;background:#F1F8E9;border-radius:8px;padding:8px 6px;text-align:center"><b style="display:block;font-size:17px;color:#1B5E20">'+v+'</b><span style="font-size:9.5px;color:#65766a">'+l+'</span></div>';};
+  var c='<div style="display:flex;gap:8px;margin:12px 0">'+kpi(_fmtN(d.cab,0),'cabeças')+kpi(d.nLotes,'lotes')+kpi(_fmtN(d.sacos,0),'sacos de suplemento')+kpi(_fmtN(d.rolos,0),'rolos de feno')+'</div>';
+  c+=sec('Nutrição por lote')+'<table style="width:100%;border-collapse:collapse"><tr><th '+th+'>Lote</th><th '+th+'>Pasto</th><th '+thr+'>Cab</th><th '+thr+'>Suplemento<br>g/cab/dia</th><th '+thr+'>Feno<br>kg/cab/dia</th><th '+thr+'>vs previsto</th></tr>';
+  d.lotes.forEach(function(l){
+    var vs=l.dif==null?'<span style="color:#999">—</span>':(Math.abs(l.dif)<=CONS_TOL?'<b style="color:#2E7D32">no previsto</b>':'<b style="color:#E65100">'+(l.dif>0?'+':'−')+Math.round(Math.abs(l.dif)*100)+'%</b>');
+    c+='<tr><td '+td+'><b>'+esc(l.lote)+'</b>'+(l.prod?'<div style="font-size:9.5px;color:#888">'+esc(l.prod)+(l.orientado?' · orientado':'')+'</div>':'')+'</td><td '+td+'>'+esc(l.pasto)+'</td><td '+tdr+'>'+l.cab+'</td><td '+tdr+'>'+(l.gCabDia!=null?_fmtN(l.gCabDia,0):'—')+'</td><td '+tdr+'>'+(l.fenoKgCabDia!=null?_fmtN(l.fenoKgCabDia,2):'—')+'</td><td '+tdr+'>'+vs+'</td></tr>';
+  });
+  c+='</table><div style="font-size:9.5px;color:#999;margin-top:3px">Médias de '+j.dias+' dia'+(j.dias>1?'s':'')+' ('+fd(j.ini)+' a '+fd(j.fimDados)+'). "vs previsto" compara com o % cadastrado ou com a orientação do consultor.</div>';
+  c+=sec('Estoque')+'<table style="width:100%;border-collapse:collapse"><tr><th '+th+'>Produto</th><th '+thr+'>Saldo</th><th '+thr+'>Cobre</th><th '+thr+'></th></tr>'
+    +d.estoque.map(function(e){ return '<tr><td '+td+'>'+esc(e.nome)+'</td><td '+tdr+'>'+esc(e.saldo)+'</td><td '+tdr+'>'+(e.dias==null?'—':e.dias+' dia'+(e.dias===1?'':'s'))+'</td><td '+tdr+'>'+(e.comprar?'<b style="color:#E65100">comprar</b>':'<b style="color:#2E7D32">ok</b>')+'</td></tr>'; }).join('')+'</table>';
+  if(d.mudancas.length) c+=sec('Movimentação de pasto')+'<div style="font-size:11px;line-height:1.6">'+d.mudancas.map(function(m){return '<b>'+esc(m.lote)+'</b>: '+esc(m.de||'entrada')+' → '+esc(m.para)+' <span style="color:#999">('+fd(m.dt)+')</span>';}).join(' · ')+'</div>';
+  if(d.orientacoes.length) c+=sec('Orientações da consultoria em vigor')+'<div style="background:#FFF8E1;border-left:3px solid #F9A825;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.55">'
+    +d.orientacoes.map(function(o){return '<b>'+esc(o.lote)+'</b> · '+esc(o.prod)+': '+_fmtN(o.sacos,0)+' saco'+(o.sacos>1?'s':'')+' '+_freqTxt(o.freq).toLowerCase()+' (desde '+fd(o.dt)+(o.vistos.length?', visto por '+esc(o.vistos.join(', ')):'')+')';}).join('<br>')
+    +'<div style="font-size:10px;color:#8a6d00;margin-top:3px">Domingo é folga: o sábado leva a quantidade do domingo.</div></div>';
+  if(rec) c+=sec('Recado do consultor')+'<div style="background:#F1F8E9;border-left:3px solid #2E7D32;border-radius:6px;padding:9px 11px;font-size:12px;line-height:1.55;white-space:pre-wrap">'+esc(rec)+'<div style="margin-top:6px;font-weight:700;color:#1B5E20">'+esc((CU&&CU.n)||'Rogério Avelino')+' · Consultor GPL</div></div>';
+  var tit='Boletim da semana';
+  var css=(typeof _pdfTimbreCss==='function')?_pdfTimbreCss():'';
+  var timbre=(typeof _pdfTimbre==='function')?_pdfTimbre(tit, fd(j.ini)+' a '+fd(j.fim)+'/'+j.ini.substring(0,4), d.fazenda):'<h2>'+tit+'</h2>';
+  var rodape=(typeof _pdfRodape==='function')?_pdfRodape():'';
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;padding:18px;color:#222;max-width:760px;margin:0 auto}'+css+'</style></head><body>'+timbre+c+rodape+'</body></html>';
+  try{ enviarDado({tipo:'boletim_log', faz:d.fazenda, n:(CU&&CU.n)||'', semana_ini:j.ini, semana_fim:j.fim, cabecas:d.cab, sacos:d.sacos, rolos:d.rolos, recado:rec}); }catch(e){}
+  if(typeof pdfModalAbrir==='function') pdfModalAbrir(tit, html); else alert('Gerador de PDF não encontrado.');
 }
 
 function calcSaldo(){
