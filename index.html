@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 05/10/2026 v7.42</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 05/10/2026 v7.43</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -3355,8 +3355,8 @@ function pagarDiaria(idx){
       dt:r.dt, n:r.n, srv:r.srv||'', v:r.v, st:'Pago', pago_por:r.pago_por, faz:r.faz||''};
     // 1) coloca SEMPRE na fila primeiro — assim nunca se perde, mesmo se a tela fechar
     S.queue=S.queue||[];
-    var _jaTem=S.queue.some(function(q){return q._acao==='atualizar_diaria'&&q.dt===r.dt&&q.n===r.n&&q.v===r.v;});
-    if(!_jaTem){ S.queue.push(payload); }
+    // v7.43: evita duplicar pela própria diária (não por dia+nome, que bloqueava diárias iguais)
+    if(!r._pgFila){ r._pgFila=payload.uid; S.queue.push(payload); }
     salvar();
     // 2) tenta enviar agora; se conseguir, a propria syncAgora tira da fila
     if(navigator.onLine){ syncAgora(true); }
@@ -12578,19 +12578,19 @@ function marcarFCSelecionadosComoPago(){
 
   if(marcados > 0){
     // Enviar cada diária paga para a planilha
-    if(S.cfgGS && navigator.onLine){
+    // v7.43: cada diária paga entra na FILA (igual pagarDiaria). A fila só sai
+    // quando a planilha responde ok:true — antes, falha era ignorada e sumia.
+    if(S.cfgGS){
+      S.queue=S.queue||[];
       (S.rD||[]).forEach(function(r){
-        if(r.pago && !r._envioPago){
-          var p={tipo:'atualizar_diaria',dt:r.dt,n:r.n,srv:r.srv||'',v:r.v,st:'Pago',pago_por:r.pago_por,faz:r.faz||''};
-          var url=getFazGasUrl(r.faz||'');
-          var cb='_pmfc_'+Date.now()+'_'+Math.random().toString(36).substr(2,4);
-          var s=document.createElement('script');
-          s.src=url+'?acao=atualizar_diaria&data='+encodeURIComponent(JSON.stringify(p))+'&callback='+cb+'&t='+Date.now();
-          window[cb]=function(){r._envioPago=true;salvar();delete window[cb];if(s.parentNode)s.parentNode.removeChild(s);};
-          s.onerror=function(){delete window[cb];if(s.parentNode)s.parentNode.removeChild(s);};
-          document.body.appendChild(s);
+        if(r.pago && !r._envioPago && !r._pgFila){
+          r._pgFila=_uid();
+          S.queue.push({_acao:'atualizar_diaria', uid:r._pgFila, tipo:'atualizar_diaria',
+            dt:r.dt, n:r.n, srv:r.srv||'', v:r.v, st:'Pago', pago_por:r.pago_por, faz:r.faz||''});
         }
       });
+      salvar();
+      if(navigator.onLine) syncAgora(true);
     }
     var msg=[];
     if(marcados>0)msg.push(marcados+' diária(s)');
