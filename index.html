@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 26/09/2026 v7.41</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 05/10/2026 v7.42</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2102,6 +2102,8 @@ function _alertasConsumo(){
   (S.LOTES||[]).forEach(function(l){ if(!(l.qtd>0))return; var pr=_ultProdLote(l.nome); if(!pr)return;
     var a=_avaliaConsumo(l.nome,pr); if(!a||(a.status!=='acima'&&a.status!=='abaixo'))return;
     if((S.PV_ALERTA_OK||{})[a.chave]===a.real.ref) return;
+    // Orientação dada depois do início do intervalo: espera trato novo antes de cobrar de novo
+    var _oA=_orientAtiva(l.nome,pr); if(_oA&&_oA.dt&&a.real.de<_oA.dt) return;
     out.push(a); });
   return out;
 }
