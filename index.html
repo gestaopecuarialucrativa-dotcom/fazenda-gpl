@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 05/10/2026 v7.43</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 06/10/2026 v7.44</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -365,6 +365,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <!-- PAINEL VAQUEIRO: gauge de dias no pasto (só para r='Vaqueiro') -->
 <div id="home-vaqueiro-panel" style="display:none;margin-top:10px;margin-bottom:12px">
   <div id="vaq-offline-banner" style="display:none;margin-bottom:10px;padding:10px 12px;background:#FFF3E0;border-left:4px solid #FF6F00;border-radius:0 8px 8px 0;font-size:12px;color:#E65100;font-weight:700"></div>
+  <div class="card" id="vaq-agenda" style="padding:14px;display:none;margin-bottom:10px"></div>
   <div class="card" id="vaq-tratos-hoje-card" style="padding:14px;display:none;margin-bottom:10px">
     <div style="font-size:14px;font-weight:800;color:#1B5E20;margin-bottom:8px">✅ Tratos de hoje</div>
     <div id="vaq-tratos-hoje"></div>
@@ -861,6 +862,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
 <!-- PAINEL — irmão de pg-cantina ✅ -->
 <div id="pg-painel" class="pg" style="display:none">
+<div id="agenda-trato"></div>
 <div id="cons-alertas"></div>
 <button id="btn-feed-acesso" onclick="sp('feed','painel')" style="display:none;width:100%;background:#fff;color:#2E7D32;padding:11px;border:1.5px solid #2E7D32;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:8px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><rect x="9" y="3" width="6" height="3.5" rx="1"/><path d="M9 4.5H7a1.5 1.5 0 00-1.5 1.5V19A1.5 1.5 0 007 20.5h10A1.5 1.5 0 0018.5 19V6A1.5 1.5 0 0017 4.5h-2"/><path d="M8.5 11h7M8.5 15h5"/></svg>Conferir lançamentos da equipe</button>
 <button id="btn-consultoria-acesso" onclick="sp('consultoria','painel')" style="display:none;width:100%;background:#fff;color:#2E7D32;padding:11px;border:1.5px solid #2E7D32;border-radius:8px;font-size:13px;font-weight:700;margin-bottom:8px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M3 3v18h18"/><path d="M7 16l4-4 3 3 5-6"/></svg>Relatório de consultoria</button>
@@ -2354,6 +2356,106 @@ function _orientEntendi(){
   }
 }
 
+
+// ═══ AGENDA DE TRATO (v7.44) — por dia e lote: quanto tinha que ir × o que foi lançado ═══
+// Sem aba nova: calculada dos tratos + orientação/%. Domingo é folga.
+var _agDia=null;
+function _agLotes(){
+  var out=[];
+  (S.LOTES||[]).forEach(function(l){ if(!(l.qtd>0))return;
+    if(CU&&CU.r==='Vaqueiro'&&CU.fs&&CU.fs.length&&l.faz&&CU.fs.indexOf(l.faz)<0) return;
+    var pr=_ultProdLote(l.nome); if(!pr)return; out.push({lote:_lbCons(l.nome), prod:pr}); });
+  return out;
+}
+function _agTratos(lote,prod){
+  var b=_lbCons(lote), pps=_ppsProd(prod), m={};
+  (S.rT||[]).forEach(function(r){ if(r.tipo!=='trato'||r._apagado)return; if(_lbCons(r.lote||r.co)!==b||(r.prod||r.pr||'')!==prod)return;
+    var d=(r.dt||'').substring(0,10); if(d.length!==10)return;
+    var kg=parseFloat(r.kg_fornecido)||((parseFloat(r.q||r.qtd)||0)*pps);
+    if(!m[d])m[d]={kg:0}; m[d].kg+=kg; });
+  Object.keys(m).forEach(function(d){ m[d].sacos=Math.round(m[d].kg/pps*10)/10; });
+  return m;
+}
+// Quanto tinha que ir no dia d (null = não era dia de trato)
+function _agEsperado(lote,prod,d,tr){
+  if(_dow(d)===DIA_FOLGA) return null;
+  var ori=_orientAtiva(lote,prod), pps=_ppsProd(prod), ds=Object.keys(tr).sort(), x=null, kg=0, i, px;
+  if(ori){
+    var od=String(ori.dt||'').substring(0,10); if(_dow(od)===DIA_FOLGA) od=_somaDias(od,1);
+    for(i=ds.length-1;i>=0;i--){ if(ds[i]<d&&(!od||ds[i]>=od)){ x=ds[i]; break; } }
+    if(!x){ if(!od||od>d) return null; if(od===d) return {sacos:_sacosDoDia(ori,d).sacos, motivo:'orientado: '+_freqTxt(ori.freq).toLowerCase()}; x=od; }
+    for(i=0;i<40;i++){ px=_proxTrato(lote,prod,0,x); if(!px||px.data<=x) return null;
+      if(px.data===d){ var sd=_sacosDoDia(ori,d); return {sacos:sd.sacos, folga:sd.cobreFolga, motivo:'orientado: '+_freqTxt(ori.freq).toLowerCase()}; }
+      if(px.data>d) return null; x=px.data; }
+    return null;
+  }
+  for(i=ds.length-1;i>=0;i--){ if(ds[i]<d){ x=ds[i]; kg=tr[x].kg; break; } }
+  if(!x||!(kg>0)) return null;
+  var prev=_pvPrevisto(lote,prod);
+  for(i=0;i<40;i++){ px=_proxTrato(lote,prod,kg,x); if(!px||px.data<=x) return null;
+    if(px.data===d) return {sacos:Math.max(1,Math.round(kg/pps)), motivo:_fmtN(prev.pct,2)+'% PV '+(prev.autorizado?'autorizado':'do cadastro')};
+    if(px.data>d) return null; x=px.data; }
+  return null;
+}
+function _agItem(lote,prod,d,tr){
+  var e=_agEsperado(lote,prod,d,tr), r=tr[d], q=r?r.sacos:0, st;
+  if(!e&&!r) return null;
+  if(!e) st={k:'fora',t:_fmtN(q,0)+' saco'+(q>1?'s':'')+' · fora da agenda',c:'#2E7D32',bg:'#E8F5E9'};
+  else if(!r) st=d<TD?{k:'nao',t:_fmtN(e.sacos,0)+' saco'+(e.sacos>1?'s':'')+' · não lançado',c:'#C62828',bg:'#FDECEA'}
+                    :{k:'fazer',t:_fmtN(e.sacos,0)+' saco'+(e.sacos>1?'s':'')+' · a fazer',c:'#546E7A',bg:'#ECEFF1'};
+  else if(q<e.sacos-0.25) st={k:'faltou',t:'foi '+_fmtN(q,0)+' de '+_fmtN(e.sacos,0)+' · faltou',c:'#E65100',bg:'#FFF3E0'};
+  else if(q>e.sacos+0.25) st={k:'mais',t:'foi '+_fmtN(q,0)+' de '+_fmtN(e.sacos,0)+' · a mais',c:'#E65100',bg:'#FFF3E0'};
+  else st={k:'feito',t:_fmtN(q,0)+' saco'+(q>1?'s':'')+' · feito',c:'#2E7D32',bg:'#E8F5E9'};
+  return {lote:lote, prod:prod, esp:e, real:r, st:st,
+    sub:e?(e.motivo+(e.folga?' · sábado cobre o domingo':'')):'não era dia previsto'};
+}
+function _agDiaItens(d,lotes){
+  var out=[]; lotes.forEach(function(x){ var it=_agItem(x.lote,x.prod,d,x.tr); if(it) out.push(it); }); return out;
+}
+function _agLinha(it){
+  return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-top:1px solid #f0f0f0">'
+    +'<div style="min-width:0"><b style="font-size:13px">'+it.lote+'</b> <span style="font-size:12px;color:#555">· '+it.prod+'</span>'
+    +'<div style="font-size:11px;color:#777">'+it.sub+'</div></div>'
+    +'<span style="font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px;white-space:nowrap;background:'+it.st.bg+';color:'+it.st.c+'">'+it.st.t+'</span></div>';
+}
+function rAgenda(){
+  var el=document.getElementById('agenda-trato'); if(!el) return;
+  if(!(CU&&CU.r==='Consultor')){ el.innerHTML=''; return; }
+  var lotes=_agLotes(); lotes.forEach(function(x){ x.tr=_agTratos(x.lote,x.prod); });
+  if(!lotes.length){ el.innerHTML=''; return; }
+  if(!_agDia) _agDia=TD;
+  var dn=['dom','seg','ter','qua','qui','sex','sáb'], dnL=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'], dias='';
+  for(var k=-3;k<=3;k++){
+    var d=_somaDias(TD,k), on=d===_agDia, fo=_dow(d)===DIA_FOLGA, dots='';
+    if(!fo) _agDiaItens(d,lotes).forEach(function(it){ dots+='<i style="width:5px;height:5px;border-radius:50%;display:block;background:'+(on?'#fff':it.st.c)+'"></i>'; });
+    dias+='<div onclick="_agDia=\''+d+'\';rAgenda()" style="flex:1;text-align:center;border-radius:10px;padding:6px 0;cursor:pointer;font-size:10.5px;'
+      +(on?'background:#1B5E20;color:#fff':(fo?'background:#f0f0f0;color:#bbb':'background:#f4f6f3;color:#666'))+'">'+dn[_dow(d)]
+      +'<b style="display:block;font-size:15px;color:'+(on?'#fff':(fo?'#bbb':'#333'))+'">'+d.substring(8,10)+'</b>'
+      +(fo?'<div style="font-size:9px">folga</div>':'<div style="display:flex;justify-content:center;gap:2px;margin-top:3px;flex-wrap:wrap;min-height:5px">'+dots+'</div>')+'</div>';
+  }
+  var its=_dow(_agDia)===DIA_FOLGA?[]:_agDiaItens(_agDia,lotes);
+  var corpo=_dow(_agDia)===DIA_FOLGA?'<div style="font-size:12px;color:#999;padding:8px 0">Domingo é folga. O trato desse dia vai no sábado.</div>'
+    :(its.length?its.map(_agLinha).join(''):'<div style="font-size:12px;color:#999;padding:8px 0">Nenhum trato previsto nem lançado neste dia.</div>');
+  el.innerHTML='<div style="font-size:13px;font-weight:800;color:#1B5E20;margin:2px 0 8px">Agenda de trato</div>'
+    +'<div style="background:#fff;border:1px solid #e0e7e0;border-radius:14px;padding:12px 14px;margin-bottom:10px">'
+    +'<div style="display:flex;gap:5px">'+dias+'</div>'
+    +'<div style="font-size:13px;font-weight:800;color:#1B5E20;margin:12px 0 2px">'+dnL[_dow(_agDia)]+', '+_agDia.substring(8,10)+'/'+_agDia.substring(5,7)+(_agDia===TD?' · hoje':'')+'</div>'
+    +corpo+'</div>';
+}
+function rAgendaVaq(){
+  var el=document.getElementById('vaq-agenda'); if(!el) return;
+  if(!(CU&&CU.r==='Vaqueiro')){ el.style.display='none'; return; }
+  var lotes=_agLotes(); lotes.forEach(function(x){ x.tr=_agTratos(x.lote,x.prod); });
+  var am=_somaDias(TD,1); if(_dow(am)===DIA_FOLGA) am=_somaDias(am,1);
+  var blocos=[[TD,'Hoje'],[am,_dow(am)===1&&_diffDias(TD,am)>1?'Segunda':'Amanhã']], h='';
+  blocos.forEach(function(b){ if(_dow(b[0])===DIA_FOLGA){ h+='<div style="font-size:12.5px;font-weight:800;color:#1B5E20;margin-top:8px">'+b[1]+' · folga</div>'; return; }
+    var its=_agDiaItens(b[0],lotes).filter(function(it){ return it.esp; });
+    h+='<div style="font-size:12.5px;font-weight:800;color:#1B5E20;margin-top:8px">'+b[1]+', '+b[0].substring(8,10)+'/'+b[0].substring(5,7)+'</div>'
+      +(its.length?its.map(_agLinha).join(''):'<div style="font-size:12px;color:#999;padding:6px 0">Sem trato previsto.</div>'); });
+  el.style.display='block';
+  el.innerHTML='<div style="font-size:14px;font-weight:800;color:#1B5E20;display:flex;align-items:center;gap:6px">'
+    +'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Agenda de trato</div>'+h;
+}
 // ═══ BOLETIM SEMANAL DO PROPRIETÁRIO (sem valores em R$) ═══
 // Semana de segunda a sábado (domingo é folga). Números do app; recado escrito pelo consultor (IA só sugere).
 var _bolSem='atual';
@@ -3261,7 +3363,7 @@ function getSafra(){const now=new Date();const y=now.getMonth()>=6?now.getFullYe
 function filtrar(lista,per){const now=new Date();const faz=(document.getElementById('pf')||{}).value||'';if(per==='safra'){const sf=getSafra();return lista.filter(r=>{const dt=r.dt||r.data;const d=new Date(dt+'T00:00:00');if(faz&&r.faz!==faz)return false;return d>=sf.inicio&&d<=sf.fim;});}return lista.filter(r=>{const dt=r.dt||r.data;const d=new Date(dt+'T00:00:00');if(faz&&r.faz!==faz)return false;if(per==='dia')return dt===TD;if(per==='semana'){const s=new Date(now);s.setDate(now.getDate()-7);return d>=s;}if(per==='quinzena'){const s=new Date(now);s.setDate(now.getDate()-15);return d>=s;}return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});}
 
 let perA='quinzena';
-function rPan(){try{rConsAlertas();}catch(_eCA){console.error('rConsAlertas',_eCA);}
+function rPan(){try{rConsAlertas();}catch(_eCA){console.error('rConsAlertas',_eCA);}try{rAgenda();}catch(_eAg){console.error('rAgenda',_eAg);}
   try{
     var lv=filtrarPan((S.rD||[]).filter(function(r){return r.tipo==='diaria'&&!r._apagado&&!r.pago;}));
     var lc=filtrarPan((S.rC||[]).filter(function(r){return !r._apagado&&!r.validado;}));
@@ -11556,6 +11658,7 @@ function rVaqueiroPainel(){
   if(!isVaq){ panel.style.display='none'; var ctc=document.getElementById('vaq-tratos-hoje-card'); if(ctc)ctc.style.display='none'; return; }
   panel.style.display = 'block';
   try{ rTratosHoje(); }catch(e){ console.error('rTratosHoje:',e); }
+  try{ rAgendaVaq(); }catch(e){ console.error('rAgendaVaq:',e); }
 
   // Aviso visível de "sem conexão / dados podem estar desatualizados" — antes só
   // existia um badge pequeno no topo, fácil de não notar. Isso mostra bem
