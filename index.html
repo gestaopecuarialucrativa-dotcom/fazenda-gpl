@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 06/10/2026 v7.44</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 06/10/2026 v7.45</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2238,7 +2238,9 @@ function rConsAlertas(){
       h+='<div style="font-size:12px;padding:6px 0;border-top:1px solid #f2f2f2"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span><b>'+p[0]+'</b> · '+p[1]+'<br><b style="color:#1B5E20">'+_fmtN(o.sacos,0)+' saco'+(parseFloat(o.sacos)>1?'s':'')+' · '+_freqTxt(o.freq).toLowerCase()+'</b> <span style="color:#999">desde '+fd(o.dt)+'</span></span>'
         +'<span style="display:flex;gap:5px;flex-shrink:0"><span onclick="_orientAbrir(\''+esc(k)+'\')" style="font-size:11px;font-weight:700;color:#1B5E20;border:1px solid #A5D6A7;border-radius:20px;padding:3px 8px;cursor:pointer">alterar</span>'
         +'<span onclick="_orientEncerrar(\''+esc(k)+'\')" style="font-size:11px;font-weight:700;color:#C62828;border:1px solid #FFCDD2;border-radius:20px;padding:3px 8px;cursor:pointer">encerrar</span></span></div>'
-        +'<div style="font-size:10.5px;color:'+(vis?'#558B2F':'#E65100')+';margin-top:2px">'+(vis?'Visto por: '+vis:'Vaqueiro ainda não viu')+'</div></div>'; });
+        +(o.pedir?(o.resp?'<div style="font-size:11px;margin-top:3px;color:'+(o.resp.indexOf('Não')===0?'#C62828':'#2E7D32')+'">'+(o.resp_por||'Vaqueiro').split(' ')[0]+' respondeu: <b>'+o.resp.toLowerCase()+(o.motivo?' · '+String(o.motivo).replace(/</g,'&lt;'):'')+'</b>'+(o.resp_em?' <span style="color:#999">('+o.resp_em.substring(8,10)+'/'+o.resp_em.substring(5,7)+' '+o.resp_em.substring(11,16)+')</span>':'')+'</div>'
+          :'<div style="font-size:10.5px;color:#E65100;margin-top:2px">Aguardando resposta do vaqueiro'+(vis?' · visto por: '+vis:'')+'</div>')
+          :'<div style="font-size:10.5px;color:'+(vis?'#558B2F':'#E65100')+';margin-top:2px">'+(vis?'Visto por: '+vis:'Vaqueiro ainda não viu')+'</div>')+'</div>'; });
     h+='</div>';
   }
   var ks=Object.keys(aut);
@@ -2283,12 +2285,13 @@ function _orientAbrir(chave){
   _feedModal('Orientação · '+p[0], p[1]+(a&&a.real?' · real '+_fmtN(a.real.kgDia,0)+' kg/dia':'')+' · previsto '+_fmtN((prev.pct/100)*massa,0)+' kg/dia',
     [{id:'sacos',label:'Quantos sacos por trato',tipo:'number',valor:atual?atual.sacos:sg.sacos,meia:true},
      {id:'freq',label:'De quanto em quanto tempo',tipo:'select',valor:_freqTxt(atual?atual.freq:sg.freq),opts:FREQ_OPTS.map(function(x){return x[0];}),meia:true},
-     {id:'recado',label:'Recado pro vaqueiro (opcional)',valor:atual?(atual.recado||''):''}],
+     {id:'recado',label:'Recado pro vaqueiro (opcional)',valor:atual?(atual.recado||''):''},
+     {id:'pedir',tipo:'check',label:'Pedir resposta do vaqueiro',ajuda:'Ele responde "Sim, vou fazer" ou "Não consigo" com o motivo. Desmarcado: só vê e toca em Entendi.',valor:atual?!!atual.pedir:false}],
     function(v){ var s=_num(v.sacos), fr=(FREQ_OPTS.find(function(x){return x[0]===v.freq;})||[0,1])[1]; if(isNaN(s)||s<=0)return '';
       var kgd=s*pps/fr; return '= '+_fmtN(kgd,0)+' kg/dia'+(massa?' · '+_fmtN(kgd/massa*100,2)+'% PV (previsto '+_fmtN(prev.pct,2)+'%)':'')+(fr===1?' · sábado: '+_fmtN(s*2,0)+' sacos (domingo é folga)':''); },
     function(v){ var s=_num(v.sacos), fr=(FREQ_OPTS.find(function(x){return x[0]===v.freq;})||[0,1])[1];
       if(isNaN(s)||s<=0){ alert('Informe quantos sacos.'); return false; }
-      var f=_consFoto(chave); f.acao='orientar'; f.sacos=s; f.freq=fr; f.recado=(v.recado||'').trim(); f.por=(CU&&CU.n)||'';
+      var f=_consFoto(chave); f.acao='orientar'; f.sacos=s; f.freq=fr; f.recado=(v.recado||'').trim(); f.por=(CU&&CU.n)||''; f.pedir=v.pedir==='sim';
       _consChamar('orient',f,function(){ alert('✅ Orientação enviada. O vaqueiro vê no próximo login.'); }); });
 }
 function _orientEncerrar(chave){
@@ -2305,7 +2308,8 @@ function _orientPendentes(){
   var vl=_orientVistoLocal(), out=[];
   Object.keys(S.ORIENT||{}).forEach(function(k){ var o=S.ORIENT[k]; if(!o||!o.id)return;
     var p=k.split('||'), lo=_loteObjCons(p[0]); if(lo&&CU.fs&&CU.fs.length&&lo.faz&&CU.fs.indexOf(lo.faz)<0) return;
-    if((o.vistos||[]).indexOf(CU.n)>=0||vl[o.id+'|'+CU.n]) return;
+    if(o.pedir){ if(o.resp||vl[o.id+'|resp']) return; }
+    else if((o.vistos||[]).indexOf(CU.n)>=0||vl[o.id+'|'+CU.n]) return;
     out.push({chave:k,lote:p[0],prod:p[1],o:o}); });
   return out;
 }
@@ -2327,22 +2331,48 @@ function _orientMostrarLogin(){
       +'<div style="font-size:20px;font-weight:900;margin:4px 0">'+_fmtN(o.sacos,0)+' saco'+(parseFloat(o.sacos)>1?'s':'')+' · '+_freqTxt(o.freq).toUpperCase()+'</div>'
       +(pd?'<div style="font-size:12.5px;opacity:.9">Próximo trato: <b>'+(pd.data===TD?'hoje, ':'')+_dataBRSemana(pd.data).toLowerCase()+' · '+_fmtN(qd.sacos,0)+' saco'+(qd.sacos>1?'s':'')+(qd.cobreFolga?' (cobre o domingo)':'')+'</b></div>':'')
       +(o.recado?'<div style="font-size:12px;opacity:.85;margin-top:4px">Recado: '+String(o.recado).replace(/</g,'&lt;')+'</div>':'')
+      +(o.pedir?'<div id="or-resp-'+o.id+'" style="margin-top:10px"><div style="display:flex;gap:8px">'
+        +'<button onclick="_orientResponder(\''+o.id+'\',\'sim\')" style="flex:1;padding:11px;background:#fff;color:#1B5E20;border:none;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer">Sim, vou fazer</button>'
+        +'<button onclick="_orientNaoConsigo(\''+o.id+'\')" style="flex:1;padding:11px;background:transparent;color:#fff;border:1.5px solid #fff;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer">Não consigo</button></div></div>':'')
       +'</div>'; }).join('');
   var m=document.getElementById('modal-orient');
   if(!m){ m=document.createElement('div'); m.id='modal-orient';
     m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10001;display:flex;align-items:center;justify-content:center;padding:16px';
     document.body.appendChild(m); }
-  window._orientPendIds=pend.map(function(x){return x.o.id;});
+  window._orientPendIds=pend.filter(function(x){return !x.o.pedir;}).map(function(x){return x.o.id;});
+  var _temPedir=pend.some(function(x){return x.o.pedir;});
   m.innerHTML='<div style="background:#1B5E20;color:#fff;border-radius:18px;max-width:420px;width:100%;max-height:90vh;overflow:auto;padding:18px;box-shadow:0 10px 40px rgba(0,0,0,.35)">'
     +'<div style="display:flex;align-items:center;gap:8px;font-size:16px;font-weight:900"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 9h8M8 13h5"/></svg>'+(nome?nome+', o':'O')+'rientação do consultor</div>'
     +itens
     +'<div style="font-size:11.5px;opacity:.8;margin-top:10px">Domingo é folga: quando precisar, o sábado leva a quantidade do domingo.</div>'
-    +'<button onclick="_orientEntendi()" style="margin-top:14px;width:100%;padding:13px;background:#fff;color:#1B5E20;border:none;border-radius:12px;font-size:15px;font-weight:900;cursor:pointer">Entendi</button></div>';
+    +'<button onclick="_orientEntendi()" style="margin-top:14px;width:100%;padding:13px;background:'+(_temPedir?'transparent;color:#fff;border:1.5px solid rgba(255,255,255,.6)':'#fff;color:#1B5E20;border:none')+';border-radius:12px;font-size:15px;font-weight:900;cursor:pointer">'+(_temPedir?'Fechar':'Entendi')+'</button></div>';
   m.style.display='flex';
+}
+function _orientNaoConsigo(id){
+  var b=document.getElementById('or-resp-'+id); if(!b) return;
+  var bt=function(t){ return '<button onclick="_orientMotivo(\''+id+'\',\''+t+'\')" style="width:100%;padding:10px;margin-top:6px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.5);border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;text-align:left">'+t+'</button>'; };
+  b.innerHTML='<div style="font-size:12.5px;font-weight:800">Qual o motivo?</div>'+bt('Falta produto')+bt('Cocho ainda tem sobra')
+    +'<input id="or-mot-'+id+'" placeholder="Outro motivo (escreva aqui)" style="width:100%;box-sizing:border-box;margin-top:8px;padding:10px;border:none;border-radius:10px;font-size:13px">'
+    +'<button onclick="var v=(document.getElementById(\'or-mot-'+id+'\').value||\'\').trim(); if(!v){alert(\'Escreva o motivo.\');return;} _orientResponder(\''+id+'\',\'nao\',v)" style="width:100%;margin-top:6px;padding:10px;background:#fff;color:#1B5E20;border:none;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer">Enviar outro motivo</button>';
+}
+function _orientMotivo(id,t){ _orientResponder(id,'nao',t); }
+function _orientResponder(id,resp,motivo){
+  var b=document.getElementById('or-resp-'+id);
+  if(!(S.cfgGS&&navigator.onLine)){ alert('Sem internet agora. Responda quando tiver sinal: a orientação aparece de novo ao entrar no app.'); return; }
+  if(b) b.innerHTML='<div style="font-size:12.5px;opacity:.9">Enviando...</div>';
+  var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
+  var cb='_or_'+Date.now(), s=document.createElement('script');
+  s.src=getFazGasUrl(faz)+'?acao=orient_resp&data='+encodeURIComponent(JSON.stringify({id:id,n:CU.n,resp:resp,motivo:motivo||''}))+'&callback='+cb+'&t='+Date.now();
+  window[cb]=function(r){ delete window[cb]; if(s.parentNode)s.parentNode.removeChild(s);
+    if(r&&r.ok){ if(r.orient)S.ORIENT=r.orient; var vl=_orientVistoLocal(); vl[id+'|resp']=new Date().toISOString(); try{localStorage.setItem('gpl_orient_visto',JSON.stringify(vl));}catch(e){} try{salvarLocal();}catch(e){}
+      if(b) b.innerHTML='<div style="background:rgba(255,255,255,.18);border-radius:10px;padding:9px 11px;font-size:13px;font-weight:800">Resposta enviada: '+(resp==='sim'?'Sim, vou fazer':'Não consigo · '+String(motivo).replace(/</g,'&lt;'))+'</div>'; }
+    else { if(b) b.innerHTML='<div style="font-size:12.5px">Não consegui enviar. Feche e entre de novo para tentar.</div>'; } };
+  s.onerror=function(){ delete window[cb]; if(s.parentNode)s.parentNode.removeChild(s); if(b) b.innerHTML='<div style="font-size:12.5px">Erro de conexão. Feche e entre de novo para tentar.</div>'; };
+  document.body.appendChild(s);
 }
 function _orientEntendi(){
   var m=document.getElementById('modal-orient'); if(m) m.style.display='none';
-  var ids=window._orientPendIds||[]; if(!ids.length) return;
+  var ids=window._orientPendIds||[]; window._orientPendIds=[]; if(!ids.length) return;
   var vl=_orientVistoLocal(); ids.forEach(function(id){ vl[id+'|'+CU.n]=new Date().toISOString(); });
   Object.keys(S.ORIENT||{}).forEach(function(k){ var o=S.ORIENT[k]; if(o&&ids.indexOf(o.id)>=0){ if(!o.vistos)o.vistos=[]; if(o.vistos.indexOf(CU.n)<0)o.vistos.push(CU.n); } }); try{salvarLocal();}catch(e){}
   try{ localStorage.setItem('gpl_orient_visto',JSON.stringify(vl)); }catch(e){}
@@ -3583,6 +3613,7 @@ function _feedModal(titulo, sub, campos, calc, onOk){
   var fecharLinha=function(){ if(linha.length){ html+='<div style="display:flex;gap:8px">'+linha.join('')+'</div>'; linha=[]; } };
   campos.forEach(function(c){
     var inp;
+    if(c.tipo==='check'){ fecharLinha(); html+='<label style="display:flex;align-items:flex-start;gap:9px;margin-bottom:10px;cursor:pointer"><input id="fe-'+c.id+'" type="checkbox"'+(c.valor?' checked':'')+' style="width:18px;height:18px;margin:1px 0 0;accent-color:#1B5E20;flex-shrink:0"><span><span style="font-size:13px;font-weight:700;color:#1B5E20">'+esc(c.label)+'</span>'+(c.ajuda?'<span style="display:block;font-size:11px;color:#888;margin-top:2px">'+esc(c.ajuda)+'</span>':'')+'</span></label>'; return; }
     if(c.tipo==='select'){ inp='<select id="fe-'+c.id+'" style="'+inSt+'">'+(c.opts||[]).map(function(o){return '<option value="'+esc(o)+'"'+(String(o)===String(c.valor)?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select>'; }
     else { inp='<input id="fe-'+c.id+'" type="'+(c.tipo==='number'?'text':(c.tipo||'text'))+'"'+(c.tipo==='number'?' inputmode="decimal"':'')+' value="'+esc(c.valor)+'" style="'+inSt+'">'; }
     var bloco='<div style="flex:1;min-width:0;margin-bottom:10px"><div style="font-size:11px;color:#666;margin-bottom:3px;font-weight:600">'+esc(c.label)+'</div>'+inp+'</div>';
@@ -3597,7 +3628,7 @@ function _feedModal(titulo, sub, campos, calc, onOk){
     +'<div id="fe-calc" style="display:none;background:#f4f8f2;border-radius:8px;padding:9px 11px;font-size:12.5px;color:#33691E;font-weight:700;margin-bottom:12px"></div>'
     +'<div style="display:flex;gap:8px"><button onclick="_feedModalFechar()" style="flex:1;padding:12px;background:#f0f0f0;color:#555;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Cancelar</button>'
     +'<button id="fe-salvar" style="flex:1;padding:12px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer">Salvar</button></div></div>';
-  var ler=function(){ var v={}; campos.forEach(function(c){ var el=document.getElementById('fe-'+c.id); v[c.id]=el?el.value:''; }); return v; };
+  var ler=function(){ var v={}; campos.forEach(function(c){ var el=document.getElementById('fe-'+c.id); v[c.id]=el?(c.tipo==='check'?(el.checked?'sim':''):el.value):''; }); return v; };
   var atual=function(){ var el=document.getElementById('fe-calc'); if(!el||!calc)return; var t=calc(ler()); el.style.display=t?'block':'none'; el.textContent=t||''; };
   campos.forEach(function(c){ var el=document.getElementById('fe-'+c.id); if(el){ el.oninput=atual; el.onchange=atual; } });
   atual();
