@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 06/10/2026 v7.45</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 08/10/2026 v7.46</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2601,7 +2601,7 @@ function _bolGerarPDF(){
   if(d.orientacoes.length) c+=sec('Orientações da consultoria em vigor')+'<div style="background:#FFF8E1;border-left:3px solid #F9A825;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.55">'
     +d.orientacoes.map(function(o){return '<b>'+esc(o.lote)+'</b> · '+esc(o.prod)+': '+_fmtN(o.sacos,0)+' saco'+(o.sacos>1?'s':'')+' '+_freqTxt(o.freq).toLowerCase()+' (desde '+fd(o.dt)+(o.vistos.length?', visto por '+esc(o.vistos.join(', ')):'')+')';}).join('<br>')
     +'<div style="font-size:10px;color:#8a6d00;margin-top:3px">Domingo é folga: o sábado leva a quantidade do domingo.</div></div>';
-  if(rec) c+=sec('Recado do consultor')+'<div style="background:#F1F8E9;border-left:3px solid #2E7D32;border-radius:6px;padding:9px 11px;font-size:12px;line-height:1.55;white-space:pre-wrap">'+esc(rec)+'<div style="margin-top:6px;font-weight:700;color:#1B5E20">'+esc((CU&&CU.n)||'Rogério Avelino')+' · Consultor GPL</div></div>';
+  if(rec) c+=sec('Recado do consultor')+'<div style="background:#F1F8E9;border-left:3px solid #2E7D32;border-radius:6px;padding:9px 11px;font-size:12px;line-height:1.55;white-space:pre-wrap">'+esc(rec)+'<div style="margin-top:6px;font-weight:700;color:#1B5E20">'+esc(String((CU&&CU.n)||'Rogério').split(' ')[0])+' · Consultor GPL</div></div>';
   var tit='Boletim da semana';
   var css=(typeof _pdfTimbreCss==='function')?_pdfTimbreCss():'';
   var timbre=(typeof _pdfTimbre==='function')?_pdfTimbre(tit, fd(j.ini)+' a '+fd(j.fim)+'/'+j.ini.substring(0,4), d.fazenda):'<h2>'+tit+'</h2>';
@@ -5344,7 +5344,7 @@ function gerarRelPDF(){
     +'</div></div>';
 
   // FOOTER
-  html+='<div class="footer">GPL – Gestão Pecuária Lucrativa · Rogério Avelino · '+hoje+'<br>Dados coletados em campo via sistema GPL</div>';
+  html+='<div class="footer">GPL — Gestão Pecuária Lucrativa · '+hoje+'<br>Dados coletados em campo via sistema GPL</div>';
 
   // BOTÃO IMPRIMIR
   html+='<div class="no-print" style="text-align:center;margin-top:16px">'
@@ -7005,7 +7005,7 @@ function gerarRelPagamentosPDF(){
     +'<div style="display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#1565C0,#1976D2);border-radius:12px;padding:14px 18px;color:#fff;margin-bottom:12px"><img src="'+LOGO_GPL+'" style="height:44px;width:auto;filter:brightness(0) invert(1);flex-shrink:0"><div><div style="font-size:10px;letter-spacing:2px;opacity:.8;font-weight:700">GESTÃO PECUÁRIA LUCRATIVA</div><div style="font-size:18px;font-weight:900;margin-top:1px">Relatório de Pagamentos</div><div style="font-size:10px;opacity:.8;margin-top:2px">'+faz+'</div></div></div>'
     +'<p style="color:#888;font-size:12px">Período: '+( de.split('-').reverse().join('/'))+' a '+(ate.split('-').reverse().join('/'))+' · Emitido em: '+hoje+'</p>'
     +el.innerHTML
-    +'<div style="margin-top:20px;font-size:10px;color:#aaa;text-align:center">GPL — Gestão Pecuária Lucrativa · Rogério Avelino</div>'
+    +'<div style="margin-top:20px;font-size:10px;color:#aaa;text-align:center">GPL — Gestão Pecuária Lucrativa</div>'
     +'</body></html>';
   var j=window.open('','_blank','width=900,height=700');
   if(!j){alert('Permita pop-ups.');return;}
@@ -7343,7 +7343,7 @@ function gerarRelPreviewPDF(){
     '@media print{body{background:#fff;padding:0}.no-print{display:none!important}.content{box-shadow:none}@page{margin:12mm}}'
   ].join('');
   var fullHtml = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Relatório da Fazenda</title><style>'+css+'</style></head><body><div class="wrap">'
-    +'<div class="hdr" style="display:flex;align-items:center;gap:16px"><img src="'+LOGO_GPL+'" style="height:50px;width:auto;filter:brightness(0) invert(1)"><div><h1>'+faz+'</h1><p>Relatório · Rogério Avelino · '+hoje+'</p></div></div>'
+    +'<div class="hdr" style="display:flex;align-items:center;gap:16px"><img src="'+LOGO_GPL+'" style="height:50px;width:auto;filter:brightness(0) invert(1)"><div><h1>'+faz+'</h1><p>Relatório · GPL — Gestão Pecuária Lucrativa · '+hoje+'</p></div></div>'
     +'<div class="content">'+el.innerHTML+'</div>'
     +'</div></body></html>';
   pdfModalAbrir('Rel. Fazenda (Preview)', fullHtml);
@@ -8678,7 +8678,7 @@ function gerarRelatorioPDF(){const faz=(document.getElementById('pf')||{}).value
 .edit-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center}
 .edit-modal.open{display:flex}
 .edit-box{background:#fff;border-radius:16px;padding:22px;width:95%;max-width:420px;max-height:90vh;overflow-y:auto}
-</style></head><body><div style="display:flex;justify-content:space-between;margin-bottom:16px"><div><div style="font-size:20px;font-weight:bold;color:#1B5E20">Gestão Pecuária Lucrativa</div><div style="color:#666;font-size:11px">Rogério Avelino</div></div><div style="text-align:right;font-size:11px;color:#666">Emitido em: ${new Date().toLocaleDateString('pt-BR')}<br>Fazenda: ${faz}</div></div><table><tr><th>Data</th><th>Colaborador</th><th>Serviço</th><th>Fazenda</th><th>Valor</th><th>Status</th></tr>${rows}</table><div class="total">Total diárias: R$ ${totalD.toFixed(2).replace('.',',')}</div><div class="total">Total cantina: R$ ${totalC.toFixed(2).replace('.',',')}</div><br><button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;font-size:13px">🖨️ Imprimir / Salvar PDF</button></body></html>`;const w=window.open('','_blank');w.document.write(html);w.document.close();}
+</style></head><body><div style="display:flex;justify-content:space-between;margin-bottom:16px"><div><div style="font-size:20px;font-weight:bold;color:#1B5E20">Gestão Pecuária Lucrativa</div><div style="color:#666;font-size:11px">GPL</div></div><div style="text-align:right;font-size:11px;color:#666">Emitido em: ${new Date().toLocaleDateString('pt-BR')}<br>Fazenda: ${faz}</div></div><table><tr><th>Data</th><th>Colaborador</th><th>Serviço</th><th>Fazenda</th><th>Valor</th><th>Status</th></tr>${rows}</table><div class="total">Total diárias: R$ ${totalD.toFixed(2).replace('.',',')}</div><div class="total">Total cantina: R$ ${totalC.toFixed(2).replace('.',',')}</div><br><button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;font-size:13px">🖨️ Imprimir / Salvar PDF</button></body></html>`;const w=window.open('','_blank');w.document.write(html);w.document.close();}
 function gerarReciboPDF(){const faz=(document.getElementById('pf')||{}).value||'';let lv=filtrar(S.rD.filter(r=>r.tipo==='diaria'),perA);if(faz)lv=lv.filter(r=>r.faz===faz);const por={};lv.forEach(r=>{if(!por[r.n])por[r.n]=[];por[r.n].push(r);});const dono=(S.US.find(u=>u.r==='Dono'&&(!faz||u.fs.includes(faz)))||{}).n||faz;const recibos=Object.keys(por).map(nome=>{const regs=por[nome];const total=regs.reduce((a,r)=>a+r.v,0);const rows=regs.map(r=>`<tr><td>${(r.dt||'').split('-').reverse().join('/')}</td><td>${r.srv}</td><td style="text-align:right">R$ ${r.v.toFixed(2).replace('.',',')}</td></tr>`).join('');return`<div style="border:1px solid #ccc;border-radius:8px;padding:20px;margin-bottom:30px;page-break-inside:avoid"><div style="display:flex;justify-content:space-between"><strong style="font-size:16px;color:#1B5E20">RECIBO</strong><div style="font-size:11px;color:#666">${new Date().toLocaleDateString('pt-BR')}</div></div><div style="margin:12px 0"><strong>Pagador:</strong> ${dono} — ${faz}</div><div style="margin-bottom:12px"><strong>Beneficiário:</strong> ${nome}</div><table style="width:100%;border-collapse:collapse;font-size:12px"><tr><th style="background:#1B5E20;color:#fff;padding:5px 8px;text-align:left">Data</th><th style="background:#1B5E20;color:#fff;padding:5px 8px;text-align:left">Serviço</th><th style="background:#1B5E20;color:#fff;padding:5px 8px;text-align:right">Valor</th></tr>${rows}</table><div style="margin-top:12px;font-size:15px;font-weight:bold;color:#1B5E20">Total: R$ ${total.toFixed(2).replace('.',',')}</div><div style="margin-top:30px;border-top:1px solid #eee;padding-top:12px;display:flex;justify-content:space-between"><div style="text-align:center;width:45%"><div style="border-top:1px solid #333;margin-top:30px;padding-top:5px;font-size:11px">${dono}<br>Fazendeiro</div></div><div style="text-align:center;width:45%"><div style="border-top:1px solid #333;margin-top:30px;padding-top:5px;font-size:11px">${nome}<br>Prestador de serviço</div></div></div></div>`;}).join('');const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recibos</title><style>body{font-family:Arial;padding:20px;font-size:13px}@media print{button{display:none}}
 .badge-pend{background:#FFF3E0;color:#E65100;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;border:1px solid #FFB300}
 .badge-ok{background:#E8F5E9;color:#2E7D32;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700}
@@ -8687,7 +8687,7 @@ function gerarReciboPDF(){const faz=(document.getElementById('pf')||{}).value||'
 .edit-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center}
 .edit-modal.open{display:flex}
 .edit-box{background:#fff;border-radius:16px;padding:22px;width:95%;max-width:420px;max-height:90vh;overflow-y:auto}
-</style></head><body><div style="text-align:center;margin-bottom:20px"><strong style="font-size:18px;color:#1B5E20">Gestão Pecuária Lucrativa</strong><br><span style="color:#666;font-size:12px">Rogério Avelino — ${faz||'Todas'}</span></div>${recibos}<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;font-size:13px">🖨️ Imprimir</button></body></html>`;const w=window.open('','_blank');w.document.write(html);w.document.close();}
+</style></head><body><div style="text-align:center;margin-bottom:20px"><strong style="font-size:18px;color:#1B5E20">Gestão Pecuária Lucrativa</strong><br><span style="color:#666;font-size:12px">GPL — ${faz||'Todas'}</span></div>${recibos}<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;font-size:13px">🖨️ Imprimir</button></body></html>`;const w=window.open('','_blank');w.document.write(html);w.document.close();}
 
 // ═══ CONSULTOR ═══
 function salvarNota(faz,k){if(!S.NOTAS)S.NOTAS={};const ta=document.getElementById('nota-'+k);if(ta){S.NOTAS[faz]=ta.value;salvar();ta.style.borderColor='#2E7D32';setTimeout(()=>ta.style.borderColor='#ddd',1000);}}
@@ -10093,7 +10093,7 @@ function _pdfTimbre(titulo, subtitulo, faz){
   return '<div class="gpl-tb">'
     +'<div style="display:flex;align-items:center;gap:14px">'
     +  '<div class="logo"><img src="'+LOGO_GPL+'" alt="GPL"></div>'
-    +  '<div><div class="tit">'+titulo+'</div><div class="sub">'+(subtitulo||'Gestão Pecuária Lucrativa · Rogério Avelino')+'</div></div>'
+    +  '<div><div class="tit">'+titulo+'</div><div class="sub">'+(subtitulo||'GPL — Gestão Pecuária Lucrativa')+'</div></div>'
     +'</div>'
     +'<div class="meta">Emitido em: '+new Date().toLocaleDateString('pt-BR')+(faz?'<br>Fazenda: '+faz:'')+'</div>'
     +'</div>'
@@ -10104,7 +10104,7 @@ function _pdfRodape(){
     +'<button onclick="window.close()" style="padding:10px 28px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">✕ Fechar e voltar ao app</button>'
     +'</div>'
     +'<div class="gpl-ft">'
-    +'<span><b>GPL</b> — Gestão Pecária Lucrativa · Rogério Avelino</span>'
+    +'<span><b>GPL</b> — Gestão Pecuária Lucrativa</span>'
     +'<span>Gerado em '+new Date().toLocaleDateString('pt-BR')+'</span>'
     +'</div>';
 }
@@ -11440,8 +11440,8 @@ function expHistCSV(){
   a.click();
 }
 
-function compartilharNota(faz,k){salvarNota(faz,k);const nota=S.NOTAS[faz]||'';const diarias=(S.rD||[]).filter(r=>r.faz===faz&&r.tipo==='diaria');const desp=(S.rDesp||[]).filter(r=>r.faz===faz&&r.st==='pagar');const totalD=diarias.reduce((a,r)=>a+r.v,0);const totalP=desp.reduce((a,r)=>a+r.val,0);let msg=`🌿 *Gestão Pecuária Lucrativa*\n*Rogério Avelino — Consultor*\n\n🏠 *${faz}*\n📅 ${new Date().toLocaleDateString('pt-BR')}\n\n *Resumo:*\n• Diárias: R$ ${totalD.toFixed(2).replace('.',',')} (${diarias.length} reg.)\n`;if(totalP>0)msg+=`• A pagar: R$ ${totalP.toFixed(2).replace('.',',')}\n`;if(nota)msg+=`\n📝 *Observações:*\n${nota}`;window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');}
-function enviarRelatorioWpp(){const fazendas=Object.keys(S.FAZ);let msg='🌿 *Gestão Pecuária Lucrativa — Rogério Avelino*\n📅 '+new Date().toLocaleDateString('pt-BR')+'\n\n*RESUMO GERAL*\n\n';fazendas.forEach(faz=>{const diarias=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz&&r.tipo==='diaria');const desp=(S.rDesp||[]).filter(r=>r.faz===faz&&r.st==='pagar');const lotes=(S.LOTES||[]).filter(l=>l.faz===faz);const totalD=diarias.reduce((a,r)=>a+r.v,0);const totalP=desp.reduce((a,r)=>a+r.val,0);const animais=lotes.reduce((a,l)=>a+l.qtd,0);msg+=`🏠 *${faz}*\n• ${animais} animais · ${diarias.length} diárias · R$ ${totalD.toFixed(2).replace('.',',')}\n`;if(totalP>0)msg+=`• ⚠️ A pagar: R$ ${totalP.toFixed(2).replace('.',',')}\n`;const nota=S.NOTAS&&S.NOTAS[faz];if(nota)msg+=`• 📝 ${nota}\n`;msg+='\n';});window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');}
+function compartilharNota(faz,k){salvarNota(faz,k);const nota=S.NOTAS[faz]||'';const diarias=(S.rD||[]).filter(r=>r.faz===faz&&r.tipo==='diaria');const desp=(S.rDesp||[]).filter(r=>r.faz===faz&&r.st==='pagar');const totalD=diarias.reduce((a,r)=>a+r.v,0);const totalP=desp.reduce((a,r)=>a+r.val,0);let msg=`🌿 *GPL — Gestão Pecuária Lucrativa*\n*Rogério · Consultor GPL*\n\n🏠 *${faz}*\n📅 ${new Date().toLocaleDateString('pt-BR')}\n\n *Resumo:*\n• Diárias: R$ ${totalD.toFixed(2).replace('.',',')} (${diarias.length} reg.)\n`;if(totalP>0)msg+=`• A pagar: R$ ${totalP.toFixed(2).replace('.',',')}\n`;if(nota)msg+=`\n📝 *Observações:*\n${nota}`;window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');}
+function enviarRelatorioWpp(){const fazendas=Object.keys(S.FAZ);let msg='🌿 *GPL — Gestão Pecuária Lucrativa*\nRogério · Consultor GPL\n📅 '+new Date().toLocaleDateString('pt-BR')+'\n\n*RESUMO GERAL*\n\n';fazendas.forEach(faz=>{const diarias=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz&&r.tipo==='diaria');const desp=(S.rDesp||[]).filter(r=>r.faz===faz&&r.st==='pagar');const lotes=(S.LOTES||[]).filter(l=>l.faz===faz);const totalD=diarias.reduce((a,r)=>a+r.v,0);const totalP=desp.reduce((a,r)=>a+r.val,0);const animais=lotes.reduce((a,l)=>a+l.qtd,0);msg+=`🏠 *${faz}*\n• ${animais} animais · ${diarias.length} diárias · R$ ${totalD.toFixed(2).replace('.',',')}\n`;if(totalP>0)msg+=`• ⚠️ A pagar: R$ ${totalP.toFixed(2).replace('.',',')}\n`;const nota=S.NOTAS&&S.NOTAS[faz];if(nota)msg+=`• 📝 ${nota}\n`;msg+='\n';});window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');}
 
 // ══ APLICAR PREÇOS DA CANTINA ══
 function _aplicarPRCantina(){
@@ -12803,7 +12803,7 @@ function gerarFCMsg(){
   linhas.push('');
   var obs=(document.getElementById('fc-obs')||{}).value||'';
   if(obs.trim())linhas.push('Obs: '+obs.trim());
-  linhas.push('GPL - Gestao Pecuaria Lucrativa - Rogerio Avelino');
+  linhas.push('GPL - Gestao Pecuaria Lucrativa');
 
   // Lançar como despesas "a pagar"
   sel.forEach(function(p){
@@ -13334,7 +13334,7 @@ function gerarPDFPesquisa(){
   var rowsD=d.diarias.map(function(r){return'<tr><td>'+(r.dt||'').split('-').reverse().join('/')+'</td><td>'+r.n+'</td><td>'+r.srv+'</td><td>'+r.faz+'</td><td style="text-align:right">R$ '+(r.v||0).toFixed(2).replace('.',',')+'</td><td>'+(r.pago?'OK Pago':'⏳ A pagar')+'</td></tr>';}).join('');
   var rowsC=d.cantinas.map(function(r){return'<tr><td>'+(r.dt||'').split('-').reverse().join('/')+'</td><td>'+(r.resp||r.n||'—')+'</td><td>Cantina</td><td>'+r.faz+'</td><td style="text-align:right">R$ '+(r.total||0).toFixed(2).replace('.',',')+'</td><td>'+(r.validado||r.pago?'OK Pago':'⏳ A pagar')+'</td></tr>';}).join('');
   var w=window.open('','_blank');
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Relatório GPL</title><style>body{font-family:Arial,sans-serif;padding:20px;color:#222}h1{color:#1B5E20;font-size:18px}h2{color:#1B5E20;font-size:14px;margin-top:18px}table{width:100%;border-collapse:collapse;font-size:12px}th{background:#1B5E20;color:#fff;padding:7px;text-align:left}td{padding:6px;border-bottom:1px solid #eee}.tot{font-size:14px;font-weight:700;color:#1B5E20;margin-top:10px}.footer{margin-top:30px;font-size:10px;color:#aaa;text-align:center}</style></head><body><h1> Relatório — Gestão Pecuária Lucrativa</h1><p style="font-size:12px;color:#666">Período: '+deFmt+' a '+ateFmt+'</p>'+(rowsD?'<h2>💰 Diárias</h2><table><tr><th>Data</th><th>Diarista</th><th>Serviço</th><th>Fazenda</th><th>Valor</th><th>Status</th></tr>'+rowsD+'</table><p class="tot">Total Diárias: R$ '+d.totalD.toFixed(2).replace('.',',')+'</p>':'')+(rowsC?'<h2>🍽 Cantina</h2><table><tr><th>Data</th><th>Responsável</th><th>Tipo</th><th>Fazenda</th><th>Valor</th><th>Status</th></tr>'+rowsC+'</table><p class="tot">Total Cantina: R$ '+d.totalC.toFixed(2).replace('.',',')+'</p>':'')+'<p class="tot" style="font-size:16px;border-top:2px solid #1B5E20;padding-top:10px">TOTAL GERAL: R$ '+d.totalG.toFixed(2).replace('.',',')+'</p><div class="footer">GPL — Gestão Pecuária Lucrativa · Rogério Avelino · Gerado em '+new Date().toLocaleDateString('pt-BR')+'</div></body></html>');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Relatório GPL</title><style>body{font-family:Arial,sans-serif;padding:20px;color:#222}h1{color:#1B5E20;font-size:18px}h2{color:#1B5E20;font-size:14px;margin-top:18px}table{width:100%;border-collapse:collapse;font-size:12px}th{background:#1B5E20;color:#fff;padding:7px;text-align:left}td{padding:6px;border-bottom:1px solid #eee}.tot{font-size:14px;font-weight:700;color:#1B5E20;margin-top:10px}.footer{margin-top:30px;font-size:10px;color:#aaa;text-align:center}</style></head><body><h1> Relatório — Gestão Pecuária Lucrativa</h1><p style="font-size:12px;color:#666">Período: '+deFmt+' a '+ateFmt+'</p>'+(rowsD?'<h2>💰 Diárias</h2><table><tr><th>Data</th><th>Diarista</th><th>Serviço</th><th>Fazenda</th><th>Valor</th><th>Status</th></tr>'+rowsD+'</table><p class="tot">Total Diárias: R$ '+d.totalD.toFixed(2).replace('.',',')+'</p>':'')+(rowsC?'<h2>🍽 Cantina</h2><table><tr><th>Data</th><th>Responsável</th><th>Tipo</th><th>Fazenda</th><th>Valor</th><th>Status</th></tr>'+rowsC+'</table><p class="tot">Total Cantina: R$ '+d.totalC.toFixed(2).replace('.',',')+'</p>':'')+'<p class="tot" style="font-size:16px;border-top:2px solid #1B5E20;padding-top:10px">TOTAL GERAL: R$ '+d.totalG.toFixed(2).replace('.',',')+'</p><div class="footer">GPL — Gestão Pecuária Lucrativa · Gerado em '+new Date().toLocaleDateString('pt-BR')+'</div></body></html>');
   w.document.close(); setTimeout(function(){w.print();},500);
 }
 
