@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 08/10/2026 v7.48</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 08/10/2026 v7.49</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2569,7 +2569,8 @@ function _bolSugerirIA(){
       sacos_na_semana:l.sacos+' saco'+(l.sacos===1?'':'s'),
       suplemento:(l.gCabDia!=null?l.gCabDia+' g/cab/dia':'sem trato lançado'),
       feno:(l.fenoKgCabDia!=null?String(l.fenoKgCabDia).replace('.',',')+' kg/cab/dia':'sem feno'),
-      vs_previsto:(l.dif!=null?((l.dif>0?'+':'')+Math.round(l.dif*100)+'%'):'sem comparação'),
+      // mesma regra da tabela do PDF: dentro da tolerância = "no previsto" (a IA não vê o % miúdo)
+      vs_previsto:(l.dif==null?'sem comparação':(Math.abs(l.dif)<=CONS_TOL?'no previsto':((l.dif>0?'+':'')+Math.round(l.dif*100)+'%'))),
       dias_considerados:l.dias+' dias', orientado:l.orientado?'sim':'não', observacao:l.marca||'' }; });
   var oriIA=d.orientacoes.map(function(o){ return {lote:o.lote, produto:o.prod,
       orientacao:_fmtN(o.sacos,0)+' saco'+(parseFloat(o.sacos)>1?'s':'')+' '+_freqTxt(o.freq).toLowerCase(), desde:fmtD(o.dt), visto_por:(o.vistos||[]).join(', ')||'ainda não visto'}; });
@@ -2578,7 +2579,7 @@ function _bolSugerirIA(){
   var perg='Escreva o RECADO DO CONSULTOR para o PROPRIETÁRIO da fazenda sobre esta semana. 3 a 6 linhas, texto corrido, primeira pessoa (eu, o consultor), tom próximo e profissional. '
     +'NÃO cite valores em R$ nem custos. Destaque o que importa pro dono: consumo dos lotes em relação ao previsto, o que já foi orientado à equipe, estoque que precisa comprar (com prazo) e mudanças de pasto relevantes. Sem listas, sem títulos, sem assinatura. '
     +'REGRAS DE NÚMEROS: use exatamente os números e as unidades recebidos, não converta nem invente. "vs_previsto" é porcentagem (ex.: -44% = 44% abaixo do previsto), nunca gramas. '
-    +'Ao citar orientação, copie o texto do campo "orientacao" (ex.: "1 saco a cada 3 dias"); não diga "a mais" nem mude a quantidade. Se um lote está "sem trato lançado", diga que não houve lançamento, não que o consumo caiu.';
+    +'Ao citar orientação, copie o texto do campo "orientacao" (ex.: "1 saco a cada 3 dias"); não diga "a mais" nem mude a quantidade. Se um lote está "sem trato lançado", diga que não houve lançamento, não que o consumo caiu. Lote com vs_previsto "no previsto" está dentro do esperado: não diga que caiu nem cite porcentagem para ele.';
   var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
   var cb='_bia_'+Date.now(), s=document.createElement('script');
   s.src=getFazGasUrl(faz)+'?acao=pergunta_ia&data='+encodeURIComponent(JSON.stringify({pergunta:perg,dados:dados,modo:'recado'}))+'&callback='+cb+'&t='+Date.now();
