@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 08/10/2026 v7.52</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 08/10/2026 v7.53</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -6112,15 +6112,18 @@ function pesCurralBuscar(){
     var tem=_pcDatasNoApp(), ds=r.datas||[];
     if(!ds.length){ el.innerHTML='<div style="font-size:12px;color:#888">Nenhuma pesagem da '+_pcFaz()+' no curral.</div>'; return; }
     el.innerHTML=ds.map(function(x){ var ja=!!tem[x.data];
-      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid #f0f0f0">'
+      return '<div style="padding:8px 0;border-top:1px solid #f0f0f0"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px">'
         +'<span style="font-size:13px"><b>'+_dataBR(x.data)+'</b> <span style="color:#666">· '+x.qtd+' animais</span></span>'
         +(ja?'<span style="font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px;background:#ECEFF1;color:#546E7A">já está no app</span>'
-            :'<button onclick="pesCurralLer(\''+x.data+'\')" style="font-size:12px;font-weight:800;padding:6px 12px;border-radius:20px;border:1.5px solid #1B5E20;background:#E8F5E9;color:#1B5E20;cursor:pointer">Importar</button>')
-        +'</div>'; }).join('');
+            :'<button onclick="pesCurralLer(\''+x.data+'\',this)" style="font-size:12px;font-weight:800;padding:6px 12px;border-radius:20px;border:1.5px solid #1B5E20;background:#E8F5E9;color:#1B5E20;cursor:pointer">Importar</button>')
+        +'</div><div id="pc-prev-'+x.data+'"></div></div>'; }).join('');
   },function(m){ el.innerHTML='<div style="font-size:12px;color:#C62828">'+m+'. Tente de novo.</div>'; });
 }
-function pesCurralLer(data){
-  var prev=document.getElementById('pes-import-preview'); if(!prev)return;
+function pesCurralLer(data,bt){
+  // v7.53: o resumo aparece logo abaixo da data clicada (antes ia para o fim da lista e parecia que nada acontecia)
+  document.querySelectorAll('[id^="pc-prev-"]').forEach(function(e){ e.innerHTML=''; });
+  var prev=document.getElementById('pc-prev-'+data)||document.getElementById('pes-import-preview'); if(!prev)return;
+  if(bt){ bt.disabled=true; bt.textContent='Lendo…'; setTimeout(function(){ bt.disabled=false; bt.textContent='Importar'; },4000); }
   prev.innerHTML='<div style="font-size:12px;color:#888">Lendo a pesagem de '+_dataBR(data)+'…</div>';
   _pcJsonp({acao:'pesagem_ler',fazenda:_pcFaz(),data:data},function(r){
     var animais=(r.animais||[]).filter(function(a){return a&&a.brinco!=null&&a.peso!=null&&a.lote!=null;})
@@ -6135,6 +6138,7 @@ function pesCurralLer(data){
       +'<div style="margin:6px 0">'+linhas+'</div>'
       +'<button onclick="pesagemConfirmarImport()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Importar e salvar</button>'
       +'</div>';
+    try{ prev.scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){}
   },function(m){ prev.innerHTML='<div style="font-size:12px;color:#C62828">'+m+'. Tente de novo.</div>'; });
 }
 function pesagemConfirmarImport(){
