@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 08/10/2026 v7.50</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 08/10/2026 v7.52</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -5846,52 +5846,9 @@ function _pesagemDataExiste(lista, data){
   });
 }
 // Carrega a biblioteca de leitura de Excel só quando precisar (no PC, ao importar).
-function _carregarXLSX(cb){
-  if(window.XLSX){ cb(); return; }
-  var s=document.createElement('script');
-  s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-  s.onload=function(){ cb(); };
-  s.onerror=function(){ alert('Não consegui carregar o leitor de planilha. Precisa de internet para importar.'); };
-  document.head.appendChild(s);
-}
+
 // Lê a aba "Pesagem" no formato GPL (cabeçalho linha 13; dados da 14 em diante; data no topo).
-function _pesagemParsePlanilha(workbook){
-  var nome=workbook.SheetNames.indexOf('Pesagem')>=0?'Pesagem':workbook.SheetNames[0];
-  var ws=workbook.Sheets[nome];
-  var linhas=XLSX.utils.sheet_to_json(ws,{header:1,raw:true});
-  // data: primeira data encontrada nas primeiras 6 linhas
-  var data='';
-  for(var i=0;i<Math.min(6,linhas.length);i++){
-    (linhas[i]||[]).forEach(function(v){
-      if(!data && v instanceof Date){ data=v.toISOString().substring(0,10); }
-      else if(!data && typeof v==='number' && v>40000 && v<60000){ // serial date excel
-        var dt=new Date(Math.round((v-25569)*86400*1000)); data=dt.toISOString().substring(0,10);
-      }
-    });
-  }
-  // animais: a partir da linha índice 13 (linha 14), col0=brinco col1=peso col2=lote col3=obs col4=data
-  var animais=[];
-  for(var r=13;r<linhas.length;r++){
-    var row=linhas[r]||[];
-    if(row[0]==null||row[1]==null||row[2]==null)continue;
-    var peso=parseFloat(row[1]); var lote=parseInt(row[2]);
-    if(isNaN(peso)||isNaN(lote))continue;
-    var obs=String(row[3]==null?'':row[3]).trim();
-    // data por animal (coluna E = índice 4); aceita Date, serial Excel ou texto AAAA-MM-DD / DD/MM/AAAA
-    var dtAnimal='';
-    var vd=row[4];
-    if(vd instanceof Date){ dtAnimal=vd.toISOString().substring(0,10); }
-    else if(typeof vd==='number' && vd>40000 && vd<60000){ var dd=new Date(Math.round((vd-25569)*86400*1000)); dtAnimal=dd.toISOString().substring(0,10); }
-    else if(typeof vd==='string' && vd.trim()){
-      var s=vd.trim();
-      if(/^\d{4}-\d{2}-\d{2}/.test(s)) dtAnimal=s.substring(0,10);
-      else { var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); if(m) dtAnimal=m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2); }
-    }
-    if(!dtAnimal) dtAnimal=data; // se a linha não tem data, usa a data geral do topo
-    animais.push({brinco:String(row[0]).trim(), peso:peso, lote:lote, obs:obs, data:dtAnimal});
-  }
-  return {data:data, animais:animais};
-}
+
 
 // ── Render da página de consulta ──
 function rPesagem(){
@@ -5911,9 +5868,10 @@ function rPesagem(){
   if(box){
     if(CU && CU.r==='Consultor'){
       box.innerHTML='<div class="card" style="padding:14px;margin-top:10px">'
-        +'<div style="font-size:13px;font-weight:800;color:#1B5E20;margin-bottom:4px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> Importar pesagem (planilha)</div>'
-        +'<div style="font-size:11px;color:#888;margin-bottom:8px">Selecione a planilha de pesagem (.xlsx). Os lotes que vierem na planilha <b>substituem</b> os mesmos lotes já salvos; os demais permanecem.</div>'
-        +'<input id="pes-file" type="file" accept=".xlsx,.xls" onchange="pesagemArquivo(this)" style="width:100%;font-size:12px;padding:8px;border:1px dashed #A5D6A7;border-radius:8px;background:#F1F8E9">'
+        +'<div style="font-size:13px;font-weight:800;color:#1B5E20;margin-bottom:4px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> Buscar pesagens do curral</div>'
+        +'<div style="font-size:11px;color:#888;margin-bottom:8px">Direto do sistema de pesagem, sem exportar. Só lê o curral; grava aqui no app.</div>'
+        +'<button onclick="pesCurralBuscar()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer">Buscar pesagens do curral</button>'
+        +'<div id="pes-curral-lista" style="margin-top:10px"></div>'
         +'<div id="pes-import-preview" style="margin-top:10px"></div>'
         +'</div>';
     } else { box.innerHTML=''; }
@@ -6074,35 +6032,7 @@ function rPesagemBusca(){
 
 // ── Importação (Consultor) ──
 var _pesImport=null;
-function pesagemArquivo(input){
-  var f=input.files&&input.files[0]; if(!f)return;
-  var prev=document.getElementById('pes-import-preview');
-  if(prev)prev.innerHTML='<div style="font-size:12px;color:#888">Lendo planilha...</div>';
-  _carregarXLSX(function(){
-    var reader=new FileReader();
-    reader.onload=function(e){
-      try{
-        var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});
-        var parsed=_pesagemParsePlanilha(wb);
-        if(!parsed.animais.length){ prev.innerHTML='<div style="color:#C62828;font-size:12px">Não encontrei animais na planilha. Confira se é a planilha de pesagem padrão.</div>'; return; }
-        _pesImport=parsed;
-        // resumo por lote
-        var porLote={};
-        parsed.animais.forEach(function(a){porLote[a.lote]=(porLote[a.lote]||0)+1;});
-        var linhas=Object.keys(porLote).sort(function(x,y){return x-y;}).map(function(l){
-          var jaTem=(S.PESAGEM&&S.PESAGEM[l])?' <span style="color:#E65100">(substitui o atual)</span>':' <span style="color:#2E7D32">(novo)</span>';
-          return '<div style="font-size:12px;padding:2px 0">Lote '+l+': '+porLote[l]+' animais'+jaTem+'</div>';
-        }).join('');
-        prev.innerHTML='<div style="background:#F1F8E9;border-radius:8px;padding:10px">'
-          +'<div style="font-size:12px;font-weight:700;color:#1B5E20">Data da pesagem: '+_dataBR(parsed.data)+' · '+parsed.animais.length+' animais</div>'
-          +'<div style="margin:6px 0">'+linhas+'</div>'
-          +'<button onclick="pesagemConfirmarImport()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">✅ Importar e salvar</button>'
-          +'</div>';
-      }catch(err){ prev.innerHTML='<div style="color:#C62828;font-size:12px">Erro ao ler a planilha: '+err.message+'</div>'; }
-    };
-    reader.readAsArrayBuffer(f);
-  });
-}
+
 // Conta quantos animais da importação já existem IDÊNTICOS (mesma data+brinco+peso) no histórico.
 // Serve pra avisar quando o MESMO arquivo é reimportado sem querer.
 function _pesagemContarIdenticos(lista){
@@ -6155,8 +6085,60 @@ function _reconstruirHistoricoPorBrinco(){
   S.PESAGEM_BRINCO=porBrinco;
   return porBrinco;
 }
+
+// ═══ v7.52: BUSCAR PESAGENS DO CURRAL (sistema pesagem-curral, só leitura) ═══
+// Lotes ficam com o MESMO número do curral (igual à antiga importação por Excel).
+var PES_CURRAL_URL='https://script.google.com/macros/s/AKfycby4lOB4zXu2dCBoA-pda6U_do8v9GDvNuH0dFOY6u5kc7FP7gZdPKofZX5Dt-QgnT4V/exec';
+function _pcFaz(){ return (CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'Fazenda Estrela'); }
+function _pcJsonp(params,ok,erro){
+  if(!navigator.onLine){ erro('Sem internet agora.'); return; }
+  var cb='_pc_'+Date.now()+'_'+Math.floor(Math.random()*9999), s=document.createElement('script'), feito=false;
+  var q=Object.keys(params).map(function(k){return k+'='+encodeURIComponent(params[k]);}).join('&');
+  s.src=PES_CURRAL_URL+'?'+q+'&callback='+cb+'&t='+Date.now();
+  window[cb]=function(r){ feito=true; delete window[cb]; if(s.parentNode)s.parentNode.removeChild(s); if(r&&r.ok) ok(r); else erro((r&&(r.erro||r.msg))||'resposta inválida'); };
+  s.onerror=function(){ if(feito)return; delete window[cb]; if(s.parentNode)s.parentNode.removeChild(s); erro('não consegui falar com o sistema do curral'); };
+  setTimeout(function(){ if(!feito){ try{delete window[cb];}catch(e){} erro('o curral demorou para responder'); } },20000);
+  document.body.appendChild(s);
+}
+function _pcDatasNoApp(){
+  var t={}; Object.keys(S.PESAGEM||{}).forEach(function(l){ var p=S.PESAGEM[l]||{}; if(p.data)t[String(p.data).substring(0,10)]=1;
+    (p.historico||[]).forEach(function(h){ if(h.data)t[String(h.data).substring(0,10)]=1; }); }); return t;
+}
+function pesCurralBuscar(){
+  var el=document.getElementById('pes-curral-lista'); if(!el)return;
+  document.getElementById('pes-import-preview').innerHTML='';
+  el.innerHTML='<div style="font-size:12px;color:#888">Buscando no curral…</div>';
+  _pcJsonp({acao:'pesagem_datas',fazenda:_pcFaz()},function(r){
+    var tem=_pcDatasNoApp(), ds=r.datas||[];
+    if(!ds.length){ el.innerHTML='<div style="font-size:12px;color:#888">Nenhuma pesagem da '+_pcFaz()+' no curral.</div>'; return; }
+    el.innerHTML=ds.map(function(x){ var ja=!!tem[x.data];
+      return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid #f0f0f0">'
+        +'<span style="font-size:13px"><b>'+_dataBR(x.data)+'</b> <span style="color:#666">· '+x.qtd+' animais</span></span>'
+        +(ja?'<span style="font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px;background:#ECEFF1;color:#546E7A">já está no app</span>'
+            :'<button onclick="pesCurralLer(\''+x.data+'\')" style="font-size:12px;font-weight:800;padding:6px 12px;border-radius:20px;border:1.5px solid #1B5E20;background:#E8F5E9;color:#1B5E20;cursor:pointer">Importar</button>')
+        +'</div>'; }).join('');
+  },function(m){ el.innerHTML='<div style="font-size:12px;color:#C62828">'+m+'. Tente de novo.</div>'; });
+}
+function pesCurralLer(data){
+  var prev=document.getElementById('pes-import-preview'); if(!prev)return;
+  prev.innerHTML='<div style="font-size:12px;color:#888">Lendo a pesagem de '+_dataBR(data)+'…</div>';
+  _pcJsonp({acao:'pesagem_ler',fazenda:_pcFaz(),data:data},function(r){
+    var animais=(r.animais||[]).filter(function(a){return a&&a.brinco!=null&&a.peso!=null&&a.lote!=null;})
+      .map(function(a){ return {brinco:String(a.brinco).trim(), peso:parseFloat(a.peso), lote:String(a.lote), obs:a.obs||'', data:data}; });
+    if(!animais.length){ prev.innerHTML='<div style="font-size:12px;color:#C62828">Essa data veio sem animais.</div>'; return; }
+    _pesImport={data:data, animais:animais};
+    var porLote={}; animais.forEach(function(a){porLote[a.lote]=(porLote[a.lote]||0)+1;});
+    var linhas=Object.keys(porLote).sort(function(x,y){return x-y;}).map(function(l){
+      return '<div style="font-size:12px;padding:2px 0">Lote '+l+': '+porLote[l]+' animais</div>'; }).join('');
+    prev.innerHTML='<div style="background:#F1F8E9;border-radius:8px;padding:10px">'
+      +'<div style="font-size:12px;font-weight:700;color:#1B5E20">Pesagem do curral: '+_dataBR(data)+' · '+animais.length+' animais</div>'
+      +'<div style="margin:6px 0">'+linhas+'</div>'
+      +'<button onclick="pesagemConfirmarImport()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Importar e salvar</button>'
+      +'</div>';
+  },function(m){ prev.innerHTML='<div style="font-size:12px;color:#C62828">'+m+'. Tente de novo.</div>'; });
+}
 function pesagemConfirmarImport(){
-  if(!_pesImport){ alert('Selecione uma planilha primeiro.'); return; }
+  if(!_pesImport){ alert('Escolha uma pesagem do curral primeiro.'); return; }
   // 1) avisa se a importação é IDÊNTICA (mesmo arquivo: data+brinco+peso já existem)
   var iguais=_pesagemContarIdenticos(_pesImport.animais);
   if(iguais>0){
@@ -7027,7 +7009,7 @@ function gerarRelPagamentosPDF(){
   setTimeout(function(){j.print();},800);
 }
 
-function enviarRelatorioWppGPL(){ gerarPDFRelFazenda(); }
+
 function gerarPDFRelFazenda(){
   var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'Fazenda Estrela');
   var lotes=(S.LOTES||[]).filter(function(l){return(l.status||'ativo')!=='vendido';});
@@ -8683,25 +8665,9 @@ function rListDesp(){if(!S.rDesp)S.rDesp=[];const faz=(document.getElementById('
 // ═══ GRÁFICO ═══
 function rChart(){}
 
-function expCSV(){if(!S.rD.length&&!S.rT.length&&!S.rC.length&&!S.rE.length){alert('Nenhum registro.');return;}let csv='Tipo,Fazenda,Nome,Data,Detalhe,Valor,Avaliação,Escore\n';S.rD.filter(r=>r.tipo==='diaria').forEach(r=>csv+=`Diária,"${r.faz}","${r.n}",${r.dt},"${r.srv}",${r.v.toFixed(2)},"${r.av}",""\n`);S.rE.forEach(r=>csv+=`Escore,"${r.faz}","${r.n||''}",${r.dt},"${r.co||''}","","",${r.es}\n`);S.rT.forEach(r=>csv+=`Trato,"${r.faz}","${r.n}",${r.dt},"${r.co} ${r.pr} ${r.q}${r.unid}","","",""\n`);S.rC.forEach(r=>csv+=`Cantina,"${r.faz}","${r.resp}",${r.dt},"${r.det}",${r.total.toFixed(2)},"",""\n`);const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download='GPL-'+TD+'.csv';a.click();}
-function gerarRelatorioPDF(){const faz=(document.getElementById('pf')||{}).value||'Todas';const lv=filtrar(S.rD.filter(r=>r.tipo==='diaria'),perA);const lc=filtrar(S.rC,perA);const totalD=lv.reduce((a,r)=>a+r.v,0);const totalC=lc.reduce((a,r)=>a+r.total,0);const rows=lv.map(r=>`<tr><td>${(r.dt||'').split('-').reverse().join('/')}</td><td>${r.n}</td><td>${r.srv}</td><td>${r.faz}</td><td style="text-align:right">R$ ${r.v.toFixed(2).replace('.',',')}</td><td>${r.pago?'OK Pago':'⏳ Pendente'}</td></tr>`).join('');const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Relatório GPL</title><style>body{font-family:Arial;padding:20px;font-size:12px}h1{color:#1B5E20}table{width:100%;border-collapse:collapse;margin-top:8px}th{background:#1B5E20;color:#fff;padding:6px 8px;text-align:left}td{padding:5px 8px;border-bottom:1px solid #eee}tr:nth-child(even){background:#f9f9f9}.total{font-weight:bold;color:#1B5E20;font-size:14px;margin-top:12px}@media print{button{display:none}}
-.badge-pend{background:#FFF3E0;color:#E65100;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;border:1px solid #FFB300}
-.badge-ok{background:#E8F5E9;color:#2E7D32;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700}
-.btn-edit{padding:3px 8px;font-size:11px;background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9;border-radius:5px;cursor:pointer;margin-left:4px}
-.btn-val{padding:3px 8px;font-size:11px;background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;border-radius:5px;cursor:pointer;margin-left:4px}
-.edit-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center}
-.edit-modal.open{display:flex}
-.edit-box{background:#fff;border-radius:16px;padding:22px;width:95%;max-width:420px;max-height:90vh;overflow-y:auto}
-</style></head><body><div style="display:flex;justify-content:space-between;margin-bottom:16px"><div><div style="font-size:20px;font-weight:bold;color:#1B5E20">Gestão Pecuária Lucrativa</div><div style="color:#666;font-size:11px">GPL</div></div><div style="text-align:right;font-size:11px;color:#666">Emitido em: ${new Date().toLocaleDateString('pt-BR')}<br>Fazenda: ${faz}</div></div><table><tr><th>Data</th><th>Colaborador</th><th>Serviço</th><th>Fazenda</th><th>Valor</th><th>Status</th></tr>${rows}</table><div class="total">Total diárias: R$ ${totalD.toFixed(2).replace('.',',')}</div><div class="total">Total cantina: R$ ${totalC.toFixed(2).replace('.',',')}</div><br><button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;font-size:13px">🖨️ Imprimir / Salvar PDF</button></body></html>`;const w=window.open('','_blank');w.document.write(html);w.document.close();}
-function gerarReciboPDF(){const faz=(document.getElementById('pf')||{}).value||'';let lv=filtrar(S.rD.filter(r=>r.tipo==='diaria'),perA);if(faz)lv=lv.filter(r=>r.faz===faz);const por={};lv.forEach(r=>{if(!por[r.n])por[r.n]=[];por[r.n].push(r);});const dono=(S.US.find(u=>u.r==='Dono'&&(!faz||u.fs.includes(faz)))||{}).n||faz;const recibos=Object.keys(por).map(nome=>{const regs=por[nome];const total=regs.reduce((a,r)=>a+r.v,0);const rows=regs.map(r=>`<tr><td>${(r.dt||'').split('-').reverse().join('/')}</td><td>${r.srv}</td><td style="text-align:right">R$ ${r.v.toFixed(2).replace('.',',')}</td></tr>`).join('');return`<div style="border:1px solid #ccc;border-radius:8px;padding:20px;margin-bottom:30px;page-break-inside:avoid"><div style="display:flex;justify-content:space-between"><strong style="font-size:16px;color:#1B5E20">RECIBO</strong><div style="font-size:11px;color:#666">${new Date().toLocaleDateString('pt-BR')}</div></div><div style="margin:12px 0"><strong>Pagador:</strong> ${dono} — ${faz}</div><div style="margin-bottom:12px"><strong>Beneficiário:</strong> ${nome}</div><table style="width:100%;border-collapse:collapse;font-size:12px"><tr><th style="background:#1B5E20;color:#fff;padding:5px 8px;text-align:left">Data</th><th style="background:#1B5E20;color:#fff;padding:5px 8px;text-align:left">Serviço</th><th style="background:#1B5E20;color:#fff;padding:5px 8px;text-align:right">Valor</th></tr>${rows}</table><div style="margin-top:12px;font-size:15px;font-weight:bold;color:#1B5E20">Total: R$ ${total.toFixed(2).replace('.',',')}</div><div style="margin-top:30px;border-top:1px solid #eee;padding-top:12px;display:flex;justify-content:space-between"><div style="text-align:center;width:45%"><div style="border-top:1px solid #333;margin-top:30px;padding-top:5px;font-size:11px">${dono}<br>Fazendeiro</div></div><div style="text-align:center;width:45%"><div style="border-top:1px solid #333;margin-top:30px;padding-top:5px;font-size:11px">${nome}<br>Prestador de serviço</div></div></div></div>`;}).join('');const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Recibos</title><style>body{font-family:Arial;padding:20px;font-size:13px}@media print{button{display:none}}
-.badge-pend{background:#FFF3E0;color:#E65100;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;border:1px solid #FFB300}
-.badge-ok{background:#E8F5E9;color:#2E7D32;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700}
-.btn-edit{padding:3px 8px;font-size:11px;background:#E3F2FD;color:#1565C0;border:1px solid #90CAF9;border-radius:5px;cursor:pointer;margin-left:4px}
-.btn-val{padding:3px 8px;font-size:11px;background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;border-radius:5px;cursor:pointer;margin-left:4px}
-.edit-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center}
-.edit-modal.open{display:flex}
-.edit-box{background:#fff;border-radius:16px;padding:22px;width:95%;max-width:420px;max-height:90vh;overflow-y:auto}
-</style></head><body><div style="text-align:center;margin-bottom:20px"><strong style="font-size:18px;color:#1B5E20">Gestão Pecuária Lucrativa</strong><br><span style="color:#666;font-size:12px">GPL — ${faz||'Todas'}</span></div>${recibos}<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:8px 20px;border:none;border-radius:6px;cursor:pointer;font-size:13px">🖨️ Imprimir</button></body></html>`;const w=window.open('','_blank');w.document.write(html);w.document.close();}
+
+
+
 
 // ═══ CONSULTOR ═══
 function salvarNota(faz,k){if(!S.NOTAS)S.NOTAS={};const ta=document.getElementById('nota-'+k);if(ta){S.NOTAS[faz]=ta.value;salvar();ta.style.borderColor='#2E7D32';setTimeout(()=>ta.style.borderColor='#ddd',1000);}}
@@ -11454,8 +11420,8 @@ function expHistCSV(){
   a.click();
 }
 
-function compartilharNota(faz,k){salvarNota(faz,k);const nota=S.NOTAS[faz]||'';const diarias=(S.rD||[]).filter(r=>r.faz===faz&&r.tipo==='diaria');const desp=(S.rDesp||[]).filter(r=>r.faz===faz&&r.st==='pagar');const totalD=diarias.reduce((a,r)=>a+r.v,0);const totalP=desp.reduce((a,r)=>a+r.val,0);let msg=`🌿 *GPL — Gestão Pecuária Lucrativa*\n*Rogério · Consultor GPL*\n\n🏠 *${faz}*\n📅 ${new Date().toLocaleDateString('pt-BR')}\n\n *Resumo:*\n• Diárias: R$ ${totalD.toFixed(2).replace('.',',')} (${diarias.length} reg.)\n`;if(totalP>0)msg+=`• A pagar: R$ ${totalP.toFixed(2).replace('.',',')}\n`;if(nota)msg+=`\n📝 *Observações:*\n${nota}`;window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');}
-function enviarRelatorioWpp(){const fazendas=Object.keys(S.FAZ);let msg='🌿 *GPL — Gestão Pecuária Lucrativa*\nRogério · Consultor GPL\n📅 '+new Date().toLocaleDateString('pt-BR')+'\n\n*RESUMO GERAL*\n\n';fazendas.forEach(faz=>{const diarias=(S.rD||[]).filter(r=>!r._apagado&&r.faz===faz&&r.tipo==='diaria');const desp=(S.rDesp||[]).filter(r=>r.faz===faz&&r.st==='pagar');const lotes=(S.LOTES||[]).filter(l=>l.faz===faz);const totalD=diarias.reduce((a,r)=>a+r.v,0);const totalP=desp.reduce((a,r)=>a+r.val,0);const animais=lotes.reduce((a,l)=>a+l.qtd,0);msg+=`🏠 *${faz}*\n• ${animais} animais · ${diarias.length} diárias · R$ ${totalD.toFixed(2).replace('.',',')}\n`;if(totalP>0)msg+=`• ⚠️ A pagar: R$ ${totalP.toFixed(2).replace('.',',')}\n`;const nota=S.NOTAS&&S.NOTAS[faz];if(nota)msg+=`• 📝 ${nota}\n`;msg+='\n';});window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');}
+
+
 
 // ══ APLICAR PREÇOS DA CANTINA ══
 function _aplicarPRCantina(){
@@ -12079,59 +12045,7 @@ rPan = function(){
 };
 
 // ═══ RELATÓRIO COM FILTRO DE DATA ═══
-function abrirRelatorioFiltrado(){
-  var ex=document.getElementById('modal-relatorio');
-  if(ex)ex.remove();
-  
-  var hoje=new Date().toISOString().split('T')[0];
-  var ma=new Date();ma.setMonth(ma.getMonth()-1);
-  var maStr=ma.toISOString().split('T')[0];
-  
-  var overlay=document.createElement('div');
-  overlay.id='modal-relatorio';
-  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
-  
-  var box=document.createElement('div');
-  box.style.cssText='background:#fff;border-radius:16px;padding:22px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto';
-  
-  var fazOpts='<option value="">Todas</option>'+Object.keys(S.FAZ).map(function(f){return'<option value="'+f+'">'+f+'</option>';}).join('');
-  
-  box.innerHTML=''
-    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'
-    +'<span style="font-size:16px;font-weight:700;color:#1B5E20">&#x1F4CA; Relatório com filtro</span>'
-    +'<span id="rel-close" style="cursor:pointer;font-size:24px;color:#888;line-height:1">&#x00D7;</span>'
-    +'</div>'
-    +'<div style="margin-bottom:10px"><div style="font-size:12px;color:#666;margin-bottom:4px">Fazenda</div>'
-    +'<select id="rel-faz" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px">'+fazOpts+'</select></div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'
-    +'<div><div style="font-size:12px;color:#666;margin-bottom:4px">Data início</div>'
-    +'<input type="date" id="rel-de" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div>'
-    +'<div><div style="font-size:12px;color:#666;margin-bottom:4px">Data fim</div>'
-    +'<input type="date" id="rel-ate" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px"></div>'
-    +'</div>'
-    +'<div style="margin-bottom:12px"><div style="font-size:12px;color:#666;margin-bottom:6px">Tipo</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'
-    +'<label style="display:flex;align-items:center;gap:6px;padding:8px;border:1px solid #ddd;border-radius:8px"><input type="checkbox" id="rel-diaria" checked> Diárias</label>'
-    +'<label style="display:flex;align-items:center;gap:6px;padding:8px;border:1px solid #ddd;border-radius:8px"><input type="checkbox" id="rel-cantina" checked> Cantina</label>'
-    +'<label style="display:flex;align-items:center;gap:6px;padding:8px;border:1px solid #ddd;border-radius:8px"><input type="checkbox" id="rel-trato" checked> Tratos</label>'
-    +'<label style="display:flex;align-items:center;gap:6px;padding:8px;border:1px solid #ddd;border-radius:8px"><input type="checkbox" id="rel-escore" checked> Escores</label>'
-    +'</div></div>'
-    +'<button id="rel-pdf-btn" style="width:100%;padding:12px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px">&#x1F4C4; Gerar PDF</button>'
-    +'<button id="rel-csv-btn" style="width:100%;padding:10px;background:#f5f5f5;color:#333;border:1px solid #ddd;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer">&#x2B07; Exportar CSV</button>';
-  
-  overlay.appendChild(box);
-  document.body.appendChild(overlay);
-  
-  // Setar datas após inserir no DOM
-  document.getElementById('rel-de').value=maStr;
-  document.getElementById('rel-ate').value=hoje;
-  
-  // Event listeners
-  document.getElementById('rel-close').onclick=function(){overlay.remove();};
-  overlay.onclick=function(e){if(e.target===overlay)overlay.remove();};
-  document.getElementById('rel-pdf-btn').onclick=gerarRelatorioFiltrado;
-  document.getElementById('rel-csv-btn').onclick=gerarCSVFiltrado;
-}
+
 
 function getRelFiltro(){
   var faz = (document.getElementById('rel-faz')||{}).value||'';
@@ -12494,6 +12408,8 @@ function salvarCampoUser(i,campo,elId){
   if(el){el.style.borderColor='#2E7D32';setTimeout(function(){el.style.borderColor='#ddd';},1000);}
 }
 
+// v7.51: fecharFC era chamada mas não existia (dava erro e a tela do Painel não atualizava depois de marcar pago)
+function fecharFC(){ var fc=document.getElementById('fc-modal'); if(fc) fc.classList.remove('open'); }
 function abrirFecharConta(){
   var m=document.getElementById('fc-modal');
   if(!m)return;
@@ -12917,33 +12833,14 @@ function gerarPDFFConta(){
   pdfModalAbrir('Fechamento de Conta', html);
 }
 
-function enviarFCWpp(){
-  var msg=gerarFCMsg();
-  var faz=window._fcFaz||'';
-  var dono=S.US.find(function(u){return u.r==='Dono'&&(!faz||u.fs.length===0||u.fs.includes(faz));});
-  var tel=dono&&dono.tel?dono.tel.replace(/[^\d]/g,''):'';
-  var url=tel?'https://wa.me/'+tel+'?text='+encodeURIComponent(msg):'https://wa.me/?text='+encodeURIComponent(msg);
-  window.open(url,'_blank');
-}
-
-function copiarFCMsg(){
-  var msg=gerarFCMsg();
-  if(navigator.clipboard)navigator.clipboard.writeText(msg).then(function(){alert('Copiado!');});
-  else{var t=document.createElement('textarea');t.value=msg;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);alert('Copiado!');}
-}
 
 
-function enviarFechamentoWpp(msgEnc,tel){
-  var msg=decodeURIComponent(msgEnc);
-  var url=tel?'https://wa.me/'+tel.replace(/\D/g,'')+'?text='+encodeURIComponent(msg):'https://wa.me/?text='+encodeURIComponent(msg);
-  window.open(url,'_blank');
-}
 
-function copiarFechamento(msgEnc){
-  var msg=decodeURIComponent(msgEnc);
-  if(navigator.clipboard)navigator.clipboard.writeText(msg).then(function(){alert('✅ Mensagem copiada!');});
-  else{var t=document.createElement('textarea');t.value=msg;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);alert('✅ Copiada!');}
-}
+
+
+
+
+
 
 // Init modal fechar conta
 document.addEventListener('DOMContentLoaded',function(){
