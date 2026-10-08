@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 08/10/2026 v7.46</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 08/10/2026 v7.48</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2563,12 +2563,25 @@ function rBoletim(){
 function _bolSugerirIA(){
   if(!(S.cfgGS&&navigator.onLine)){ alert('⚠️ Sem internet. A sugestão da IA precisa de conexão.'); return; }
   var d=_bolDados(_bolSem), bt=document.getElementById('bol-ia-bt'); if(bt){bt.disabled=true;bt.lastChild.textContent='Escrevendo…';}
-  var dados={fazenda:d.fazenda, semana:d.janela.ini+' a '+d.janela.fim, dias_considerados:d.janela.dias, cabecas:d.cab, lotes:d.lotes, estoque:d.estoque, mudancas_de_pasto:d.mudancas, orientacoes_do_consultor:d.orientacoes};
+  // v7.47: cada número vai com a UNIDADE junto (a IA trocava % por gramas e inventava na orientação)
+  var fmtD=function(s){ return s?s.substring(8,10)+'/'+s.substring(5,7):''; };
+  var lotesIA=d.lotes.map(function(l){ return {lote:l.lote, pasto:l.pasto, cabecas:l.cab+' cab', produto:l.prod||'',
+      sacos_na_semana:l.sacos+' saco'+(l.sacos===1?'':'s'),
+      suplemento:(l.gCabDia!=null?l.gCabDia+' g/cab/dia':'sem trato lançado'),
+      feno:(l.fenoKgCabDia!=null?String(l.fenoKgCabDia).replace('.',',')+' kg/cab/dia':'sem feno'),
+      vs_previsto:(l.dif!=null?((l.dif>0?'+':'')+Math.round(l.dif*100)+'%'):'sem comparação'),
+      dias_considerados:l.dias+' dias', orientado:l.orientado?'sim':'não', observacao:l.marca||'' }; });
+  var oriIA=d.orientacoes.map(function(o){ return {lote:o.lote, produto:o.prod,
+      orientacao:_fmtN(o.sacos,0)+' saco'+(parseFloat(o.sacos)>1?'s':'')+' '+_freqTxt(o.freq).toLowerCase(), desde:fmtD(o.dt), visto_por:(o.vistos||[]).join(', ')||'ainda não visto'}; });
+  var estIA=d.estoque.map(function(e){ return {produto:e.nome, saldo:e.saldo, cobre:(e.dias!=null?e.dias+' dias':'sem consumo para calcular'), situacao:e.comprar?'comprar':'ok'}; });
+  var dados={fazenda:d.fazenda, semana:fmtD(d.janela.ini)+' a '+fmtD(d.janela.fim), dias_considerados:d.janela.dias+' dias', cabecas:d.cab+' cab', lotes:lotesIA, estoque:estIA, mudancas_de_pasto:d.mudancas, orientacoes_do_consultor:oriIA};
   var perg='Escreva o RECADO DO CONSULTOR para o PROPRIETÁRIO da fazenda sobre esta semana. 3 a 6 linhas, texto corrido, primeira pessoa (eu, o consultor), tom próximo e profissional. '
-    +'NÃO cite valores em R$ nem custos. Destaque o que importa pro dono: consumo dos lotes em relação ao previsto, o que já foi orientado à equipe, estoque que precisa comprar (com prazo) e mudanças de pasto relevantes. Sem listas, sem títulos, sem assinatura.';
+    +'NÃO cite valores em R$ nem custos. Destaque o que importa pro dono: consumo dos lotes em relação ao previsto, o que já foi orientado à equipe, estoque que precisa comprar (com prazo) e mudanças de pasto relevantes. Sem listas, sem títulos, sem assinatura. '
+    +'REGRAS DE NÚMEROS: use exatamente os números e as unidades recebidos, não converta nem invente. "vs_previsto" é porcentagem (ex.: -44% = 44% abaixo do previsto), nunca gramas. '
+    +'Ao citar orientação, copie o texto do campo "orientacao" (ex.: "1 saco a cada 3 dias"); não diga "a mais" nem mude a quantidade. Se um lote está "sem trato lançado", diga que não houve lançamento, não que o consumo caiu.';
   var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
   var cb='_bia_'+Date.now(), s=document.createElement('script');
-  s.src=getFazGasUrl(faz)+'?acao=pergunta_ia&data='+encodeURIComponent(JSON.stringify({pergunta:perg,dados:dados}))+'&callback='+cb+'&t='+Date.now();
+  s.src=getFazGasUrl(faz)+'?acao=pergunta_ia&data='+encodeURIComponent(JSON.stringify({pergunta:perg,dados:dados,modo:'recado'}))+'&callback='+cb+'&t='+Date.now();
   var fim=function(){ if(s.parentNode)s.parentNode.removeChild(s); var b=document.getElementById('bol-ia-bt'); if(b){b.disabled=false;b.lastChild.textContent='Sugerir recado com IA';} };
   window[cb]=function(r){ delete window[cb]; fim(); if(r&&r.saldo){ _iaSaldo=r.saldo; try{rIaPerg();}catch(e){} }
     if(r&&r.ok&&r.texto){ var t=document.getElementById('bol-recado'); var atual=t?t.value.trim():'';
