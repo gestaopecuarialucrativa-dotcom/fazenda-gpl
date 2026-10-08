@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 08/10/2026 v7.54</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 08/10/2026 v7.55</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -7973,6 +7973,8 @@ function _alertaTrato(){
   var dow=agora.getDay();        // 0=domingo
   var hora=agora.getHours()+agora.getMinutes()/60;
   if(dow===0 || hora<11){ el.style.display='none'; return; }
+  // v7.55: consultor acompanha pela Agenda de trato e pelo Consumo no cocho (Painel); este aviso fica só pra equipe
+  if(CU && CU.r==='Consultor'){ el.style.display='none'; return; }
   var hojeISO=agora.getFullYear()+'-'+String(agora.getMonth()+1).padStart(2,'0')+'-'+String(agora.getDate()).padStart(2,'0');
   function _bl(x){return String(x||'').split('(')[0].trim();}
   // ja marcou "nao precisa hoje" pra esse lote?
