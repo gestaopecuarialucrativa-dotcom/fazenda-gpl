@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 08/10/2026 v7.56</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 15/10/2026 v7.57</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -332,6 +332,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 
 <!-- Mini-mapa da fazenda -->
 <div id="alerta-trato" style="display:none"></div>
+<div class="card" id="vaq-trato-dia" style="padding:14px;display:none;margin-bottom:10px"></div>
 <div id="alerta-rotacao" style="display:none"></div>
 <div id="home-mapa-card" style="margin-bottom:12px;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.1)">
   <div onclick="sp('mapa',true,'home')" style="background:linear-gradient(135deg,#1a5c10,#2d7a1f);padding:8px 12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent">
@@ -383,8 +384,10 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
   </div>
 </div>
 
+<!-- v7.57: Meus lançamentos (só vaqueiro) -->
+<div class="card" id="meus-lanc" style="padding:14px;display:none"></div>
 <!-- Calendário de Lançamentos -->
-<div class="card" style="padding:14px">
+<div class="card" id="cal-card" style="padding:14px">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
     <div class="stit" style="margin:0">📅 Lançamentos</div>
     <div style="display:flex;align-items:center;gap:8px">
@@ -2455,7 +2458,9 @@ function _agEsperado(lote,prod,d,tr){
 function _agItem(lote,prod,d,tr){
   var e=_agEsperado(lote,prod,d,tr), r=tr[d], q=r?r.sacos:0, st;
   if(!e&&!r) return null;
-  if(!e) st={k:'fora',t:_fmtN(q,0)+' saco'+(q>1?'s':'')+' · fora da agenda',c:'#2E7D32',bg:'#E8F5E9'};
+  var semT=(!r&&e)?(S.rT||[]).filter(function(x){ return x.tipo==='sem_trato'&&!x._apagado&&_lbCons(x.lote)===_lbCons(lote)&&(x.dt||'').substring(0,10)===d; })[0]:null;
+  if(semT) st={k:'naoprec',t:'não precisou · '+String(semT.motivo||'').toLowerCase()+(semT.n?' ('+semT.n+')':''),c:'#6D4C41',bg:'#EFEBE9'};
+  else if(!e) st={k:'fora',t:_fmtN(q,0)+' saco'+(q>1?'s':'')+' · fora da agenda',c:'#2E7D32',bg:'#E8F5E9'};
   else if(!r) st=d<TD?{k:'nao',t:_fmtN(e.sacos,0)+' saco'+(e.sacos>1?'s':'')+' · não lançado',c:'#C62828',bg:'#FDECEA'}
                     :{k:'fazer',t:_fmtN(e.sacos,0)+' saco'+(e.sacos>1?'s':'')+' · a fazer',c:'#546E7A',bg:'#ECEFF1'};
   else if(q<e.sacos-0.25) st={k:'faltou',t:'foi '+_fmtN(q,0)+' de '+_fmtN(e.sacos,0)+' · faltou',c:'#E65100',bg:'#FFF3E0'};
@@ -2496,6 +2501,35 @@ function rAgenda(){
     +'<div style="display:flex;gap:5px">'+dias+'</div>'
     +'<div style="font-size:13px;font-weight:800;color:#1B5E20;margin:12px 0 2px">'+dnL[_dow(_agDia)]+', '+_agDia.substring(8,10)+'/'+_agDia.substring(5,7)+(_agDia===TD?' · hoje':'')+'</div>'
     +corpo+'</div>';
+}
+// v7.57: card único do vaqueiro (substitui Falta lançar trato + Agenda + Tratos de hoje)
+function rTratoDia(){
+  var el=document.getElementById('vaq-trato-dia'); if(!el) return;
+  if(!(CU&&CU.r==='Vaqueiro')){ el.style.display='none'; return; }
+  var dnL=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+  var tit='<div style="font-size:14px;font-weight:800;color:#1B5E20;display:flex;align-items:center;gap:6px;margin-bottom:4px">'
+    +'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>'
+    +'Trato de hoje · '+dnL[_dow(TD)]+' '+TD.substring(8,10)+'/'+TD.substring(5,7)+'</div>';
+  var lotes=_agLotes(); lotes.forEach(function(x){ x.tr=_agTratos(x.lote,x.prod); });
+  if(!lotes.length){ el.style.display='none'; return; }
+  var h='';
+  if(_dow(TD)===DIA_FOLGA){ h='<div style="font-size:12px;color:#999;padding:8px 0">Domingo é folga. O trato de hoje foi no sábado.</div>'; }
+  else {
+    var its=_agDiaItens(TD,lotes);
+    if(!its.length) h='<div style="font-size:12px;color:#999;padding:8px 0">Nenhum trato previsto para hoje.</div>';
+    its.forEach(function(it){
+      var nmJs=String(it.lote).replace(/\\/g,'').replace(/'/g,"\\'");
+      h+=_agLinha(it);
+      if(it.st.k==='fazer') h+='<div style="display:flex;gap:7px;padding:0 0 9px">'
+        +'<button onclick="irParaTratoLote(\''+nmJs+'\')" style="flex:1;padding:10px;background:#1B5E20;color:#fff;border:none;border-radius:9px;font-size:12.5px;font-weight:800;cursor:pointer">Lançar trato</button>'
+        +'<button onclick="_semTratoLote(\''+nmJs+'\')" style="flex:1;padding:10px;background:#fff;color:#E65100;border:1.5px solid #E65100;border-radius:9px;font-size:12.5px;font-weight:800;cursor:pointer">Não precisa hoje</button></div>';
+    });
+  }
+  var am=_somaDias(TD,1); if(_dow(am)===DIA_FOLGA) am=_somaDias(am,1);
+  var ia=_agDiaItens(am,lotes).filter(function(it){ return it.esp; });
+  h+='<div style="font-size:11.5px;color:#666;border-top:1px solid #f0f0f0;padding-top:8px;margin-top:2px">'+(_diffDias(TD,am)>1?'Segunda':'Amanhã')+' ('+am.substring(8,10)+'/'+am.substring(5,7)+'): '
+    +(ia.length?ia.map(function(it){ return it.lote+' · '+_fmtN(it.esp.sacos,0)+' saco'+(it.esp.sacos>1?'s':''); }).join(' · '):'sem trato previsto')+'</div>';
+  el.innerHTML=tit+h; el.style.display='block';
 }
 function rAgendaVaq(){
   var el=document.getElementById('vaq-agenda'); if(!el) return;
@@ -3124,12 +3158,12 @@ function rEstFeno(){
 }
 
 
-function envD(){const n=(document.getElementById('d-nome')||{}).value||'';const v=parseFloat((document.getElementById('d-val')||{}).value)||0;const faz=(document.getElementById('d-faz')||{}).value||(CU&&CU.fs&&CU.fs.length===1?CU.fs[0]:getFL()[0]||'');const dt=(document.getElementById('d-data')||{}).value||TD;if(!n||!srvSel||!avSel){alert('Preencha nome, serviço e avaliação.');return;}if(n&&faz){if(!S.DIARISTAS)S.DIARISTAS={};if(!S.DIARISTAS[faz])S.DIARISTAS[faz]=[];if(!S.DIARISTAS[faz].includes(n))S.DIARISTAS[faz].push(n);}var _pastosSel=(_dPastos||[]).filter(function(p){return p;});
+function envD(){const n=(document.getElementById('d-nome')||{}).value||'';const v=parseFloat((document.getElementById('d-val')||{}).value)||0;const faz=(document.getElementById('d-faz')||{}).value||(CU&&CU.fs&&CU.fs.length===1?CU.fs[0]:getFL()[0]||'');const dt=(document.getElementById('d-data')||{}).value||TD;if(!n||!srvSel||!avSel){alert('Preencha nome, serviço e avaliação.');return;}if(!_jaLancouOk('diaria',n,dt))return;if(n&&faz){if(!S.DIARISTAS)S.DIARISTAS={};if(!S.DIARISTAS[faz])S.DIARISTAS[faz]=[];if(!S.DIARISTAS[faz].includes(n))S.DIARISTAS[faz].push(n);}var _pastosSel=(_dPastos||[]).filter(function(p){return p;});
 var _pastosLabels=_pastosSel.map(function(id){var a=MAPA_AREAS.find(function(x){return x.id===id;});return a?a.label:id;});
 const r={tipo:'diaria',faz,n,dt,srv:srvSel==='Outro'?(document.getElementById('d-out')||{}).value:srvSel,v,av:avSel,obs:(document.getElementById('d-obs')||{}).value,lancadoPor:CU?CU.n:'',pasto:_pastosLabels.join(', '),pasto_ids:_pastosSel.join(','),praga:_dPraga||''};S.rD.push(r);// despesa criada pelo Fechar Conta
 enviarDado(r);showOk('ok-d');document.getElementById('d-val').value='';document.getElementById('d-obs').value='';document.querySelectorAll('#d-servs .bopt,.avbtn').forEach(b=>b.classList.remove('sel'));srvSel='';avSel='';_dPastos=[''];_dPraga='';var _dd=document.getElementById('d-dyn');if(_dd)_dd.innerHTML='';setTimeout(()=>{sp('home',false);rUlt();},1600);}
 
-function envT(){const co=(document.getElementById('t-cocho')||{}).value;const pr=(document.getElementById('t-prod')||{}).value;const q=parseFloat((document.getElementById('t-qtd')||{}).value)||0;if(!co||!pr||!q){alert('Selecione lote, produto e quantidade.');return;}const dt=(document.getElementById('t-data')||{}).value||TD;const faz=(document.getElementById('t-faz')||{}).value;const cab=parseInt((document.getElementById('t-cab')||{}).value)||0;/* v6.27: trato NÃO baixa mais o q direto — isso causava dupla contagem (o saldo já
+function envT(){const co=(document.getElementById('t-cocho')||{}).value;const pr=(document.getElementById('t-prod')||{}).value;const q=parseFloat((document.getElementById('t-qtd')||{}).value)||0;if(!co||!pr||!q){alert('Selecione lote, produto e quantidade.');return;}const dt=(document.getElementById('t-data')||{}).value||TD;if(!_jaLancouOk('trato',co,dt))return;const faz=(document.getElementById('t-faz')||{}).value;const cab=parseInt((document.getElementById('t-cab')||{}).value)||0;/* v6.27: trato NÃO baixa mais o q direto — isso causava dupla contagem (o saldo já
    desconta o trato via _compraSaldoEst: q - tratado, igual à planilha). Só ENTRADA mexe no q. */
 const pps=(S.EST&&pr&&S.EST[pr]&&S.EST[pr].peso_saco)?S.EST[pr].peso_saco:30;const desp=parseFloat((document.getElementById('t-desp')||{}).value)||0;// Inclui lote_id (ID único do lote) para corte preciso por ciclo no consumo
 var _coLoteObj=(S.LOTES||[]).find(function(l){return l.nome===co||l.nome===co.replace(/\s*\(\d+\s*animais\)\s*$/i,'').trim();});
@@ -3294,7 +3328,46 @@ function calMes(delta){
   rUlt();
 }
 
+var _mlDia=null;
+function rMeusLanc(){
+  var el=document.getElementById('meus-lanc'); if(!el) return;
+  var eu=CU?String(CU.n||''):'';
+  var regs=[];
+  (S.rD||[]).forEach(function(r){ if(r._apagado)return; if(String(r.lancadoPor||r.n||'')!==eu&&String(r.n||'')!==eu)return; regs.push({k:'diaria',r:r}); });
+  (S.rT||[]).forEach(function(r){ if(r._apagado||String(r.n||'')!==eu)return;
+    if(r.tipo==='trato') regs.push({k:'trato',r:r}); else if(r.tipo==='mudanca_pasto') regs.push({k:'mud',r:r}); else if(r.tipo==='sem_trato') regs.push({k:'sem',r:r}); });
+  var cor={trato:'#2E7D32',mud:'#1565C0',diaria:'#E65100',sem:'#8D6E63'}, bg={trato:'#E8F5E9',mud:'#E3F2FD',diaria:'#FFF3E0',sem:'#EFEBE9'}, nm={trato:'Trato',mud:'Mudança',diaria:'Diária',sem:'Não precisou'};
+  function doDia(d){ return regs.filter(function(x){ return String(x.r.dt||x.r.data||'').substring(0,10)===d; }); }
+  if(!_mlDia) _mlDia=TD;
+  var dn=['dom','seg','ter','qua','qui','sex','sáb'], dnL=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'], dias='';
+  for(var k=-6;k<=0;k++){
+    var d=_somaDias(TD,k), on=d===_mlDia, l=doDia(d), fo=_dow(d)===DIA_FOLGA&&!l.length, dots='';
+    l.forEach(function(x){ dots+='<i style="width:6px;height:6px;border-radius:50%;display:block;background:'+(on?'#fff':cor[x.k])+'"></i>'; });
+    dias+='<div onclick="_mlDia=\''+d+'\';rMeusLanc()" style="flex:1;text-align:center;border-radius:10px;padding:6px 0;cursor:pointer;font-size:10.5px;'
+      +(on?'background:#1B5E20;color:#fff':(fo?'background:#f0f0f0;color:#bbb':'background:#f4f6f3;color:#666'))+'">'+dn[_dow(d)]
+      +'<b style="display:block;font-size:15px;color:'+(on?'#fff':(fo?'#bbb':'#333'))+'">'+d.substring(8,10)+'</b>'
+      +(fo?'<div style="font-size:9px">folga</div>':'<div style="display:flex;justify-content:center;gap:2px;margin-top:3px;flex-wrap:wrap;min-height:6px">'+dots+'</div>')+'</div>';
+  }
+  var lis=doDia(_mlDia), corpo='';
+  lis.forEach(function(x){ var r=x.r, t='';
+    if(x.k==='trato') t='<b>'+_lbCons(r.lote||r.co)+'</b> · '+_fmtN(parseFloat(r.q||r.qtd)||0,0)+' saco'+((parseFloat(r.q||r.qtd)||0)>1?'s':'')+' '+(r.pr||r.prod||'');
+    else if(x.k==='mud') t='<b>'+_lbCons(r.lote)+'</b> · '+(r.origem||'?')+' → '+(r.destino||'?');
+    else if(x.k==='sem') t='<b>'+_lbCons(r.lote)+'</b> · '+(r.motivo||'');
+    else t='<b>'+(r.n||'')+'</b> · '+(r.srv||'');
+    corpo+='<div style="padding:8px 0;border-top:1px solid #f0f0f0;font-size:12.5px"><span style="background:'+bg[x.k]+';color:'+cor[x.k]+';font-weight:800;font-size:11px;padding:2px 8px;border-radius:10px;margin-right:4px">'+nm[x.k]+'</span>'+t+'</div>'; });
+  if(!corpo) corpo='<div style="font-size:12px;color:#999;padding:8px 0">'+(_dow(_mlDia)===DIA_FOLGA?'Domingo é folga.':'Nada lançado por você neste dia.')+'</div>';
+  el.innerHTML='<div style="font-size:14px;font-weight:800;color:#1B5E20;margin-bottom:10px">Meus lançamentos</div>'
+    +'<div style="display:flex;gap:5px">'+dias+'</div>'
+    +'<div style="font-size:13px;font-weight:800;color:#1B5E20;margin:12px 0 2px">'+dnL[_dow(_mlDia)]+', '+_mlDia.substring(8,10)+'/'+_mlDia.substring(5,7)+(_mlDia===TD?' · hoje':'')+'</div>'
+    +corpo
+    +'<div style="font-size:10.5px;color:#888;margin-top:6px"><span style="color:#2E7D32">●</span> trato &nbsp; <span style="color:#1565C0">●</span> mudança &nbsp; <span style="color:#E65100">●</span> diária — toque no dia para ver</div>';
+  el.style.display='block';
+}
 function rUlt(){
+  // v7.57: vaqueiro vê "Meus lançamentos" (7 dias, trato + mudança + diária) no lugar do calendário
+  var _ml=document.getElementById('meus-lanc'), _cc=document.getElementById('cal-card');
+  if(CU&&CU.r==='Vaqueiro'){ if(_cc)_cc.style.display='none'; try{rMeusLanc();}catch(e){console.error('rMeusLanc',e);} return; }
+  if(_ml)_ml.style.display='none'; if(_cc)_cc.style.display='';
   // Atualizar calendário
   var grid = document.getElementById('cal-grid');
   var titulo = document.getElementById('cal-titulo');
@@ -7954,7 +8027,7 @@ function _alertaTrato(){
   var hora=agora.getHours()+agora.getMinutes()/60;
   if(dow===0 || hora<11){ el.style.display='none'; return; }
   // v7.55: consultor acompanha pela Agenda de trato e pelo Consumo no cocho (Painel); este aviso fica só pra equipe
-  if(CU && CU.r==='Consultor'){ el.style.display='none'; return; }
+  if(CU && (CU.r==='Consultor'||CU.r==='Vaqueiro')){ el.style.display='none'; return; } // v7.57: vaqueiro usa o card Trato de hoje
   var hojeISO=agora.getFullYear()+'-'+String(agora.getMonth()+1).padStart(2,'0')+'-'+String(agora.getDate()).padStart(2,'0');
   function _bl(x){return String(x||'').split('(')[0].trim();}
   // ja marcou "nao precisa hoje" pra esse lote?
@@ -8010,7 +8083,9 @@ function _semTratoLote(nm){
   S.rT=S.rT||[];
   S.rT.push(r);
   enviarDado(r);            // MESMO caminho do trato: grava na aba da planilha
+  try{salvar();}catch(e){}
   try{_alertaTrato();}catch(e){}
+  try{rTratoDia();}catch(e){}
   alert('✅ Registrado: '+nm+' — '+motivos[idx]);
 }
 function _alertaRotacao(){
@@ -11537,6 +11612,19 @@ function _statusTratosHoje(){
   });
   return out;
 }
+// v7.57: avisa se já existe lançamento igual (mesmo lote/pessoa, mesma data)
+function _jaLancouOk(tipo,quem,dt){
+  dt=String(dt||'').substring(0,10); var b=_lbCons(quem), lista=tipo==='diaria'?(S.rD||[]):(S.rT||[]);
+  var ja=lista.filter(function(r){ if(r._apagado||(r.dt||'').substring(0,10)!==dt) return false;
+    if(tipo==='diaria') return (r.tipo==='diaria'||r.srv)&&String(r.n||'')===String(quem);
+    return r.tipo===tipo&&_lbCons(r.lote||r.co)===b; });
+  if(!ja.length) return true;
+  var dBR=dt.substring(8,10)+'/'+dt.substring(5,7), o;
+  if(tipo==='trato') o='Já tem trato lançado para '+b+' em '+dBR+' ('+ja.map(function(r){return (r.q||r.qtd||0)+' saco(s) '+(r.pr||r.prod||'');}).join(', ')+').';
+  else if(tipo==='diaria') o='Já tem diária lançada para '+quem+' em '+dBR+' ('+ja.map(function(r){return r.srv||'';}).join(', ')+').';
+  else o='Já tem mudança de pasto lançada para '+b+' em '+dBR+'.';
+  return confirm(o+'\n\nVocê já lançou. Vai lançar novamente?\n\nOK = lançar de novo   ·   Cancelar = não lançar');
+}
 function irParaTratoLote(nomeLote){
   loteSelecionadoNoMapa=nomeLote;
   irParaTrato();
@@ -11586,10 +11674,9 @@ function rVaqueiroPainel(){
 
   // Só mostrar para vaqueiro
   var isVaq = CU && CU.r === 'Vaqueiro';
-  if(!isVaq){ panel.style.display='none'; var ctc=document.getElementById('vaq-tratos-hoje-card'); if(ctc)ctc.style.display='none'; return; }
+  if(!isVaq){ panel.style.display='none'; var ctc=document.getElementById('vaq-tratos-hoje-card'); if(ctc)ctc.style.display='none'; try{rTratoDia();}catch(e){} return; }
   panel.style.display = 'block';
-  try{ rTratosHoje(); }catch(e){ console.error('rTratosHoje:',e); }
-  try{ rAgendaVaq(); }catch(e){ console.error('rAgendaVaq:',e); }
+  try{ rTratoDia(); }catch(e){ console.error('rTratoDia:',e); }
 
   // Aviso visível de "sem conexão / dados podem estar desatualizados" — antes só
   // existia um badge pequeno no topo, fácil de não notar. Isso mostra bem
@@ -13425,6 +13512,7 @@ function confirmarMudancaPasto(){
   var dest=(document.getElementById('mud-destino')||{}).value;
   if(!dest){alert('Selecione a área de destino.');return;}
   var loteNome=loteSelecionadoNoMapa||'';
+  if(!_jaLancouOk('mudanca_pasto',loteNome,(document.getElementById('mud-dt')||{}).value||TD)) return;
   var areaOrigem=MAPA_AREAS.find(function(a){return a.label===pastoSelecionadoNoMapa||a.id===pastoSelecionadoNoMapa;});
   if(!S.MAPA_ALOC)S.MAPA_ALOC={};
   if(areaOrigem)delete S.MAPA_ALOC[areaOrigem.id];
