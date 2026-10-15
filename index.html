@@ -3333,7 +3333,10 @@ function rMeusLanc(){
   var el=document.getElementById('meus-lanc'); if(!el) return;
   var eu=CU?String(CU.n||''):'';
   var regs=[];
-  (S.rD||[]).forEach(function(r){ if(r._apagado)return; if(String(r.lancadoPor||r.n||'')!==eu&&String(r.n||'')!==eu)return; regs.push({k:'diaria',r:r}); });
+  // diária: a planilha não guarda "lançado por" (r.n é o diarista). Mesma regra do calendário antigo:
+  // mostra as diárias da fazenda dele, menos as que sabidamente outra pessoa lançou.
+  var _faz=CU&&CU.fs&&CU.fs.length===1?CU.fs[0]:'';
+  (S.rD||[]).forEach(function(r){ if(r._apagado)return; if(_faz&&r.faz&&r.faz!==_faz)return; if(r.lancadoPor&&String(r.lancadoPor)!==eu)return; regs.push({k:'diaria',r:r}); });
   (S.rT||[]).forEach(function(r){ if(r._apagado||String(r.n||'')!==eu)return;
     if(r.tipo==='trato') regs.push({k:'trato',r:r}); else if(r.tipo==='mudanca_pasto') regs.push({k:'mud',r:r}); else if(r.tipo==='sem_trato') regs.push({k:'sem',r:r}); });
   var cor={trato:'#2E7D32',mud:'#1565C0',diaria:'#E65100',sem:'#8D6E63'}, bg={trato:'#E8F5E9',mud:'#E3F2FD',diaria:'#FFF3E0',sem:'#EFEBE9'}, nm={trato:'Trato',mud:'Mudança',diaria:'Diária',sem:'Não precisou'};
