@@ -3363,7 +3363,17 @@ function rMeusLanc(){
     +'<div style="font-size:10.5px;color:#888;margin-top:6px"><span style="color:#2E7D32">●</span> trato &nbsp; <span style="color:#1565C0">●</span> mudança &nbsp; <span style="color:#E65100">●</span> diária — toque no dia para ver</div>';
   el.style.display='block';
 }
+// v7.57: ordem da home do vaqueiro: Trato de hoje → Meus lançamentos → Mapa → botões (diária/identificar)
+function _ordemHome(){
+  var mapa=document.getElementById('home-mapa-card'), va=document.getElementById('vacts'), ml=document.getElementById('meus-lanc'),
+      td=document.getElementById('vaq-trato-dia'), at=document.getElementById('alerta-trato'), cc=document.getElementById('cal-card');
+  if(!mapa||!va||!ml||!td||!at||!cc) return;
+  var pai=mapa.parentNode;
+  if(CU&&CU.r==='Vaqueiro'){ pai.insertBefore(td,mapa); pai.insertBefore(ml,mapa); pai.insertBefore(va,mapa.nextSibling); }
+  else { at.parentNode.insertBefore(va,at); cc.parentNode.insertBefore(ml,cc); }
+}
 function rUlt(){
+  try{_ordemHome();}catch(e){}
   // v7.57: vaqueiro vê "Meus lançamentos" (7 dias, trato + mudança + diária) no lugar do calendário
   var _ml=document.getElementById('meus-lanc'), _cc=document.getElementById('cal-card');
   if(CU&&CU.r==='Vaqueiro'){ if(_cc)_cc.style.display='none'; try{rMeusLanc();}catch(e){console.error('rMeusLanc',e);} return; }
