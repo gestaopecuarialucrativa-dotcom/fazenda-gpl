@@ -2638,17 +2638,32 @@ function _bolSugerirIA(){
   var perg='Escreva o RECADO DO CONSULTOR para o PROPRIETÁRIO da fazenda sobre esta semana. 3 a 6 linhas, texto corrido, primeira pessoa (eu, o consultor), tom próximo e profissional. '
     +'NÃO cite valores em R$ nem custos. Destaque o que importa pro dono: consumo dos lotes em relação ao previsto, o que já foi orientado à equipe, estoque que precisa comprar (com prazo) e mudanças de pasto relevantes. Sem listas, sem títulos, sem assinatura. '
     +'REGRAS DE NÚMEROS: use exatamente os números e as unidades recebidos, não converta nem invente. "vs_previsto" é porcentagem (ex.: -44% = 44% abaixo do previsto), nunca gramas. '
-    +'Ao citar orientação, copie o texto do campo "orientacao" (ex.: "1 saco a cada 3 dias"); não diga "a mais" nem mude a quantidade. Se um lote está "sem trato lançado", diga que não houve lançamento, não que o consumo caiu. Lote com vs_previsto "no previsto" está dentro do esperado: não diga que caiu nem cite porcentagem para ele.';
+    +'Ao citar orientação, copie o texto do campo "orientacao" (ex.: "1 saco a cada 3 dias"); não diga "a mais" nem mude a quantidade. Se um lote está "sem trato lançado", diga que não houve lançamento, não que o consumo caiu. Lote com vs_previsto "no previsto" está dentro do esperado: não diga que caiu nem cite porcentagem para ele. '
+    // v7.58: não inventar ações; orientado e abaixo = equipe não seguiu; usar o pedido do consultor
+    +'NUNCA diga que o consultor fez algo (passou instruções, conversou, orientou, visitou) se isso não estiver nos dados ou no pedido do consultor abaixo. Lote sem orientação: diga só que ainda não tem orientação. '
+    +'Quando o lote tem orientado "sim", o previsto É a orientação: se vs_previsto estiver abaixo, diga claramente que o lote recebeu menos do que foi orientado e que é preciso conferir com a equipe se o trato está sendo feito e lançado. Nunca escreva "conforme orientação" para lote abaixo do previsto.';
+  var _ped=((document.getElementById('bol-recado')||{}).value||'').trim();
+  if(_ped) perg+=' PEDIDO/ANOTAÇÃO DO CONSULTOR (use como orientação do que escrever; inclua o que ele pediu, em texto corrido): "'+_ped.substring(0,600).replace(/"/g,"'")+'"';
   var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
   var cb='_bia_'+Date.now(), s=document.createElement('script');
-  s.src=getFazGasUrl(faz)+'?acao=pergunta_ia&data='+encodeURIComponent(JSON.stringify({pergunta:perg,dados:dados,modo:'recado'}))+'&callback='+cb+'&t='+Date.now();
+  // v7.58: o pedido vai no endereço (URL). Endereço grande demais o Google recusa e aparecia "Erro de conexão".
+  // Encolhe as mudanças de pasto (a parte que mais cresce) até caber.
+  var _mkUrl=function(){ return getFazGasUrl(faz)+'?acao=pergunta_ia&data='+encodeURIComponent(JSON.stringify({pergunta:perg,dados:dados,modo:'recado'}))+'&callback='+cb+'&t='+Date.now(); };
+  var _LIM=7000, url=_mkUrl();
+  if(url.length>_LIM&&Array.isArray(dados.mudancas_de_pasto)){
+    dados.mudancas_de_pasto=dados.mudancas_de_pasto.map(function(m){ return (m.lote||'')+' '+(m.de||'?')+'→'+(m.para||'?')+' '+fmtD(m.dt); });
+    url=_mkUrl();
+    while(url.length>_LIM&&dados.mudancas_de_pasto.length>3){ dados.mudancas_de_pasto=dados.mudancas_de_pasto.slice(-Math.floor(dados.mudancas_de_pasto.length*0.7)); url=_mkUrl(); }
+  }
+  if(url.length>_LIM){ oriIA.forEach(function(o){ delete o.visto_por; }); url=_mkUrl(); }
+  s.src=url;
   var fim=function(){ if(s.parentNode)s.parentNode.removeChild(s); var b=document.getElementById('bol-ia-bt'); if(b){b.disabled=false;b.lastChild.textContent='Sugerir recado com IA';} };
   window[cb]=function(r){ delete window[cb]; fim(); if(r&&r.saldo){ _iaSaldo=r.saldo; try{rIaPerg();}catch(e){} }
     if(r&&r.ok&&r.texto){ var t=document.getElementById('bol-recado'); var atual=t?t.value.trim():'';
       if(atual&&!confirm('Trocar o recado que já está escrito pela sugestão da IA?')) return;
       if(t){ t.value=r.texto.trim(); } _bolRecadoSet(d.janela.ini,r.texto.trim()); }
     else alert('IA: '+((r&&r.erro)||'não consegui sugerir agora.')); };
-  s.onerror=function(){ delete window[cb]; fim(); alert('Erro de conexão ao pedir a sugestão.'); };
+  s.onerror=function(){ delete window[cb]; fim(); alert('Erro de conexão ao pedir a sugestão.\n\nTamanho do pedido: '+url.length+' caracteres. Confira a internet e tente de novo; se repetir, me mande este número.'); };
   document.body.appendChild(s);
 }
 function _bolGerarPDF(){
