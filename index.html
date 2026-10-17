@@ -366,11 +366,6 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <!-- PAINEL VAQUEIRO: gauge de dias no pasto (só para r='Vaqueiro') -->
 <div id="home-vaqueiro-panel" style="display:none;margin-top:10px;margin-bottom:12px">
   <div id="vaq-offline-banner" style="display:none;margin-bottom:10px;padding:10px 12px;background:#FFF3E0;border-left:4px solid #FF6F00;border-radius:0 8px 8px 0;font-size:12px;color:#E65100;font-weight:700"></div>
-  <div class="card" id="vaq-agenda" style="padding:14px;display:none;margin-bottom:10px"></div>
-  <div class="card" id="vaq-tratos-hoje-card" style="padding:14px;display:none;margin-bottom:10px">
-    <div style="font-size:14px;font-weight:800;color:#1B5E20;margin-bottom:8px">✅ Tratos de hoje</div>
-    <div id="vaq-tratos-hoje"></div>
-  </div>
   <div class="card" style="padding:14px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div style="font-size:14px;font-weight:800;color:#1B5E20">🐄 Situação dos lotes</div>
@@ -2536,23 +2531,7 @@ function rTratoDia(){
     +(ia.length?ia.map(function(it){ return it.lote+' · '+_fmtN(it.esp.sacos,0)+' saco'+(it.esp.sacos>1?'s':''); }).join(' · '):'sem trato previsto')+'</div>';
   el.innerHTML=tit+h; el.style.display='block';
 }
-function rAgendaVaq(){
-  var el=document.getElementById('vaq-agenda'); if(!el) return;
-  if(!(CU&&CU.r==='Vaqueiro')){ el.style.display='none'; return; }
-  var lotes=_agLotes(); lotes.forEach(function(x){ x.tr=_agTratos(x.lote,x.prod); });
-  var am=_somaDias(TD,1); if(_dow(am)===DIA_FOLGA) am=_somaDias(am,1);
-  var blocos=[[TD,'Hoje'],[am,_dow(am)===1&&_diffDias(TD,am)>1?'Segunda':'Amanhã']], h='';
-  blocos.forEach(function(b){ if(_dow(b[0])===DIA_FOLGA){ h+='<div style="font-size:12.5px;font-weight:800;color:#1B5E20;margin-top:8px">'+b[1]+' · folga</div>'; return; }
-    var its=_agDiaItens(b[0],lotes).filter(function(it){ return it.esp; });
-    h+='<div style="font-size:12.5px;font-weight:800;color:#1B5E20;margin-top:8px">'+b[1]+', '+b[0].substring(8,10)+'/'+b[0].substring(5,7)+'</div>'
-      +(its.length?its.map(_agLinha).join(''):'<div style="font-size:12px;color:#999;padding:6px 0">Sem trato previsto.</div>'); });
-  el.style.display='block';
-  el.innerHTML='<div style="font-size:14px;font-weight:800;color:#1B5E20;display:flex;align-items:center;gap:6px">'
-    +'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Agenda de trato</div>'+h;
-}
-// ═══ BOLETIM SEMANAL DO PROPRIETÁRIO (sem valores em R$) ═══
-// Semana de segunda a sábado (domingo é folga). Números do app; recado escrito pelo consultor (IA só sugere).
-var _bolSem='atual';
+// v7.60: rAgendaVaq removida (não era chamada em lugar nenhum)
 function _bolJanela(qual){
   var h=new Date(TD+'T12:00:00'), dw=h.getDay(); // 0=dom
   var segAtual=_somaDias(TD, -((dw+6)%7));
@@ -3802,8 +3781,12 @@ function feedEditarTrato(idx){
     });
 }
 // MOVIMENTAÇÃO de pasto — ⚙️ CONFIG
+// v7.60: ÚNICA função que transforma qualquer grafia de piquete no código do app
+// ("M2/P1", "m2p1", "M 2 / P 1", "PA 7", "M01P01"...). Todas as outras agora usam esta.
 function _feedNormArea(v){
-  var s=String(v||'').trim().toUpperCase();
+  var s=String(v||'').trim().toUpperCase().replace(/\s+/g,'').replace(/-/g,'/');
+  if(!s) return '';
+  if(typeof MAPA_AREAS!=='undefined'){ var _l=MAPA_AREAS.find(function(a){return String(a.label).toUpperCase().replace(/\s+/g,'')===s;}); if(_l) return _l.id; }
   s=s.replace(/^M(\d{1,2})\/P(\d{1,2})$/i,function(_,m,p){return 'M'+String(parseInt(m)).padStart(2,'0')+'P'+String(parseInt(p)).padStart(2,'0');});
   s=s.replace(/^M(\d{1,2})P(\d{1,2})$/i,function(_,m,p){return 'M'+String(parseInt(m)).padStart(2,'0')+'P'+String(parseInt(p)).padStart(2,'0');});
   s=s.replace(/^PA\s*(\d{1,2})$/i,function(_,n){return 'PA'+String(parseInt(n)).padStart(2,'0');});
@@ -7721,13 +7704,7 @@ function carregarNuvem(cb){
               });
               // Aplicar movimentações em ordem cronológica
               movsSorted.forEach(function(m){
-                var normId=function(v){
-                  var s=String(v||'').trim();
-                  s=s.replace(/^M(\d{1,2})\/P(\d{1,2})$/i,function(_,mm,pp){return 'M'+('0'+parseInt(mm)).slice(-2)+'P'+('0'+parseInt(pp)).slice(-2);});
-                  s=s.replace(/^M(\d{1,2})P(\d{1,2})$/i,function(_,mm,pp){return 'M'+('0'+parseInt(mm)).slice(-2)+'P'+('0'+parseInt(pp)).slice(-2);});
-                  s=s.replace(/^PA\s*(\d+)$/i,function(_,n){return 'PA'+('0'+parseInt(n)).slice(-2);});
-                  return s;
-                };
+                var normId=_feedNormArea; // v7.60: mesma regra do resto do app
                 var orig=normId(m.origem), dest=normId(m.destino);
                 if(orig) Object.keys(alocRecalc).forEach(function(k){if(k===orig&&alocRecalc[k]===m.lote)delete alocRecalc[k];});
                 if(dest && m.lote) alocRecalc[dest]=m.lote;
@@ -7777,23 +7754,7 @@ function carregarNuvem(cb){
             // Normalizar IDs de área ao carregar (M4/P2 → M04P02, PA 8 → PA08)
             S.rT=cfg.rT.map(function(r){
               if(r.tipo!=='mudanca_pasto')return r;
-              function nId(v){
-                var s=String(v||'').trim();
-                if(!s) return '';
-                // 1) se já é um id de área, mantém
-                if(typeof MAPA_AREAS!=='undefined'){
-                  var byId=MAPA_AREAS.find(function(a){return a.id===s;});
-                  if(byId) return byId.id;
-                  // 2) se é um label (M1/P1), converte pro id (M01P01)
-                  var byLabel=MAPA_AREAS.find(function(a){return a.label===s;});
-                  if(byLabel) return byLabel.id;
-                }
-                // 3) fallback: normaliza a grafia
-                s=s.replace(/^M(\d{1,2})\/P(\d{1,2})$/i,function(_,m,p){return 'M'+String(parseInt(m)).padStart(2,'0')+'P'+String(parseInt(p)).padStart(2,'0');});
-                s=s.replace(/^M(\d{1,2})P(\d{1,2})$/i,function(_,m,p){return 'M'+String(parseInt(m)).padStart(2,'0')+'P'+String(parseInt(p)).padStart(2,'0');});
-                s=s.replace(/^PA\s*(\d{1,2})$/i,function(_,n){return 'PA'+String(parseInt(n)).padStart(2,'0');});
-                return s;
-              }
+              function nId(v){ return _feedNormArea(v); } // v7.60: mesma regra do resto do app
               return Object.assign({},r,{origem:nId(r.origem),destino:nId(r.destino)});
             });
           }
@@ -11627,62 +11588,7 @@ function responderRacao(loteNome, refDt, resposta){
 // consumo do _calcAvisosRacao (sacos lançados ÷ consumo/dia previsto = quantos
 // dias deveria durar). Só marca "pendente" quando já passou desse prazo —
 // não aparece todo lote toda vez, só quando realmente é hora de checar.
-function _statusTratosHoje(){
-  var out=[];
-  if(!CU||CU.r!=='Vaqueiro') return out;
-  var lotes=S.LOTES||[];
-  function _baseLote(x){return String(x||'').split('(')[0].trim();}
-  var hoje=new Date(); hoje.setHours(12,0,0,0);
-  lotes.forEach(function(lote){
-    var nm=lote.nome, peso=lote.peso||0, qtd=lote.qtd||0;
-    var tl=(S.rT||[]).filter(function(r){return r.tipo==='trato'&&!r._apagado&&_baseLote(r.lote||r.co)===nm;});
-    var lancadoHoje=tl.some(function(r){return (r.dt||'').substring(0,10)===TD;});
-    if(lancadoHoje){
-      var _prH=_ultProdLote(nm), _kgH=0, _ppsH=((S.EST||{})[_prH]&&parseFloat(S.EST[_prH].peso_saco))||30;
-      tl.forEach(function(r){ if((r.dt||'').substring(0,10)===TD&&(r.prod||r.pr||'')===_prH) _kgH+=parseFloat(r.kg_fornecido)||((parseFloat(r.q||r.qtd)||0)*_ppsH); });
-      var _pxH=_proxTrato(nm,_prH,_kgH,TD);
-      out.push({lote:nm,status:'feito',prox:_pxH?_pxH.data:''}); return; }
-    if(!tl.length){
-      // Lote nunca recebeu trato: não dá pra calcular previsão, mas ainda
-      // assim precisa aparecer como pendente (senão nunca chama atenção).
-      if(peso&&qtd){ out.push({lote:nm,status:'pendente',nunca:true}); }
-      else { out.push({lote:nm,status:'sem_dado'}); }
-      return;
-    }
-    if(!peso||!qtd){ out.push({lote:nm,status:'sem_dado'}); return; }
-    var totalSacos=0, prodMap={}, ultDt='';
-    tl.forEach(function(r){
-      var q=parseFloat(r.q||r.qtd||0)||0; totalSacos+=q;
-      var pr=r.pr||r.prod||''; if(pr) prodMap[pr]=(prodMap[pr]||0)+q;
-      var d=(r.dt||'').substring(0,10); if(d>ultDt) ultDt=d;
-    });
-    if(totalSacos<=0){ out.push({lote:nm,status:'sem_dado'}); return; }
-    var prodNome=Object.keys(prodMap).sort(function(a,b){return prodMap[b]-prodMap[a];})[0]||'';
-    var est=(prodNome&&S.EST&&S.EST[prodNome])?S.EST[prodNome]:null;
-    var pct=prodNome?_pvPrevisto(nm,prodNome).pct:0;
-    var pSaco=est&&est.peso_saco?est.peso_saco:30;
-    if(prodNome&&_orientAtiva(nm,prodNome)){
-      var _pxO=_proxTrato(nm,prodNome,0,ultDt);
-      if(_pxO&&TD>=_pxO.data){ out.push({lote:nm,status:'pendente',diasSemTrato:Math.max(0,Math.round((hoje-new Date(ultDt+'T12:00:00'))/864e5)),diasDura:_diffDias(ultDt,_pxO.data),ultDt:ultDt}); }
-      else { out.push({lote:nm,status:'em_dia',diasRestantes:_pxO?_diffDias(TD,_pxO.data):0}); }
-      return;
-    }
-    if(pct<=0||pSaco<=0){ out.push({lote:nm,status:'sem_dado'}); return; }
-    var kgDia=(pct/100)*peso*qtd;
-    var sacosDia=pSaco>0?kgDia/pSaco:0;
-    if(sacosDia<=0){ out.push({lote:nm,status:'sem_dado'}); return; }
-    var diasDura=totalSacos/sacosDia;
-    if(!ultDt||ultDt.length!==10){ out.push({lote:nm,status:'sem_dado'}); return; }
-    var diasSemTrato=Math.max(0,Math.round((hoje-new Date(ultDt+'T12:00:00'))/864e5));
-    if(diasSemTrato>diasDura){
-      out.push({lote:nm,status:'pendente',diasSemTrato:diasSemTrato,diasDura:Math.round(diasDura),ultDt:ultDt});
-    } else {
-      out.push({lote:nm,status:'em_dia',diasRestantes:Math.max(0,Math.round(diasDura-diasSemTrato))});
-    }
-  });
-  return out;
-}
-// v7.57: avisa se já existe lançamento igual (mesmo lote/pessoa, mesma data)
+// v7.60: _statusTratosHoje removida (não era chamada em lugar nenhum)
 function _jaLancouOk(tipo,quem,dt){
   dt=String(dt||'').substring(0,10); var b=_lbCons(quem), lista=tipo==='diaria'?(S.rD||[]):(S.rT||[]);
   var ja=lista.filter(function(r){ if(r._apagado||(r.dt||'').substring(0,10)!==dt) return false;
@@ -11699,43 +11605,7 @@ function irParaTratoLote(nomeLote){
   loteSelecionadoNoMapa=nomeLote;
   irParaTrato();
 }
-function rTratosHoje(){
-  var card=document.getElementById('vaq-tratos-hoje-card');
-  var wrap=document.getElementById('vaq-tratos-hoje');
-  if(!card||!wrap) return;
-  if(!CU||CU.r!=='Vaqueiro'){ card.style.display='none'; return; }
-  var itens=_statusTratosHoje();
-  if(!itens.length){ card.style.display='none'; return; }
-  var feitos=itens.filter(function(i){return i.status==='feito';});
-  var pendentes=itens.filter(function(i){return i.status==='pendente';});
-  var resto=itens.filter(function(i){return i.status==='em_dia'||i.status==='sem_dado';});
-  if(!feitos.length&&!pendentes.length){ card.style.display='none'; return; }
-  var html='';
-  feitos.forEach(function(i){
-    html+='<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #eee">'
-      +'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
-      +'<div><div style="font-size:13px;font-weight:700;color:#333">'+i.lote+'</div><div style="font-size:11px;color:#888">Lançado hoje'+(i.prox?' · <b style="color:#1B5E20">próximo: '+_dataBRSemana(i.prox).toLowerCase()+'</b>':'')+'</div></div>'
-      +'</div>';
-  });
-  pendentes.forEach(function(i){
-    var refDtJs=(i.ultDt||'').replace(/'/g,'');
-    var subTxt=i.nunca?'Nunca lançado':(i.diasSemTrato+' dias sem trato · esperado durar '+i.diasDura);
-    html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #eee">'
-      +'<div style="display:flex;align-items:center;gap:8px;min-width:0">'
-      +'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C62828" stroke-width="2" stroke-linecap="round" style="flex-shrink:0"><circle cx="12" cy="12" r="9"/></svg>'
-      +'<div style="min-width:0"><div style="font-size:13px;font-weight:700;color:#333">'+i.lote+'</div><div style="font-size:11px;color:#C62828">'+subTxt+'</div></div>'
-      +'</div>'
-      +'<div style="display:flex;gap:5px;flex-shrink:0">'
-      +'<button onclick="irParaTratoLote(\''+i.lote.replace(/'/g,"\\'")+'\')" style="font-size:11px;padding:6px 8px;background:#2E7D32;color:#fff;border:none;border-radius:7px;font-weight:700;cursor:pointer">Lançar</button>'
-      +(i.nunca?'':'<button onclick="responderRacao(\''+i.lote.replace(/'/g,"\\'")+'\',\''+refDtJs+'\',\'tem_cocho\')" style="font-size:11px;padding:6px 8px;background:#fff;color:#2E7D32;border:1px solid #2E7D32;border-radius:7px;font-weight:700;cursor:pointer">Ainda tem</button>')
-      +'</div></div>';
-  });
-  if(resto.length){
-    html+='<div style="font-size:11px;color:#888;padding:6px 0 0">'+resto.length+' lote'+(resto.length!==1?'s':'')+' em dia</div>';
-  }
-  wrap.innerHTML=html;
-  card.style.display='block';
-}
+// v7.60: rTratosHoje removida (não era chamada em lugar nenhum)
 function rVaqueiroPainel(){
   try{ setTimeout(function(){ try{_orientMostrarLogin();}catch(e){console.error('orient',e);} },500); }catch(e){}
   var panel = document.getElementById('home-vaqueiro-panel');
@@ -13604,15 +13474,7 @@ function confirmarMudancaPasto(){
   // Normaliza origem/destino pro ID interno (M1/P1 e M01P01 viram M01P01),
   // porque as comparações no sistema usam a.id. Se o select/mapa mandou o label,
   // converte pro id da área correspondente.
-  function _idArea(v){
-    var s=String(v||'').trim();
-    if(!s) return '';
-    var byId=MAPA_AREAS.find(function(a){return a.id===s;});
-    if(byId) return byId.id;
-    var byLabel=MAPA_AREAS.find(function(a){return a.label===s;});
-    if(byLabel) return byLabel.id;
-    return _feedNormArea(s); // fallback: normaliza a grafia
-  }
+  function _idArea(v){ return _feedNormArea(v); } // v7.60: mesma regra do resto do app
   var r={tipo:'mudanca_pasto',faz:faz,n:CU?CU.n:'',lote:loteNome,origem:_idArea(pastoSelecionadoNoMapa),destino:_idArea(dest),dt:dt,ts:new Date().toISOString()};
   if(!S.rT)S.rT=[];S.rT.push(r);
   try{enviarDado(r);}catch(ex){}
