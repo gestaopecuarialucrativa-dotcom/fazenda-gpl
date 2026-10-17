@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 17/10/2026 v7.59</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 17/10/2026 v7.60</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -7503,7 +7503,7 @@ function pdfModalImprimir(){
 function initSync(){atualizarSync();window.addEventListener('online',()=>{atualizarSync();if(S.queue.length>0)syncAgora();});window.addEventListener('offline',()=>atualizarSync());setInterval(()=>{if(navigator.onLine&&S.queue.length>0&&S.cfgGS)syncAgora();},30000);}
 
 // ═══ NUVEM ═══
-function updCloudStatus(st){const el=document.getElementById('cloud-status');if(!el)return;const M={saving:'Salvando...',loading:'Carregando...',ok:'Nuvem OK',err:'Offline'};const txt=M[st]||'';el.textContent=txt;if(!txt){el.style.background='transparent';el.style.color='transparent';el.style.border='0';el.style.padding='0';return;}el.style.padding='2px 8px';el.style.borderRadius='10px';el.style.whiteSpace='nowrap';if(st==='err'){el.style.background='#FF6F00';el.style.color='#fff';el.style.border='0';}else if(st==='ok'){el.style.background='rgba(255,255,255,.18)';el.style.color='#fff';el.style.border='1px solid rgba(255,255,255,.25)';}else{el.style.background='rgba(255,255,255,.14)';el.style.color='#fff';el.style.border='0';}}
+function updCloudStatus(st){const el=document.getElementById('cloud-status');if(!el)return;const M={saving:'Salvando...',loading:'Carregando...',ok:'Nuvem OK',err:(navigator.onLine?'Sem resposta':'Offline')};const txt=M[st]||'';el.textContent=txt;if(!txt){el.style.background='transparent';el.style.color='transparent';el.style.border='0';el.style.padding='0';return;}el.style.padding='2px 8px';el.style.borderRadius='10px';el.style.whiteSpace='nowrap';if(st==='err'){el.style.background='#FF6F00';el.style.color='#fff';el.style.border='0';}else if(st==='ok'){el.style.background='rgba(255,255,255,.18)';el.style.color='#fff';el.style.border='1px solid rgba(255,255,255,.25)';}else{el.style.background='rgba(255,255,255,.14)';el.style.color='#fff';el.style.border='0';}}
 function salvarNuvem(cb){
   if(!S.cfgGS){if(cb)cb(false);return;}
   // ══ PROTEÇÃO ANTI-RESET: nunca sobrescrever planilha com dados vazios ══
@@ -7615,7 +7615,7 @@ function carregarNuvem(cb){
     if(el&&el.parentNode)el.parentNode.removeChild(el);
     updCloudStatus('err');
     if(cb)cb(false);
-  },12000);
+  },30000); // v7.59: a planilha leva às vezes mais de 12 s pra responder (resposta ~240 KB); com 12 s o app desistia e mostrava "Offline" mesmo com internet
   
   window[cbName]=function(data){
     clearTimeout(timeout);
@@ -8234,10 +8234,25 @@ function fecharMapaModal(){
   mapaAreaAtual=null;
 }
 
+// v7.60: caminho ÚNICO — todo jeito de mudar lote de lugar grava uma mudança de pasto na planilha
+// (antes "alocar", "retirar", seletor de piquete e área do lote mudavam só o celular, e o lote voltava ao reabrir)
+function _areaAtualLote(lote){ var k=''; Object.keys(S.MAPA_ALOC||{}).forEach(function(a){ if(S.MAPA_ALOC[a]===lote) k=a; }); return k; }
+function _registrarMudanca(lote,destino){
+  if(!lote) return;
+  var origem=_areaAtualLote(lote);
+  if((origem||'')===(destino||'')) return;   // não mudou nada
+  var faz=CU&&CU.fs&&CU.fs.length?CU.fs[0]:Object.keys(S.FAZ||{})[0]||'';
+  var r={tipo:'mudanca_pasto',faz:faz,n:CU?CU.n:'',lote:lote,origem:origem,destino:destino||'',dt:TD,ts:new Date().toISOString()};
+  if(!S.rT)S.rT=[]; S.rT.push(r);
+  try{ enviarDado(r); }catch(e){ console.error('mudanca',e); }
+}
 function mapaAlocar(){
   if(!mapaAreaAtual) return;
   var sel = document.getElementById('mapa-sel-lote').value;
   if(!S.MAPA_ALOC) S.MAPA_ALOC={};
+  var _idA=mapaAreaAtual.area.id, _quemEstava=S.MAPA_ALOC[_idA];
+  if(_quemEstava&&_quemEstava!==sel) _registrarMudanca(_quemEstava,'');
+  if(sel){ _registrarMudanca(sel,_idA); Object.keys(S.MAPA_ALOC).forEach(function(k){ if(S.MAPA_ALOC[k]===sel) delete S.MAPA_ALOC[k]; }); }
   if(sel) S.MAPA_ALOC[mapaAreaAtual.area.id]=sel;
   else delete S.MAPA_ALOC[mapaAreaAtual.area.id];
   salvar();fecharMapaModal();_sincMapa();
@@ -8246,6 +8261,7 @@ function mapaAlocar(){
 function mapaRetirar(){
   if(!mapaAreaAtual) return;
   if(!S.MAPA_ALOC) S.MAPA_ALOC={};
+  _registrarMudanca(S.MAPA_ALOC[mapaAreaAtual.area.id],'');
   delete S.MAPA_ALOC[mapaAreaAtual.area.id];
   salvar();fecharMapaModal();_sincMapa();
 }
@@ -8282,6 +8298,8 @@ function mapaAlocarDireto(contId){
   var lote = (document.getElementById('mapa-sel-lote2')||{}).value;
   if(!piq||!lote){alert('Selecione o piquete e o lote.');return;}
   if(!S.MAPA_ALOC) S.MAPA_ALOC={};
+  _registrarMudanca(lote,piq);
+  Object.keys(S.MAPA_ALOC).forEach(function(k){ if(S.MAPA_ALOC[k]===lote) delete S.MAPA_ALOC[k]; });
   S.MAPA_ALOC[piq]=lote;
   salvar();fecharMapaModal();_sincMapa();
 }
@@ -8491,7 +8509,7 @@ function salvarLote(){
   if(_ant&&_ant.vendas)lote.vendas=_ant.vendas;
   if(dini){ lote.dt_abertura=dini; } else if(_ant){ if(_ant.dt_abertura)lote.dt_abertura=_ant.dt_abertura; } else { lote.dt_abertura=TD; }
   if(idx>=0)S.LOTES[idx]=lote;else S.LOTES.push(lote);
-  if(area){ if(!S.MAPA_ALOC)S.MAPA_ALOC={}; Object.keys(S.MAPA_ALOC).forEach(function(k){if(S.MAPA_ALOC[k]===nome)delete S.MAPA_ALOC[k];}); S.MAPA_ALOC[area]=nome; }
+  if(area){ if(!S.MAPA_ALOC)S.MAPA_ALOC={}; _registrarMudanca(nome,area); Object.keys(S.MAPA_ALOC).forEach(function(k){if(S.MAPA_ALOC[k]===nome)delete S.MAPA_ALOC[k];}); S.MAPA_ALOC[area]=nome; }
   window._loteEditTs = Date.now();   // trava a sobrescrita da nuvem por 30s
   salvar();
   if(S.cfgGS)salvarNuvem(function(){});
@@ -8899,6 +8917,7 @@ function alterarAreaLote(nome,faz){
   if(isNaN(idx)||idx<0||idx>=MAPA_AREAS.length){alert('Opção inválida.');return;}
   var novaArea=MAPA_AREAS[idx];
   if(!S.MAPA_ALOC)S.MAPA_ALOC={};
+  _registrarMudanca(nome,novaArea.id);
   Object.keys(S.MAPA_ALOC).forEach(function(k){if(S.MAPA_ALOC[k]===nome)delete S.MAPA_ALOC[k];});
   S.MAPA_ALOC[novaArea.id]=nome;
   window._loteEditTs=Date.now();
