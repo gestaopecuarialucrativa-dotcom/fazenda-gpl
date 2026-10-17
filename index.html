@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 16/10/2026 v7.58</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 17/10/2026 v7.59</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1517,7 +1517,12 @@ if('serviceWorker'in navigator){navigator.serviceWorker.getRegistrations().then(
 
 // ═══ CONSTANTES ═══
 const STORAGE_KEY='gpl_v17_data';
-const TD=new Date().toISOString().split('T')[0];
+// v7.59: data de HOJE no horário do Brasil (antes era UTC: depois das 21h já virava o dia seguinte,
+// e uma mudança feita à noite ficava com a data de amanhã e passava na frente das outras no mapa)
+function _hojeLocal(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+var TD=_hojeLocal();
+// app aberto de um dia pro outro: atualiza a data ao voltar pra tela
+document.addEventListener('visibilitychange',function(){ if(!document.hidden){ var h=_hojeLocal(); if(h!==TD){ TD=h; try{ var md=document.getElementById('mud-dt'); if(md&&!md.dataset.mexido) md.value=TD; }catch(e){} } } });
 const EC=['','#7B3F00','#A0522D','#2d7a1f','#CC8800','#CC2200'];
 const EI=[null,{em:'💩',ti:'Escore 1 — Firmes e secas',re:'💡 Reduzir fibra'},{em:'💩',ti:'Escore 2 — Firmes com espalhamento',re:'💡 Monitorar'},{em:'✅',ti:'Escore 3 — Ideal (panqueca)',re:'💡 Nutrição equilibrada!'},{em:'⚠️',ti:'Escore 4 — Soltas e espalhadas',re:'💡 Revisar proteína e água'},{em:'🚨',ti:'Escore 5 — Diarreia',re:'💡 Ação imediata!'}];
 const PL={diaria:'Diária',insumo:'Insumos',trato:'Trato cocho',escore:'Escore fezes',cantina:'Cantina',estoque:'Estoque',painel:'Painel',mapa:'Mapa',historico:'📋 Histórico',config:'Config.'};
@@ -7694,6 +7699,12 @@ function carregarNuvem(cb){
             });
             if(Object.keys(aloc).length>0) S.MAPA_ALOC=aloc;
           }
+          // v7.59: mudanças feitas no celular que AINDA estão na fila (sem sinal) entram na conta,
+          // senão o lote "voltava" pro lugar antigo ao reabrir o app antes da fila subir
+          try{
+            var _uidsNuvem={}; (cfg.rT||[]).forEach(function(r){ if(r&&r.uid) _uidsNuvem[r.uid]=1; });
+            (S.queue||[]).forEach(function(q){ if(q&&q.tipo==='mudanca_pasto'&&!(q.uid&&_uidsNuvem[q.uid])){ cfg.rT=(cfg.rT||[]).concat([Object.assign({},q,{_pendente:true})]); } });
+          }catch(_eq){ console.error('fila mudanca',_eq); }
           // RECALCULAR MAPA_ALOC pelas movimentações reais (fonte de verdade)
           if(cfg.rT && cfg.rT.length>0){
             var movsSorted=cfg.rT.filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
@@ -11395,7 +11406,7 @@ function editarRegHist(tsId){
     if((r.ts||r.dt||'')===(ts)||encodeURIComponent(r.ts||r.dt||'')===tsId) reg=r;
   });
   if(!reg){alert('Registro não encontrado.');return;}
-  var dtAtual=reg.dt||(reg.ts||'').substring(0,10)||new Date().toISOString().substring(0,10);
+  var dtAtual=reg.dt||(reg.ts||'').substring(0,10)||_hojeLocal();
   // Modal com date picker
   var modal=document.createElement('div');
   modal.id='modal-edit-dt-hist';
@@ -11910,7 +11921,7 @@ function rVaqueiroPainel(){
 // ═══ EDITAR DATA DE ENTRADA DO LOTE ═══
 function editarDataEntrada(loteNome, areaId, dtAtual){
   // Mostrar modal simples com input de data
-  var dtVal = dtAtual || new Date().toISOString().substring(0,10);
+  var dtVal = dtAtual || _hojeLocal();
   var modal = document.createElement('div');
   modal.id = 'modal-dt-entrada';
   modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center';
@@ -12015,7 +12026,7 @@ function exportarDadosLocais(){
     queue: S.queue||[]
   };
   var json=JSON.stringify(dados, null, 2);
-  var dtStr=new Date().toISOString().substring(0,10);
+  var dtStr=_hojeLocal();
   var nomeArq='GPL_backup_'+dtStr+'.json';
 
   // Tentar download direto (funciona na maioria dos celulares)
@@ -12786,7 +12797,7 @@ function gerarFCMsg(){
     var desc='Fechamento: '+p.n+' ('+deFmt+' a '+ateFmt+')';
     var jaExiste=S.rDesp.some(function(d){return d.desc===desc&&d.faz===faz;});
     if(!jaExiste){
-      S.rDesp.push({tipo:'despesa',faz:faz,desc:desc,val:total,venc:window._fcAte_iso,st:'pagar',dt:new Date().toISOString().split('T')[0],id:Date.now()+Math.random()});
+      S.rDesp.push({tipo:'despesa',faz:faz,desc:desc,val:total,venc:window._fcAte_iso,st:'pagar',dt:_hojeLocal(),id:Date.now()+Math.random()});
     }
   });
   salvar();
@@ -13155,7 +13166,7 @@ function sPeqSt(el, st){
   el.classList.add('on');
 }
 function abrirPesquisaPeriodo(){
-  var hoje = new Date().toISOString().split('T')[0];
+  var hoje = _hojeLocal();
   var mesAtras = new Date(); mesAtras.setDate(mesAtras.getDate()-30);
   var el1 = document.getElementById('peq-de');
   var el2 = document.getElementById('peq-ate');
@@ -13554,6 +13565,17 @@ function confirmarMudancaPasto(){
   if(!dest){alert('Selecione a área de destino.');return;}
   var loteNome=loteSelecionadoNoMapa||'';
   if(!_jaLancouOk('mudanca_pasto',loteNome,(document.getElementById('mud-dt')||{}).value||TD)) return;
+  // v7.59: mudança com data ANTERIOR à última mudança do lote não muda a posição atual no mapa
+  // (o mapa segue a ordem das datas). Era isso que fazia o Lote 2 "voltar" pro Módulo 3 todo dia.
+  (function(){
+    var _dtN=String((document.getElementById('mud-dt')||{}).value||TD).substring(0,10);
+    var _ult=(S.rT||[]).filter(function(m){return m.tipo==='mudanca_pasto'&&!m._apagado&&_lbCons(m.lote)===_lbCons(loteNome);})
+      .map(function(m){return String(m.dt||'').substring(0,10);}).sort().pop()||'';
+    if(_ult&&_dtN<_ult){ window._mudCancel=!confirm('Atenção: o '+loteNome+' já tem mudança registrada em '+_ult.split('-').reverse().join('/')
+      +'.\n\nUma mudança com data '+_dtN.split('-').reverse().join('/')+' (mais antiga) NÃO muda onde o lote aparece hoje no mapa.\n\nSe é para corrigir uma mudança errada, cancele e exclua a errada na Conferência.\n\nOK = gravar assim mesmo   ·   Cancelar = não gravar'); }
+    else window._mudCancel=false;
+  })();
+  if(window._mudCancel) return;
   var areaOrigem=MAPA_AREAS.find(function(a){return a.label===pastoSelecionadoNoMapa||a.id===pastoSelecionadoNoMapa;});
   if(!S.MAPA_ALOC)S.MAPA_ALOC={};
   if(areaOrigem)delete S.MAPA_ALOC[areaOrigem.id];
