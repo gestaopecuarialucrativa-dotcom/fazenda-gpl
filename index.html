@@ -2243,6 +2243,18 @@ function _sugestaoOrient(a){
 }
 // ── Painel do consultor ──
 var _consAl={};
+// v7.60: avisos de ocupação (saíram da tela do vaqueiro — decisão é do consultor)
+function _consOcupacao(){
+  var aloc=S.MAPA_ALOC||{}, lotes=S.LOTES||[], mods={}, h='';
+  MAPA_AREAS.filter(function(a){return a.tipo==='modulo';}).forEach(function(a){
+    var mk=a.modulo; if(!mods[mk]) mods[mk]={ha:0,ua:0};
+    mods[mk].ha+=a.ha; var ln=aloc[a.id]; if(ln){ var l=lotes.find(function(x){return x.nome===ln;}); if(l) mods[mk].ua+=(l.qtd||0)*(l.peso||0)/450; } });
+  Object.keys(mods).forEach(function(mk){ if(mods[mk].ua===0)
+    h+='<div style="background:#fff;border:1px solid #e0e7e0;border-left:4px solid #F9A825;border-radius:12px;padding:10px 12px;margin-bottom:6px;font-size:12.5px"><b>Módulo '+mk+'</b> sem animais · '+_fmtN(mods[mk].ha,1)+' ha ocioso</div>'; });
+  var ua=lotes.reduce(function(s,l){return s+((l.qtd||0)*(l.peso||0)/450);},0), ha=MAPA_AREAS.reduce(function(s,a){return s+(a.ha||0);},0), tx=ha>0?ua/ha:0;
+  if(tx>0&&tx<1.5) h+='<div style="background:#fff;border:1px solid #e0e7e0;border-left:4px solid #F9A825;border-radius:12px;padding:10px 12px;margin-bottom:6px;font-size:12.5px"><b>Taxa de lotação baixa</b> · '+_fmtN(tx,2)+' UA/ha na fazenda</div>';
+  return h?'<div style="font-size:13px;font-weight:800;color:#1B5E20;margin:10px 0 8px">Ocupação dos pastos</div>'+h:'';
+}
 function rConsAlertas(){
   var el=document.getElementById('cons-alertas'); if(!el)return;
   if(!(CU&&CU.r==='Consultor')){ el.innerHTML=''; return; }
@@ -2284,7 +2296,7 @@ function rConsAlertas(){
         +'<span onclick="_pvAut(\''+esc(k)+'\',\'remover\',0)" style="flex-shrink:0;font-size:11px;font-weight:700;color:#C62828;border:1px solid #FFCDD2;border-radius:20px;padding:3px 8px;cursor:pointer">voltar ao cadastro</span></div>'; });
     h+='</div>';
   }
-  el.innerHTML=h?('<div style="font-size:13px;font-weight:800;color:#1B5E20;margin:2px 0 8px">Consumo no cocho</div>'+h):'';
+  el.innerHTML=(h?('<div style="font-size:13px;font-weight:800;color:#1B5E20;margin:2px 0 8px">Consumo no cocho</div>'+h):'')+_consOcupacao();
 }
 // Foto do momento (vai pro histórico da planilha)
 function _consFoto(chave){
