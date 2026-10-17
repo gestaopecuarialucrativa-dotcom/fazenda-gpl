@@ -1638,6 +1638,12 @@ function voltarPagina(){
 }
 
 /* ═══ MINI-MAPA HOME ═══ */
+// v7.60: posição ÚNICA de cada piquete no mapa (aba 🗺️ Mapa Coords da planilha; se não tiver, a do código)
+function _coordArea(a){
+  var c=(S.MAPA_COORDS||{})[a.id]||{};
+  return { x:(c.x!==undefined&&c.x!==''&&!isNaN(parseFloat(c.x)))?parseFloat(c.x):a.x,
+           y:(c.y!==undefined&&c.y!==''&&!isNaN(parseFloat(c.y)))?parseFloat(c.y):a.y };
+}
 function rHomeMapa(){
   var cont = document.getElementById('home-mapa-pins');
   var wrap = document.getElementById('home-mapa-wrap');
@@ -1660,8 +1666,7 @@ function rHomeMapa(){
     totalAnim += qtd;
     lotesAtivos++;
 
-    var cx = (((S.MAPA_COORDS||{})[a.id]||{}).x||a.x);
-    var cy = (((S.MAPA_COORDS||{})[a.id]||{}).y||a.y);
+    var _pc=_coordArea(a), cx=_pc.x, cy=_pc.y; // v7.60: mesma posição do mapa principal
 
     var pin = document.createElement('button');
     pin.type='button';
@@ -7952,8 +7957,7 @@ function _renderPinsNoContainer(contId, resumoId){
     // BOTÃO — pointer-events:auto sobrescreve o none do container
     var btn = document.createElement('button');
     btn.type='button';
-    var _cx = (((S.MAPA_COORDS||{})[a.id]||{}).x !== undefined) ? (S.MAPA_COORDS[a.id].x) : a.x;
-    var _cy = (((S.MAPA_COORDS||{})[a.id]||{}).y !== undefined) ? (S.MAPA_COORDS[a.id].y) : a.y;
+    var _pc2=_coordArea(a), _cx=_pc2.x, _cy=_pc2.y; // v7.60: mesma posição do mapa da tela inicial
     btn.style.cssText=[
       'position:absolute',
       'left:'+_cx+'%',
@@ -11641,89 +11645,44 @@ function rVaqueiroPainel(){
   var hoje  = new Date();
   hoje.setHours(12,0,0,0);
 
-  var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
-
+  // v7.60: lista compacta (antes: 6 relógios ocupando a tela). Quem está há mais tempo aparece primeiro.
+  var _itens=[];
   lotes.forEach(function(lote){
     var nm   = lote.nome;
-    // Área atual
     var areaId = null;
     Object.keys(aloc).forEach(function(k){ if(aloc[k]===nm) areaId=k; });
     var areaObj = areaId ? MAPA_AREAS.find(function(a){return a.id===areaId;}) : null;
     var areaNm  = areaObj ? areaObj.label : '—';
-
-    // Data de entrada
     var movsLote = movs.filter(function(m){return m.lote===nm;});
     var dtEnt = null;
-    for(var i=movsLote.length-1;i>=0;i--){
-      if(movsLote[i].destino===areaId){
-        dtEnt = (movsLote[i].dt||'').substring(0,10);
-        break;
-      }
-    }
-    if(!dtEnt && movsLote.length){
-      dtEnt = (movsLote[movsLote.length-1].dt||'').substring(0,10);
-    }
-
+    for(var i=movsLote.length-1;i>=0;i--){ if(movsLote[i].destino===areaId){ dtEnt=(movsLote[i].dt||'').substring(0,10); break; } }
+    if(!dtEnt && movsLote.length){ dtEnt=(movsLote[movsLote.length-1].dt||'').substring(0,10); }
     var dias = 0;
-    if(dtEnt && dtEnt.length===10){
-      dias = Math.max(0, Math.round((hoje - new Date(dtEnt+'T12:00:00'))/864e5));
-    }
-
-    // Gauge: máx 21 dias (21d = cheio = critical)
-    var maxDias = 21;
-    var pct     = Math.min(dias/maxDias, 1);
-    var angStart = -90, angEnd = 90;
-    var ang     = angStart + pct*(angEnd - angStart);
-
-    // Cor: 0-3 verde ideal, 4-7 ok, 8-14 atenção, 15+ crítico
+    if(dtEnt && dtEnt.length===10){ dias=Math.max(0, Math.round((hoje - new Date(dtEnt+'T12:00:00'))/864e5)); }
+    _itens.push({nm:nm, areaId:areaId, areaNm:areaNm, dtEnt:dtEnt, dias:dias});
+  });
+  _itens.sort(function(a,b){ return b.dias-a.dias; });
+  var html = '<div style="font-size:10.5px;color:#7a8a7e;margin:-4px 0 2px">dias no piquete · ideal até 3</div>';
+  _itens.forEach(function(it){
+    var dias=it.dias;
+    // Cor: 0-3 verde ideal, 4-7 ok, 8-14 atenção, 15+ crítico (mesma regra de antes)
     var cor   = dias<=3?'#1B5E20':dias<=7?'#4CAF50':dias<=14?'#FF8F00':'#C62828';
     var label = dias<=3?'Ideal':dias<=7?'Ok':dias<=14?'Atenção':'Crítico';
-    var dtFmt = dtEnt ? dtEnt.split('-').reverse().join('/') : '—';
-
-    // SVG velocímetro
-    var cx=70, cy=70, r=50, stroke=10;
-    function polar(a, radius){
-      var rad = a * Math.PI / 180;
-      return {x: cx + radius*Math.cos(rad), y: cy + radius*Math.sin(rad)};
-    }
-    // Arco de fundo
-    var p1=polar(angStart-90, r), p2=polar(angEnd-90, r);
-    var arcBg='M '+p1.x+' '+p1.y+' A '+r+' '+r+' 0 0 1 '+p2.x+' '+p2.y;
-    // Arco preenchido
-    var pFill=polar(ang-90, r);
-    var largeArc = 0;
-    var arcFill='M '+p1.x+' '+p1.y+' A '+r+' '+r+' 0 '+largeArc+' 1 '+pFill.x+' '+pFill.y;
-    // Agulha
-    var needle=polar(ang-90, r-8);
-    var needleStr='M '+cx+' '+cy+' L '+needle.x+' '+needle.y;
-
-    // ID para editar data
-    var editId = encodeURIComponent(areaId||nm);
-
-    var _vaqId='vg_'+nm.replace(/\s/g,'');
-    html += '<div id="'+_vaqId+'" style="background:#fff;border-radius:14px;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:pointer;border:2px solid '+(areaId?cor:'#eee')+'";'
-      + 'style="background:#fff;border-radius:14px;padding:10px;box-shadow:0 2px 8px rgba(0,0,0,0.08);cursor:pointer;border:2px solid '+(areaId?cor:'#eee')+';">'
-      // SVG velocímetro
-      + '<svg viewBox="0 0 140 125" style="width:100%;display:block">'
-      +   '<path d="'+arcBg+'" fill="none" stroke="#eee" stroke-width="'+stroke+'" stroke-linecap="round"/>'
-      +   (pct>0?'<path d="'+arcFill+'" fill="none" stroke="'+cor+'" stroke-width="'+stroke+'" stroke-linecap="round"/>'
-              +'<line x1="'+cx+'" y1="'+cy+'" x2="'+needle.x+'" y2="'+needle.y+'" stroke="'+cor+'" stroke-width="3" stroke-linecap="round"/>'
-          :'')
-      +   '<circle cx="'+cx+'" cy="'+cy+'" r="4" fill="'+cor+'"/>'
-      +   '<text x="'+cx+'" y="'+(cy+32)+'" text-anchor="middle" font-size="26" font-weight="900" fill="'+cor+'">'+dias+'</text>'
-      +   '<text x="'+cx+'" y="'+(cy+46)+'" text-anchor="middle" font-size="10" fill="#888">dias</text>'
-      + '</svg>'
-      // Info
-      + '<div style="text-align:center;margin-top:2px">'
-      +   '<div style="font-size:12px;font-weight:800;color:#333">'+nm+'</div>'
-      +   '<div style="font-size:11px;color:#555;margin-top:1px">'+areaNm+'</div>'
-      +   '<div style="font-size:10px;color:#888;margin-top:1px">Entrada: '+dtFmt+'</div>'
-
-      + '</div>'
-      + '</div>';
+    var dtFmt = it.dtEnt ? it.dtEnt.split('-').reverse().join('/').substring(0,5) : '—';
+    var w = Math.max(3, Math.min(dias/21,1)*100);
+    html += '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #eef1ed">'
+      + '<div style="width:44px;height:44px;border-radius:12px;background:'+cor+'1a;color:'+cor+';display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0">'
+      +   '<b style="font-size:18px;line-height:1">'+dias+'</b><span style="font-size:9px">dias</span></div>'
+      + '<div style="flex:1;min-width:0">'
+      +   '<div style="display:flex;justify-content:space-between;gap:6px"><b style="font-size:13.5px;color:#222">'+it.nm+'</b>'
+      +   '<span style="font-size:10.5px;font-weight:800;color:'+cor+'">'+(it.areaId?label:'sem piquete')+'</span></div>'
+      +   '<div style="font-size:11px;color:#7a8a7e">'+it.areaNm+(it.dtEnt?' · entrou '+dtFmt:'')+'</div>'
+      +   '<div style="height:6px;background:#eef1ed;border-radius:6px;margin-top:5px;position:relative">'
+      +     '<i style="display:block;height:6px;width:'+w+'%;background:'+cor+';border-radius:6px"></i>'
+      +     '<span style="position:absolute;left:33.3%;top:-2px;width:1px;height:10px;background:#cfd8cf"></span>'
+      +     '<span style="position:absolute;left:66.6%;top:-2px;width:1px;height:10px;background:#cfd8cf"></span>'
+      +   '</div></div></div>';
   });
-
-  html += '</div>';
 
   // Pontos de atenção
   var alertasHtml='';
