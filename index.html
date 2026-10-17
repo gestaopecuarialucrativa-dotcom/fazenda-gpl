@@ -8105,6 +8105,8 @@ function _semTratoLote(nm){
   alert('✅ Registrado: '+nm+' — '+motivos[idx]);
 }
 function _alertaRotacao(){
+  // v7.60: só o consultor vê aviso de rotação (decisão de mudar pasto é dele)
+  if(!(CU&&CU.r==='Consultor')){ var _er=document.getElementById('alerta-rotacao'); if(_er) _er.style.display='none'; return; }
   // Verificar lotes com mais de 21 dias no mesmo pasto
   var hoje=new Date();
   var aloc=S.MAPA_ALOC||{};
@@ -11741,7 +11743,8 @@ function rVaqueiroPainel(){
       + '</div>';
   });
 
-  grid.innerHTML = avisoHtml + html + alertasDiv;
+  // v7.60: vaqueiro não decide mudança de pasto — avisos de rotação/ocupação e o "verificar ração" (já está no Trato de hoje) saem da tela dele
+  grid.innerHTML = html;
 
   // Gráfico dos pastos no painel do vaqueiro (só-leitura).
   // Reusa o cálculo de rHistRankingPastos via window._rkpPerfis.
