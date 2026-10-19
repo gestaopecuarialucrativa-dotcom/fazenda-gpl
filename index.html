@@ -7636,7 +7636,21 @@ function salvarNuvem(cb){
     }
   }
 }
+// v7.63: se já tem um carregamento em andamento, espera ele em vez de abrir outro.
+// Antes, login + mapa + histórico pediam a planilha ao mesmo tempo; cada pedido leva ~15 s
+// no Google e eles fazem fila — os últimos passavam de 30 s e o app mostrava "Sem resposta".
+var _nuvemEspera=null;
 function carregarNuvem(cb){
+  if(_nuvemEspera){ if(cb)_nuvemEspera.push(cb); return; }
+  _nuvemEspera=cb?[cb]:[];
+  var feito=false;
+  _carregarNuvemReal(function(ok){
+    if(feito)return; feito=true;
+    var lista=_nuvemEspera||[]; _nuvemEspera=null;
+    lista.forEach(function(f){ try{f(ok);}catch(e){console.error('carregarNuvem cb',e);} });
+  });
+}
+function _carregarNuvemReal(cb){
   if(!S.cfgGS||!navigator.onLine){if(cb)cb(false);return;}
   _nuvemCarregando=true;
   updCloudStatus('loading');
