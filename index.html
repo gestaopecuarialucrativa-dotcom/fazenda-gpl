@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 19/10/2026 v7.62</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 19/10/2026 v7.63</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2553,6 +2553,7 @@ function rTratoDia(){
   el.innerHTML=tit+h; el.style.display='block';
 }
 // v7.60: rAgendaVaq removida (não era chamada em lugar nenhum)
+var _bolSem='passada'; // v7.62: declaração tinha sumido junto com rAgendaVaq — boletim abria em branco
 function _bolJanela(qual){
   var h=new Date(TD+'T12:00:00'), dw=h.getDay(); // 0=dom
   var segAtual=_somaDias(TD, -((dw+6)%7));
