@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 17/10/2026 v7.61</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 19/10/2026 v7.62</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -11989,7 +11989,8 @@ function showOk(id){const m=document.getElementById(id);if(!m)return;m.style.dis
 
 // ═══ INIT ═══
 try{carregar();}catch(e){S=JSON.parse(JSON.stringify(DEFAULT));}
-if(S.cfgGS&&navigator.onLine){carregarNuvem(ok=>{try{initLogin();}catch(e){mostrarFazendas();}try{popAll();}catch(e){}});}else{try{initLogin();}catch(e){mostrarFazendas();}}
+try{initLogin();}catch(e){mostrarFazendas();} // v7.62: login aparece NA HORA com os dados do aparelho (antes ficava em branco até 30 s esperando a planilha)
+if(S.cfgGS&&navigator.onLine){carregarNuvem(ok=>{try{var _sf=document.getElementById('step-faz');if(_sf&&_sf.style.display!=='none')initLogin();}catch(e){mostrarFazendas();}try{popAll();}catch(e){}});}
 
 
 var _rPanBase = rPan;
