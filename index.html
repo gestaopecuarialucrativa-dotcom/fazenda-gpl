@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/10/2026 v7.66</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/10/2026 v7.67</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2564,11 +2564,11 @@ function _bolJanela(qual){
   return {ini:ini, fim:sab, fimDados:fimDados, dias:dias};
 }
 function _bolTotais(ini,fim){ // v7.65: sacos, rolos e custo R$ de uma janela
-  var noP=function(dt){ dt=(dt||'').substring(0,10); return dt>=ini&&dt<=fim; }, sac=0, rol=0, cs=0, cf=0;
-  (S.rT||[]).forEach(function(r){ if(r._apagado||r.tipo!=='trato'||!noP(r.dt))return; var q=parseFloat(r.q||r.qtd)||0, e=(S.EST||{})[r.pr||r.prod||'']||{}; sac+=q; cs+=q*(parseFloat(e.preco_saco)||0); });
-  (S.mFeno||[]).forEach(function(m){ if(!m||m.mov!=='saida'||!m.lote||!noP(m.dt))return; var e=(S.FENO||{})[m.tipo]||{}; rol+=parseFloat(m.q)||0; cf+=parseFloat(m.custo)||((parseFloat(m.kg)||0)*(parseFloat(e.vkg)||0)); });
+  var noP=function(dt){ dt=(dt||'').substring(0,10); return dt>=ini&&dt<=fim; }, sac=0, rol=0, cs=0, cf=0, kgS=0, kgF=0;
+  (S.rT||[]).forEach(function(r){ if(r._apagado||r.tipo!=='trato'||!noP(r.dt))return; var q=parseFloat(r.q||r.qtd)||0, e=(S.EST||{})[r.pr||r.prod||'']||{}; sac+=q; kgS+=parseFloat(r.kg_fornecido)||q*(_ppsProd(r.pr||r.prod||'')||30); cs+=q*(parseFloat(e.preco_saco)||0); });
+  (S.mFeno||[]).forEach(function(m){ if(!m||m.mov!=='saida'||!m.lote||!noP(m.dt))return; var e=(S.FENO||{})[m.tipo]||{}; rol+=parseFloat(m.q)||0; kgF+=parseFloat(m.kg)||0; cf+=parseFloat(m.custo)||((parseFloat(m.kg)||0)*(parseFloat(e.vkg)||0)); });
   var dias=Math.max(1,_diffDias(ini,fim)+1);
-  return {sacos:sac, rolos:rol, custo:cs+cf, custoSup:cs, custoFeno:cf, dias:dias};
+  return {sacos:sac, rolos:rol, kgSup:kgS, kgFeno:kgF, custo:cs+cf, custoSup:cs, custoFeno:cf, dias:dias};
 }
 function _bolDados(qual){
   var j=_bolJanela(qual), noP=function(dt){ dt=(dt||'').substring(0,10); return dt>=j.ini&&dt<=j.fimDados; };
@@ -2715,7 +2715,11 @@ function _bolGerarPDF(){
   var kpi2=function(v,l,extra){return '<div style="flex:1;background:#F1F8E9;border-radius:8px;padding:8px 6px;text-align:center"><b style="display:block;font-size:17px;color:#1B5E20">'+v+'</b><span style="font-size:9.5px;color:#65766a">'+l+'</span>'+(extra||'')+'</div>';};
   var c=(resumo?'<div style="margin:12px 0 4px;background:#1B5E20;color:#fff;border-radius:8px;padding:10px 12px;font-size:13px;font-weight:700;line-height:1.45">'+esc(resumo)+'</div>':'');
   c+='<div style="display:flex;gap:8px;margin:12px 0">'+kpi(_fmtN(d.cab,0),'cabeças hoje'+((d.vendas||[]).length?'<br>+'+_fmtN(d.vendas.reduce(function(a,v){return a+v.qtd;},0),0)+' vendidas':''))+kpi(d.nLotes,'lotes')+kpi2(_fmtN(d.sacos,0),'sacos de suplemento',seta(d.tot.sacos,d.ant.sacos))+kpi2(_fmtN(d.rolos,0),'rolos de feno',seta(d.tot.rolos,d.ant.rolos))+'</div>';
-  if(comR&&d.tot.custo>0) c+='<div style="display:flex;gap:8px;margin:0 0 12px">'+kpi2('R$ '+_fmtN(d.tot.custo,0),'custo da semana (suplemento + feno)',seta(d.tot.custo,d.ant.custo))+kpi2('R$ '+_fmtN(d.cabDiaRS,2),'por cabeça por dia')+'</div>';
+  if(comR&&d.tot.custo>0){ var _ln=function(t){return '<div style="font-size:9.5px;color:#65766a">'+t+'</div>';}, _cd=(d.cab||0)*(j.dias||1);
+    var qSem=[]; if(d.tot.kgSup>0) qSem.push(_fmtN(d.tot.kgSup,0)+' kg suplemento'); if(d.tot.kgFeno>0) qSem.push(_fmtN(d.tot.kgFeno,0)+' kg feno');
+    var qCab=[]; if(_cd&&d.tot.kgSup>0) qCab.push(_fmtN(d.tot.kgSup*1000/_cd,0)+' g suplemento'); if(_cd&&d.tot.kgFeno>0) qCab.push(_fmtN(d.tot.kgFeno/_cd,2)+' kg feno');
+    c+='<div style="display:flex;gap:8px;margin:0 0 12px">'+kpi2('R$ '+_fmtN(d.tot.custo,0),'custo da semana (suplemento + feno)',(qSem.length?_ln(qSem.join(' · ')):'')+seta(d.tot.custo,d.ant.custo))
+      +kpi2('R$ '+_fmtN(d.cabDiaRS,2),'por cabeça por dia',qCab.length?_ln(qCab.join(' · ')):'')+'</div>'; }
   c+=sec('Nutrição por lote')+'<table style="width:100%;border-collapse:collapse"><tr><th '+th+'>Lote</th><th '+th+'>Pasto</th><th '+thr+'>Cab</th><th '+thr+'>Suplemento<br>sacos na semana</th><th '+thr+'>Feno<br>rolos</th><th '+thr+'>Previsto x fornecido</th></tr>';
   d.lotes.forEach(function(l){
     var _n1=function(v){return _fmtN(Math.round(v*10)/10,(Math.round(v*10)%10)?1:0);}, _dS=l.prevSac!=null?l.sacos-l.prevSac:0;
