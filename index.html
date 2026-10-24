@@ -274,7 +274,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="login-title">Selecione a fazenda</div>
 <div class="login-sub" id="step-faz-sub"></div>
 <div id="faz-list"></div>
-<div style="display:none;margin-top:14px;text-align:center"><span style="font-size:12px;color:#888;cursor:pointer" onclick="acessoConsultor()" style="display:inline-flex;align-items:center;gap:5px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Acesso de consultor</span></div>
+<div style="margin-top:14px;text-align:center"><span style="font-size:12px;color:#888;cursor:pointer" onclick="acessoConsultor()" style="display:inline-flex;align-items:center;gap:5px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Acesso de consultor</span></div>
 </div>
 <div class="login-card" id="step-user" style="display:none">
 <div style="font-size:12px;color:#1B5E20;font-weight:700;cursor:pointer;margin-bottom:6px" onclick="mostrarFazendas()">‹ Voltar</div><div class="login-title" id="step-user-title">Quem é você?</div>
@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 19/10/2026 v7.63</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/10/2026 v7.64</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -1559,7 +1559,7 @@ salvar._t=null;
 // ═══ LOGIN ═══
 let loginFaz=null,loginUser=null,pinBuf='',CU=null,prevPage=null;
 function initLogin(){const p=new URLSearchParams(window.location.search);const u=p.get('user');const f=p.get('faz');if(u){const sl=u.toLowerCase();const us=S.US.find(x=>{const ns=x.n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');return ns===sl;});if(us){loginUser=S.US.indexOf(us);mostrarPin(us);return;}}if(f){const fn=f.toLowerCase().replace(/-/g,' ');const faz=Object.keys(S.FAZ).find(x=>x.toLowerCase().includes(fn));if(faz){loginFaz=faz;mostrarUsers(faz);return;}}mostrarFazendas();}
-function mostrarFazendas(){document.getElementById('step-faz').style.display='block';document.getElementById('step-user').style.display='none';document.getElementById('step-pin').style.display='none';const l=document.getElementById('faz-list');if(!l)return;var fazendas=Object.assign({},DEFAULT.FAZ,S.FAZ||{});var _ksFaz=Object.keys(fazendas);if(_ksFaz.length===1){selecionarFaz(_ksFaz[0]);return;}l.innerHTML=Object.keys(fazendas).map(f=>`<div style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #e8e8e8;border-radius:12px;background:#fff;cursor:pointer;margin-bottom:8px" onclick="selecionarFaz('${f}')"><span style="width:36px;height:36px;border-radius:10px;background:#E8F5E9;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V21H3z"/><path d="M9 21v-6h6v6"/></svg></span><div style="flex:1;font-size:14px;font-weight:700">${f}</div><span style="color:#888;font-size:18px">›</span></div>`).join('');}
+function mostrarFazendas(){document.getElementById('step-faz').style.display='block';document.getElementById('step-user').style.display='none';document.getElementById('step-pin').style.display='none';const l=document.getElementById('faz-list');if(!l)return;var fazendas=Object.assign({},DEFAULT.FAZ,S.FAZ||{});l.innerHTML=Object.keys(fazendas).map(f=>`<div style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #e8e8e8;border-radius:12px;background:#fff;cursor:pointer;margin-bottom:8px" onclick="selecionarFaz('${f}')"><span style="width:36px;height:36px;border-radius:10px;background:#E8F5E9;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V21H3z"/><path d="M9 21v-6h6v6"/></svg></span><div style="flex:1;font-size:14px;font-weight:700">${f}</div><span style="color:#888;font-size:18px">›</span></div>`).join('');}
 function acessoConsultor(){loginFaz=null;mostrarUsersLista(S.US.filter(u=>u.r==='Consultor'||u.fs.length===0));document.getElementById('step-faz').style.display='none';document.getElementById('step-user').style.display='block';document.getElementById('step-user-title').textContent='Acesso de consultor';document.getElementById('step-user-faz').textContent='Todas as fazendas';}
 function selecionarFaz(f){loginFaz=f;mostrarUsers(f);}
 function mostrarUsers(faz){const users=S.US.filter(u=>u.fs.length===0||u.fs.includes(faz)||u.r==='Consultor');document.getElementById('step-faz').style.display='none';document.getElementById('step-user').style.display='block';document.getElementById('step-pin').style.display='none';document.getElementById('step-user-title').textContent='Quem é você?';document.getElementById('step-user-faz').textContent=faz;mostrarUsersLista(users);}
@@ -2595,12 +2595,24 @@ function _bolDados(qual){
     if(pr){ var ori=_orientAtiva(lo,pr); if(ori) prevKg=parseFloat(ori.sacos)*_ppsProd(pr)/(parseInt(ori.freq)||1);
       else { var pp=_pvPrevisto(lo,pr).pct; if(pp&&l.peso) prevKg=(pp/100)*parseFloat(l.peso)*cab; } }
     var kgDia=s?s.kg/diasL:0, dif=(prevKg>0&&s)?(kgDia-prevKg)/prevKg:null;
+    // v7.64: previsto em SACOS. Orientado: conta os tratos da agenda na semana. Sem orientação: % do peso, conferido em 14 dias.
+    var prevSac=null, conforme=null, oriB=pr?_orientAtiva(lo,pr):null, fimL=x.vendido||j.fimDados;
+    if(oriB){ var fq=parseInt(oriB.freq)||1, base=(oriB.dt||j.ini).substring(0,10), nEsp=0;
+      // semana atual: o trato de hoje ainda pode não ter sido feito — só conta hoje se já lançou
+      var fimEsp=fimL; if(fimEsp===TD && !(S.rT||[]).some(function(r){return !r._apagado&&r.tipo==='trato'&&(r.dt||'').substring(0,10)===TD&&_lbCons(r.lote||r.co)===lo;})) fimEsp=_somaDias(TD,-1);
+      for(var dd=j.ini; dd<=fimEsp; dd=_somaDias(dd,1)){ if(dd<base) continue; if(_diffDias(base,dd)%fq===0) nEsp++; }
+      prevSac=nEsp*(parseFloat(oriB.sacos)||0);
+      var sacR=s?s.sacos:0; conforme=prevSac>0?Math.abs(sacR-prevSac)<=Math.max(0.5,prevSac*CONS_TOL):null;
+    } else if(prevKg>0&&pr){ var pps=_ppsProd(pr)||30; prevSac=Math.round(prevKg*diasL/pps*10)/10;
+      var i14=_somaDias(fimL,-13), kg14=0;
+      (S.rT||[]).forEach(function(r){ var dt=(r.dt||'').substring(0,10); if(r._apagado||r.tipo!=='trato'||dt<i14||dt>fimL||_lbCons(r.lote||r.co)!==lo)return; var q=parseFloat(r.q||r.qtd)||0; kg14+=parseFloat(r.kg_fornecido)||q*_ppsProd(r.pr||r.prod||''); });
+      var d14=Math.min(14,_diffDias(i14,fimL)+1); conforme=Math.abs(kg14/d14-prevKg)/prevKg<=CONS_TOL; }
     var marca = x.vendido ? ('vendido em '+x.vendido.substring(8,10)+'/'+x.vendido.substring(5,7)) : (qVendSem?('venda parcial: '+qVendSem+' cab'):'');
     return {lote:lo, pasto:x.vendido?'vendido':(pasto[lo]||l.pasto||'—'), cab:cab, prod:pr, sacos:s?s.sacos:0, dias:diasL, vendido:!!x.vendido, marca:marca,
-      gCabDia:(s&&cab)?Math.round(s.kg/cab/diasL*1000):null, fenoKgCabDia:(f&&cab)?Math.round(f.kg/cab/diasL*100)/100:null, fenoRolos:f?f.un:0, dif:dif, orientado:!!(pr&&_orientAtiva(lo,pr))};
+      gCabDia:(s&&cab)?Math.round(s.kg/cab/diasL*1000):null, fenoKgCabDia:(f&&cab)?Math.round(f.kg/cab/diasL*100)/100:null, fenoRolos:f?f.un:0, pctPV:(s&&cab&&parseFloat(l.peso))?s.kg/diasL/(cab*parseFloat(l.peso))*100:null, dif:dif, prevSac:prevSac, conforme:conforme, orientado:!!(pr&&_orientAtiva(lo,pr))};
   }).sort(function(a,b){ var na=parseInt((a.lote.match(/\d+/)||[9999])[0]), nb=parseInt((b.lote.match(/\d+/)||[9999])[0]); return na-nb; });
-  var estoque=(rd.estoque||[]).map(function(e){return {nome:e.produto, saldo:e.saldo+' saco'+(e.saldo===1?'':'s'), dias:e.dias, comprar:(e.dias!=null&&e.dias<15)};});
-  (rd.feno||[]).forEach(function(f){ estoque.push({nome:'Feno '+f.tipo, saldo:f.saldo+' '+f.u+(f.saldo===1?'':'s'), dias:f.dias, comprar:(f.dias!=null&&f.dias<15)}); });
+  var estoque=(rd.estoque||[]).filter(function(e){return (parseFloat(e.saldo)||0)>0;}).map(function(e){return {nome:e.produto, saldo:e.saldo+' saco'+(e.saldo===1?'':'s'), dias:e.dias, comprar:(e.dias!=null&&e.dias<15)};});
+  (rd.feno||[]).forEach(function(f){ if(!((parseFloat(f.saldo)||0)>0)) return; estoque.push({nome:'Feno '+f.tipo, saldo:f.saldo+' '+f.u+(f.saldo===1?'':'s'), dias:f.dias, comprar:(f.dias!=null&&f.dias<15)}); });
   var mud=(S.rT||[]).filter(function(r){return !r._apagado&&r.tipo==='mudanca_pasto'&&noP(r.dt);}).map(function(r){return {lote:_lbCons(r.lote), de:r.origem||'', para:r.destino||'', dt:r.dt};});
   var ori=Object.keys(S.ORIENT||{}).map(function(k){ var o=S.ORIENT[k], p=k.split('||'); return {lote:p[0], prod:p[1], sacos:o.sacos, freq:o.freq, dt:o.dt, vistos:o.vistos||[]}; });
   return {fazenda:rd.fazenda, janela:j, cab:totCab, nLotes:lotes.filter(function(x){return !x.vendido;}).length, sacos:totSac, rolos:totRol, lotes:lotes, estoque:estoque, mudancas:mud, orientacoes:ori, vendas:vendas};
@@ -2681,12 +2693,13 @@ function _bolGerarPDF(){
   var td='style="padding:5px 3px;border-bottom:1px solid #f0f0f0;font-size:11px"', tdr=td.replace('padding','text-align:right;padding');
   var kpi=function(v,l){return '<div style="flex:1;background:#F1F8E9;border-radius:8px;padding:8px 6px;text-align:center"><b style="display:block;font-size:17px;color:#1B5E20">'+v+'</b><span style="font-size:9.5px;color:#65766a">'+l+'</span></div>';};
   var c='<div style="display:flex;gap:8px;margin:12px 0">'+kpi(_fmtN(d.cab,0),'cabeças hoje'+((d.vendas||[]).length?'<br>+'+_fmtN(d.vendas.reduce(function(a,v){return a+v.qtd;},0),0)+' vendidas':''))+kpi(d.nLotes,'lotes')+kpi(_fmtN(d.sacos,0),'sacos de suplemento')+kpi(_fmtN(d.rolos,0),'rolos de feno')+'</div>';
-  c+=sec('Nutrição por lote')+'<table style="width:100%;border-collapse:collapse"><tr><th '+th+'>Lote</th><th '+th+'>Pasto</th><th '+thr+'>Cab</th><th '+thr+'>Suplemento<br>g/cab/dia</th><th '+thr+'>Feno<br>kg/cab/dia</th><th '+thr+'>vs previsto</th></tr>';
+  c+=sec('Nutrição por lote')+'<table style="width:100%;border-collapse:collapse"><tr><th '+th+'>Lote</th><th '+th+'>Pasto</th><th '+thr+'>Cab</th><th '+thr+'>Suplemento<br>sacos na semana</th><th '+thr+'>Feno<br>rolos</th><th '+thr+'>Previsto x fornecido</th></tr>';
   d.lotes.forEach(function(l){
-    var vs=l.dif==null?'<span style="color:#999">—</span>':(Math.abs(l.dif)<=CONS_TOL?'<b style="color:#2E7D32">no previsto</b>':'<b style="color:#E65100">'+(l.dif>0?'+':'−')+Math.round(Math.abs(l.dif)*100)+'%</b>');
-    c+='<tr><td '+td+'><b>'+esc(l.lote)+'</b>'+(l.prod?'<div style="font-size:9.5px;color:#888">'+esc(l.prod)+(l.orientado?' · orientado':'')+'</div>':'')+(l.marca?'<div style="font-size:9.5px;color:#1565C0;font-weight:700">'+esc(l.marca)+'</div>':'')+'</td><td '+td+'>'+esc(l.pasto)+'</td><td '+tdr+'>'+l.cab+'</td><td '+tdr+'>'+(l.gCabDia!=null?_fmtN(l.gCabDia,0):'—')+'</td><td '+tdr+'>'+(l.fenoKgCabDia!=null?_fmtN(l.fenoKgCabDia,2):'—')+'</td><td '+tdr+'>'+vs+'</td></tr>';
+    var _n1=function(v){return _fmtN(Math.round(v*10)/10,(Math.round(v*10)%10)?1:0);}, _dS=l.prevSac!=null?l.sacos-l.prevSac:0;
+    var vs=(l.prevSac==null||l.conforme==null)?'<span style="color:#999">—</span>':(l.conforme?'<b style="color:#2E7D32">✓ conforme</b>':'<b style="color:#E65100">previsto '+_n1(l.prevSac)+' sc</b><div style="font-size:9.5px;color:#888;font-weight:700">'+(_dS<0?'faltou ':'passou ')+_n1(Math.abs(_dS))+' saco'+(Math.abs(_dS)>1?'s':'')+'</div>');
+    c+='<tr><td '+td+'><b>'+esc(l.lote)+'</b>'+(l.prod?'<div style="font-size:9.5px;color:#888">'+esc(l.prod)+(l.orientado?' · orientado':'')+'</div>':'')+(l.marca?'<div style="font-size:9.5px;color:#1565C0;font-weight:700">'+esc(l.marca)+'</div>':'')+'</td><td '+td+'>'+esc(l.pasto)+'</td><td '+tdr+'>'+l.cab+'</td><td '+tdr+'>'+(l.sacos?'<b>'+_n1(l.sacos)+'</b>'+(l.pctPV!=null?'<div style="font-size:9.5px;color:#888">'+_fmtN(l.pctPV,2)+'% PV</div>':''):'—')+'</td><td '+tdr+'>'+(l.fenoRolos?_n1(l.fenoRolos):'—')+'</td><td '+tdr+'>'+vs+'</td></tr>';
   });
-  c+='</table><div style="font-size:9.5px;color:#999;margin-top:3px">Médias de '+j.dias+' dia'+(j.dias>1?'s':'')+' ('+fd(j.ini)+' a '+fd(j.fimDados)+'); lote vendido: até o dia da venda. Cabeças do início da semana. "vs previsto" compara com o % cadastrado ou com a orientação do consultor.</div>';
+  c+='</table><div style="font-size:9.5px;color:#999;margin-top:3px">Sacos e rolos lançados de '+fd(j.ini)+' a '+fd(j.fimDados)+' (lote vendido: até o dia da venda). Cabeças do início da semana. Previsto: lote com orientação da consultoria conta os tratos da agenda na semana; sem orientação, compara com o % do peso cadastrado nos últimos 14 dias.</div>';
   if(d.vendas&&d.vendas.length) c+=sec('Vendas da semana')+'<div style="background:#E3F2FD;border-left:3px solid #1565C0;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.55">'
     +d.vendas.map(function(v){return '<b>'+esc(v.lote)+'</b>: '+v.qtd+' cabeça'+(v.qtd===1?'':'s')+' vendida'+(v.qtd===1?'':'s')+' em '+fd(v.dt)+(v.total?' (lote todo)':' (parte do lote)');}).join('<br>')+'</div>';
   c+=sec('Estoque')+'<table style="width:100%;border-collapse:collapse"><tr><th '+th+'>Produto</th><th '+thr+'>Saldo</th><th '+thr+'>Cobre</th><th '+thr+'></th></tr>'
@@ -2696,6 +2709,7 @@ function _bolGerarPDF(){
     +d.orientacoes.map(function(o){return '<b>'+esc(o.lote)+'</b> · '+esc(o.prod)+': '+_fmtN(o.sacos,0)+' saco'+(o.sacos>1?'s':'')+' '+_freqTxt(o.freq).toLowerCase()+' (desde '+fd(o.dt)+(o.vistos.length?', visto por '+esc(o.vistos.join(', ')):'')+')';}).join('<br>')
     +'<div style="font-size:10px;color:#8a6d00;margin-top:3px">Domingo é folga: o sábado leva a quantidade do domingo.</div></div>';
   if(rec) c+=sec('Recado do consultor')+'<div style="background:#F1F8E9;border-left:3px solid #2E7D32;border-radius:6px;padding:9px 11px;font-size:12px;line-height:1.55;white-space:pre-wrap">'+esc(rec)+'<div style="margin-top:6px;font-weight:700;color:#1B5E20">'+esc(String((CU&&CU.n)||'Rogério').split(' ')[0])+' · Consultor GPL</div></div>';
+  c+='<div style="margin-top:16px;padding-top:8px;border-top:1px solid #e3e8e3;font-size:11.5px;color:#33691E"><b>Rogério · Consultor GPL</b> · (63) 99108-2453</div>'; // v7.64: assinatura sempre
   var tit='Boletim da semana';
   var css=(typeof _pdfTimbreCss==='function')?_pdfTimbreCss():'';
   var timbre=(typeof _pdfTimbre==='function')?_pdfTimbre(tit, fd(j.ini)+' a '+fd(j.fim)+'/'+j.ini.substring(0,4), d.fazenda):'<h2>'+tit+'</h2>';
@@ -10148,6 +10162,7 @@ function rkpResponder(areaId, cod){
 // _pdfTimbre(titulo, subtitulo, faz) (cabeçalho) e _pdfRodape() (rodapé).
 function _pdfTimbreCss(){
   return '*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}'
+    +'@page{margin:0}@media print{.no-print{display:none!important}body{padding:12mm 14mm!important;max-width:none!important}}'
     +'@media print{body{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}}'
     +'.gpl-tb{display:flex;justify-content:space-between;align-items:center;'
     +'border-bottom:3px solid #2E7D32;padding-bottom:10px;margin-bottom:4px}'
@@ -10172,7 +10187,7 @@ function _pdfTimbre(titulo, subtitulo, faz){
     +'<div class="gpl-bar"></div>';
 }
 function _pdfRodape(){
-  return '<div style="text-align:center;margin:18px 0 6px">'
+  return '<div class="no-print" style="text-align:center;margin:18px 0 6px">'
     +'<button onclick="window.close()" style="padding:10px 28px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">✕ Fechar e voltar ao app</button>'
     +'</div>'
     +'<div class="gpl-ft">'
@@ -13343,7 +13358,7 @@ function irParaFeno(){
   // Popular tipos de feno do estoque (S.FENO)
   var tipoSel=document.getElementById('fn-tipo');
   if(tipoSel){
-    var fenTipos=Object.keys(S.FENO||{});
+    var fenTipos=Object.keys(S.FENO||{}).filter(function(t){ return (parseFloat((S.FENO[t]||{}).q)||0)>0; }); // v7.64: só feno com saldo (igual insumos)
     tipoSel.innerHTML='<option value="">Selecione...</option>'
       +fenTipos.map(function(t){
         var e=S.FENO[t];
@@ -13352,6 +13367,7 @@ function irParaFeno(){
       }).join('');
     // Se só tem um tipo, seleciona automaticamente
     if(fenTipos.length===1){ tipoSel.value=fenTipos[0]; updFenoCalc(); }
+    if(!fenTipos.length) tipoSel.innerHTML='<option value="">Sem feno em estoque — lance uma compra</option>';
   }
 }
 
