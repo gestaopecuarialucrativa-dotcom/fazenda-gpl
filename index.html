@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/10/2026 v7.64</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/10/2026 v7.65</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2563,6 +2563,13 @@ function _bolJanela(qual){
   var dias=qual==='passada'?7:Math.max(1,_diffDias(ini,TD)+1);
   return {ini:ini, fim:sab, fimDados:fimDados, dias:dias};
 }
+function _bolTotais(ini,fim){ // v7.65: sacos, rolos e custo R$ de uma janela
+  var noP=function(dt){ dt=(dt||'').substring(0,10); return dt>=ini&&dt<=fim; }, sac=0, rol=0, cs=0, cf=0;
+  (S.rT||[]).forEach(function(r){ if(r._apagado||r.tipo!=='trato'||!noP(r.dt))return; var q=parseFloat(r.q||r.qtd)||0, e=(S.EST||{})[r.pr||r.prod||'']||{}; sac+=q; cs+=q*(parseFloat(e.preco_saco)||0); });
+  (S.mFeno||[]).forEach(function(m){ if(!m||m.mov!=='saida'||!m.lote||!noP(m.dt))return; var e=(S.FENO||{})[m.tipo]||{}; rol+=parseFloat(m.q)||0; cf+=parseFloat(m.custo)||((parseFloat(m.kg)||0)*(parseFloat(e.vkg)||0)); });
+  var dias=Math.max(1,_diffDias(ini,fim)+1);
+  return {sacos:sac, rolos:rol, custo:cs+cf, custoSup:cs, custoFeno:cf, dias:dias};
+}
 function _bolDados(qual){
   var j=_bolJanela(qual), noP=function(dt){ dt=(dt||'').substring(0,10); return dt>=j.ini&&dt<=j.fimDados; };
   var rd=_relDiaDados('mes'), pasto={}; (rd.lotesPasto||[]).forEach(function(x){ pasto[_lbCons(x.lote)]=x.pasto; });
@@ -2612,11 +2619,16 @@ function _bolDados(qual){
       gCabDia:(s&&cab)?Math.round(s.kg/cab/diasL*1000):null, fenoKgCabDia:(f&&cab)?Math.round(f.kg/cab/diasL*100)/100:null, fenoRolos:f?f.un:0, pctPV:(s&&cab&&parseFloat(l.peso))?s.kg/diasL/(cab*parseFloat(l.peso))*100:null, dif:dif, prevSac:prevSac, conforme:conforme, orientado:!!(pr&&_orientAtiva(lo,pr))};
   }).sort(function(a,b){ var na=parseInt((a.lote.match(/\d+/)||[9999])[0]), nb=parseInt((b.lote.match(/\d+/)||[9999])[0]); return na-nb; });
   var estoque=(rd.estoque||[]).filter(function(e){return (parseFloat(e.saldo)||0)>0;}).map(function(e){return {nome:e.produto, saldo:e.saldo+' saco'+(e.saldo===1?'':'s'), dias:e.dias, comprar:(e.dias!=null&&e.dias<15)};});
-  (rd.feno||[]).forEach(function(f){ if(!((parseFloat(f.saldo)||0)>0)) return; estoque.push({nome:'Feno '+f.tipo, saldo:f.saldo+' '+f.u+(f.saldo===1?'':'s'), dias:f.dias, comprar:(f.dias!=null&&f.dias<15)}); });
+  (rd.feno||[]).forEach(function(f){ if(!((parseFloat(f.saldo)||0)>0)) return; estoque.push({nome:'Feno '+f.tipo, saldo:f.saldo+' '+f.u+(f.saldo===1?'':'s'), dias:f.dias, semHist:f.semHist, comprar:(f.dias!=null&&f.dias<15)}); });
   var mud=(S.rT||[]).filter(function(r){return !r._apagado&&r.tipo==='mudanca_pasto'&&noP(r.dt);}).map(function(r){return {lote:_lbCons(r.lote), de:r.origem||'', para:r.destino||'', dt:r.dt};});
   var ori=Object.keys(S.ORIENT||{}).map(function(k){ var o=S.ORIENT[k], p=k.split('||'); return {lote:p[0], prod:p[1], sacos:o.sacos, freq:o.freq, dt:o.dt, vistos:o.vistos||[]}; });
-  return {fazenda:rd.fazenda, janela:j, cab:totCab, nLotes:lotes.filter(function(x){return !x.vendido;}).length, sacos:totSac, rolos:totRol, lotes:lotes, estoque:estoque, mudancas:mud, orientacoes:ori, vendas:vendas};
+  var tot=_bolTotais(j.ini,j.fimDados), pIni=_somaDias(j.ini,-7), ant=_bolTotais(pIni,_somaDias(pIni,j.dias-1));
+  return {fazenda:rd.fazenda, janela:j, tot:tot, ant:ant, cabDiaRS:(totCab>0?tot.custo/totCab/j.dias:0), cab:totCab, nLotes:lotes.filter(function(x){return !x.vendido;}).length, sacos:totSac, rolos:totRol, lotes:lotes, estoque:estoque, mudancas:mud, orientacoes:ori, vendas:vendas};
 }
+function _bolResumoGet(ini){ return ((S.BOL_RESUMO||{})[ini])||''; }
+function _bolResumoSet(ini,t){ if(!S.BOL_RESUMO)S.BOL_RESUMO={}; S.BOL_RESUMO[ini]=t; try{salvarLocal();}catch(e){} }
+function _bolComCusto(){ try{ return localStorage.getItem('gpl_bol_custo')==='1'; }catch(e){ return false; } }
+function _bolComCustoSet(v){ try{ localStorage.setItem('gpl_bol_custo',v?'1':'0'); }catch(e){} }
 function _bolRecadoGet(ini){ return ((S.BOL_RECADOS||{})[ini])||''; }
 function _bolRecadoSet(ini,t){ if(!S.BOL_RECADOS)S.BOL_RECADOS={}; S.BOL_RECADOS[ini]=t; try{salvarLocal();}catch(e){} }
 function rBoletim(){
@@ -2628,8 +2640,11 @@ function rBoletim(){
   var txt=String(_bolRecadoGet(j.ini)).replace(/&/g,'&amp;').replace(/</g,'&lt;');
   el.innerHTML='<div class="card" style="margin-bottom:12px;padding:12px 14px">'
     +'<div style="font-size:14px;font-weight:800;color:#1B5E20">Boletim semanal do proprietário</div>'
-    +'<div style="font-size:11px;color:#888;margin:2px 0 10px">Semana de segunda a sábado · sem valores em R$</div>'
+    +'<div style="font-size:11px;color:#888;margin:2px 0 10px">Semana de segunda a sábado</div>'
     +'<div style="display:flex;gap:6px">'+chip('passada','Semana passada',jp)+chip('atual','Esta semana',ja)+'</div>'
+    +'<div style="font-size:11px;color:#666;margin:10px 0 3px;font-weight:600">Resumo da semana em 1 linha (sai em destaque no topo)</div>'
+    +'<input id="bol-resumo" oninput="_bolResumoSet(\''+j.ini+'\',this.value)" value="'+String(_bolResumoGet(j.ini)).replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'" placeholder="Ex.: Semana boa: 5 de 6 lotes conforme; Lote Compra precisa ajustar" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid #ddd;border-radius:9px;font-size:12.5px;font-family:inherit">'
+    +'<label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#444;margin-top:9px;cursor:pointer"><input type="checkbox" '+(_bolComCusto()?'checked':'')+' onchange="_bolComCustoSet(this.checked)" style="width:17px;height:17px"> Mostrar custo em R$ no boletim (custo da semana e R$/cab/dia)</label>'
     +'<div style="font-size:11px;color:#666;margin:10px 0 3px;font-weight:600">Recado do consultor (vai no boletim)</div>'
     +'<textarea id="bol-recado" oninput="_bolRecadoSet(\''+j.ini+'\',this.value)" rows="4" placeholder="Escreva o que o proprietário precisa saber desta semana…" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid #ddd;border-radius:9px;font-size:12.5px;font-family:inherit;line-height:1.45">'+txt+'</textarea>'
     +'<div style="display:flex;gap:8px;margin-top:10px">'
@@ -2692,7 +2707,14 @@ function _bolGerarPDF(){
   var th='style="text-align:left;color:#65766a;font-weight:700;border-bottom:1.5px solid #dfe8dc;padding:4px 3px;font-size:10.5px"', thr=th.replace('text-align:left','text-align:right');
   var td='style="padding:5px 3px;border-bottom:1px solid #f0f0f0;font-size:11px"', tdr=td.replace('padding','text-align:right;padding');
   var kpi=function(v,l){return '<div style="flex:1;background:#F1F8E9;border-radius:8px;padding:8px 6px;text-align:center"><b style="display:block;font-size:17px;color:#1B5E20">'+v+'</b><span style="font-size:9.5px;color:#65766a">'+l+'</span></div>';};
-  var c='<div style="display:flex;gap:8px;margin:12px 0">'+kpi(_fmtN(d.cab,0),'cabeças hoje'+((d.vendas||[]).length?'<br>+'+_fmtN(d.vendas.reduce(function(a,v){return a+v.qtd;},0),0)+' vendidas':''))+kpi(d.nLotes,'lotes')+kpi(_fmtN(d.sacos,0),'sacos de suplemento')+kpi(_fmtN(d.rolos,0),'rolos de feno')+'</div>';
+  var resumo=String(_bolResumoGet(j.ini)||'').trim(), comR=_bolComCusto();
+  // seta vs semana anterior (pela média por dia, pra semana atual incompleta não parecer queda)
+  var seta=function(a,b){ var da=a/(d.tot.dias||1), db=b/(d.ant.dias||1); if(!(db>0)||!(da>0)) return ''; var v=(da-db)/db; if(Math.abs(v)<0.05) return '<div style="font-size:9px;color:#888">= semana anterior</div>';
+    return '<div style="font-size:9px;font-weight:700;color:#555">'+(v>0?'▲ ':'▼ ')+Math.round(Math.abs(v)*100)+'% vs semana anterior</div>'; };
+  var kpi2=function(v,l,extra){return '<div style="flex:1;background:#F1F8E9;border-radius:8px;padding:8px 6px;text-align:center"><b style="display:block;font-size:17px;color:#1B5E20">'+v+'</b><span style="font-size:9.5px;color:#65766a">'+l+'</span>'+(extra||'')+'</div>';};
+  var c=(resumo?'<div style="margin:12px 0 4px;background:#1B5E20;color:#fff;border-radius:8px;padding:10px 12px;font-size:13px;font-weight:700;line-height:1.45">'+esc(resumo)+'</div>':'');
+  c+='<div style="display:flex;gap:8px;margin:12px 0">'+kpi(_fmtN(d.cab,0),'cabeças hoje'+((d.vendas||[]).length?'<br>+'+_fmtN(d.vendas.reduce(function(a,v){return a+v.qtd;},0),0)+' vendidas':''))+kpi(d.nLotes,'lotes')+kpi2(_fmtN(d.sacos,0),'sacos de suplemento',seta(d.tot.sacos,d.ant.sacos))+kpi2(_fmtN(d.rolos,0),'rolos de feno',seta(d.tot.rolos,d.ant.rolos))+'</div>';
+  if(comR&&d.tot.custo>0) c+='<div style="display:flex;gap:8px;margin:0 0 12px">'+kpi2('R$ '+_fmtN(d.tot.custo,0),'custo da semana (suplemento + feno)',seta(d.tot.custo,d.ant.custo))+kpi2('R$ '+_fmtN(d.cabDiaRS,2),'por cabeça por dia')+'</div>';
   c+=sec('Nutrição por lote')+'<table style="width:100%;border-collapse:collapse"><tr><th '+th+'>Lote</th><th '+th+'>Pasto</th><th '+thr+'>Cab</th><th '+thr+'>Suplemento<br>sacos na semana</th><th '+thr+'>Feno<br>rolos</th><th '+thr+'>Previsto x fornecido</th></tr>';
   d.lotes.forEach(function(l){
     var _n1=function(v){return _fmtN(Math.round(v*10)/10,(Math.round(v*10)%10)?1:0);}, _dS=l.prevSac!=null?l.sacos-l.prevSac:0;
@@ -2703,7 +2725,7 @@ function _bolGerarPDF(){
   if(d.vendas&&d.vendas.length) c+=sec('Vendas da semana')+'<div style="background:#E3F2FD;border-left:3px solid #1565C0;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.55">'
     +d.vendas.map(function(v){return '<b>'+esc(v.lote)+'</b>: '+v.qtd+' cabeça'+(v.qtd===1?'':'s')+' vendida'+(v.qtd===1?'':'s')+' em '+fd(v.dt)+(v.total?' (lote todo)':' (parte do lote)');}).join('<br>')+'</div>';
   c+=sec('Estoque')+'<table style="width:100%;border-collapse:collapse"><tr><th '+th+'>Produto</th><th '+thr+'>Saldo</th><th '+thr+'>Cobre</th><th '+thr+'></th></tr>'
-    +d.estoque.map(function(e){ return '<tr><td '+td+'>'+esc(e.nome)+'</td><td '+tdr+'>'+esc(e.saldo)+'</td><td '+tdr+'>'+(e.dias==null?'—':e.dias+' dia'+(e.dias===1?'':'s'))+'</td><td '+tdr+'>'+(e.comprar?'<b style="color:#E65100">comprar</b>':'<b style="color:#2E7D32">ok</b>')+'</td></tr>'; }).join('')+'</table>';
+    +d.estoque.map(function(e){ return '<tr><td '+td+'>'+esc(e.nome)+'</td><td '+tdr+'>'+esc(e.saldo)+'</td><td '+tdr+'>'+(e.dias==null?(e.semHist?'<span style="color:#999;font-size:10px">chegou agora</span>':'—'):e.dias+' dia'+(e.dias===1?'':'s'))+'</td><td '+tdr+'>'+(e.comprar?'<b style="color:#E65100">comprar</b>':'<b style="color:#2E7D32">ok</b>')+'</td></tr>'; }).join('')+'</table>';
   if(d.mudancas.length) c+=sec('Movimentação de pasto')+'<div style="font-size:11px;line-height:1.6">'+d.mudancas.map(function(m){return '<b>'+esc(m.lote)+'</b>: '+esc(m.de||'entrada')+' → '+esc(m.para)+' <span style="color:#999">('+fd(m.dt)+')</span>';}).join(' · ')+'</div>';
   if(d.orientacoes.length) c+=sec('Orientações da consultoria em vigor')+'<div style="background:#FFF8E1;border-left:3px solid #F9A825;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.55">'
     +d.orientacoes.map(function(o){return '<b>'+esc(o.lote)+'</b> · '+esc(o.prod)+': '+_fmtN(o.sacos,0)+' saco'+(o.sacos>1?'s':'')+' '+_freqTxt(o.freq).toLowerCase()+' (desde '+fd(o.dt)+(o.vistos.length?', visto por '+esc(o.vistos.join(', ')):'')+')';}).join('<br>')
@@ -5615,11 +5637,14 @@ function _relDiaDados(per){
   });
   var diasPer=(per==='semana'?7:(per==='mes'?30:1));
   var _cabDeLotes=function(setObj){ var tot=0; (S.LOTES||[]).forEach(function(l){ if(setObj[canon(l.nome)]) tot+=(parseFloat(l.qtd)||0); }); return tot; };
-  var feno=Object.keys(S.FENO||{}).map(function(t){ var e=S.FENO[t]||{}; var q=(e.q!=null?e.q:0); var rpd=(fenoR7[t]||0)/7; var dias=rpd>0?Math.floor(q/rpd):null;
+  var _fenHist=function(t){ var lim14=_somaDias(TD,-13), n14=0, prim=''; (S.mFeno||[]).forEach(function(m){ if(!m||m.mov!=='saida'||m.tipo!==t)return; var dt=(m.dt||'').substring(0,10); if(!prim||dt<prim)prim=dt; if(dt>=lim14)n14++; }); return {n14:n14, dias:prim?_diffDias(prim,TD)+1:0}; };
+  var feno=Object.keys(S.FENO||{}).map(function(t){ var e=S.FENO[t]||{}; var q=(e.q!=null?e.q:0); var rpd=(fenoR7[t]||0)/7; var _h=_fenHist(t);
+    // v7.65: feno que acabou de chegar não tem consumo pra prever (1 rolo em 7 dias dava "70 dias"). Só calcula com ≥3 tratos em 14 dias e ≥7 dias de uso.
+    var dias=(rpd>0&&_h.n14>=3&&_h.dias>=7)?Math.floor(q/rpd):null; var semHist=!(_h.n14>=3&&_h.dias>=7);
     var kgPer=Math.round(fenoKgPer[t]||0); var vkg=(parseFloat(e.vkg)||0); var custoPer=Math.round((fenoKgPer[t]||0)*vkg*100)/100;
     var cab=fenoLotesPer[t]?_cabDeLotes(fenoLotesPer[t]):0;
     var cabDia=(cab>0&&diasPer>0&&custoPer>0)?Math.round((custoPer/cab/diasPer)*100)/100:null;
-    return {tipo:t, saldo:q, u:(e.u||'rolo'), dias:dias, kgPer:kgPer, custoPer:custoPer, cabDia:cabDia, cab:cab}; });
+    return {tipo:t, saldo:q, u:(e.u||'rolo'), dias:dias, semHist:semHist, kgPer:kgPer, custoPer:custoPer, cabDia:cabDia, cab:cab}; });
   // Sem trato no período
   var semTrato=[];
   (S.rT||[]).forEach(function(r){ if(r._apagado||r.tipo!=='sem_trato')return; if(!noPer(r.dt))return; semTrato.push({lote:canon(r.lote||''), motivo:(r.motivo||'')}); });
