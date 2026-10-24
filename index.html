@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/10/2026 v7.65</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/10/2026 v7.66</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2603,7 +2603,7 @@ function _bolDados(qual){
       else { var pp=_pvPrevisto(lo,pr).pct; if(pp&&l.peso) prevKg=(pp/100)*parseFloat(l.peso)*cab; } }
     var kgDia=s?s.kg/diasL:0, dif=(prevKg>0&&s)?(kgDia-prevKg)/prevKg:null;
     // v7.64: previsto em SACOS. Orientado: conta os tratos da agenda na semana. Sem orientação: % do peso, conferido em 14 dias.
-    var prevSac=null, conforme=null, oriB=pr?_orientAtiva(lo,pr):null, fimL=x.vendido||j.fimDados;
+    var prevSac=null, prevPctB=null, conforme=null, oriB=pr?_orientAtiva(lo,pr):null, fimL=x.vendido||j.fimDados;
     if(oriB){ var fq=parseInt(oriB.freq)||1, base=(oriB.dt||j.ini).substring(0,10), nEsp=0;
       // semana atual: o trato de hoje ainda pode não ter sido feito — só conta hoje se já lançou
       var fimEsp=fimL; if(fimEsp===TD && !(S.rT||[]).some(function(r){return !r._apagado&&r.tipo==='trato'&&(r.dt||'').substring(0,10)===TD&&_lbCons(r.lote||r.co)===lo;})) fimEsp=_somaDias(TD,-1);
@@ -2613,10 +2613,11 @@ function _bolDados(qual){
     } else if(prevKg>0&&pr){ var pps=_ppsProd(pr)||30; prevSac=Math.round(prevKg*diasL/pps*10)/10;
       var i14=_somaDias(fimL,-13), kg14=0;
       (S.rT||[]).forEach(function(r){ var dt=(r.dt||'').substring(0,10); if(r._apagado||r.tipo!=='trato'||dt<i14||dt>fimL||_lbCons(r.lote||r.co)!==lo)return; var q=parseFloat(r.q||r.qtd)||0; kg14+=parseFloat(r.kg_fornecido)||q*_ppsProd(r.pr||r.prod||''); });
-      var d14=Math.min(14,_diffDias(i14,fimL)+1); conforme=Math.abs(kg14/d14-prevKg)/prevKg<=CONS_TOL; }
+      var d14=Math.min(14,_diffDias(i14,fimL)+1); conforme=s?Math.abs(kgDia-prevKg)/prevKg<=CONS_TOL:false; // v7.66: mesma semana do % PV mostrado
+      prevPctB=_pvPrevisto(lo,pr).pct||null; }
     var marca = x.vendido ? ('vendido em '+x.vendido.substring(8,10)+'/'+x.vendido.substring(5,7)) : (qVendSem?('venda parcial: '+qVendSem+' cab'):'');
     return {lote:lo, pasto:x.vendido?'vendido':(pasto[lo]||l.pasto||'—'), cab:cab, prod:pr, sacos:s?s.sacos:0, dias:diasL, vendido:!!x.vendido, marca:marca,
-      gCabDia:(s&&cab)?Math.round(s.kg/cab/diasL*1000):null, fenoKgCabDia:(f&&cab)?Math.round(f.kg/cab/diasL*100)/100:null, fenoRolos:f?f.un:0, pctPV:(s&&cab&&parseFloat(l.peso))?s.kg/diasL/(cab*parseFloat(l.peso))*100:null, dif:dif, prevSac:prevSac, conforme:conforme, orientado:!!(pr&&_orientAtiva(lo,pr))};
+      gCabDia:(s&&cab)?Math.round(s.kg/cab/diasL*1000):null, fenoKgCabDia:(f&&cab)?Math.round(f.kg/cab/diasL*100)/100:null, fenoRolos:f?f.un:0, pctPV:(s&&cab&&parseFloat(l.peso))?s.kg/diasL/(cab*parseFloat(l.peso))*100:null, dif:dif, prevSac:prevSac, prevPct:prevPctB, conforme:conforme, orientado:!!(pr&&_orientAtiva(lo,pr))};
   }).sort(function(a,b){ var na=parseInt((a.lote.match(/\d+/)||[9999])[0]), nb=parseInt((b.lote.match(/\d+/)||[9999])[0]); return na-nb; });
   var estoque=(rd.estoque||[]).filter(function(e){return (parseFloat(e.saldo)||0)>0;}).map(function(e){return {nome:e.produto, saldo:e.saldo+' saco'+(e.saldo===1?'':'s'), dias:e.dias, comprar:(e.dias!=null&&e.dias<15)};});
   (rd.feno||[]).forEach(function(f){ if(!((parseFloat(f.saldo)||0)>0)) return; estoque.push({nome:'Feno '+f.tipo, saldo:f.saldo+' '+f.u+(f.saldo===1?'':'s'), dias:f.dias, semHist:f.semHist, comprar:(f.dias!=null&&f.dias<15)}); });
@@ -2718,10 +2719,10 @@ function _bolGerarPDF(){
   c+=sec('Nutrição por lote')+'<table style="width:100%;border-collapse:collapse"><tr><th '+th+'>Lote</th><th '+th+'>Pasto</th><th '+thr+'>Cab</th><th '+thr+'>Suplemento<br>sacos na semana</th><th '+thr+'>Feno<br>rolos</th><th '+thr+'>Previsto x fornecido</th></tr>';
   d.lotes.forEach(function(l){
     var _n1=function(v){return _fmtN(Math.round(v*10)/10,(Math.round(v*10)%10)?1:0);}, _dS=l.prevSac!=null?l.sacos-l.prevSac:0;
-    var vs=(l.prevSac==null||l.conforme==null)?'<span style="color:#999">—</span>':(l.conforme?'<b style="color:#2E7D32">✓ conforme</b>':'<b style="color:#E65100">previsto '+_n1(l.prevSac)+' sc</b><div style="font-size:9.5px;color:#888;font-weight:700">'+(_dS<0?'faltou ':'passou ')+_n1(Math.abs(_dS))+' saco'+(Math.abs(_dS)>1?'s':'')+'</div>');
+    var vs=(l.prevSac==null||l.conforme==null)?'<span style="color:#999">—</span>':(l.conforme?'<b style="color:#2E7D32">✓ conforme</b>':(l.prevPct&&!l.orientado)?'<b style="color:#E65100">previsto '+_fmtN(l.prevPct,2)+'% PV</b><div style="font-size:9.5px;color:#888;font-weight:700">deu '+(l.pctPV!=null?_fmtN(l.pctPV,2):'0')+'% PV</div>':'<b style="color:#E65100">previsto '+_n1(l.prevSac)+' sc</b><div style="font-size:9.5px;color:#888;font-weight:700">'+(_dS<0?'faltou ':'passou ')+_n1(Math.abs(_dS))+' saco'+(Math.abs(_dS)>1?'s':'')+'</div>');
     c+='<tr><td '+td+'><b>'+esc(l.lote)+'</b>'+(l.prod?'<div style="font-size:9.5px;color:#888">'+esc(l.prod)+(l.orientado?' · orientado':'')+'</div>':'')+(l.marca?'<div style="font-size:9.5px;color:#1565C0;font-weight:700">'+esc(l.marca)+'</div>':'')+'</td><td '+td+'>'+esc(l.pasto)+'</td><td '+tdr+'>'+l.cab+'</td><td '+tdr+'>'+(l.sacos?'<b>'+_n1(l.sacos)+'</b>'+(l.pctPV!=null?'<div style="font-size:9.5px;color:#888">'+_fmtN(l.pctPV,2)+'% PV</div>':''):'—')+'</td><td '+tdr+'>'+(l.fenoRolos?_n1(l.fenoRolos):'—')+'</td><td '+tdr+'>'+vs+'</td></tr>';
   });
-  c+='</table><div style="font-size:9.5px;color:#999;margin-top:3px">Sacos e rolos lançados de '+fd(j.ini)+' a '+fd(j.fimDados)+' (lote vendido: até o dia da venda). Cabeças do início da semana. Previsto: lote com orientação da consultoria conta os tratos da agenda na semana; sem orientação, compara com o % do peso cadastrado nos últimos 14 dias.</div>';
+  c+='</table><div style="font-size:9.5px;color:#999;margin-top:3px">Sacos e rolos lançados de '+fd(j.ini)+' a '+fd(j.fimDados)+' (lote vendido: até o dia da venda). Cabeças do início da semana. Previsto: lote com orientação da consultoria confere os tratos da agenda na semana; sem orientação, compara o % do peso vivo da semana com o % cadastrado (tolerância de 20%).</div>';
   if(d.vendas&&d.vendas.length) c+=sec('Vendas da semana')+'<div style="background:#E3F2FD;border-left:3px solid #1565C0;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.55">'
     +d.vendas.map(function(v){return '<b>'+esc(v.lote)+'</b>: '+v.qtd+' cabeça'+(v.qtd===1?'':'s')+' vendida'+(v.qtd===1?'':'s')+' em '+fd(v.dt)+(v.total?' (lote todo)':' (parte do lote)');}).join('<br>')+'</div>';
   c+=sec('Estoque')+'<table style="width:100%;border-collapse:collapse"><tr><th '+th+'>Produto</th><th '+thr+'>Saldo</th><th '+thr+'>Cobre</th><th '+thr+'></th></tr>'
