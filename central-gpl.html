@@ -107,8 +107,10 @@ var ICO={
 };
 
 /* ---------- guardado no aparelho ---------- */
-var L={ url:"", senha:"", config:null, cache:null };
+var URL_CENTRAL="https://script.google.com/macros/s/AKfycbzTIa9TZj69T5GtLuouKI3C5R8Hb3ceCUvjwHF7zuxp7pWJ10R9rBtGzhyn3FBsa7hh/exec";
+var L={ url:URL_CENTRAL, senha:"", config:null, cache:null };
 try{ var r0=localStorage.getItem(LS); if(r0) L=Object.assign(L,JSON.parse(r0)); }catch(e){}
+if(!L.url) L.url=URL_CENTRAL;
 function salvarL(){ try{ localStorage.setItem(LS,JSON.stringify(L)); }catch(e){} }
 function cfg(){ return Object.assign({},PADRAO,L.config||{}); }
 
