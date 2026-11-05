@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 24/10/2026 v7.67</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 05/11/2026 v7.68</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -7571,6 +7571,24 @@ function pdfModalFechar(){
   var overlay = document.getElementById('pdf-modal-overlay');
   if(overlay) overlay.style.display = 'none';
   document.body.style.overflow = '';
+  if(window._pdfFcPend){ window._pdfFcPend=false; _fcPerguntaPago(); }
+}
+// v7.68: depois de fechar o PDF do Fechamento de Conta — Sim marca como pago tudo que estava no PDF; Não deixa como está
+function _fcPerguntaPago(){
+  var sel=Object.keys(window._fcSel||{}).filter(function(n){ return window._fcSel[n]!==false; });
+  if(!sel.length) return;
+  var tot=(window._fcLista||[]).filter(function(p){return window._fcSel[p.n]!==false;}).reduce(function(a,p){return a+p.totalD+p.totalC+(p.totalX||0);},0);
+  var old=document.getElementById('fc-pg-ask'); if(old) old.remove();
+  var d=document.createElement('div'); d.id='fc-pg-ask';
+  d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10050;display:flex;align-items:center;justify-content:center;padding:20px';
+  d.innerHTML='<div style="background:#fff;border-radius:14px;padding:18px;max-width:360px;width:100%;box-shadow:0 8px 30px rgba(0,0,0,.25)">'
+    +'<div style="font-size:16px;font-weight:800;color:#1B5E20;margin-bottom:6px">Marcar como pago?</div>'
+    +'<div style="font-size:13px;color:#444;line-height:1.5;margin-bottom:14px">Tudo o que está neste PDF ('+sel.length+' colaborador'+(sel.length>1?'es':'')+' · R$ '+tot.toFixed(2).replace('.',',')+', de '+(window._fcDe||'')+' a '+(window._fcAte||'')+') vai ficar como <b>pago</b>.</div>'
+    +'<div style="display:flex;gap:8px"><button id="fc-pg-nao" style="flex:1;padding:12px;border:1.5px solid #ccc;background:#fff;border-radius:10px;font-size:14px;font-weight:700;color:#555;cursor:pointer">Não</button>'
+    +'<button id="fc-pg-sim" style="flex:1;padding:12px;border:none;background:#1B5E20;color:#fff;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Sim, marcar pago</button></div></div>';
+  document.body.appendChild(d);
+  document.getElementById('fc-pg-nao').onclick=function(){ d.remove(); };
+  document.getElementById('fc-pg-sim').onclick=function(){ d.remove(); marcarFCSelecionadosComoPago(true); };
 }
 
 function pdfModalImprimir(){
@@ -7578,6 +7596,7 @@ function pdfModalImprimir(){
   if(frame && frame.contentWindow) frame.contentWindow.print();
 }
 // ══════════════════════
+var _syncErroDetalhe=''; // v7.68: era lida antes de existir e travava o aviso de erro do envio
 function initSync(){atualizarSync();window.addEventListener('online',()=>{atualizarSync();if(S.queue.length>0)syncAgora();});window.addEventListener('offline',()=>atualizarSync());setInterval(()=>{if(navigator.onLine&&S.queue.length>0&&S.cfgGS)syncAgora();},30000);}
 
 // ═══ NUVEM ═══
@@ -12600,7 +12619,7 @@ function renderFCLista(lista, totalGeral, deFmt, ateFmt, faz){
   document.getElementById('fc-resultado').innerHTML=html;
 }
 
-function marcarFCSelecionadosComoPago(){
+function marcarFCSelecionadosComoPago(semConfirmar){
   // Usa _fcSel (objeto de estado real) em vez de querySelector
   if(!window._fcSel || !Object.keys(window._fcSel).length){
     alert('Calcule o período primeiro.');
@@ -12611,13 +12630,13 @@ function marcarFCSelecionadosComoPago(){
     alert('Selecione pelo menos um colaborador.');
     return;
   }
-  if(!confirm('Marcar todos os selecionados como pago?\n\n'+selecionados.join(', '))) return;
+  if(!semConfirmar && !confirm('Marcar todos os selecionados como pago?\n\n'+selecionados.join(', '))) return;
 
   var marcados = 0;
   var despMarcadas = 0;
   var faz = window._fcFaz || '';
-  var de  = (document.getElementById('fc-de')||{}).value || '';
-  var ate = (document.getElementById('fc-ate')||{}).value || '';
+  var de  = window._fcDe_iso || (document.getElementById('fc-de')||{}).value || '';
+  var ate = window._fcAte_iso || (document.getElementById('fc-ate')||{}).value || '';
 
   selecionados.forEach(function(nome){
     (S.rD||[]).forEach(function(r){
@@ -12841,6 +12860,9 @@ function gerarPDFFConta(){
     +linhasColab
     +_pdfRodape()
     +'</body></html>';
+  // v7.68: fecha a janela do Fechar Conta (ela ficava por cima do PDF no celular) e, ao fechar o PDF, pergunta se marca como pago
+  fecharFC();
+  window._pdfFcPend=true;
   pdfModalAbrir('Fechamento de Conta', html);
 }
 
