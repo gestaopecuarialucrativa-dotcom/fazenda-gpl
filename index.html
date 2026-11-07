@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 07/11/2026 v7.70</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 07/11/2026 v7.71</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2784,6 +2784,8 @@ function _bolGerarPDF(){
   var rodape=(typeof _pdfRodape==='function')?_pdfRodape():'';
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;padding:18px;color:#222;max-width:760px;margin:0 auto}'+css+'</style></head><body>'+timbre+c+rodape+'</body></html>';
   try{ enviarDado({tipo:'boletim_log', faz:d.fazenda, n:(CU&&CU.n)||'', semana_ini:j.ini, semana_fim:j.fim, cabecas:d.cab, sacos:d.sacos, rolos:d.rolos, recado:rec+(acoes.length?'\n— O que fazer agora: '+acoes.join(' · '):'')}); }catch(e){}
+  // v7.71: arquivo sai como "Boletim Fazenda Estrela 02-11 a 07-11-2026"
+  window._pdfNomeArq='Boletim '+(d.fazenda||'')+' '+fd(j.ini).replace('/','-')+' a '+fd(j.fim).replace('/','-')+'-'+j.fim.substring(0,4);
   if(typeof pdfModalAbrir==='function') pdfModalAbrir(tit, html); else alert('Gerador de PDF não encontrado.');
 }
 
@@ -7609,6 +7611,7 @@ function pdfModalAbrir(titulo, html){
 }
 
 function pdfModalFechar(){
+  window._pdfNomeArq=''; // v7.71
   var overlay = document.getElementById('pdf-modal-overlay');
   if(overlay) overlay.style.display = 'none';
   document.body.style.overflow = '';
@@ -7634,7 +7637,12 @@ function _fcPerguntaPago(){
 
 function pdfModalImprimir(){
   var frame = document.getElementById('pdf-modal-frame');
-  if(frame && frame.contentWindow) frame.contentWindow.print();
+  if(!(frame && frame.contentWindow)) return;
+  // v7.71: nome do arquivo ao salvar o PDF (o Chrome usa o título da página); só quando o relatório define um nome
+  var nome=window._pdfNomeArq, velho=document.title;
+  if(nome){ try{ frame.contentDocument.title=nome; }catch(e){} document.title=nome;
+    var volta=function(){ document.title=velho; window.removeEventListener('afterprint',volta); }; window.addEventListener('afterprint',volta); setTimeout(volta,60000); }
+  frame.contentWindow.print();
 }
 // ══════════════════════
 var _syncErroDetalhe=''; // v7.68: era lida antes de existir e travava o aviso de erro do envio
