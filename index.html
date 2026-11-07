@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 07/11/2026 v7.69</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 07/11/2026 v7.70</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2553,7 +2553,7 @@ function rTratoDia(){
   el.innerHTML=tit+h; el.style.display='block';
 }
 // v7.60: rAgendaVaq removida (não era chamada em lugar nenhum)
-var _bolSem='passada'; // v7.62: declaração tinha sumido junto com rAgendaVaq — boletim abria em branco
+var _bolSem='atual'; // v7.70: Rogério manda sempre a semana atual // v7.62: declaração tinha sumido junto com rAgendaVaq — boletim abria em branco
 function _bolJanela(qual){
   var h=new Date(TD+'T12:00:00'), dw=h.getDay(); // 0=dom
   var segAtual=_somaDias(TD, -((dw+6)%7));
@@ -2636,6 +2636,26 @@ function _bolRecadoSet(ini,t){ if(!S.BOL_RECADOS)S.BOL_RECADOS={}; S.BOL_RECADOS
 function _bolFazerGet(ini){ return ((S.BOL_FAZER||{})[ini])||''; }
 function _bolFazerSet(ini,t){ if(!S.BOL_FAZER)S.BOL_FAZER={}; S.BOL_FAZER[ini]=t; try{salvarLocal();}catch(e){} }
 function _bolAcoes(t){ return String(t||'').split(/\r?\n/).map(function(x){ return x.replace(/^[\s•\-–·*]+/,'').trim(); }).filter(Boolean); }
+/* v7.70: "Conferir antes de mandar" — o boletim só enxerga o que foi LANÇADO no app.
+   Lista o que pode ser trato não lançado, abaixo do orientado e o período dos dados. Só na tela, não vai no PDF. */
+function _bolConferir(qual){
+  var d=_bolDados(qual), j=d.janela, fd=function(s){return s?s.substring(8,10)+'/'+s.substring(5,7):'';}, it=[];
+  var tratos=(S.rT||[]).filter(function(r){ return !r._apagado&&r.tipo==='trato'; });
+  d.lotes.forEach(function(l){ if(l.vendido) return;
+    var sem=(S.rT||[]).filter(function(r){ var dt=(r.dt||'').substring(0,10); return !r._apagado&&r.tipo==='sem_trato'&&_lbCons(r.lote)===l.lote&&dt>=j.ini&&dt<=j.fimDados; });
+    var mot={}; sem.forEach(function(r){ var m=r.motivo||'sem motivo'; mot[m]=(mot[m]||0)+1; });
+    var motTxt=Object.keys(mot).map(function(m){ return m+(mot[m]>1?' ('+mot[m]+'x)':''); }).join(', ');
+    if(l.prod && !(l.sacos>0)){
+      var ult=tratos.filter(function(r){ return _lbCons(r.lote||r.co)===l.lote; }).map(function(r){ return (r.dt||'').substring(0,10); }).sort().pop();
+      it.push({ g:'alto', t:'<b>'+l.lote+'</b>: nenhum trato lançado de '+fd(j.ini)+' a '+fd(j.fimDados)+(ult?' (último em '+fd(ult)+')':'')+(motTxt?' · vaqueiro respondeu: '+motTxt:' · sem resposta do vaqueiro')+'. Tratou e não lançou?' });
+    } else if(l.conforme===false && l.prevSac!=null){
+      it.push({ g:'medio', t:'<b>'+l.lote+'</b>: '+(l.orientado?('recebeu '+_fmtN(l.sacos,0)+' de '+_fmtN(l.prevSac,0)+' sacos orientados'):('deu '+(l.pctPV!=null?_fmtN(l.pctPV,2):'0')+'% PV, previsto '+_fmtN(l.prevPct||0,2)+'%'))+(motTxt?' · vaqueiro respondeu: '+motTxt:'')+'.' });
+    }
+  });
+  if(qual==='atual' && !tratos.some(function(r){ return (r.dt||'').substring(0,10)===TD; }))
+    it.push({ g:'baixo', t:'Hoje ('+fd(TD)+') ainda não tem trato lançado. Se o trato de hoje ainda vai acontecer, gere o boletim depois do lançamento.' });
+  return { itens:it, periodo:'Dados lançados de '+fd(j.ini)+' a '+fd(j.fimDados)+(qual==='atual'?' (até hoje)':'') };
+}
 function rBoletim(){
   var el=document.getElementById('bol-sem'); if(!el)return;
   if(!(CU&&CU.r==='Consultor')){ el.innerHTML=''; return; }
@@ -2646,7 +2666,14 @@ function rBoletim(){
   el.innerHTML='<div class="card" style="margin-bottom:12px;padding:12px 14px">'
     +'<div style="font-size:14px;font-weight:800;color:#1B5E20">Boletim semanal do proprietário</div>'
     +'<div style="font-size:11px;color:#888;margin:2px 0 10px">Semana de segunda a sábado</div>'
-    +'<div style="display:flex;gap:6px">'+chip('passada','Semana passada',jp)+chip('atual','Esta semana',ja)+'</div>'
+    +'<div style="display:flex;gap:6px">'+chip('atual','Esta semana',ja)+chip('passada','Semana passada',jp)+'</div>'
+    +(function(){ var cf; try{ cf=_bolConferir(_bolSem); }catch(e){ return ''; }
+        var cor={alto:'#C62828',medio:'#E65100',baixo:'#6D6D6D'};
+        return '<div style="margin-top:10px;border:1.5px solid '+(cf.itens.length?'#FFB74D':'#A5D6A7')+';background:'+(cf.itens.length?'#FFF8EC':'#F1F8E9')+';border-radius:10px;padding:10px 12px">'
+          +'<div style="font-size:12.5px;font-weight:800;color:'+(cf.itens.length?'#8a5a00':'#1B5E20')+'">'+(cf.itens.length?'Conferir antes de mandar ('+cf.itens.length+')':'Conferido: nada fora do esperado')+'</div>'
+          +'<div style="font-size:11px;color:#666;margin:2px 0 '+(cf.itens.length?'6px':'0')+'">'+cf.periodo+' · se a equipe lançou sem internet, sincronize antes de gerar</div>'
+          +cf.itens.map(function(x){ return '<div style="font-size:12px;line-height:1.45;padding:5px 0;border-top:1px solid #f3e3c7;color:#333"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+cor[x.g]+';margin-right:6px"></span>'+x.t+'</div>'; }).join('')
+          +'</div>'; })()
     +'<div style="font-size:11px;color:#666;margin:10px 0 3px;font-weight:600">Resumo da semana em 1 linha (sai em destaque no topo)</div>'
     +'<input id="bol-resumo" oninput="_bolResumoSet(\''+j.ini+'\',this.value)" value="'+String(_bolResumoGet(j.ini)).replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'" placeholder="Ex.: Semana boa: 5 de 6 lotes conforme; Lote Compra precisa ajustar" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid #ddd;border-radius:9px;font-size:12.5px;font-family:inherit">'
     +'<label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#444;margin-top:9px;cursor:pointer"><input type="checkbox" '+(_bolComCusto()?'checked':'')+' onchange="_bolComCustoSet(this.checked)" style="width:17px;height:17px"> Mostrar custo em R$ no boletim (custo da semana e R$/cab/dia)</label>'
