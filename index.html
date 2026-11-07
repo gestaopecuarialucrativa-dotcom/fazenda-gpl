@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 05/11/2026 v7.68</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 07/11/2026 v7.69</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2632,6 +2632,10 @@ function _bolComCusto(){ try{ return localStorage.getItem('gpl_bol_custo')==='1'
 function _bolComCustoSet(v){ try{ localStorage.setItem('gpl_bol_custo',v?'1':'0'); }catch(e){} }
 function _bolRecadoGet(ini){ return ((S.BOL_RECADOS||{})[ini])||''; }
 function _bolRecadoSet(ini,t){ if(!S.BOL_RECADOS)S.BOL_RECADOS={}; S.BOL_RECADOS[ini]=t; try{salvarLocal();}catch(e){} }
+// v7.69: "o que fazer agora" (uma ação por linha) — separado do que os números mostram
+function _bolFazerGet(ini){ return ((S.BOL_FAZER||{})[ini])||''; }
+function _bolFazerSet(ini,t){ if(!S.BOL_FAZER)S.BOL_FAZER={}; S.BOL_FAZER[ini]=t; try{salvarLocal();}catch(e){} }
+function _bolAcoes(t){ return String(t||'').split(/\r?\n/).map(function(x){ return x.replace(/^[\s•\-–·*]+/,'').trim(); }).filter(Boolean); }
 function rBoletim(){
   var el=document.getElementById('bol-sem'); if(!el)return;
   if(!(CU&&CU.r==='Consultor')){ el.innerHTML=''; return; }
@@ -2646,8 +2650,10 @@ function rBoletim(){
     +'<div style="font-size:11px;color:#666;margin:10px 0 3px;font-weight:600">Resumo da semana em 1 linha (sai em destaque no topo)</div>'
     +'<input id="bol-resumo" oninput="_bolResumoSet(\''+j.ini+'\',this.value)" value="'+String(_bolResumoGet(j.ini)).replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'" placeholder="Ex.: Semana boa: 5 de 6 lotes conforme; Lote Compra precisa ajustar" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid #ddd;border-radius:9px;font-size:12.5px;font-family:inherit">'
     +'<label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#444;margin-top:9px;cursor:pointer"><input type="checkbox" '+(_bolComCusto()?'checked':'')+' onchange="_bolComCustoSet(this.checked)" style="width:17px;height:17px"> Mostrar custo em R$ no boletim (custo da semana e R$/cab/dia)</label>'
-    +'<div style="font-size:11px;color:#666;margin:10px 0 3px;font-weight:600">Recado do consultor (vai no boletim)</div>'
+    +'<div style="font-size:11px;color:#666;margin:10px 0 3px;font-weight:600">O que os números mostram (o que aconteceu na semana)</div>'
     +'<textarea id="bol-recado" oninput="_bolRecadoSet(\''+j.ini+'\',this.value)" rows="4" placeholder="Escreva o que o proprietário precisa saber desta semana…" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid #ddd;border-radius:9px;font-size:12.5px;font-family:inherit;line-height:1.45">'+txt+'</textarea>'
+    +'<div style="font-size:11px;color:#666;margin:10px 0 3px;font-weight:600">O que fazer agora (uma ação por linha)</div>'
+    +'<textarea id="bol-fazer" oninput="_bolFazerSet(\''+j.ini+'\',this.value)" rows="3" placeholder="Ex.: cotar o sal com 2 fornecedores" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid #ddd;border-radius:9px;font-size:13px;font-family:inherit;resize:vertical">'+String(_bolFazerGet(j.ini)).replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</textarea>'
     +'<div style="display:flex;gap:8px;margin-top:10px">'
     +'<button id="bol-ia-bt" onclick="_bolSugerirIA()" style="flex:1;padding:11px;border:1px solid #8BC34A;border-radius:10px;font-size:12.5px;font-weight:800;color:#33691E;background:#F1F8E9;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#33691E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8H20l-4.9 3.6 1.9 5.8L12 14.6 7 18.2l1.9-5.8L4 8.8h6.1z"/></svg>Sugerir recado com IA</button>'
     +'<button onclick="_bolGerarPDF()" style="flex:1;padding:11px;border:none;border-radius:10px;font-size:12.5px;font-weight:800;color:#fff;background:#1B5E20;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Gerar boletim (PDF)</button>'
@@ -2709,17 +2715,26 @@ function _bolGerarPDF(){
   var td='style="padding:5px 3px;border-bottom:1px solid #f0f0f0;font-size:11px"', tdr=td.replace('padding','text-align:right;padding');
   var kpi=function(v,l){return '<div style="flex:1;background:#F1F8E9;border-radius:8px;padding:8px 6px;text-align:center"><b style="display:block;font-size:17px;color:#1B5E20">'+v+'</b><span style="font-size:9.5px;color:#65766a">'+l+'</span></div>';};
   var resumo=String(_bolResumoGet(j.ini)||'').trim(), comR=_bolComCusto();
+  var faz=(document.getElementById('bol-fazer')||{}).value; if(faz==null) faz=_bolFazerGet(j.ini); var acoes=_bolAcoes(faz);
+  // v7.69: linha de contexto antes dos números (aula Gama: número sem contexto não diz nada)
+  var _ctx=['Semana de '+fd(j.ini)+' a '+fd(j.fim)+(_bolSem==='atual'?' (até hoje)':''), _fmtN(d.cab,0)+' cabeças em '+d.nLotes+' lote'+(d.nLotes===1?'':'s')];
+  if(d.vendas&&d.vendas.length) _ctx.push('semana com venda'); if(d.mudancas&&d.mudancas.length) _ctx.push(d.mudancas.length+' mudança'+(d.mudancas.length===1?'':'s')+' de pasto');
   // seta vs semana anterior (pela média por dia, pra semana atual incompleta não parecer queda)
   var seta=function(a,b){ var da=a/(d.tot.dias||1), db=b/(d.ant.dias||1); if(!(db>0)||!(da>0)) return ''; var v=(da-db)/db; if(Math.abs(v)<0.05) return '<div style="font-size:9px;color:#888">= semana anterior</div>';
     return '<div style="font-size:9px;font-weight:700;color:#555">'+(v>0?'▲ ':'▼ ')+Math.round(Math.abs(v)*100)+'% vs semana anterior</div>'; };
   var kpi2=function(v,l,extra){return '<div style="flex:1;background:#F1F8E9;border-radius:8px;padding:8px 6px;text-align:center"><b style="display:block;font-size:17px;color:#1B5E20">'+v+'</b><span style="font-size:9.5px;color:#65766a">'+l+'</span>'+(extra||'')+'</div>';};
-  var c=(resumo?'<div style="margin:12px 0 4px;background:#1B5E20;color:#fff;border-radius:8px;padding:10px 12px;font-size:13px;font-weight:700;line-height:1.45">'+esc(resumo)+'</div>':'');
+  var c='<div style="margin:10px 0 0;background:#f6f8f5;border-radius:6px;padding:6px 10px;font-size:11px;color:#3d5a3f">'+esc(_ctx.join(' · '))+'</div>';
+  c+=(resumo?'<div style="margin:12px 0 4px;background:#1B5E20;color:#fff;border-radius:8px;padding:10px 12px;font-size:13px;font-weight:700;line-height:1.45">'+esc(resumo)+'</div>':'');
   c+='<div style="display:flex;gap:8px;margin:12px 0">'+kpi(_fmtN(d.cab,0),'cabeças hoje'+((d.vendas||[]).length?'<br>+'+_fmtN(d.vendas.reduce(function(a,v){return a+v.qtd;},0),0)+' vendidas':''))+kpi(d.nLotes,'lotes')+kpi2(_fmtN(d.sacos,0),'sacos de suplemento',seta(d.tot.sacos,d.ant.sacos))+kpi2(_fmtN(d.rolos,0),'rolos de feno',seta(d.tot.rolos,d.ant.rolos))+'</div>';
   if(comR&&d.tot.custo>0){ var _ln=function(t){return '<div style="font-size:9.5px;color:#65766a">'+t+'</div>';}, _cd=(d.cab||0)*(j.dias||1);
     var qSem=[]; if(d.tot.kgSup>0) qSem.push(_fmtN(d.tot.kgSup,0)+' kg suplemento'); if(d.tot.kgFeno>0) qSem.push(_fmtN(d.tot.kgFeno,0)+' kg feno');
     var qCab=[]; if(_cd&&d.tot.kgSup>0) qCab.push(_fmtN(d.tot.kgSup*1000/_cd,0)+' g suplemento'); if(_cd&&d.tot.kgFeno>0) qCab.push(_fmtN(d.tot.kgFeno/_cd,2)+' kg feno');
     c+='<div style="display:flex;gap:8px;margin:0 0 12px">'+kpi2('R$ '+_fmtN(d.tot.custo,0),'custo da semana (suplemento + feno)',(qSem.length?_ln(qSem.join(' · ')):'')+seta(d.tot.custo,d.ant.custo))
       +kpi2('R$ '+_fmtN(d.cabDiaRS,2),'por cabeça por dia',qCab.length?_ln(qCab.join(' · ')):'')+'</div>'; }
+  // v7.69: leitura do consultor logo depois dos números (do macro pro micro)
+  var _ass=esc(String((CU&&CU.n)||'Rogério').split(' ')[0])+' · Consultor GPL';
+  if(rec) c+='<div style="background:#F1F8E9;border-left:3px solid #2E7D32;border-radius:6px;padding:9px 11px;margin:4px 0 8px;font-size:12px;line-height:1.55"><div style="font-size:9.5px;font-weight:800;color:#33691E;letter-spacing:.6px;text-transform:uppercase;margin-bottom:2px">O que os números mostram</div><div style="white-space:pre-wrap">'+esc(rec)+'</div>'+(acoes.length?'':'<div style="margin-top:6px;font-weight:700;color:#1B5E20">'+_ass+'</div>')+'</div>';
+  if(acoes.length) c+='<div style="background:#FFF8EC;border-left:3px solid #E6A13A;border-radius:6px;padding:9px 11px;margin:0 0 8px;font-size:12px;line-height:1.55"><div style="font-size:9.5px;font-weight:800;color:#8a5a00;letter-spacing:.6px;text-transform:uppercase;margin-bottom:2px">O que fazer agora</div>'+acoes.map(function(a){return '• '+esc(a);}).join('<br>')+'<div style="margin-top:6px;font-weight:700;color:#1B5E20">'+_ass+'</div></div>';
   c+=sec('Nutrição por lote')+'<table style="width:100%;border-collapse:collapse"><tr><th '+th+'>Lote</th><th '+th+'>Pasto</th><th '+thr+'>Cab</th><th '+thr+'>Suplemento<br>sacos na semana</th><th '+thr+'>Feno<br>rolos</th><th '+thr+'>Previsto x fornecido</th></tr>';
   d.lotes.forEach(function(l){
     var _n1=function(v){return _fmtN(Math.round(v*10)/10,(Math.round(v*10)%10)?1:0);}, _dS=l.prevSac!=null?l.sacos-l.prevSac:0;
@@ -2735,14 +2750,13 @@ function _bolGerarPDF(){
   if(d.orientacoes.length) c+=sec('Orientações da consultoria em vigor')+'<div style="background:#FFF8E1;border-left:3px solid #F9A825;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.55">'
     +d.orientacoes.map(function(o){return '<b>'+esc(o.lote)+'</b> · '+esc(o.prod)+': '+_fmtN(o.sacos,0)+' saco'+(o.sacos>1?'s':'')+' '+_freqTxt(o.freq).toLowerCase()+' (desde '+fd(o.dt)+(o.vistos.length?', visto por '+esc(o.vistos.join(', ')):'')+')';}).join('<br>')
     +'<div style="font-size:10px;color:#8a6d00;margin-top:3px">Domingo é folga: o sábado leva a quantidade do domingo.</div></div>';
-  if(rec) c+=sec('Recado do consultor')+'<div style="background:#F1F8E9;border-left:3px solid #2E7D32;border-radius:6px;padding:9px 11px;font-size:12px;line-height:1.55;white-space:pre-wrap">'+esc(rec)+'<div style="margin-top:6px;font-weight:700;color:#1B5E20">'+esc(String((CU&&CU.n)||'Rogério').split(' ')[0])+' · Consultor GPL</div></div>';
   c+='<div style="margin-top:16px;padding-top:8px;border-top:1px solid #e3e8e3;font-size:11.5px;color:#33691E"><b>Rogério · Consultor GPL</b> · (63) 99108-2453</div>'; // v7.64: assinatura sempre
   var tit='Boletim da semana';
   var css=(typeof _pdfTimbreCss==='function')?_pdfTimbreCss():'';
   var timbre=(typeof _pdfTimbre==='function')?_pdfTimbre(tit, fd(j.ini)+' a '+fd(j.fim)+'/'+j.ini.substring(0,4), d.fazenda):'<h2>'+tit+'</h2>';
   var rodape=(typeof _pdfRodape==='function')?_pdfRodape():'';
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;padding:18px;color:#222;max-width:760px;margin:0 auto}'+css+'</style></head><body>'+timbre+c+rodape+'</body></html>';
-  try{ enviarDado({tipo:'boletim_log', faz:d.fazenda, n:(CU&&CU.n)||'', semana_ini:j.ini, semana_fim:j.fim, cabecas:d.cab, sacos:d.sacos, rolos:d.rolos, recado:rec}); }catch(e){}
+  try{ enviarDado({tipo:'boletim_log', faz:d.fazenda, n:(CU&&CU.n)||'', semana_ini:j.ini, semana_fim:j.fim, cabecas:d.cab, sacos:d.sacos, rolos:d.rolos, recado:rec+(acoes.length?'\n— O que fazer agora: '+acoes.join(' · '):'')}); }catch(e){}
   if(typeof pdfModalAbrir==='function') pdfModalAbrir(tit, html); else alert('Gerador de PDF não encontrado.');
 }
 
