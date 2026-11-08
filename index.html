@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 07/11/2026 v7.71</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 08/11/2026 v7.69</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -502,6 +502,11 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
         style="flex:1;padding:10px 4px;border:2px solid #FFA726;border-radius:10px;background:#fff;cursor:pointer;text-align:center">
         <div style="display:flex;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E65100" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="11" rx="2"/><path d="M3 12h18"/><path d="M7 16h6"/></svg></div>
         <div style="font-size:10px;font-weight:700;color:#E65100;margin-top:2px">Baixo</div>
+      </button>
+      <button class="tco-btn" id="tco-cheio" onclick="sCo2(this,'cheio')"
+        style="flex:1;padding:10px 4px;border:2px solid #8BC34A;border-radius:10px;background:#fff;cursor:pointer;text-align:center">
+        <div style="display:flex;justify-content:center"><svg width="26" height="18" viewBox="0 0 100 60"><path d="M6 14h88l-8 38H14z" fill="#f3efe6" stroke="#6D4C41" stroke-width="5"/><path d="M8.5 20h83l-6.5 30H15z" fill="#C8A165"/></svg></div>
+        <div style="font-size:10px;font-weight:700;color:#558B2F;margin-top:2px">Cheio</div>
       </button>
       <button class="tco-btn" id="tco-medio" onclick="sCo2(this,'medio')"
         style="flex:1;padding:10px 4px;border:2px solid #FFC107;border-radius:10px;background:#fff;cursor:pointer;text-align:center">
@@ -2049,7 +2054,7 @@ function sCo2(el,v){
   document.querySelectorAll('.tco-btn').forEach(function(b){
     b.style.background='#fff';b.style.fontWeight='normal';
   });
-  el.style.background=v==='vazio'?'#FFF3E0':v==='baixo'?'#FFF8E1':'#FFFDE7';
+  el.style.background=v==='vazio'?'#FFF3E0':v==='baixo'?'#FFF8E1':v==='cheio'?'#F1F8E9':'#FFFDE7';
   el.style.borderWidth='3px';
   setTimeout(function(){document.querySelectorAll('.tco-btn').forEach(function(b){b.style.borderWidth='2px';});el.style.borderWidth='3px';},10);
 }
@@ -2300,7 +2305,7 @@ function rConsAlertas(){
         +'<span onclick="_pvAut(\''+esc(k)+'\',\'remover\',0)" style="flex-shrink:0;font-size:11px;font-weight:700;color:#C62828;border:1px solid #FFCDD2;border-radius:20px;padding:3px 8px;cursor:pointer">voltar ao cadastro</span></div>'; });
     h+='</div>';
   }
-  el.innerHTML=(h?('<div style="font-size:13px;font-weight:800;color:#1B5E20;margin:2px 0 8px">Consumo no cocho</div>'+h):'')+_consOcupacao();
+  el.innerHTML=(h?('<div style="font-size:13px;font-weight:800;color:#1B5E20;margin:2px 0 8px">Consumo no cocho</div>'+h):'')+_consCocho()+_consOcupacao();
 }
 // Foto do momento (vai pro histórico da planilha)
 function _consFoto(chave){
@@ -2553,7 +2558,7 @@ function rTratoDia(){
   el.innerHTML=tit+h; el.style.display='block';
 }
 // v7.60: rAgendaVaq removida (não era chamada em lugar nenhum)
-var _bolSem='atual'; // v7.70: Rogério manda sempre a semana atual // v7.62: declaração tinha sumido junto com rAgendaVaq — boletim abria em branco
+var _bolSem='passada'; // v7.62: declaração tinha sumido junto com rAgendaVaq — boletim abria em branco
 function _bolJanela(qual){
   var h=new Date(TD+'T12:00:00'), dw=h.getDay(); // 0=dom
   var segAtual=_somaDias(TD, -((dw+6)%7));
@@ -2617,7 +2622,7 @@ function _bolDados(qual){
       prevPctB=_pvPrevisto(lo,pr).pct||null; }
     var marca = x.vendido ? ('vendido em '+x.vendido.substring(8,10)+'/'+x.vendido.substring(5,7)) : (qVendSem?('venda parcial: '+qVendSem+' cab'):'');
     return {lote:lo, pasto:x.vendido?'vendido':(pasto[lo]||l.pasto||'—'), cab:cab, prod:pr, sacos:s?s.sacos:0, dias:diasL, vendido:!!x.vendido, marca:marca,
-      gCabDia:(s&&cab)?Math.round(s.kg/cab/diasL*1000):null, fenoKgCabDia:(f&&cab)?Math.round(f.kg/cab/diasL*100)/100:null, fenoRolos:f?f.un:0, pctPV:(s&&cab&&parseFloat(l.peso))?s.kg/diasL/(cab*parseFloat(l.peso))*100:null, dif:dif, prevSac:prevSac, prevPct:prevPctB, conforme:conforme, orientado:!!(pr&&_orientAtiva(lo,pr))};
+      gCabDia:(s&&cab)?Math.round(s.kg/cab/diasL*1000):null, fenoKgCabDia:(f&&cab)?Math.round(f.kg/cab/diasL*100)/100:null, fenoRolos:f?f.un:0, cocho:_cochoContagem(l.nome,j.ini,x.vendido||j.fimDados), pctPV:(s&&cab&&parseFloat(l.peso))?s.kg/diasL/(cab*parseFloat(l.peso))*100:null, dif:dif, prevSac:prevSac, prevPct:prevPctB, conforme:conforme, orientado:!!(pr&&_orientAtiva(lo,pr))};
   }).sort(function(a,b){ var na=parseInt((a.lote.match(/\d+/)||[9999])[0]), nb=parseInt((b.lote.match(/\d+/)||[9999])[0]); return na-nb; });
   var estoque=(rd.estoque||[]).filter(function(e){return (parseFloat(e.saldo)||0)>0;}).map(function(e){return {nome:e.produto, saldo:e.saldo+' saco'+(e.saldo===1?'':'s'), dias:e.dias, comprar:(e.dias!=null&&e.dias<15)};});
   (rd.feno||[]).forEach(function(f){ if(!((parseFloat(f.saldo)||0)>0)) return; estoque.push({nome:'Feno '+f.tipo, saldo:f.saldo+' '+f.u+(f.saldo===1?'':'s'), dias:f.dias, semHist:f.semHist, comprar:(f.dias!=null&&f.dias<15)}); });
@@ -2632,30 +2637,6 @@ function _bolComCusto(){ try{ return localStorage.getItem('gpl_bol_custo')==='1'
 function _bolComCustoSet(v){ try{ localStorage.setItem('gpl_bol_custo',v?'1':'0'); }catch(e){} }
 function _bolRecadoGet(ini){ return ((S.BOL_RECADOS||{})[ini])||''; }
 function _bolRecadoSet(ini,t){ if(!S.BOL_RECADOS)S.BOL_RECADOS={}; S.BOL_RECADOS[ini]=t; try{salvarLocal();}catch(e){} }
-// v7.69: "o que fazer agora" (uma ação por linha) — separado do que os números mostram
-function _bolFazerGet(ini){ return ((S.BOL_FAZER||{})[ini])||''; }
-function _bolFazerSet(ini,t){ if(!S.BOL_FAZER)S.BOL_FAZER={}; S.BOL_FAZER[ini]=t; try{salvarLocal();}catch(e){} }
-function _bolAcoes(t){ return String(t||'').split(/\r?\n/).map(function(x){ return x.replace(/^[\s•\-–·*]+/,'').trim(); }).filter(Boolean); }
-/* v7.70: "Conferir antes de mandar" — o boletim só enxerga o que foi LANÇADO no app.
-   Lista o que pode ser trato não lançado, abaixo do orientado e o período dos dados. Só na tela, não vai no PDF. */
-function _bolConferir(qual){
-  var d=_bolDados(qual), j=d.janela, fd=function(s){return s?s.substring(8,10)+'/'+s.substring(5,7):'';}, it=[];
-  var tratos=(S.rT||[]).filter(function(r){ return !r._apagado&&r.tipo==='trato'; });
-  d.lotes.forEach(function(l){ if(l.vendido) return;
-    var sem=(S.rT||[]).filter(function(r){ var dt=(r.dt||'').substring(0,10); return !r._apagado&&r.tipo==='sem_trato'&&_lbCons(r.lote)===l.lote&&dt>=j.ini&&dt<=j.fimDados; });
-    var mot={}; sem.forEach(function(r){ var m=r.motivo||'sem motivo'; mot[m]=(mot[m]||0)+1; });
-    var motTxt=Object.keys(mot).map(function(m){ return m+(mot[m]>1?' ('+mot[m]+'x)':''); }).join(', ');
-    if(l.prod && !(l.sacos>0)){
-      var ult=tratos.filter(function(r){ return _lbCons(r.lote||r.co)===l.lote; }).map(function(r){ return (r.dt||'').substring(0,10); }).sort().pop();
-      it.push({ g:'alto', t:'<b>'+l.lote+'</b>: nenhum trato lançado de '+fd(j.ini)+' a '+fd(j.fimDados)+(ult?' (último em '+fd(ult)+')':'')+(motTxt?' · vaqueiro respondeu: '+motTxt:' · sem resposta do vaqueiro')+'. Tratou e não lançou?' });
-    } else if(l.conforme===false && l.prevSac!=null){
-      it.push({ g:'medio', t:'<b>'+l.lote+'</b>: '+(l.orientado?('recebeu '+_fmtN(l.sacos,0)+' de '+_fmtN(l.prevSac,0)+' sacos orientados'):('deu '+(l.pctPV!=null?_fmtN(l.pctPV,2):'0')+'% PV, previsto '+_fmtN(l.prevPct||0,2)+'%'))+(motTxt?' · vaqueiro respondeu: '+motTxt:'')+'.' });
-    }
-  });
-  if(qual==='atual' && !tratos.some(function(r){ return (r.dt||'').substring(0,10)===TD; }))
-    it.push({ g:'baixo', t:'Hoje ('+fd(TD)+') ainda não tem trato lançado. Se o trato de hoje ainda vai acontecer, gere o boletim depois do lançamento.' });
-  return { itens:it, periodo:'Dados lançados de '+fd(j.ini)+' a '+fd(j.fimDados)+(qual==='atual'?' (até hoje)':'') };
-}
 function rBoletim(){
   var el=document.getElementById('bol-sem'); if(!el)return;
   if(!(CU&&CU.r==='Consultor')){ el.innerHTML=''; return; }
@@ -2666,21 +2647,12 @@ function rBoletim(){
   el.innerHTML='<div class="card" style="margin-bottom:12px;padding:12px 14px">'
     +'<div style="font-size:14px;font-weight:800;color:#1B5E20">Boletim semanal do proprietário</div>'
     +'<div style="font-size:11px;color:#888;margin:2px 0 10px">Semana de segunda a sábado</div>'
-    +'<div style="display:flex;gap:6px">'+chip('atual','Esta semana',ja)+chip('passada','Semana passada',jp)+'</div>'
-    +(function(){ var cf; try{ cf=_bolConferir(_bolSem); }catch(e){ return ''; }
-        var cor={alto:'#C62828',medio:'#E65100',baixo:'#6D6D6D'};
-        return '<div style="margin-top:10px;border:1.5px solid '+(cf.itens.length?'#FFB74D':'#A5D6A7')+';background:'+(cf.itens.length?'#FFF8EC':'#F1F8E9')+';border-radius:10px;padding:10px 12px">'
-          +'<div style="font-size:12.5px;font-weight:800;color:'+(cf.itens.length?'#8a5a00':'#1B5E20')+'">'+(cf.itens.length?'Conferir antes de mandar ('+cf.itens.length+')':'Conferido: nada fora do esperado')+'</div>'
-          +'<div style="font-size:11px;color:#666;margin:2px 0 '+(cf.itens.length?'6px':'0')+'">'+cf.periodo+' · se a equipe lançou sem internet, sincronize antes de gerar</div>'
-          +cf.itens.map(function(x){ return '<div style="font-size:12px;line-height:1.45;padding:5px 0;border-top:1px solid #f3e3c7;color:#333"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+cor[x.g]+';margin-right:6px"></span>'+x.t+'</div>'; }).join('')
-          +'</div>'; })()
+    +'<div style="display:flex;gap:6px">'+chip('passada','Semana passada',jp)+chip('atual','Esta semana',ja)+'</div>'
     +'<div style="font-size:11px;color:#666;margin:10px 0 3px;font-weight:600">Resumo da semana em 1 linha (sai em destaque no topo)</div>'
     +'<input id="bol-resumo" oninput="_bolResumoSet(\''+j.ini+'\',this.value)" value="'+String(_bolResumoGet(j.ini)).replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'" placeholder="Ex.: Semana boa: 5 de 6 lotes conforme; Lote Compra precisa ajustar" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid #ddd;border-radius:9px;font-size:12.5px;font-family:inherit">'
     +'<label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#444;margin-top:9px;cursor:pointer"><input type="checkbox" '+(_bolComCusto()?'checked':'')+' onchange="_bolComCustoSet(this.checked)" style="width:17px;height:17px"> Mostrar custo em R$ no boletim (custo da semana e R$/cab/dia)</label>'
-    +'<div style="font-size:11px;color:#666;margin:10px 0 3px;font-weight:600">O que os números mostram (o que aconteceu na semana)</div>'
+    +'<div style="font-size:11px;color:#666;margin:10px 0 3px;font-weight:600">Recado do consultor (vai no boletim)</div>'
     +'<textarea id="bol-recado" oninput="_bolRecadoSet(\''+j.ini+'\',this.value)" rows="4" placeholder="Escreva o que o proprietário precisa saber desta semana…" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid #ddd;border-radius:9px;font-size:12.5px;font-family:inherit;line-height:1.45">'+txt+'</textarea>'
-    +'<div style="font-size:11px;color:#666;margin:10px 0 3px;font-weight:600">O que fazer agora (uma ação por linha)</div>'
-    +'<textarea id="bol-fazer" oninput="_bolFazerSet(\''+j.ini+'\',this.value)" rows="3" placeholder="Ex.: cotar o sal com 2 fornecedores" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid #ddd;border-radius:9px;font-size:13px;font-family:inherit;resize:vertical">'+String(_bolFazerGet(j.ini)).replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</textarea>'
     +'<div style="display:flex;gap:8px;margin-top:10px">'
     +'<button id="bol-ia-bt" onclick="_bolSugerirIA()" style="flex:1;padding:11px;border:1px solid #8BC34A;border-radius:10px;font-size:12.5px;font-weight:800;color:#33691E;background:#F1F8E9;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#33691E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8H20l-4.9 3.6 1.9 5.8L12 14.6 7 18.2l1.9-5.8L4 8.8h6.1z"/></svg>Sugerir recado com IA</button>'
     +'<button onclick="_bolGerarPDF()" style="flex:1;padding:11px;border:none;border-radius:10px;font-size:12.5px;font-weight:800;color:#fff;background:#1B5E20;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Gerar boletim (PDF)</button>'
@@ -2742,31 +2714,22 @@ function _bolGerarPDF(){
   var td='style="padding:5px 3px;border-bottom:1px solid #f0f0f0;font-size:11px"', tdr=td.replace('padding','text-align:right;padding');
   var kpi=function(v,l){return '<div style="flex:1;background:#F1F8E9;border-radius:8px;padding:8px 6px;text-align:center"><b style="display:block;font-size:17px;color:#1B5E20">'+v+'</b><span style="font-size:9.5px;color:#65766a">'+l+'</span></div>';};
   var resumo=String(_bolResumoGet(j.ini)||'').trim(), comR=_bolComCusto();
-  var faz=(document.getElementById('bol-fazer')||{}).value; if(faz==null) faz=_bolFazerGet(j.ini); var acoes=_bolAcoes(faz);
-  // v7.69: linha de contexto antes dos números (aula Gama: número sem contexto não diz nada)
-  var _ctx=['Semana de '+fd(j.ini)+' a '+fd(j.fim)+(_bolSem==='atual'?' (até hoje)':''), _fmtN(d.cab,0)+' cabeças em '+d.nLotes+' lote'+(d.nLotes===1?'':'s')];
-  if(d.vendas&&d.vendas.length) _ctx.push('semana com venda'); if(d.mudancas&&d.mudancas.length) _ctx.push(d.mudancas.length+' mudança'+(d.mudancas.length===1?'':'s')+' de pasto');
   // seta vs semana anterior (pela média por dia, pra semana atual incompleta não parecer queda)
   var seta=function(a,b){ var da=a/(d.tot.dias||1), db=b/(d.ant.dias||1); if(!(db>0)||!(da>0)) return ''; var v=(da-db)/db; if(Math.abs(v)<0.05) return '<div style="font-size:9px;color:#888">= semana anterior</div>';
     return '<div style="font-size:9px;font-weight:700;color:#555">'+(v>0?'▲ ':'▼ ')+Math.round(Math.abs(v)*100)+'% vs semana anterior</div>'; };
   var kpi2=function(v,l,extra){return '<div style="flex:1;background:#F1F8E9;border-radius:8px;padding:8px 6px;text-align:center"><b style="display:block;font-size:17px;color:#1B5E20">'+v+'</b><span style="font-size:9.5px;color:#65766a">'+l+'</span>'+(extra||'')+'</div>';};
-  var c='<div style="margin:10px 0 0;background:#f6f8f5;border-radius:6px;padding:6px 10px;font-size:11px;color:#3d5a3f">'+esc(_ctx.join(' · '))+'</div>';
-  c+=(resumo?'<div style="margin:12px 0 4px;background:#1B5E20;color:#fff;border-radius:8px;padding:10px 12px;font-size:13px;font-weight:700;line-height:1.45">'+esc(resumo)+'</div>':'');
+  var c=(resumo?'<div style="margin:12px 0 4px;background:#1B5E20;color:#fff;border-radius:8px;padding:10px 12px;font-size:13px;font-weight:700;line-height:1.45">'+esc(resumo)+'</div>':'');
   c+='<div style="display:flex;gap:8px;margin:12px 0">'+kpi(_fmtN(d.cab,0),'cabeças hoje'+((d.vendas||[]).length?'<br>+'+_fmtN(d.vendas.reduce(function(a,v){return a+v.qtd;},0),0)+' vendidas':''))+kpi(d.nLotes,'lotes')+kpi2(_fmtN(d.sacos,0),'sacos de suplemento',seta(d.tot.sacos,d.ant.sacos))+kpi2(_fmtN(d.rolos,0),'rolos de feno',seta(d.tot.rolos,d.ant.rolos))+'</div>';
   if(comR&&d.tot.custo>0){ var _ln=function(t){return '<div style="font-size:9.5px;color:#65766a">'+t+'</div>';}, _cd=(d.cab||0)*(j.dias||1);
     var qSem=[]; if(d.tot.kgSup>0) qSem.push(_fmtN(d.tot.kgSup,0)+' kg suplemento'); if(d.tot.kgFeno>0) qSem.push(_fmtN(d.tot.kgFeno,0)+' kg feno');
     var qCab=[]; if(_cd&&d.tot.kgSup>0) qCab.push(_fmtN(d.tot.kgSup*1000/_cd,0)+' g suplemento'); if(_cd&&d.tot.kgFeno>0) qCab.push(_fmtN(d.tot.kgFeno/_cd,2)+' kg feno');
     c+='<div style="display:flex;gap:8px;margin:0 0 12px">'+kpi2('R$ '+_fmtN(d.tot.custo,0),'custo da semana (suplemento + feno)',(qSem.length?_ln(qSem.join(' · ')):'')+seta(d.tot.custo,d.ant.custo))
       +kpi2('R$ '+_fmtN(d.cabDiaRS,2),'por cabeça por dia',qCab.length?_ln(qCab.join(' · ')):'')+'</div>'; }
-  // v7.69: leitura do consultor logo depois dos números (do macro pro micro)
-  var _ass=esc(String((CU&&CU.n)||'Rogério').split(' ')[0])+' · Consultor GPL';
-  if(rec) c+='<div style="background:#F1F8E9;border-left:3px solid #2E7D32;border-radius:6px;padding:9px 11px;margin:4px 0 8px;font-size:12px;line-height:1.55"><div style="font-size:9.5px;font-weight:800;color:#33691E;letter-spacing:.6px;text-transform:uppercase;margin-bottom:2px">O que os números mostram</div><div style="white-space:pre-wrap">'+esc(rec)+'</div>'+(acoes.length?'':'<div style="margin-top:6px;font-weight:700;color:#1B5E20">'+_ass+'</div>')+'</div>';
-  if(acoes.length) c+='<div style="background:#FFF8EC;border-left:3px solid #E6A13A;border-radius:6px;padding:9px 11px;margin:0 0 8px;font-size:12px;line-height:1.55"><div style="font-size:9.5px;font-weight:800;color:#8a5a00;letter-spacing:.6px;text-transform:uppercase;margin-bottom:2px">O que fazer agora</div>'+acoes.map(function(a){return '• '+esc(a);}).join('<br>')+'<div style="margin-top:6px;font-weight:700;color:#1B5E20">'+_ass+'</div></div>';
   c+=sec('Nutrição por lote')+'<table style="width:100%;border-collapse:collapse"><tr><th '+th+'>Lote</th><th '+th+'>Pasto</th><th '+thr+'>Cab</th><th '+thr+'>Suplemento<br>sacos na semana</th><th '+thr+'>Feno<br>rolos</th><th '+thr+'>Previsto x fornecido</th></tr>';
   d.lotes.forEach(function(l){
     var _n1=function(v){return _fmtN(Math.round(v*10)/10,(Math.round(v*10)%10)?1:0);}, _dS=l.prevSac!=null?l.sacos-l.prevSac:0;
     var vs=(l.prevSac==null||l.conforme==null)?'<span style="color:#999">—</span>':(l.conforme?'<b style="color:#2E7D32">✓ conforme</b>':(l.prevPct&&!l.orientado)?'<b style="color:#E65100">previsto '+_fmtN(l.prevPct,2)+'% PV</b><div style="font-size:9.5px;color:#888;font-weight:700">deu '+(l.pctPV!=null?_fmtN(l.pctPV,2):'0')+'% PV</div>':'<b style="color:#E65100">previsto '+_n1(l.prevSac)+' sc</b><div style="font-size:9.5px;color:#888;font-weight:700">'+(_dS<0?'faltou ':'passou ')+_n1(Math.abs(_dS))+' saco'+(Math.abs(_dS)>1?'s':'')+'</div>');
-    c+='<tr><td '+td+'><b>'+esc(l.lote)+'</b>'+(l.prod?'<div style="font-size:9.5px;color:#888">'+esc(l.prod)+(l.orientado?' · orientado':'')+'</div>':'')+(l.marca?'<div style="font-size:9.5px;color:#1565C0;font-weight:700">'+esc(l.marca)+'</div>':'')+'</td><td '+td+'>'+esc(l.pasto)+'</td><td '+tdr+'>'+l.cab+'</td><td '+tdr+'>'+(l.sacos?'<b>'+_n1(l.sacos)+'</b>'+(l.pctPV!=null?'<div style="font-size:9.5px;color:#888">'+_fmtN(l.pctPV,2)+'% PV</div>':''):'—')+'</td><td '+tdr+'>'+(l.fenoRolos?_n1(l.fenoRolos):'—')+'</td><td '+tdr+'>'+vs+'</td></tr>';
+    c+='<tr><td '+td+'><b>'+esc(l.lote)+'</b>'+(l.prod?'<div style="font-size:9.5px;color:#888">'+esc(l.prod)+(l.orientado?' · orientado':'')+'</div>':'')+(l.marca?'<div style="font-size:9.5px;color:#1565C0;font-weight:700">'+esc(l.marca)+'</div>':'')+(function(c){ if(!c)return ''; var p=[]; if(c.cheio)p.push(c.cheio+' cheio'); if(c.metade)p.push(c.metade+' metade'); if(c.pouco)p.push(c.pouco+' pouco'); if(c.vazio)p.push(c.vazio+' vazio'); return p.length?'<div style="font-size:9.5px;color:'+(c.cheio>=2?'#E65100':'#6D4C41')+';font-weight:700">Cocho: '+p.join(' · ')+'</div>':''; })(l.cocho)+'</td><td '+td+'>'+esc(l.pasto)+'</td><td '+tdr+'>'+l.cab+'</td><td '+tdr+'>'+(l.sacos?'<b>'+_n1(l.sacos)+'</b>'+(l.pctPV!=null?'<div style="font-size:9.5px;color:#888">'+_fmtN(l.pctPV,2)+'% PV</div>':''):'—')+'</td><td '+tdr+'>'+(l.fenoRolos?_n1(l.fenoRolos):'—')+'</td><td '+tdr+'>'+vs+'</td></tr>';
   });
   c+='</table><div style="font-size:9.5px;color:#999;margin-top:3px">Sacos e rolos lançados de '+fd(j.ini)+' a '+fd(j.fimDados)+' (lote vendido: até o dia da venda). Cabeças do início da semana. Previsto: lote com orientação da consultoria confere os tratos da agenda na semana; sem orientação, compara o % do peso vivo da semana com o % cadastrado (tolerância de 20%).</div>';
   if(d.vendas&&d.vendas.length) c+=sec('Vendas da semana')+'<div style="background:#E3F2FD;border-left:3px solid #1565C0;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.55">'
@@ -2777,15 +2740,14 @@ function _bolGerarPDF(){
   if(d.orientacoes.length) c+=sec('Orientações da consultoria em vigor')+'<div style="background:#FFF8E1;border-left:3px solid #F9A825;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.55">'
     +d.orientacoes.map(function(o){return '<b>'+esc(o.lote)+'</b> · '+esc(o.prod)+': '+_fmtN(o.sacos,0)+' saco'+(o.sacos>1?'s':'')+' '+_freqTxt(o.freq).toLowerCase()+' (desde '+fd(o.dt)+(o.vistos.length?', visto por '+esc(o.vistos.join(', ')):'')+')';}).join('<br>')
     +'<div style="font-size:10px;color:#8a6d00;margin-top:3px">Domingo é folga: o sábado leva a quantidade do domingo.</div></div>';
+  if(rec) c+=sec('Recado do consultor')+'<div style="background:#F1F8E9;border-left:3px solid #2E7D32;border-radius:6px;padding:9px 11px;font-size:12px;line-height:1.55;white-space:pre-wrap">'+esc(rec)+'<div style="margin-top:6px;font-weight:700;color:#1B5E20">'+esc(String((CU&&CU.n)||'Rogério').split(' ')[0])+' · Consultor GPL</div></div>';
   c+='<div style="margin-top:16px;padding-top:8px;border-top:1px solid #e3e8e3;font-size:11.5px;color:#33691E"><b>Rogério · Consultor GPL</b> · (63) 99108-2453</div>'; // v7.64: assinatura sempre
   var tit='Boletim da semana';
   var css=(typeof _pdfTimbreCss==='function')?_pdfTimbreCss():'';
   var timbre=(typeof _pdfTimbre==='function')?_pdfTimbre(tit, fd(j.ini)+' a '+fd(j.fim)+'/'+j.ini.substring(0,4), d.fazenda):'<h2>'+tit+'</h2>';
   var rodape=(typeof _pdfRodape==='function')?_pdfRodape():'';
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;padding:18px;color:#222;max-width:760px;margin:0 auto}'+css+'</style></head><body>'+timbre+c+rodape+'</body></html>';
-  try{ enviarDado({tipo:'boletim_log', faz:d.fazenda, n:(CU&&CU.n)||'', semana_ini:j.ini, semana_fim:j.fim, cabecas:d.cab, sacos:d.sacos, rolos:d.rolos, recado:rec+(acoes.length?'\n— O que fazer agora: '+acoes.join(' · '):'')}); }catch(e){}
-  // v7.71: arquivo sai como "Boletim Fazenda Estrela 02-11 a 07-11-2026"
-  window._pdfNomeArq='Boletim '+(d.fazenda||'')+' '+fd(j.ini).replace('/','-')+' a '+fd(j.fim).replace('/','-')+'-'+j.fim.substring(0,4);
+  try{ enviarDado({tipo:'boletim_log', faz:d.fazenda, n:(CU&&CU.n)||'', semana_ini:j.ini, semana_fim:j.fim, cabecas:d.cab, sacos:d.sacos, rolos:d.rolos, recado:rec}); }catch(e){}
   if(typeof pdfModalAbrir==='function') pdfModalAbrir(tit, html); else alert('Gerador de PDF não encontrado.');
 }
 
@@ -7611,7 +7573,6 @@ function pdfModalAbrir(titulo, html){
 }
 
 function pdfModalFechar(){
-  window._pdfNomeArq=''; // v7.71
   var overlay = document.getElementById('pdf-modal-overlay');
   if(overlay) overlay.style.display = 'none';
   document.body.style.overflow = '';
@@ -7637,12 +7598,7 @@ function _fcPerguntaPago(){
 
 function pdfModalImprimir(){
   var frame = document.getElementById('pdf-modal-frame');
-  if(!(frame && frame.contentWindow)) return;
-  // v7.71: nome do arquivo ao salvar o PDF (o Chrome usa o título da página); só quando o relatório define um nome
-  var nome=window._pdfNomeArq, velho=document.title;
-  if(nome){ try{ frame.contentDocument.title=nome; }catch(e){} document.title=nome;
-    var volta=function(){ document.title=velho; window.removeEventListener('afterprint',volta); }; window.addEventListener('afterprint',volta); setTimeout(volta,60000); }
-  frame.contentWindow.print();
+  if(frame && frame.contentWindow) frame.contentWindow.print();
 }
 // ══════════════════════
 var _syncErroDetalhe=''; // v7.68: era lida antes de existir e travava o aviso de erro do envio
@@ -8257,24 +8213,66 @@ function _tratarLote(nm){
   try{ sp('trato',true,'home'); }catch(e){}
 }
 // Botao "Nao precisa hoje" -> escolhe motivo e registra (tipo sem_trato, vive no CONFIG)
+function _cochoSvg(n,w){ w=w||84; var f='#C8A165', base='<path d="M6 14h88l-8 38H14z" fill="#f3efe6" stroke="#6D4C41" stroke-width="3"/>';
+  var fill=n==='cheio'?'<path d="M8.5 20h83l-6.5 30H15z" fill="'+f+'"/><path d="M9 20q12-6 20 0t20 0 21 0 21 0" fill="'+f+'"/>'
+    :n==='metade'?'<path d="M11.5 33h77l-3.5 17H15z" fill="'+f+'"/>'
+    :n==='pouco'?'<path d="M14 45h72l-1.5 5H15.5z" fill="'+f+'"/><circle cx="40" cy="43" r="1.6" fill="'+f+'"/><circle cx="66" cy="44" r="1.6" fill="'+f+'"/>':'';
+  return '<svg viewBox="0 0 100 60" width="'+w+'" style="display:block;margin:0 auto">'+base+fill+'</svg>'; }
+// v7.69: "Não precisa hoje" — vaqueiro toca no desenho do cocho (antes era caixinha pra digitar 1, 2 ou 3)
 function _semTratoLote(nm){
-  var motivos=['Choveu','Ainda tem no cocho','Acabou o produto'];
-  var msg='Por que o '+nm+' não precisa de trato hoje?\n\n1 - Choveu\n2 - Ainda tem no cocho\n3 - Acabou o produto';
-  var op=prompt(msg,'2');
-  if(op===null) return;
-  var idx=parseInt(op)-1;
-  if(isNaN(idx)||idx<0||idx>2){ alert('Escolha 1, 2 ou 3.'); return; }
+  var old=document.getElementById('st-cocho-modal'); if(old) old.remove();
+  var d=document.createElement('div'); d.id='st-cocho-modal';
+  d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10050;display:flex;align-items:center;justify-content:center;padding:14px';
+  var nmJs=String(nm).replace(/\\/g,'').replace(/'/g,"\\'");
+  var card=function(k,t){ return '<div onclick="_semTratoSalvar(\''+nmJs+'\',\''+t+'\')" style="border:2px solid #dfe8dc;border-radius:14px;padding:8px 2px 10px;text-align:center;cursor:pointer;background:#fff">'+_cochoSvg(k,80)+'<b style="display:block;font-size:13px;color:#333;margin-top:4px">'+t.replace('Cocho ','').replace(/^./,function(c){return c.toUpperCase();})+'</b></div>'; };
+  var ico='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1565C0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M20 16.6A5 5 0 0 0 18 7h-1.3A8 8 0 1 0 4 15.3"/><path d="M8 19v2M8 13v2M16 19v2M16 13v2M12 21v2M12 15v2"/></svg>';
+  var bt=function(t,c,html){ return '<div onclick="_semTratoSalvar(\''+nmJs+'\',\''+t+'\')" style="flex:1;border:1.5px solid #ddd;border-radius:12px;padding:12px 4px;text-align:center;font-size:13px;font-weight:700;color:'+c+';cursor:pointer;background:#fff">'+(html||'')+t+'</div>'; };
+  d.innerHTML='<div style="background:#fff;border-radius:16px;padding:16px;max-width:380px;width:100%;box-shadow:0 8px 30px rgba(0,0,0,.25)">'
+    +'<div style="font-size:17px;font-weight:800;color:#1B5E20">'+nm+' — como está o cocho?</div>'
+    +'<div style="font-size:12.5px;color:#666;margin:2px 0 12px">Toque no desenho que parece com o cocho agora</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">'+card('cheio','Cocho cheio')+card('metade','Cocho pela metade')+card('pouco','Cocho com pouco')+'</div>'
+    +'<div style="display:flex;gap:8px;margin-top:10px">'+bt('Choveu','#1565C0',ico)+bt('Acabou o produto','#E65100')+'</div>'
+    +'<div onclick="document.getElementById(\'st-cocho-modal\').remove()" style="margin-top:12px;text-align:center;color:#999;font-size:13px;padding:6px;cursor:pointer">Cancelar</div></div>';
+  document.body.appendChild(d);
+}
+function _semTratoSalvar(nm,motivo){
+  var m=document.getElementById('st-cocho-modal'); if(m) m.remove();
   var hoje=new Date();
   var hojeISO=hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0')+'-'+String(hoje.getDate()).padStart(2,'0');
   var _fazST=(typeof getFL==='function'&&getFL()[0])?getFL()[0]:((CU&&CU.fs&&CU.fs[0])?CU.fs[0]:Object.keys(S.FAZ||{})[0]||'');
-  var r={tipo:'sem_trato', lote:nm, motivo:motivos[idx], dt:hojeISO, ts:new Date().toISOString(), n:(CU?CU.n:''), faz:_fazST};
+  var r={tipo:'sem_trato', lote:nm, motivo:motivo, dt:hojeISO, ts:new Date().toISOString(), n:(CU?CU.n:''), faz:_fazST};
   S.rT=S.rT||[];
   S.rT.push(r);
-  enviarDado(r);            // MESMO caminho do trato: grava na aba da planilha
+  enviarDado(r);            // MESMO caminho do trato: grava na aba 🚫 Sem Trato (coluna Motivo)
   try{salvar();}catch(e){}
   try{_alertaTrato();}catch(e){}
   try{rTratoDia();}catch(e){}
-  alert('✅ Registrado: '+nm+' — '+motivos[idx]);
+  alert('✅ Registrado: '+nm+' — '+motivo);
+}
+// nível do cocho no dia: "Não precisa hoje" (motivo) ou trato (situação antes)
+function _cochoNivel(r){
+  if(r.tipo==='sem_trato'){ var m=String(r.motivo||'').toLowerCase(); if(m.indexOf('cheio')>=0) return 'cheio'; if(m.indexOf('metade')>=0) return 'metade'; if(m.indexOf('pouco')>=0) return 'pouco'; if(m.indexOf('ainda tem')>=0) return 'tem'; return null; }
+  if(r.tipo==='trato'){ var sit=String(r.sit||''); if(sit==='cheio') return 'cheio'; if(sit==='medio') return 'metade'; if(sit==='baixo') return 'pouco'; if(sit==='vazio') return 'vazio'; }
+  return null;
+}
+function _cochoContagem(lote,ini,fim){
+  var c={cheio:0,metade:0,pouco:0,vazio:0,tem:0}, lo=_lbCons(lote);
+  (S.rT||[]).forEach(function(r){ if(r._apagado)return; var dt=(r.dt||'').substring(0,10); if(dt<ini||dt>fim)return; if(_lbCons(r.lote||r.co)!==lo)return; var n=_cochoNivel(r); if(n) c[n]++; });
+  return c;
+}
+// aviso do consultor: cocho cheio 2+ vezes em 7 dias
+function _consCocho(){
+  var fim=TD, ini=_somaDias(TD,-6), h='';
+  (S.LOTES||[]).filter(function(l){return l.qtd>0;}).forEach(function(l){
+    var c=_cochoContagem(l.nome,ini,fim); if(c.cheio<2) return;
+    var lo=_lbCons(l.nome), pr=_ultProdLote(l.nome), kg=0;
+    (S.rT||[]).forEach(function(r){ var dt=(r.dt||'').substring(0,10); if(r._apagado||r.tipo!=='trato'||dt<ini||dt>fim||_lbCons(r.lote||r.co)!==lo)return; var q=parseFloat(r.q||r.qtd)||0; kg+=parseFloat(r.kg_fornecido)||q*_ppsProd(r.pr||r.prod||''); });
+    var pv=(parseFloat(l.qtd)||0)*(parseFloat(l.peso)||0), pct=pv?kg/7/pv*100:0, ref='';
+    if(pr){ var o=_orientAtiva(lo,pr); if(o&&pv){ ref=' (orientado '+_fmtN(parseFloat(o.sacos)*_ppsProd(pr)/(parseInt(o.freq)||1)/pv*100,2)+'%)'; } else { var pp=_pvPrevisto(lo,pr).pct; if(pp) ref=' (previsto '+_fmtN(pp,2)+'%)'; } }
+    h+='<div style="background:#fff;border:1px solid #e0e7e0;border-left:4px solid #E65100;border-radius:12px;padding:10px 12px;margin-bottom:6px;font-size:12.5px;line-height:1.5">'
+      +'<b style="color:#E65100">'+lo+' — cocho cheio '+c.cheio+'x em 7 dias</b><br>Consumo '+_fmtN(pct,2)+'% PV'+ref+'.<br><span style="color:#666">Sobrando produto no cocho: rever a orientação ou o produto.</span></div>';
+  });
+  return h?'<div style="font-size:13px;font-weight:800;color:#1B5E20;margin:10px 0 8px">Leitura de cocho</div>'+h:'';
 }
 function _alertaRotacao(){
   // v7.60: só o consultor vê aviso de rotação (decisão de mudar pasto é dele)
@@ -8954,7 +8952,7 @@ function rHistCocho(){
   // respostas "sem_trato" registradas pelo vaqueiro
   var resp=(S.rT||[]).filter(function(r){return r.tipo==='sem_trato' && !r._apagado;});
   resp.sort(function(a,b){ var da=(a.dt||a.ts||''), db=(b.dt||b.ts||''); return da<db?1:(da>db?-1:0); });
-  var corMotivo={'Choveu':'#1565C0','Ainda tem no cocho':'#2E7D32','Acabou o produto':'#E65100'};
+  var corMotivo={'Choveu':'#1565C0','Ainda tem no cocho':'#2E7D32','Acabou o produto':'#E65100','Cocho cheio':'#E65100','Cocho pela metade':'#F9A825','Cocho com pouco':'#2E7D32'};
   var out='<div style="margin:4px 0 10px"><div style="font-size:15px;font-weight:800;color:#1B5E20">Respostas do cocho</div>'
     +'<div style="font-size:12px;color:#777;margin-top:2px">Quando o vaqueiro marcou "não precisa hoje" e o motivo</div></div>';
   if(!resp.length){
