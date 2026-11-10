@@ -311,7 +311,7 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div class="sdot" id="sdot"></div>
 <div class="upill" onclick="doLogout()">⏻ <span id="un"></span></div>
 </div>
-<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 08/11/2026 v7.69</div>
+<div id="ver-banner" style="display:none;background:#FF6F00;color:#fff;text-align:center;font-size:10px;padding:3px;font-weight:700">BUILD 10/11/2026 v7.70</div>
 <div class="tabs" id="tabs" style="display:none"></div>
 
 <!-- HOME -->
@@ -2572,8 +2572,9 @@ function _bolTotais(ini,fim){ // v7.65: sacos, rolos e custo R$ de uma janela
   var noP=function(dt){ dt=(dt||'').substring(0,10); return dt>=ini&&dt<=fim; }, sac=0, rol=0, cs=0, cf=0, kgS=0, kgF=0;
   (S.rT||[]).forEach(function(r){ if(r._apagado||r.tipo!=='trato'||!noP(r.dt))return; var q=parseFloat(r.q||r.qtd)||0, e=(S.EST||{})[r.pr||r.prod||'']||{}; sac+=q; kgS+=parseFloat(r.kg_fornecido)||q*(_ppsProd(r.pr||r.prod||'')||30); cs+=q*(parseFloat(e.preco_saco)||0); });
   (S.mFeno||[]).forEach(function(m){ if(!m||m.mov!=='saida'||!m.lote||!noP(m.dt))return; var e=(S.FENO||{})[m.tipo]||{}; rol+=parseFloat(m.q)||0; kgF+=parseFloat(m.kg)||0; cf+=parseFloat(m.custo)||((parseFloat(m.kg)||0)*(parseFloat(e.vkg)||0)); });
-  var dias=Math.max(1,_diffDias(ini,fim)+1);
-  return {sacos:sac, rolos:rol, kgSup:kgS, kgFeno:kgF, custo:cs+cf, custoSup:cs, custoFeno:cf, dias:dias};
+  var dias=Math.max(1,_diffDias(ini,fim)+1), pk=0, pr$=0;
+  (S.rT||[]).forEach(function(r){ if(r._apagado||r.tipo!=='sem_trato'||!noP(r.dt))return; var k=_perdaKg(r); if(!k)return; pk+=k; var pr=_ultProdLote(r.lote||''), e=(S.EST||{})[pr]||{}; pr$+=k/(_ppsProd(pr)||30)*(parseFloat(e.preco_saco)||0); });
+  return {perdaKg:pk, perdaRS:pr$, sacos:sac, rolos:rol, kgSup:kgS, kgFeno:kgF, custo:cs+cf, custoSup:cs, custoFeno:cf, dias:dias};
 }
 function _bolDados(qual){
   var j=_bolJanela(qual), noP=function(dt){ dt=(dt||'').substring(0,10); return dt>=j.ini&&dt<=j.fimDados; };
@@ -2606,6 +2607,7 @@ function _bolDados(qual){
     var pr=_ultProdLote(l.nome), prevKg=0;
     if(pr){ var ori=_orientAtiva(lo,pr); if(ori) prevKg=parseFloat(ori.sacos)*_ppsProd(pr)/(parseInt(ori.freq)||1);
       else { var pp=_pvPrevisto(lo,pr).pct; if(pp&&l.peso) prevKg=(pp/100)*parseFloat(l.peso)*cab; } }
+    var perdaKg=_perdaLote(l.nome,j.ini,x.vendido||j.fimDados); if(s&&perdaKg>0){ s=Object.assign({},s); s.kg=Math.max(0,s.kg-perdaKg); } // v7.70: jogado fora não foi comido
     var kgDia=s?s.kg/diasL:0, dif=(prevKg>0&&s)?(kgDia-prevKg)/prevKg:null;
     // v7.64: previsto em SACOS. Orientado: conta os tratos da agenda na semana. Sem orientação: % do peso, conferido em 14 dias.
     var prevSac=null, prevPctB=null, conforme=null, oriB=pr?_orientAtiva(lo,pr):null, fimL=x.vendido||j.fimDados;
@@ -2622,7 +2624,7 @@ function _bolDados(qual){
       prevPctB=_pvPrevisto(lo,pr).pct||null; }
     var marca = x.vendido ? ('vendido em '+x.vendido.substring(8,10)+'/'+x.vendido.substring(5,7)) : (qVendSem?('venda parcial: '+qVendSem+' cab'):'');
     return {lote:lo, pasto:x.vendido?'vendido':(pasto[lo]||l.pasto||'—'), cab:cab, prod:pr, sacos:s?s.sacos:0, dias:diasL, vendido:!!x.vendido, marca:marca,
-      gCabDia:(s&&cab)?Math.round(s.kg/cab/diasL*1000):null, fenoKgCabDia:(f&&cab)?Math.round(f.kg/cab/diasL*100)/100:null, fenoRolos:f?f.un:0, cocho:_cochoContagem(l.nome,j.ini,x.vendido||j.fimDados), pctPV:(s&&cab&&parseFloat(l.peso))?s.kg/diasL/(cab*parseFloat(l.peso))*100:null, dif:dif, prevSac:prevSac, prevPct:prevPctB, conforme:conforme, orientado:!!(pr&&_orientAtiva(lo,pr))};
+      gCabDia:(s&&cab)?Math.round(s.kg/cab/diasL*1000):null, fenoKgCabDia:(f&&cab)?Math.round(f.kg/cab/diasL*100)/100:null, fenoRolos:f?f.un:0, perdaKg:perdaKg, cocho:_cochoContagem(l.nome,j.ini,x.vendido||j.fimDados), pctPV:(s&&cab&&parseFloat(l.peso))?s.kg/diasL/(cab*parseFloat(l.peso))*100:null, dif:dif, prevSac:prevSac, prevPct:prevPctB, conforme:conforme, orientado:!!(pr&&_orientAtiva(lo,pr))};
   }).sort(function(a,b){ var na=parseInt((a.lote.match(/\d+/)||[9999])[0]), nb=parseInt((b.lote.match(/\d+/)||[9999])[0]); return na-nb; });
   var estoque=(rd.estoque||[]).filter(function(e){return (parseFloat(e.saldo)||0)>0;}).map(function(e){return {nome:e.produto, saldo:e.saldo+' saco'+(e.saldo===1?'':'s'), dias:e.dias, comprar:(e.dias!=null&&e.dias<15)};});
   (rd.feno||[]).forEach(function(f){ if(!((parseFloat(f.saldo)||0)>0)) return; estoque.push({nome:'Feno '+f.tipo, saldo:f.saldo+' '+f.u+(f.saldo===1?'':'s'), dias:f.dias, semHist:f.semHist, comprar:(f.dias!=null&&f.dias<15)}); });
@@ -2720,6 +2722,7 @@ function _bolGerarPDF(){
   var kpi2=function(v,l,extra){return '<div style="flex:1;background:#F1F8E9;border-radius:8px;padding:8px 6px;text-align:center"><b style="display:block;font-size:17px;color:#1B5E20">'+v+'</b><span style="font-size:9.5px;color:#65766a">'+l+'</span>'+(extra||'')+'</div>';};
   var c=(resumo?'<div style="margin:12px 0 4px;background:#1B5E20;color:#fff;border-radius:8px;padding:10px 12px;font-size:13px;font-weight:700;line-height:1.45">'+esc(resumo)+'</div>':'');
   c+='<div style="display:flex;gap:8px;margin:12px 0">'+kpi(_fmtN(d.cab,0),'cabeças hoje'+((d.vendas||[]).length?'<br>+'+_fmtN(d.vendas.reduce(function(a,v){return a+v.qtd;},0),0)+' vendidas':''))+kpi(d.nLotes,'lotes')+kpi2(_fmtN(d.sacos,0),'sacos de suplemento',seta(d.tot.sacos,d.ant.sacos))+kpi2(_fmtN(d.rolos,0),'rolos de feno',seta(d.tot.rolos,d.ant.rolos))+'</div>';
+  if(d.tot.perdaKg>0) c+='<div style="margin:-4px 0 12px;background:#E3F2FD;border-left:3px solid #1565C0;border-radius:6px;padding:7px 10px;font-size:11.5px"><b>Perda da semana:</b> '+_fmtN(d.tot.perdaKg,0)+' kg de produto molhado/estragado jogado fora'+(comR&&d.tot.perdaRS>0?' (R$ '+_fmtN(d.tot.perdaRS,0)+')':'')+'</div>';
   if(comR&&d.tot.custo>0){ var _ln=function(t){return '<div style="font-size:9.5px;color:#65766a">'+t+'</div>';}, _cd=(d.cab||0)*(j.dias||1);
     var qSem=[]; if(d.tot.kgSup>0) qSem.push(_fmtN(d.tot.kgSup,0)+' kg suplemento'); if(d.tot.kgFeno>0) qSem.push(_fmtN(d.tot.kgFeno,0)+' kg feno');
     var qCab=[]; if(_cd&&d.tot.kgSup>0) qCab.push(_fmtN(d.tot.kgSup*1000/_cd,0)+' g suplemento'); if(_cd&&d.tot.kgFeno>0) qCab.push(_fmtN(d.tot.kgFeno/_cd,2)+' kg feno');
@@ -2729,7 +2732,7 @@ function _bolGerarPDF(){
   d.lotes.forEach(function(l){
     var _n1=function(v){return _fmtN(Math.round(v*10)/10,(Math.round(v*10)%10)?1:0);}, _dS=l.prevSac!=null?l.sacos-l.prevSac:0;
     var vs=(l.prevSac==null||l.conforme==null)?'<span style="color:#999">—</span>':(l.conforme?'<b style="color:#2E7D32">✓ conforme</b>':(l.prevPct&&!l.orientado)?'<b style="color:#E65100">previsto '+_fmtN(l.prevPct,2)+'% PV</b><div style="font-size:9.5px;color:#888;font-weight:700">deu '+(l.pctPV!=null?_fmtN(l.pctPV,2):'0')+'% PV</div>':'<b style="color:#E65100">previsto '+_n1(l.prevSac)+' sc</b><div style="font-size:9.5px;color:#888;font-weight:700">'+(_dS<0?'faltou ':'passou ')+_n1(Math.abs(_dS))+' saco'+(Math.abs(_dS)>1?'s':'')+'</div>');
-    c+='<tr><td '+td+'><b>'+esc(l.lote)+'</b>'+(l.prod?'<div style="font-size:9.5px;color:#888">'+esc(l.prod)+(l.orientado?' · orientado':'')+'</div>':'')+(l.marca?'<div style="font-size:9.5px;color:#1565C0;font-weight:700">'+esc(l.marca)+'</div>':'')+(function(c){ if(!c)return ''; var p=[]; if(c.cheio)p.push(c.cheio+' cheio'); if(c.metade)p.push(c.metade+' metade'); if(c.pouco)p.push(c.pouco+' pouco'); if(c.vazio)p.push(c.vazio+' vazio'); return p.length?'<div style="font-size:9.5px;color:'+(c.cheio>=2?'#E65100':'#6D4C41')+';font-weight:700">Cocho: '+p.join(' · ')+'</div>':''; })(l.cocho)+'</td><td '+td+'>'+esc(l.pasto)+'</td><td '+tdr+'>'+l.cab+'</td><td '+tdr+'>'+(l.sacos?'<b>'+_n1(l.sacos)+'</b>'+(l.pctPV!=null?'<div style="font-size:9.5px;color:#888">'+_fmtN(l.pctPV,2)+'% PV</div>':''):'—')+'</td><td '+tdr+'>'+(l.fenoRolos?_n1(l.fenoRolos):'—')+'</td><td '+tdr+'>'+vs+'</td></tr>';
+    c+='<tr><td '+td+'><b>'+esc(l.lote)+'</b>'+(l.prod?'<div style="font-size:9.5px;color:#888">'+esc(l.prod)+(l.orientado?' · orientado':'')+'</div>':'')+(l.marca?'<div style="font-size:9.5px;color:#1565C0;font-weight:700">'+esc(l.marca)+'</div>':'')+(function(c){ if(!c)return ''; var p=[]; if(c.cheio)p.push(c.cheio+' cheio'); if(c.metade)p.push(c.metade+' metade'); if(c.pouco)p.push(c.pouco+' pouco'); if(c.vazio)p.push(c.vazio+' vazio'); return p.length?'<div style="font-size:9.5px;color:'+(c.cheio>=2?'#E65100':'#6D4C41')+';font-weight:700">Cocho: '+p.join(' · ')+'</div>':''; })(l.cocho)+(l.perdaKg>0?'<div style="font-size:9.5px;color:#1565C0;font-weight:700">Perda: '+_fmtN(l.perdaKg,0)+' kg (molhou/estragou)</div>':'')+'</td><td '+td+'>'+esc(l.pasto)+'</td><td '+tdr+'>'+l.cab+'</td><td '+tdr+'>'+(l.sacos?'<b>'+_n1(l.sacos)+'</b>'+(l.pctPV!=null?'<div style="font-size:9.5px;color:#888">'+_fmtN(l.pctPV,2)+'% PV</div>':''):'—')+'</td><td '+tdr+'>'+(l.fenoRolos?_n1(l.fenoRolos):'—')+'</td><td '+tdr+'>'+vs+'</td></tr>';
   });
   c+='</table><div style="font-size:9.5px;color:#999;margin-top:3px">Sacos e rolos lançados de '+fd(j.ini)+' a '+fd(j.fimDados)+' (lote vendido: até o dia da venda). Cabeças do início da semana. Previsto: lote com orientação da consultoria confere os tratos da agenda na semana; sem orientação, compara o % do peso vivo da semana com o % cadastrado (tolerância de 20%).</div>';
   if(d.vendas&&d.vendas.length) c+=sec('Vendas da semana')+'<div style="background:#E3F2FD;border-left:3px solid #1565C0;border-radius:6px;padding:8px 10px;font-size:11.5px;line-height:1.55">'
@@ -8216,6 +8219,7 @@ function _tratarLote(nm){
 function _cochoSvg(n,w){ w=w||84; var f='#C8A165', base='<path d="M6 14h88l-8 38H14z" fill="#f3efe6" stroke="#6D4C41" stroke-width="3"/>';
   var fill=n==='cheio'?'<path d="M8.5 20h83l-6.5 30H15z" fill="'+f+'"/><path d="M9 20q12-6 20 0t20 0 21 0 21 0" fill="'+f+'"/>'
     :n==='metade'?'<path d="M11.5 33h77l-3.5 17H15z" fill="'+f+'"/>'
+    :n==='molhou'?'<path d="M10 27h80l-5 23H15z" fill="#8a7a55"/><path d="M10 27q10-4 20 0t20 0 20 0 20 0v5H10z" fill="#64B5F6" opacity=".85"/><path d="M22 36q4-3 8 0M55 40q4-3 8 0" stroke="#5d4a2c" stroke-width="2" fill="none"/>'
     :n==='pouco'?'<path d="M14 45h72l-1.5 5H15.5z" fill="'+f+'"/><circle cx="40" cy="43" r="1.6" fill="'+f+'"/><circle cx="66" cy="44" r="1.6" fill="'+f+'"/>':'';
   return '<svg viewBox="0 0 100 60" width="'+w+'" style="display:block;margin:0 auto">'+base+fill+'</svg>'; }
 // v7.69: "Não precisa hoje" — vaqueiro toca no desenho do cocho (antes era caixinha pra digitar 1, 2 ou 3)
@@ -8224,17 +8228,40 @@ function _semTratoLote(nm){
   var d=document.createElement('div'); d.id='st-cocho-modal';
   d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:10050;display:flex;align-items:center;justify-content:center;padding:14px';
   var nmJs=String(nm).replace(/\\/g,'').replace(/'/g,"\\'");
-  var card=function(k,t){ return '<div onclick="_semTratoSalvar(\''+nmJs+'\',\''+t+'\')" style="border:2px solid #dfe8dc;border-radius:14px;padding:8px 2px 10px;text-align:center;cursor:pointer;background:#fff">'+_cochoSvg(k,80)+'<b style="display:block;font-size:13px;color:#333;margin-top:4px">'+t.replace('Cocho ','').replace(/^./,function(c){return c.toUpperCase();})+'</b></div>'; };
+  var card=function(k,t){ return '<div onclick="_semTratoSalvar(\''+nmJs+'\',\''+t+'\')" style="border:2px solid #dfe8dc;border-radius:14px;padding:8px 2px 10px;text-align:center;cursor:pointer;background:#fff">'+_cochoSvg(k,100)+'<b style="display:block;font-size:13px;color:#333;margin-top:4px">'+t.replace('Cocho ','').replace(/^./,function(c){return c.toUpperCase();})+'</b></div>'; };
   var ico='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1565C0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:4px"><path d="M20 16.6A5 5 0 0 0 18 7h-1.3A8 8 0 1 0 4 15.3"/><path d="M8 19v2M8 13v2M16 19v2M16 13v2M12 21v2M12 15v2"/></svg>';
   var bt=function(t,c,html){ return '<div onclick="_semTratoSalvar(\''+nmJs+'\',\''+t+'\')" style="flex:1;border:1.5px solid #ddd;border-radius:12px;padding:12px 4px;text-align:center;font-size:13px;font-weight:700;color:'+c+';cursor:pointer;background:#fff">'+(html||'')+t+'</div>'; };
   d.innerHTML='<div style="background:#fff;border-radius:16px;padding:16px;max-width:380px;width:100%;box-shadow:0 8px 30px rgba(0,0,0,.25)">'
     +'<div style="font-size:17px;font-weight:800;color:#1B5E20">'+nm+' — como está o cocho?</div>'
     +'<div style="font-size:12.5px;color:#666;margin:2px 0 12px">Toque no desenho que parece com o cocho agora</div>'
-    +'<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">'+card('cheio','Cocho cheio')+card('metade','Cocho pela metade')+card('pouco','Cocho com pouco')+'</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">'+card('cheio','Cocho cheio')+card('metade','Cocho pela metade')+card('pouco','Cocho com pouco')
+    +'<div onclick="_stPerda(\''+nmJs+'\')" style="border:2px solid #90CAF9;border-radius:14px;padding:8px 2px 10px;text-align:center;cursor:pointer;background:#fff">'+_cochoSvg('molhou',100)+'<b style="display:block;font-size:13px;color:#1565C0;margin-top:4px">Molhou / estragou</b></div></div>'
     +'<div style="display:flex;gap:8px;margin-top:10px">'+bt('Choveu','#1565C0',ico)+bt('Acabou o produto','#E65100')+'</div>'
     +'<div onclick="document.getElementById(\'st-cocho-modal\').remove()" style="margin-top:12px;text-align:center;color:#999;font-size:13px;padding:6px;cursor:pointer">Cancelar</div></div>';
   document.body.appendChild(d);
 }
+// v7.70: produto molhou/estragou — kg jogado fora é obrigatório
+function _stPerda(nm){
+  var m=document.getElementById('st-cocho-modal'); if(!m) return;
+  var nmJs=String(nm).replace(/\\/g,'').replace(/'/g,"\\'"), pr=_ultProdLote(nm), pps=pr?_ppsProd(pr):30;
+  var at=function(k,t){ return '<div onclick="document.getElementById(\'st-kg\').value=\''+k+'\'" style="flex:1;border:1.5px solid #A5D6A7;border-radius:12px;padding:12px 4px;text-align:center;font-size:13px;font-weight:700;color:#1B5E20;cursor:pointer;background:#fff">'+t+'</div>'; };
+  m.firstChild.innerHTML='<div style="font-size:17px;font-weight:800;color:#1B5E20">'+nm+' — produto estragou</div>'
+    +'<div style="font-size:12.5px;color:#666;margin:2px 0 10px">Quanto foi jogado fora? (estimativa)</div>'
+    +'<input id="st-kg" type="number" inputmode="decimal" min="0" placeholder="kg" style="width:100%;box-sizing:border-box;font-size:22px;font-weight:800;text-align:center;padding:10px;border:2px solid #1565C0;border-radius:12px">'
+    +'<div style="text-align:center;font-size:12.5px;color:#666;margin-top:4px">kg · ½ saco = '+_fmtN(pps/2,0)+' kg · 1 saco = '+_fmtN(pps,0)+' kg</div>'
+    +'<div style="display:flex;gap:8px;margin-top:10px">'+at(pps/2,'½ saco')+at(pps,'1 saco')+at(pps*2,'2 sacos')+'</div>'
+    +'<div onclick="_stPerdaOk(\''+nmJs+'\')" style="background:#1B5E20;color:#fff;text-align:center;border-radius:12px;padding:13px;font-weight:800;margin-top:12px;cursor:pointer">Registrar</div>'
+    +'<div onclick="_semTratoLote(\''+nmJs+'\')" style="margin-top:10px;text-align:center;color:#999;font-size:13px;padding:6px;cursor:pointer">Voltar</div>';
+}
+function _stPerdaOk(nm){
+  var kg=parseFloat(String((document.getElementById('st-kg')||{}).value||'').replace(',','.'))||0;
+  if(!(kg>0)){ alert('Informe quantos kg foram jogados fora.'); return; }
+  _semTratoSalvar(nm,'Molhou / estragou — '+_fmtN(kg,(kg%1)?1:0)+' kg');
+  if(confirm('Vai colocar produto novo no cocho do '+nm+' agora?')){ try{ irParaTratoLote(nm); }catch(e){} }
+}
+// kg jogado fora gravado no motivo ("Molhou / estragou — 15 kg")
+function _perdaKg(r){ if(!r||r.tipo!=='sem_trato') return 0; var m=String(r.motivo||'').match(/estragou\s*[—-]\s*([\d.,]+)\s*kg/i); return m?(parseFloat(m[1].replace(/\./g,'').replace(',','.'))||0):0; }
+function _perdaLote(lote,ini,fim){ var lo=_lbCons(lote), kg=0; (S.rT||[]).forEach(function(r){ if(r._apagado||r.tipo!=='sem_trato')return; var dt=(r.dt||'').substring(0,10); if(dt<ini||dt>fim||_lbCons(r.lote||r.co)!==lo)return; kg+=_perdaKg(r); }); return kg; }
 function _semTratoSalvar(nm,motivo){
   var m=document.getElementById('st-cocho-modal'); if(m) m.remove();
   var hoje=new Date();
@@ -8247,7 +8274,7 @@ function _semTratoSalvar(nm,motivo){
   try{salvar();}catch(e){}
   try{_alertaTrato();}catch(e){}
   try{rTratoDia();}catch(e){}
-  alert('✅ Registrado: '+nm+' — '+motivo);
+  if(motivo.indexOf('estragou')<0) alert('✅ Registrado: '+nm+' — '+motivo);
 }
 // nível do cocho no dia: "Não precisa hoje" (motivo) ou trato (situação antes)
 function _cochoNivel(r){
@@ -8267,6 +8294,7 @@ function _consCocho(){
     var c=_cochoContagem(l.nome,ini,fim); if(c.cheio<2) return;
     var lo=_lbCons(l.nome), pr=_ultProdLote(l.nome), kg=0;
     (S.rT||[]).forEach(function(r){ var dt=(r.dt||'').substring(0,10); if(r._apagado||r.tipo!=='trato'||dt<ini||dt>fim||_lbCons(r.lote||r.co)!==lo)return; var q=parseFloat(r.q||r.qtd)||0; kg+=parseFloat(r.kg_fornecido)||q*_ppsProd(r.pr||r.prod||''); });
+    kg=Math.max(0,kg-_perdaLote(l.nome,ini,fim));
     var pv=(parseFloat(l.qtd)||0)*(parseFloat(l.peso)||0), pct=pv?kg/7/pv*100:0, ref='';
     if(pr){ var o=_orientAtiva(lo,pr); if(o&&pv){ ref=' (orientado '+_fmtN(parseFloat(o.sacos)*_ppsProd(pr)/(parseInt(o.freq)||1)/pv*100,2)+'%)'; } else { var pp=_pvPrevisto(lo,pr).pct; if(pp) ref=' (previsto '+_fmtN(pp,2)+'%)'; } }
     h+='<div style="background:#fff;border:1px solid #e0e7e0;border-left:4px solid #E65100;border-radius:12px;padding:10px 12px;margin-bottom:6px;font-size:12.5px;line-height:1.5">'
@@ -8952,7 +8980,7 @@ function rHistCocho(){
   // respostas "sem_trato" registradas pelo vaqueiro
   var resp=(S.rT||[]).filter(function(r){return r.tipo==='sem_trato' && !r._apagado;});
   resp.sort(function(a,b){ var da=(a.dt||a.ts||''), db=(b.dt||b.ts||''); return da<db?1:(da>db?-1:0); });
-  var corMotivo={'Choveu':'#1565C0','Ainda tem no cocho':'#2E7D32','Acabou o produto':'#E65100','Cocho cheio':'#E65100','Cocho pela metade':'#F9A825','Cocho com pouco':'#2E7D32'};
+  var corMotivo={'Molhou / estragou':'#1565C0','Choveu':'#1565C0','Ainda tem no cocho':'#2E7D32','Acabou o produto':'#E65100','Cocho cheio':'#E65100','Cocho pela metade':'#F9A825','Cocho com pouco':'#2E7D32'};
   var out='<div style="margin:4px 0 10px"><div style="font-size:15px;font-weight:800;color:#1B5E20">Respostas do cocho</div>'
     +'<div style="font-size:12px;color:#777;margin-top:2px">Quando o vaqueiro marcou "não precisa hoje" e o motivo</div></div>';
   if(!resp.length){
