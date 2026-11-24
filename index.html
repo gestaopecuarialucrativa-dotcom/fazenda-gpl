@@ -2361,30 +2361,40 @@ function _cnAbrir(){
       +(x.prod?'<div style="display:flex;gap:6px;margin-top:6px"><input type="number" min="1" step="1" value="'+x.sacos+'" oninput="_cnSet('+i+',\'sacos\',this.value)" style="width:70px;padding:7px;border:1px solid #cdd6cd;border-radius:8px;font-size:13px"><span style="align-self:center;font-size:12px">saco(s)</span>'
         +'<select onchange="_cnSet('+i+',\'freq\',this.value)" style="flex:1;padding:7px;border:1px solid #cdd6cd;border-radius:8px;font-size:12px">'+FREQ_OPTS.map(function(o){ return '<option value="'+o[1]+'"'+(o[1]===x.freq?' selected':'')+'>'+o[0]+'</option>'; }).join('')+'</select></div>'
         +'<div id="cn-res-'+i+'" style="font-size:11px;color:#555;margin-top:3px">'+_cnRes(x)+'</div>'
-        +'<button onclick="_cnEnviar(['+i+'])" style="width:100%;margin-top:6px;padding:8px;border:none;border-radius:8px;background:#1B5E20;color:#fff;font-size:12px;font-weight:800;cursor:pointer">Enviar pro vaqueiro</button>':'')
+        +'<button onclick="_cnEnviar(['+i+'])" style="width:100%;margin-top:6px;padding:8px;border:none;border-radius:8px;background:#1B5E20;color:#fff;font-size:12px;font-weight:800;cursor:pointer">Salvar e enviar pro vaqueiro</button>':'')
       +'</div>';
   });
-  h+='<button onclick="_cnEnviarTodos()" style="width:100%;margin-top:8px;padding:10px;border:2px solid #1B5E20;border-radius:10px;background:#E8F5E9;color:#1B5E20;font-size:13px;font-weight:800;cursor:pointer">Enviar todos e zerar o resto</button>'
+  h+='<button onclick="_cnEnviarTodos()" style="width:100%;margin-top:8px;padding:10px;border:2px solid #1B5E20;border-radius:10px;background:#E8F5E9;color:#1B5E20;font-size:13px;font-weight:800;cursor:pointer">Salvar e enviar todos</button>'
     +'<button onclick="_cnPDF(true)" style="width:100%;margin-top:8px;padding:10px;border:none;border-radius:10px;background:#1B5E20;color:#fff;font-size:13px;font-weight:800;cursor:pointer">PDF pro vaqueiro (com estes ajustes)</button>'
-    +'<div style="font-size:10.5px;color:#888;margin-top:4px">Zerar o resto: encerra orientações de lotes que não estão aqui e volta todo % autorizado ao do fabricante.</div>'
+    +'<div style="font-size:10.5px;color:#888;margin-top:4px">Fica salvo na planilha e vale até você ajustar de novo (ou 30 dias). Ao abrir esta tela de novo, aparece o que você salvou.</div>'
     +'<button onclick="_cnBotao()" style="width:100%;margin-top:8px;padding:8px;border:1px solid #ccc;border-radius:8px;background:#fff;font-size:12px;cursor:pointer">Fechar</button></div>';
   cn.innerHTML=h;
 }
 // Ciclo novo pra todos os lotes de uma vez (quando a formação foi gravada sem marcar "novo ciclo")
 function _cnCicloHTML(){
   var ls=(S.LOTES||[]).filter(function(l){ return (parseFloat(l.qtd)||0)>0; });
-  var ics=ls.map(function(l){ return l.dt_abertura?String(l.dt_abertura).substring(0,10):''; }), mx=ics.slice().sort().pop()||'';
-  var sug=(typeof _pesLotesPrev!=='undefined'&&_pesLotesPrev&&_pesLotesPrev.data)||'';
-  var todos=ics.every(function(d){ return d&&d===ics[0]; });
-  var txt=todos&&ics[0]?'Lotes formados em <b>'+ics[0].split('-').reverse().join('/')+'</b>. A conta de consumo começa nessa data.':'Os lotes ainda contam desde o ciclo antigo. Marque a data em que formou os lotes novos: o lote antigo fica registrado até o dia anterior e a conta recomeça.';
-  return '<div style="background:#F1F8E9;border-radius:10px;padding:9px 10px;margin-bottom:8px;font-size:11.5px">'+txt
-    +'<div style="display:flex;gap:6px;margin-top:6px;align-items:center"><input type="date" id="cn-ciclo-dt" value="'+(todos&&ics[0]?ics[0]:sug)+'" style="flex:1;padding:6px;border:1px solid #cdd6cd;border-radius:8px;font-size:12px">'
-    +'<button onclick="_cnCicloTodos()" style="padding:7px 10px;border:1.5px solid #1B5E20;border-radius:8px;background:#fff;color:#1B5E20;font-size:12px;font-weight:800;cursor:pointer">Marcar ciclo novo</button></div></div>';
+  var ics=ls.map(function(l){ return l.dt_abertura?String(l.dt_abertura).substring(0,10):''; });
+  var todos=ics.length&&ics.every(function(d){ return d&&d===ics[0]; });
+  if(!todos) return '';
+  return '<div style="background:#F1F8E9;border-radius:10px;padding:8px 10px;margin-bottom:8px;font-size:11.5px">Lotes formados em <b>'+ics[0].split('-').reverse().join('/')+'</b>. O consumo conta a partir dessa data.</div>';
 }
-function _cnCicloTodos(){
-  var iso=(document.getElementById('cn-ciclo-dt')||{}).value||''; if(!/^\d{4}-\d{2}-\d{2}$/.test(iso)){ alert('Escolha a data em que formou os lotes.'); return; }
+// Lotes importados da formação ANTES desta versão ficaram sem a data do ciclo novo.
+// Ao abrir o Painel (consultor), o app lê a formação na pesagem e marca sozinho o início = última pesagem da formação. Uma vez só.
+var _cicloAutoFeito=false;
+function _cicloAutoFormacao(){
+  if(_cicloAutoFeito||!window._nuvemCarregou||_nuvemCarregando||!(CU&&CU.r==='Consultor')||typeof _pcJsonp!=='function') return; _cicloAutoFeito=true;   // só depois de ler a nuvem, pra não gravar dado velho
+  var ls=(S.LOTES||[]).filter(function(l){ return (parseFloat(l.qtd)||0)>0; }); if(!ls.length) return;
+  _pcJsonp({acao:'formacao_lista',fazenda:_pcFaz()},function(r){
+    var f=(r&&r.formacoes||[])[0]; if(!f||String(f.id)>'2026-11-24') return;   // formações novas já trazem a data na importação
+    var ds=String(f.datas||'').split(' + ').filter(Boolean).sort(), dU=ds[ds.length-1]; if(!/^\d{4}-\d{2}-\d{2}$/.test(dU||'')) return;
+    if(!ls.some(function(l){ var a=l.dt_abertura?String(l.dt_abertura).substring(0,10):''; return !a||a<dU; })) return;
+    _cnCicloTodos(dU,true);
+  },function(){});
+}
+function _cnCicloTodos(iso,auto){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(iso||'')) return;
   var ls=(S.LOTES||[]).filter(function(l){ return (parseFloat(l.qtd)||0)>0; });
-  if(!confirm('Ciclo novo em '+iso.split('-').reverse().join('/')+' para: '+ls.map(function(l){return l.nome;}).join(', ')+'.\n\nO lote antigo fica registrado até o dia anterior. Trato antes dessa data deixa de entrar na conta do lote novo.')) return;
+  if(!auto&&!confirm('Ciclo novo em '+iso.split('-').reverse().join('/')+' para: '+ls.map(function(l){return l.nome;}).join(', ')+'.\n\nO lote antigo fica registrado até o dia anterior. Trato antes dessa data deixa de entrar na conta do lote novo.')) return;
   ls.forEach(function(l){
     var ini=l.dt_abertura?String(l.dt_abertura).substring(0,10):''; if(ini===iso) return;
     // cabeças do lote antigo: o nome gravado no último trato antes da data, ex. "Lote 2 (64 animais)"
@@ -2394,7 +2404,7 @@ function _cnCicloTodos(){
     if(!(ini&&ini>=iso)){ if(!l.ciclos) l.ciclos=[]; l.ciclos.push({ini:ini, fim:_somaDias(iso,-1), qtd:qAnt, peso:null, fechado_em:TD, por:(CU&&CU.n)||'', obs:'marcado depois da formação; peso do lote antigo não ficou guardado'}); }
     l.dt_abertura=iso;
   });
-  salvar(); var fim=function(){ try{ rPan(); }catch(e){} _cnAbrir(); alert('✅ Ciclo novo em '+iso.split('-').reverse().join('/')+'. A conta de consumo dos lotes recomeça nessa data.'); };
+  salvar(); var fim=function(){ try{ rPan(); }catch(e){} var cn=document.getElementById('cons-novo'); if(cn&&cn.innerHTML) _cnAbrir(); };
   if(S.cfgGS) salvarNuvem(fim); else fim();
 }
 function _cnRes(x){ var kgd=x.sacos*x.pps/(x.freq||1), pct=x.massa?kgd/x.massa*100:0;
@@ -3839,6 +3849,7 @@ function rPan(){try{rConsAlertas();}catch(_eCA){console.error('rConsAlertas',_eC
     _s('ps-cn',lc.length+' pend.');
     try{ _panPagLinha(td,lv.length,tc,lc.length); }catch(_ePg){ console.error('pag',_ePg); }
     try{ _panPastosLinha(); }catch(_ePs){ console.error('pastos',_ePs); }
+    try{ _cicloAutoFormacao(); }catch(_eCi){}
     _s('ps-av',lt.length);
     if(le.length){
       var m=(le.reduce(function(a,r){return a+(r.es||0);},0)/le.length).toFixed(1);
@@ -8369,7 +8380,7 @@ function _carregarNuvemReal(cb){
     }
     // Dados definitivos vêm apenas do CONFIG (evita re-adição de excluídos)
     salvarLocal();
-    _nuvemCarregando=false;
+    _nuvemCarregando=false; window._nuvemCarregou=true;
     // Não salvar automaticamente — evita zerar nuvem com dados vazios
     updCloudStatus('ok');
     setTimeout(function(){
