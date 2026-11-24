@@ -1443,6 +1443,11 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <button class="sbtn" onclick="salvarWppAdmin()">💾 Salvar número WhatsApp</button>
 <div class="ok" id="ok-wpp">✅ Número salvo!</div>
 </div>
+<div class="card">
+<div class="stit">📧 Avisos por e-mail</div>
+<div style="font-size:11.5px;color:#666;margin-bottom:8px">Quem recebe o e-mail de trato, mudança de pasto e sem trato. Fica na aba 📧 Avisos E-mail da planilha.</div>
+<div id="av-email"><button class="sbtn" onclick="avAbrir()">Abrir lista</button></div>
+</div>
 <div class="card"><div class="stit">🔗 Links por Fazenda</div><div class="info-box" style="font-size:11px">📌 Cada fazenda recebe um link próprio.</div><div id="links-fazendas"></div></div>
 <div class="card"><div class="stit">👤 Links por Funcionário</div><div class="info-box">Link individual: abre direto no PIN da pessoa.</div><div id="links-usuarios"></div></div>
 <div class="card">
@@ -2467,6 +2472,46 @@ function _cnPDF(ajustes){
     +'<table><tr><th>Lote</th><th>Pasto</th><th>Produto</th><th>Quanto</th><th>Quando</th></tr>'+linhas+'</table>'
     +'<div class="ass">Qualquer dúvida, fala comigo. Rogério · Consultor GPL</div></body></html>');
   w.document.close();
+}
+// ═══ AVISOS POR E-MAIL (Config) — lê/grava a aba 📧 Avisos E-mail (Code v4.46: avisos_ler / avisos_salvar) ═══
+var AV={lista:null, msg:''};
+function _avChamar(acao,data,ok){
+  if(!(S.cfgGS&&navigator.onLine)){ AV.msg='Sem internet.'; avRender(); return; }
+  var faz=(CU&&CU.fs&&CU.fs[0])?CU.fs[0]:(Object.keys(S.FAZ||{})[0]||'');
+  var cb='_av_'+Date.now()+'_'+Math.floor(Math.random()*9999), sc=document.createElement('script'), t=setTimeout(function(){ fim(null); },40000);
+  function fim(r){ clearTimeout(t); delete window[cb]; if(sc.parentNode) sc.parentNode.removeChild(sc);
+    if(r&&r.ok&&Array.isArray(r.lista)){ AV.lista=r.lista; ok&&ok(); }
+    else AV.msg=(r&&r.erro)?('Não gravou: '+r.erro):'A planilha não respondeu a lista. Confira se o código da planilha v4.46 foi implantado.';
+    avRender(); }
+  window[cb]=fim; sc.onerror=function(){ fim(null); };
+  sc.src=getFazGasUrl(faz)+'?acao='+acao+(data?'&data='+encodeURIComponent(JSON.stringify(data)):'')+'&callback='+cb+'&t='+Date.now();
+  document.body.appendChild(sc);
+}
+function avAbrir(){ AV.msg='Carregando…'; avRender(); _avChamar('avisos_ler',null,function(){ AV.msg=''; }); }
+function avEsc(t){ return String(t==null?'':t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+function avRender(){
+  var el=document.getElementById('av-email'); if(!el) return;
+  if(!AV.lista){ el.innerHTML=(AV.msg?'<div style="font-size:12px;color:#888;margin-bottom:6px">'+avEsc(AV.msg)+'</div>':'')+'<button class="sbtn" onclick="avAbrir()">Abrir lista</button>'; return; }
+  var h=AV.lista.map(function(a,i){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid #eee;padding:8px 0'+(a.recebe?'':';color:#999')+'">'
+      +'<div style="min-width:0"><b style="font-size:13px">'+avEsc(a.nome||'(sem nome)')+'</b><div style="font-size:11px;'+(a.recebe?'color:#666':'')+';word-break:break-all">'+avEsc(a.email)+'</div></div>'
+      +'<div style="display:flex;gap:6px;flex-shrink:0"><span onclick="avTroca('+i+')" style="cursor:pointer;border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700;'+(a.recebe?'background:#E8F5E9;color:#1B5E20':'border:1px solid #ccc;color:#888')+'">'+(a.recebe?'recebe':'não recebe')+'</span>'
+      +'<span onclick="avTirar('+i+')" style="cursor:pointer;color:#C62828;font-size:11px;font-weight:700;padding:4px 2px">tirar</span></div></div>'; }).join('');
+  h+='<div style="border-top:1px solid #eee;padding-top:8px;display:flex;flex-direction:column;gap:6px">'
+    +'<input id="av-nome" placeholder="Nome (ex.: Funcionário)" style="padding:9px;border:1.5px solid #ddd;border-radius:8px;font-size:13px">'
+    +'<input id="av-mail" type="email" placeholder="e-mail" style="padding:9px;border:1.5px solid #ddd;border-radius:8px;font-size:13px">'
+    +'<button onclick="avAdd()" style="padding:9px;border:1.5px solid #1B5E20;border-radius:8px;background:#fff;color:#1B5E20;font-weight:800;cursor:pointer">+ adicionar pessoa</button></div>'
+    +(AV.msg?'<div style="font-size:12px;color:#C62828;margin-top:6px">'+avEsc(AV.msg)+'</div>':'');
+  el.innerHTML=h;
+}
+function avGravar(nova,txt){ AV.msg='Gravando…'; avRender(); _avChamar('avisos_salvar',{lista:nova},function(){ AV.msg=''; if(txt) setTimeout(function(){ alert('✅ '+txt); },50); }); }
+function avTroca(i){ var L=AV.lista.map(function(a){ return Object.assign({},a); }); L[i].recebe=!L[i].recebe; avGravar(L,L[i].nome+(L[i].recebe?' volta a receber os avisos.':' não recebe mais os avisos.')); }
+function avTirar(i){ var a=AV.lista[i]; if(!confirm('Tirar '+(a.nome||a.email)+' da lista de avisos?')) return; var L=AV.lista.filter(function(x,j){ return j!==i; }); avGravar(L,(a.nome||a.email)+' saiu da lista.'); }
+function avAdd(){
+  var n=(document.getElementById('av-nome')||{}).value||'', m=((document.getElementById('av-mail')||{}).value||'').trim();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m)){ alert('Digite um e-mail válido.'); return; }
+  if(AV.lista.some(function(a){ return a.email.toLowerCase()===m.toLowerCase(); })){ alert('Esse e-mail já está na lista.'); return; }
+  var L=AV.lista.concat([{nome:n.trim(), email:m, recebe:true}]); avGravar(L,(n.trim()||m)+' vai receber os avisos.');
 }
 // Foto do momento (vai pro histórico da planilha)
 function _consFoto(chave){
