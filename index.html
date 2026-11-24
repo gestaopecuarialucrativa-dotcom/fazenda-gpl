@@ -6338,7 +6338,10 @@ function _pesLotesMontar(f, animais){
     var g=G[n], peso=g.comPeso?Math.round(g.soma/g.comPeso):null;
     if(idx<0){ semApp.push('Lote '+n+' ('+g.n+')'); return; }
     var l=S.LOTES[idx];
-    linhas.push({idx:idx,nome:l.nome,antesQ:l.qtd||0,antesP:l.peso||0,qtd:g.n,peso:peso,extra:g.extra});
+    var desc=[], dQ=0;
+    (l.baixas||[]).forEach(function(b){ if(dUlt && b.dt>dUlt){ dQ+=b.qtd; desc.push(b.qtd+' '+(b.motivo==='morte'?'morte':'doação')+' ('+_isoBR(b.dt).slice(0,5)+')'); } });
+    (l.vendas||[]).forEach(function(v){ if(v.parcial && dUlt && v.dt>dUlt){ dQ+=v.qtd; desc.push(v.qtd+' vendido(s) ('+_isoBR(v.dt).slice(0,5)+')'); } });
+    linhas.push({idx:idx,nome:l.nome,antesQ:l.qtd||0,antesP:l.peso||0,qtd:Math.max(0,g.n-dQ),bal:g.n,desc:desc,peso:peso,extra:g.extra});
   });
   _pesLotesPrev={linhas:linhas,data:dUlt,id:f.id,fora:fora};
   var ua=function(q,p){ return ((q||0)*(p||0)/450).toFixed(1); };
@@ -6347,7 +6350,7 @@ function _pesLotesMontar(f, animais){
     +'<table style="width:100%;font-size:12px;border-collapse:collapse"><tr style="color:#888;text-align:left"><th style="padding:4px 0">Lote</th><th>Antes</th><th>Fica</th></tr>'
     +linhas.map(function(x){ return '<tr style="border-top:1px solid #eee"><td style="padding:6px 0"><b>'+x.nome+'</b></td>'
       +'<td>'+x.antesQ+' · '+x.antesP+' kg<div style="font-size:10px;color:#999">'+ua(x.antesQ,x.antesP)+' UA</div></td>'
-      +'<td><b>'+x.qtd+' · '+(x.peso||'—')+' kg</b><div style="font-size:10px;color:#999">'+ua(x.qtd,x.peso)+' UA'+(x.extra?' · com '+x.extra+' vaca/reprodutor/bezerro':'')+'</div></td></tr>'; }).join('')
+      +'<td><b>'+x.qtd+' · '+(x.peso||'—')+' kg</b><div style="font-size:10px;color:#999">'+ua(x.qtd,x.peso)+' UA'+(x.extra?' · com '+x.extra+' vaca/reprodutor/bezerro':'')+'</div>'+(x.desc&&x.desc.length?'<div style="font-size:10px;color:#C62828">'+x.bal+' na balança − '+x.desc.join(' − ')+'</div>':'')+'</td></tr>'; }).join('')
     +'</table>';
   // quem ficou de fora (enfermaria, compra, novilha): o consultor escolhe juntar num lote ou deixar fora
   // lotes do app que não vêm da formação (ex.: Lote Compra): podem ser FORMADOS com quem ficou de fora
@@ -8896,6 +8899,44 @@ function editarNomeLote(nomeEnc, faz){
     try{rHistLotes();}catch(e){}
   });
 }
+// ── Morte e doação/consumo de animal do lote (com ou sem número de brinco) ──
+// Fica no próprio lote (l.baixas), gravado na aba ⚙️ CONFIG da planilha como o resto. O lote perde as cabeças na hora.
+function registrarBaixaAnimal(nomeEnc,faz){
+  var nome=decodeURIComponent(nomeEnc);
+  var l=(S.LOTES||[]).find(function(x){return x.nome===nome&&(!faz||x.faz===faz);});
+  if(!l){alert('Lote não encontrado.');return;}
+  var op=prompt('Baixa de animal do "'+nome+'" ('+(l.qtd||0)+' animais)\n\n1 = Morte\n2 = Doação / consumo da fazenda','1');
+  if(op===null)return; op=String(op).trim();
+  if(op!=='1'&&op!=='2'){alert('Escolha 1 (morte) ou 2 (doação/consumo).');return;}
+  var motivo=op==='1'?'morte':'doacao';
+  var br=prompt('Número do brinco (se for mais de um, separe por vírgula).\n\nSe não dá pra ver o número, deixe em branco.','');
+  if(br===null)return;
+  var brincos=String(br).split(/[,;]+/).map(function(x){return x.trim();}).filter(function(x){return x;});
+  var qtd=brincos.length;
+  if(!qtd){
+    var q=prompt('Sem número: quantos animais?','1'); if(q===null)return;
+    qtd=parseInt(q)||0;
+  }
+  if(qtd<=0){alert('Quantidade inválida.');return;}
+  if(qtd>(l.qtd||0)){alert('O lote só tem '+(l.qtd||0)+' animais.');return;}
+  var obs='';
+  if(motivo==='morte'){ var o=prompt('Causa (opcional):',''); if(o===null)return; obs=String(o).trim(); }
+  var dp=prompt('Data (dd/mm/aaaa):',_isoBR(TD)); if(dp===null)return;
+  var dt=_parseDataBRp(dp)||TD;
+  l.baixas=l.baixas||[];
+  l.baixas.push({dt:dt,qtd:qtd,motivo:motivo,brincos:brincos,obs:obs,n:(CU?CU.n:''),ts:new Date().toISOString()});
+  l.qtd=(l.qtd||0)-qtd;
+  window._loteEditTs=Date.now();
+  salvar();
+  if(S.cfgGS)salvarNuvem(function(){});
+  try{rListLotes();}catch(e){} try{rHistLotes();}catch(e){}
+  alert((motivo==='morte'?'Morte':'Doação/consumo')+' registrada: '+qtd+' animal(is) do '+nome+(brincos.length?' (brinco '+brincos.join(', ')+')':' (sem número)')+' em '+_isoBR(dt)+'.\nO lote ficou com '+l.qtd+' animais.');
+}
+function _baixasLoteResumo(l){
+  var b=(l&&l.baixas)||[]; if(!b.length) return '';
+  var ult=b.slice(-3).map(function(x){ return (x.motivo==='morte'?'morte':'doação')+' '+x.qtd+' ('+_isoBR(x.dt).slice(0,5)+(x.brincos&&x.brincos.length?' · '+x.brincos.join(', '):'')+')'; });
+  return '<div style="font-size:11px;color:#C62828;margin-top:8px">Baixas: '+ult.join(' · ')+(b.length>3?' · +'+(b.length-3):'')+'</div>';
+}
 function darBaixaLote(nome,faz){
   var l=(S.LOTES||[]).find(function(x){return x.nome===nome&&x.faz===faz;});
   if(!l){alert('Lote não encontrado.');return;}
@@ -9283,6 +9324,8 @@ function rHistLotes(){
       +'</div>'
       +'<div style="margin-top:8px;font-size:11px;color:#65766a">Início do ciclo: <b style="color:#1b2c1b">'+(lote.dt_abertura?_isoBR(lote.dt_abertura):'desde sempre')+'</b> <span onclick="editInicioCiclo(\''+nm+'\',\''+(lote.faz||'')+'\')" style="color:#2E7D32;font-weight:700;cursor:pointer;text-decoration:underline">editar</span></div>'
       +'<button onclick="editarNomeLote(\''+encodeURIComponent(nm)+'\',\''+(lote.faz||'')+'\')" style="width:100%;margin-top:10px;padding:10px;background:#fff;border:1.5px solid #A5D6A7;color:#1B5E20;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Editar nome do lote</button>'
+      +_baixasLoteResumo(lote)
+      +'<button onclick="registrarBaixaAnimal(\''+encodeURIComponent(nm)+'\',\''+(lote.faz||'')+'\')" style="width:100%;margin-top:8px;padding:10px;background:#fff;border:1.5px solid #E57373;color:#C62828;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer">Registrar morte / doação</button>'
       +'<button onclick="darBaixaLote(\''+nm+'\',\''+(lote.faz||'')+'\')" style="width:100%;margin-top:8px;padding:10px;background:#fff;border:1.5px solid #FF8F00;color:#8a5a00;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Dar baixa (lote vendido)</button>'
       +'</div>';
   });
