@@ -2482,7 +2482,14 @@ function _consChamar(acao,payload,ok,falha){
   window[cb]=function(r){ delete window[cb]; if(s.parentNode)s.parentNode.removeChild(s);
     if(r&&r.ok){ if(r.aut)S.PV_AUT=r.aut; if(r.alertaOk)S.PV_ALERTA_OK=r.alertaOk; if(r.orient)S.ORIENT=r.orient; salvarLocal(); try{rConsAlertas();}catch(e){} if(ok)ok(r); }
     else { if(falha) falha((r&&r.erro)||'erro'); else alert('⚠️ Não consegui gravar: '+((r&&r.erro)||'erro')); } };
-  s.onerror=function(){ delete window[cb]; if(s.parentNode)s.parentNode.removeChild(s); if(falha) falha('a planilha não respondeu'); else alert('⚠️ Erro de conexão. Nada foi gravado.'); };
+  s.onerror=function(){ delete window[cb]; if(s.parentNode)s.parentNode.removeChild(s);
+    // descobre o que o Google respondeu (página de erro, limite, login…) pra mostrar no aviso
+    var u=s.src.replace(/([?&])callback=[^&]*/,'$1callback=_diag');
+    var avisa=function(det){ var m='a planilha não respondeu'+(det?' ('+det+')':''); if(falha) falha(m); else alert('⚠️ Erro de conexão. Nada foi gravado.'+(det?'\n\nO Google respondeu: '+det:'')); };
+    if(!(window.fetch)) return avisa('');
+    fetch(u).then(function(r){ return r.text().then(function(t){ return 'HTTP '+r.status+' · '+String(t||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,160); }); })
+      .then(function(det){ avisa(det); }, function(e){ avisa(navigator.onLine?'sem resposta do Google':'sem internet'); });
+  };
   document.body.appendChild(s);
 }
 function _pvAut(chave,acao,pct){
