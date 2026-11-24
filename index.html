@@ -6058,6 +6058,8 @@ function rPesagem(){
         +'<div id="pes-import-preview" style="margin-top:10px"></div>'
         +'<button onclick="pesLotesFormacao()" style="width:100%;margin-top:10px;padding:11px;background:#fff;color:#1B5E20;border:1.5px solid #1B5E20;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer">Atualizar lotes pela formação</button>'
         +'<div id="pes-lotes-form" style="margin-top:10px"></div>'
+        +'<button onclick="pesRealocar()" style="width:100%;margin-top:10px;padding:11px;background:#fff;color:#0D47A1;border:1.5px solid #0D47A1;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer">Realocar animais de uma pesagem</button>'
+        +'<div id="pes-realoc" style="margin-top:10px"></div>'
         +'</div>';
     } else { box.innerHTML=''; }
   }
@@ -6403,6 +6405,95 @@ function pesLotesGravar(){
     alert('Lotes atualizados: '+P.linhas.map(function(x){return x.nome+' '+x.qtd;}).concat(outNomes).join(', ')+(ciclo?'\nNovo ciclo em '+_dataBR(P.data)+'.':'')+(ok===false?'\n(Salvo no aparelho; a nuvem não confirmou. Verifique a internet.)':''));
     _pesLotesPrev=null;
   };
+  if(S.cfgGS) salvarNuvem(fim); else fim();
+}
+// ── REALOCAR animais de uma (ou mais) pesagem(ns) SEM mexer na formação ──
+// Para cada animal pesado no(s) dia(s) escolhido(s): de onde veio = lote da última pesagem dele ANTES do dia;
+// sai desse lote e entra no lote novo (quem nunca foi pesado só entra). Peso médio recalculado com esses pesos.
+// Os dias lançados ficam guardados nos próprios lotes (l.realoc, dentro de LOTES na aba ⚙️ CONFIG) para não somar duas vezes.
+var _rlDatas=[], _rlPrev=null, _rlMais=false;
+function _rlFeitos(){ var f={}; (S.LOTES||[]).forEach(function(l){ (l.realoc||[]).forEach(function(r){ if(r&&r.d&&!f[r.d]) f[r.d]=r.em||''; }); }); return f; }
+function _rlKey(b){ return String(b||'').toLowerCase().replace(/[\s\-_.]/g,''); }
+function _rlLoteApp(lotePes){
+  var n=parseInt(String(lotePes||''),10); if(isNaN(n)||n===14) return -1;
+  var L=S.LOTES||[];
+  if(n===15||n===16) return L.findIndex(function(l){ return /compra/i.test(l.nome); });
+  var alvo=(n>=11&&n<=13)?6:n;
+  return L.findIndex(function(l){ return _plNum(l.nome)===alvo && !/compra/i.test(l.nome); });
+}
+function pesRealocar(){
+  var el=document.getElementById('pes-realoc'); if(!el)return; _rlPrev=null;
+  el.innerHTML='<div style="font-size:12px;color:#888">Buscando as pesagens…</div>';
+  _pcJsonp({acao:'pesagem_datas',fazenda:_pcFaz()},function(r){ _rlDatas=(r.datas||[]).slice().sort(function(a,b){ return a.data<b.data?1:-1; }); _rlMais=false; _rlRenderDatas(); },
+    function(m){ el.innerHTML='<div style="font-size:12px;color:#C62828">'+m+'</div>'; });
+}
+function _rlRenderDatas(){
+  var el=document.getElementById('pes-realoc'); if(!el)return;
+  var feitos=_rlFeitos(), lista=_rlMais?_rlDatas:_rlDatas.slice(0,3);
+  if(!lista.length){ el.innerHTML='<div style="font-size:12px;color:#888">Nenhuma pesagem no curral.</div>'; return; }
+  var h='<div style="font-size:12px;color:#555;margin-bottom:6px">Escolha a(s) pesagem(ns) para realocar. A formação não muda.</div>'
+    +lista.map(function(x){ var ja=feitos[x.data];
+      return '<label style="display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid #f0f0f0;font-size:13px"><input type="checkbox" class="rl-d" value="'+x.data+'">'
+        +'<b>'+_dataBR(x.data)+'</b><span style="color:#666">· '+x.qtd+' animais</span>'+(ja?'<span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:20px;background:#ECEFF1;color:#546E7A">já lançado em '+_dataBR(ja)+'</span>':'')+'</label>'; }).join('')
+    +(_rlDatas.length>3?'<button onclick="_rlMais=!_rlMais;_rlRenderDatas()" style="background:none;border:none;color:#0D47A1;font-size:12px;font-weight:800;cursor:pointer;padding:6px 0">'+(_rlMais?'Mostrar só as 3 últimas':'Mostrar mais datas ('+_rlDatas.length+')')+'</button>':'')
+    +'<button onclick="_rlCalcular()" style="width:100%;margin-top:8px;padding:10px;border-radius:10px;border:none;background:#0D47A1;color:#fff;font-weight:800;cursor:pointer">Ver como fica</button>';
+  el.innerHTML=h;
+}
+function _rlCalcular(){
+  var el=document.getElementById('pes-realoc'); if(!el)return;
+  var ds=[].slice.call(document.querySelectorAll('.rl-d:checked')).map(function(c){return c.value;}).sort();
+  if(!ds.length){ alert('Marque pelo menos uma pesagem.'); return; }
+  var fe=_rlFeitos(), ja=ds.filter(function(d){ return fe[d]!==undefined; });
+  if(ja.length && !confirm('A(s) pesagem(ns) '+ja.map(_dataBR).join(', ')+' já foi(ram) lançada(s). Lançar de novo vai somar em dobro. Continuar?')) return;
+  el.innerHTML='<div style="font-size:12px;color:#888">Lendo as pesagens…</div>';
+  var dias={}, falta=ds.length+1, ant=null, erro=null;
+  var fim=function(){ if(--falta>0) return; if(erro){ el.innerHTML='<div style="font-size:12px;color:#C62828">'+erro+'</div>'; return; } _rlMontar(ds,dias,ant); };
+  _pcJsonp({acao:'pesagem_ultimas',fazenda:_pcFaz(),antes:ds[0]},function(r){ ant=r.animais||[]; fim(); },function(m){ erro=m; fim(); });
+  ds.forEach(function(d){ _pcJsonp({acao:'pesagem_ler',fazenda:_pcFaz(),data:d},function(r){ dias[d]=r.animais||[]; fim(); },function(m){ erro=m; fim(); }); });
+}
+function _rlMontar(ds,dias,ant){
+  var el=document.getElementById('pes-realoc'); if(!el)return;
+  var ult={}; (ant||[]).forEach(function(a){ var k=_rlKey(a.brinco); if(k) ult[k]={lote:String(a.lote||''),peso:parseFloat(a.peso)||0}; });
+  var M={}, nTot=0, fora=0, mesmo=0;
+  function mov(i){ return M[i]=M[i]||{entra:0,pEntra:0,sai:0,pSai:0,txt:{}}; }
+  ds.forEach(function(d){
+    var vistos={}; (dias[d]||[]).forEach(function(a){ var k=_rlKey(a.brinco); if(k) vistos[k]=a; });
+    Object.keys(vistos).forEach(function(k){
+      var a=vistos[k], peso=parseFloat(a.peso)||0, de=ult[k], iPara=_rlLoteApp(a.lote), iDe=de?_rlLoteApp(de.lote):-2;
+      nTot++;
+      if(iPara<0){ fora++; }
+      else if(iDe===iPara){ mesmo++; }
+      else{
+        var mp=mov(iPara); mp.entra++; mp.pEntra+=peso;
+        var nomeDe=iDe>=0?S.LOTES[iDe].nome:(de?'fora dos lotes':'sem pesagem antes');
+        mp.txt['+ '+nomeDe]=(mp.txt['+ '+nomeDe]||0)+1;
+        if(iDe>=0){ var md=mov(iDe); md.sai++; md.pSai+=(de.peso||peso); md.txt['− para '+S.LOTES[iPara].nome]=(md.txt['− para '+S.LOTES[iPara].nome]||0)+1; }
+      }
+      ult[k]={lote:String(a.lote||''),peso:peso};
+    });
+  });
+  var linhas=Object.keys(M).map(Number).map(function(i){ var l=S.LOTES[i], m=M[i], q0=l.qtd||0, p0=l.peso||0;
+    var q=q0+m.entra-m.sai, tot=q0*p0+m.pEntra-m.pSai;
+    return {idx:i,nome:l.nome,q0:q0,p0:p0,q:Math.max(0,q),p:q>0?Math.round(tot/q):p0,txt:Object.keys(m.txt).map(function(t){ return (t.charAt(0)==='+'?'+':'−')+m.txt[t]+' '+t.slice(2); })}; });
+  _rlPrev={datas:ds,linhas:linhas};
+  var h='<div style="font-size:12px;color:#555;margin-bottom:6px">Pesagem de <b>'+ds.map(_dataBR).join(', ')+'</b> · '+nTot+' animais · a formação não muda.</div>';
+  if(!linhas.length) h+='<div style="font-size:12px;color:#888">Nenhum animal mudou de lote nessas pesagens.</div>';
+  else h+='<table style="width:100%;font-size:12px;border-collapse:collapse"><tr style="color:#888;text-align:left"><th style="padding:4px 0">Lote</th><th>Hoje</th><th>Fica</th></tr>'
+    +linhas.map(function(x){ return '<tr style="border-top:1px solid #eee"><td style="padding:6px 0"><b>'+x.nome+'</b></td><td>'+x.q0+' · '+x.p0+' kg</td><td><b>'+x.q+' · '+x.p+' kg</b><div style="font-size:10px;color:#555">'+x.txt.join(' · ')+'</div></td></tr>'; }).join('')+'</table>';
+  if(mesmo) h+='<div style="font-size:11px;color:#888;margin-top:6px">'+mesmo+' repesado(s) no mesmo lote: não muda a quantidade.</div>';
+  if(fora) h+='<div style="font-size:11px;color:#888;margin-top:2px">'+fora+' sem lote no app (enfermaria ou lote que não existe no app): ficou de fora.</div>';
+  h+='<div style="display:flex;gap:8px;margin-top:10px"><button onclick="document.getElementById(\'pes-realoc\').innerHTML=\'\'" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #ccc;background:#fff;font-weight:800;cursor:pointer">Cancelar</button>'
+    +(linhas.length?'<button onclick="_rlGravar()" style="flex:1;padding:10px;border-radius:10px;border:none;background:#1B5E20;color:#fff;font-weight:800;cursor:pointer">Gravar no app</button>':'')+'</div>';
+  el.innerHTML=h;
+}
+function _rlGravar(){
+  var P=_rlPrev; if(!P||!P.linhas.length) return;
+  P.linhas.forEach(function(x){ var l=S.LOTES[x.idx]; if(!l) return; l.qtd=x.q; l.peso=x.p;
+    l.realoc=l.realoc||[]; P.datas.forEach(function(d){ l.realoc.push({d:d,em:TD}); }); });
+  window._loteEditTs=Date.now();
+  salvar();
+  var fim=function(ok){ var el=document.getElementById('pes-realoc'); if(el) el.innerHTML=''; try{ rHistLotes(); }catch(e){}
+    alert('Realocado: '+P.linhas.map(function(x){ return x.nome+' '+x.q; }).join(', ')+(ok===false?'\n(Salvo no aparelho; a nuvem não confirmou. Verifique a internet.)':'')); _rlPrev=null; };
   if(S.cfgGS) salvarNuvem(fim); else fim();
 }
 function pesCurralLer(data,bt){
