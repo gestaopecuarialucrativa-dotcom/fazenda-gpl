@@ -5541,7 +5541,7 @@ function gerarRelPDF(){
       +'<td>'+(inf.lote?'<span class="tag tag-lote">'+inf.lote+'</span>':'<span class="tag tag-vazio">vazio</span>')+'</td>'
       +'<td>'+(inf.ua>0?inf.ua.toFixed(1):'—')+'</td>'
       +'<td>'+(tx>0?'<span class="'+cTx+'">'+tx.toFixed(2)+' UA/ha</span>':'—')+'</td>'
-      +'<td>'+(dias!==null?'<span class="tag tag-dias" style="background:'+corDias(dias)+'">'+dias+'d</span>':'—')+'</td>'
+      +'<td>'+(dias!==null?'<span class="tag tag-dias" style="background:'+(AREAS_SEM_ALERTA_DIAS[p.id]?'#78909C':corDias(dias))+'">'+dias+'d'+(AREAS_SEM_ALERTA_DIAS[p.id]?' · '+AREAS_SEM_ALERTA_DIAS[p.id]:'')+'</span>':'—')+'</td>'
       +'</tr>';
   });
   html+='</table></div>';
@@ -6342,7 +6342,7 @@ function _pesLotesMontar(f, animais){
   });
   _pesLotesPrev={linhas:linhas,data:dUlt,id:f.id,fora:fora};
   var ua=function(q,p){ return ((q||0)*(p||0)/450).toFixed(1); };
-  var nomes={14:'enfermaria',15:'compra',16:'novilha'};
+  var nomes={14:'enfermaria',15:'de compra',16:'novilha'};
   var h='<div style="font-size:12px;color:#555;margin-bottom:6px">Formação salva em <b>'+_dataBR(f.id)+'</b> ('+(f.datas||'')+'). Confira antes de gravar.</div>'
     +'<table style="width:100%;font-size:12px;border-collapse:collapse"><tr style="color:#888;text-align:left"><th style="padding:4px 0">Lote</th><th>Antes</th><th>Fica</th></tr>'
     +linhas.map(function(x){ return '<tr style="border-top:1px solid #eee"><td style="padding:6px 0"><b>'+x.nome+'</b></td>'
@@ -6350,11 +6350,15 @@ function _pesLotesMontar(f, animais){
       +'<td><b>'+x.qtd+' · '+(x.peso||'—')+' kg</b><div style="font-size:10px;color:#999">'+ua(x.qtd,x.peso)+' UA'+(x.extra?' · com '+x.extra+' vaca/reprodutor/bezerro':'')+'</div></td></tr>'; }).join('')
     +'</table>';
   // quem ficou de fora (enfermaria, compra, novilha): o consultor escolhe juntar num lote ou deixar fora
-  var opts='<option value="">Deixar fora</option>'+linhas.map(function(x,i){ return '<option value="'+i+'">Juntar no '+x.nome+'</option>'; }).join('');
+  // lotes do app que não vêm da formação (ex.: Lote Compra): podem ser FORMADOS com quem ficou de fora
+  var outros=(S.LOTES||[]).map(function(l,i){ return {l:l,i:i}; }).filter(function(o){ return !linhas.some(function(x){ return x.idx===o.i; }); });
+  _pesLotesPrev.outros=outros.map(function(o){ return o.i; });
+  var opts='<option value="">Deixar fora</option>'+linhas.map(function(x,i){ return '<option value="'+i+'">Juntar no '+x.nome+'</option>'; }).join('')
+    +outros.map(function(o){ return '<option value="o'+o.i+'">Formar o '+o.l.nome+'</option>'; }).join('');
   Object.keys(fora).forEach(function(k){ var fo=fora[k];
     h+='<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px"><span style="flex:1"><b>'+fo.n+' '+nomes[k]+'</b>'+(fo.comPeso?' · '+Math.round(fo.soma/fo.comPeso)+' kg':'')+'</span>'
-      +'<select id="pl-fora-'+k+'" style="padding:6px;border:1px solid #cdd6cd;border-radius:8px;font-size:12px">'+opts+'</select></div>'; });
-  if(Object.keys(fora).length) h+='<div style="font-size:10px;color:#999;margin-top:4px">O que ficar fora não muda nenhum lote (o Lote Compra você ajusta à mão).</div>';
+      +'<select id="pl-fora-'+k+'" onchange="_pesLotesOutrosTxt()" style="padding:6px;border:1px solid #cdd6cd;border-radius:8px;font-size:12px">'+opts+'</select></div>'; });
+  if(Object.keys(fora).length) h+='<div id="pl-outros-txt" style="font-size:11px;color:#1B5E20;margin-top:6px"></div><div style="font-size:10px;color:#999;margin-top:4px">O que ficar fora não muda nenhum lote. "Formar o Lote Compra" troca a quantidade e o peso dele pelos animais escolhidos.</div>';
   // lote do app sem área no mapa (sem mudança de pasto lançada)
   var semArea=linhas.filter(function(x){ return !(S.rT||[]).some(function(r){ return r.tipo==='mudanca_pasto' && r.lote===x.nome && r.destino; }); }).map(function(x){ return x.nome; });
   if(semArea.length) h+='<div style="font-size:11px;color:#E65100;margin-top:6px">Sem área no mapa: '+semArea.join(', ')+'. Depois de gravar, lance a mudança de pasto desse lote.</div>';
@@ -6364,11 +6368,24 @@ function _pesLotesMontar(f, animais){
     +'<button onclick="pesLotesGravar()" style="flex:1;padding:10px;border-radius:10px;border:none;background:#1B5E20;color:#fff;font-weight:800;cursor:pointer">Gravar no app</button></div>';
   el.innerHTML=h;
 }
+// soma, por lote "formado", os grupos de fora escolhidos para ele
+function _pesLotesOutrosCalc(){
+  var P=_pesLotesPrev, R={}; if(!P) return R;
+  Object.keys(P.fora||{}).forEach(function(k){ var sel=document.getElementById('pl-fora-'+k); if(!sel||sel.value.charAt(0)!=='o') return;
+    var i=parseInt(sel.value.slice(1),10), fo=P.fora[k], r=R[i]=R[i]||{n:0,soma:0,comPeso:0}; r.n+=fo.n; r.soma+=fo.soma; r.comPeso+=fo.comPeso; });
+  return R;
+}
+function _pesLotesOutrosTxt(){
+  var el=document.getElementById('pl-outros-txt'); if(!el) return; var R=_pesLotesOutrosCalc();
+  el.innerHTML=Object.keys(R).map(function(i){ var l=S.LOTES[i], r=R[i]; return '<b>'+l.nome+'</b>: '+(l.qtd||0)+' · '+(l.peso||0)+' kg → <b>'+r.n+' · '+(r.comPeso?Math.round(r.soma/r.comPeso):'—')+' kg</b>'; }).join('<br>');
+}
 function pesLotesGravar(){
   var P=_pesLotesPrev; if(!P||!P.linhas.length){ alert('Nada para gravar.'); return; }
   var ciclo=document.getElementById('pl-ciclo'); ciclo=!!(ciclo&&ciclo.checked);
   // junta quem ficou de fora no lote escolhido (soma cabeças e recalcula o peso médio)
-  Object.keys(P.fora||{}).forEach(function(k){ var sel=document.getElementById('pl-fora-'+k); if(!sel||sel.value==='') return;
+  var OUT=_pesLotesOutrosCalc(), outNomes=[];
+  Object.keys(OUT).forEach(function(i){ var l=S.LOTES[i], r=OUT[i]; if(!l) return; l.qtd=r.n; if(r.comPeso) l.peso=Math.round(r.soma/r.comPeso); outNomes.push(l.nome+' '+r.n); });
+  Object.keys(P.fora||{}).forEach(function(k){ var sel=document.getElementById('pl-fora-'+k); if(!sel||sel.value===''||sel.value.charAt(0)==='o') return;
     var x=P.linhas[parseInt(sel.value,10)], fo=P.fora[k]; if(!x) return;
     var tot=(x.peso||0)*x.qtd+fo.soma, nP=x.qtd+fo.comPeso; x.qtd+=fo.n; if(nP>0) x.peso=Math.round(tot/nP); });
   P.linhas.forEach(function(x){
@@ -6380,7 +6397,7 @@ function pesLotesGravar(){
   var fim=function(ok){
     var el=document.getElementById('pes-lotes-form'); if(el) el.innerHTML='';
     try{ rHistLotes(); }catch(e){}
-    alert('Lotes atualizados: '+P.linhas.map(function(x){return x.nome+' '+x.qtd;}).join(', ')+(ciclo?'\nNovo ciclo em '+_dataBR(P.data)+'.':'')+(ok===false?'\n(Salvo no aparelho; a nuvem não confirmou. Verifique a internet.)':''));
+    alert('Lotes atualizados: '+P.linhas.map(function(x){return x.nome+' '+x.qtd;}).concat(outNomes).join(', ')+(ciclo?'\nNovo ciclo em '+_dataBR(P.data)+'.':'')+(ok===false?'\n(Salvo no aparelho; a nuvem não confirmou. Verifique a internet.)':''));
     _pesLotesPrev=null;
   };
   if(S.cfgGS) salvarNuvem(fim); else fim();
@@ -7112,7 +7129,7 @@ function rRelFazendaPreview(){
     var movsLote=movs.filter(function(m){return m.lote===lot.nome;});
     var ultSaida=movsLote.length>1?movsLote[movsLote.length-2]:null;
     var ultStr=ultSaida?((ultSaida.dt||'').split('-').reverse().join('/')+(ultSaida.origem?' ('+ultSaida.origem+')':'')):'—';
-    var cD=corDias(dias);
+    var cD=AREAS_SEM_ALERTA_DIAS[aId]?'#78909C':corDias(dias);
     html+='<tr>'
       +'<td><b>'+lot.nome+'</b></td>'
       +'<td>'+(aObj?aObj.label:'—')+'</td>'
@@ -7306,7 +7323,7 @@ function gerarPDFRelFazenda(){
       if(aId&&_feedNormArea(dest)===aId){dt=ml[i].dt;break;}
     }
     var dias=dt?Math.max(0,Math.round((hoje-new Date(dt+'T12:00:00'))/864e5)):null;
-    var diasCor=dias===null?'#888':dias<=7?'#2E7D32':dias<=14?'#E65100':'#C62828';
+    var diasCor=dias===null?'#888':AREAS_SEM_ALERTA_DIAS[aId]?'#78909C':dias<=7?'#2E7D32':dias<=14?'#E65100':'#C62828';
     var diasTxt=dias!==null?('<b style="color:'+diasCor+'">'+dias+'d</b>'):'—';
     return '<tr style="border-bottom:1px solid #f0f0f0">'
       +'<td style="padding:8px 6px;font-weight:700">'+lot.nome+'</td>'
@@ -9228,8 +9245,8 @@ function rHistLotes(){
     var txLot=ha>0 ? (ua/ha).toFixed(2) : '—';
     var supCg=ha>0 ? ((ha*40)/(peso*0.04||1)).toFixed(0) : '—';
     var temDt = !!dtEnt;
-    var cD=!temDt?'#bbb':dias<=3?'#1B5E20':dias<=7?'#2E7D32':dias<=14?'#E65100':'#B71C1C';
-    var eD=!temDt?'⚪':dias<=3?'🟢':dias<=7?'🟡':dias<=14?'🟠':'🔴';
+    var cD=!temDt?'#bbb':AREAS_SEM_ALERTA_DIAS[areaId]?'#78909C':dias<=3?'#1B5E20':dias<=7?'#2E7D32':dias<=14?'#E65100':'#B71C1C';
+    var eD=!temDt?'⚪':AREAS_SEM_ALERTA_DIAS[areaId]?'⚪':dias<=3?'🟢':dias<=7?'🟡':dias<=14?'🟠':'🔴';
     var diasTxt=temDt?String(dias):'?';
 
     _lp.push({nm:nm,qtd:qtd,peso:peso,areaNm:areaNm,ha:ha,dtEnt:dtEnt,dias:dias,temDt:temDt,txLot:txLot,cD:cD,diasTxt:diasTxt});
@@ -9467,6 +9484,8 @@ function _rTaxaLotacaoPiquetes(){
   cont.innerHTML=html||'<div style="color:#aaa;font-size:12px">Cadastre ha das áreas em Config → Áreas para ver as taxas.</div>';
 }
 
+// Áreas que SEMPRE têm gado (quarentena da compra): não alertam dias no pasto
+var AREAS_SEM_ALERTA_DIAS={PA04:'quarentena'};
 function _rGraficoDias(lotes, aloc, movs, hoje){
   var gdiv = document.getElementById('hist-grafico-dias');
   if(!gdiv) return;
@@ -9487,7 +9506,7 @@ function _rGraficoDias(lotes, aloc, movs, hoje){
     }
     if(!dtEnt&&movsLote.length) dtEnt=(movsLote[movsLote.length-1].dt||movsLote[movsLote.length-1].ts||'').substring(0,10);
     var dias=dtEnt?Math.max(0,Math.round((hoje-new Date(dtEnt+'T12:00:00'))/864e5)):null;
-    return {nm:nm, areaNm:areaNm, dias:dias, temDt:!!dtEnt, qtd:qtd};
+    return {nm:nm, areaNm:areaNm, dias:dias, temDt:!!dtEnt, qtd:qtd, semAlerta:AREAS_SEM_ALERTA_DIAS[areaId]||''};
   });
 
   // Max dias para escala
@@ -9507,8 +9526,9 @@ function _rGraficoDias(lotes, aloc, movs, hoje){
         +'</div>';
     }
     var pct = Math.max(4, Math.round((d.dias/maxDias)*100));
-    var cor = d.dias<=3?'#2E7D32':d.dias<=7?'#558B2F':d.dias<=14?'#F57F17':'#B71C1C';
-    var em  = d.dias<=3?'🟢':d.dias<=7?'🟡':d.dias<=14?'🟠':'🔴';
+    var cor = d.semAlerta?'#78909C':d.dias<=3?'#2E7D32':d.dias<=7?'#558B2F':d.dias<=14?'#F57F17':'#B71C1C';
+    var em  = d.semAlerta?'⚪':d.dias<=3?'🟢':d.dias<=7?'🟡':d.dias<=14?'🟠':'🔴';
+    if(d.semAlerta) d.areaNm+=' ('+d.semAlerta+')';
     return '<div style="margin-bottom:8px">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">'
       +  '<div style="font-size:11px;font-weight:700;color:#333">'+d.nm+'</div>'
