@@ -6055,6 +6055,8 @@ function rPesagem(){
         +'<button onclick="pesCurralBuscar()" style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer">Buscar pesagens do curral</button>'
         +'<div id="pes-curral-lista" style="margin-top:10px"></div>'
         +'<div id="pes-import-preview" style="margin-top:10px"></div>'
+        +'<button onclick="pesLotesFormacao()" style="width:100%;margin-top:10px;padding:11px;background:#fff;color:#1B5E20;border:1.5px solid #1B5E20;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer">Atualizar lotes pela formação</button>'
+        +'<div id="pes-lotes-form" style="margin-top:10px"></div>'
         +'</div>';
     } else { box.innerHTML=''; }
   }
@@ -6300,6 +6302,76 @@ function pesCurralBuscar(){
             :'<button onclick="pesCurralLer(\''+x.data+'\',this)" style="font-size:12px;font-weight:800;padding:6px 12px;border-radius:20px;border:1.5px solid #1B5E20;background:#E8F5E9;color:#1B5E20;cursor:pointer">Importar</button>')
         +'</div><div id="pc-prev-'+x.data+'"></div></div>'; }).join('');
   },function(m){ el.innerHTML='<div style="font-size:12px;color:#C62828">'+m+'. Tente de novo.</div>'; });
+}
+// ── Atualizar LOTES (quantidade e peso médio) pela última formação salva no sistema de pesagem ──
+// Pesagem "2" → lote do app com número 2 ("Lote 2"/"Lote 02"). Vaca (11), reprodutor (12) e bezerro mamando (13) entram no lote 6.
+// Enfermaria (14), compra (15) e novilha (16) não entram: ficam no Lote Compra (PA04), que é ajustado à mão.
+var _pesLotesPrev=null;
+function _plNum(nome){ var m=String(nome||'').replace(/\(\s*\d+\s*animais?\s*\)/i,'').match(/\d+/); return m?parseInt(m[0],10):null; }
+function pesLotesFormacao(){
+  var el=document.getElementById('pes-lotes-form'); if(!el)return;
+  _pesLotesPrev=null;
+  el.innerHTML='<div style="font-size:12px;color:#888">Buscando a formação no sistema de pesagem…</div>';
+  _pcJsonp({acao:'formacao_lista',fazenda:_pcFaz()},function(r){
+    var fs=r.formacoes||[];
+    if(!fs.length){ el.innerHTML='<div style="font-size:12px;color:#888">Nenhuma formação salva no sistema de pesagem para a '+_pcFaz()+'.</div>'; return; }
+    var f=fs[0];
+    _pcJsonp({acao:'formacao_ler',fazenda:_pcFaz(),id:f.id},function(r2){ _pesLotesMontar(f, r2.animais||[]); },function(m){ el.innerHTML='<div style="font-size:12px;color:#C62828">'+m+'</div>'; });
+  },function(m){ el.innerHTML='<div style="font-size:12px;color:#C62828">'+m+'</div>'; });
+}
+function _pesLotesMontar(f, animais){
+  var el=document.getElementById('pes-lotes-form'); if(!el)return;
+  var G={}, fora={}, dUlt='';
+  animais.forEach(function(a){
+    var n=parseInt(String(a.lote||''),10); if(isNaN(n))return;
+    if(a.data && a.data>dUlt) dUlt=a.data;
+    if(n===14||n===15||n===16){ fora[n]=(fora[n]||0)+1; return; }
+    var alvo=(n===11||n===12||n===13)?6:n;
+    var g=G[alvo]=G[alvo]||{n:0,soma:0,comPeso:0,extra:0};
+    g.n++; if(alvo!==n) g.extra++;
+    var p=parseFloat(a.peso); if(p>0){ g.soma+=p; g.comPeso++; }
+  });
+  var linhas=[], semApp=[];
+  Object.keys(G).map(Number).sort(function(a,b){return a-b;}).forEach(function(n){
+    var idx=(S.LOTES||[]).findIndex(function(l){ return _plNum(l.nome)===n && !/compra/i.test(l.nome); });
+    var g=G[n], peso=g.comPeso?Math.round(g.soma/g.comPeso):null;
+    if(idx<0){ semApp.push('Lote '+n+' ('+g.n+')'); return; }
+    var l=S.LOTES[idx];
+    linhas.push({idx:idx,nome:l.nome,antesQ:l.qtd||0,antesP:l.peso||0,qtd:g.n,peso:peso,extra:g.extra});
+  });
+  _pesLotesPrev={linhas:linhas,data:dUlt,id:f.id};
+  var ua=function(q,p){ return ((q||0)*(p||0)/450).toFixed(1); };
+  var nomes={14:'enfermaria',15:'compra',16:'novilha'};
+  var h='<div style="font-size:12px;color:#555;margin-bottom:6px">Formação salva em <b>'+_dataBR(f.id)+'</b> ('+(f.datas||'')+'). Confira antes de gravar.</div>'
+    +'<table style="width:100%;font-size:12px;border-collapse:collapse"><tr style="color:#888;text-align:left"><th style="padding:4px 0">Lote</th><th>Antes</th><th>Fica</th></tr>'
+    +linhas.map(function(x){ return '<tr style="border-top:1px solid #eee"><td style="padding:6px 0"><b>'+x.nome+'</b></td>'
+      +'<td>'+x.antesQ+' · '+x.antesP+' kg<div style="font-size:10px;color:#999">'+ua(x.antesQ,x.antesP)+' UA</div></td>'
+      +'<td><b>'+x.qtd+' · '+(x.peso||'—')+' kg</b><div style="font-size:10px;color:#999">'+ua(x.qtd,x.peso)+' UA'+(x.extra?' · com '+x.extra+' vaca/reprodutor/bezerro':'')+'</div></td></tr>'; }).join('')
+    +'</table>';
+  var fl=Object.keys(fora).map(function(k){ return fora[k]+' '+nomes[k]; });
+  if(fl.length) h+='<div style="font-size:11px;color:#888;margin-top:6px">Não entram: '+fl.join(', ')+' (ficam no Lote Compra, PA04, que você ajusta à mão).</div>';
+  if(semApp.length) h+='<div style="font-size:11px;color:#E65100;margin-top:4px">Sem lote no app, não grava: '+semApp.join(', ')+'.</div>';
+  h+='<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;margin-top:10px"><input type="checkbox" id="pl-ciclo" style="margin-top:2px"><span>Começar novo ciclo em <b>'+_dataBR(dUlt)+'</b> (os relatórios dos lotes passam a contar desta data)</span></label>'
+    +'<div style="display:flex;gap:8px;margin-top:10px"><button onclick="document.getElementById(\'pes-lotes-form\').innerHTML=\'\'" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #ccc;background:#fff;font-weight:800;cursor:pointer">Cancelar</button>'
+    +'<button onclick="pesLotesGravar()" style="flex:1;padding:10px;border-radius:10px;border:none;background:#1B5E20;color:#fff;font-weight:800;cursor:pointer">Gravar no app</button></div>';
+  el.innerHTML=h;
+}
+function pesLotesGravar(){
+  var P=_pesLotesPrev; if(!P||!P.linhas.length){ alert('Nada para gravar.'); return; }
+  var ciclo=document.getElementById('pl-ciclo'); ciclo=!!(ciclo&&ciclo.checked);
+  P.linhas.forEach(function(x){
+    var l=S.LOTES[x.idx]; if(!l) return;
+    l.qtd=x.qtd; if(x.peso) l.peso=x.peso;
+    if(ciclo && P.data){ if(!l.id) l.id='L'+Date.now()+'_'+x.idx; l.dt_abertura=P.data; }
+  });
+  salvar();
+  var fim=function(ok){
+    var el=document.getElementById('pes-lotes-form'); if(el) el.innerHTML='';
+    try{ rHistLotes(); }catch(e){}
+    alert('Lotes atualizados: '+P.linhas.map(function(x){return x.nome+' '+x.qtd;}).join(', ')+(ciclo?'\nNovo ciclo em '+_dataBR(P.data)+'.':'')+(ok===false?'\n(Salvo no aparelho; a nuvem não confirmou. Verifique a internet.)':''));
+    _pesLotesPrev=null;
+  };
+  if(S.cfgGS) salvarNuvem(fim); else fim();
 }
 function pesCurralLer(data,bt){
   // v7.53: o resumo aparece logo abaixo da data clicada (antes ia para o fim da lista e parecia que nada acontecia)
