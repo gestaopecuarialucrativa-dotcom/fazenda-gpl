@@ -2125,10 +2125,18 @@ function _pvPrevisto(lote,prod){
 }
 function _loteObjCons(lote){ var b=_lbCons(lote); return (S.LOTES||[]).find(function(l){return l.nome===lote||l.nome===b;})||null; }
 // Consumo real = kg do penúltimo DIA de trato ÷ dias até o último dia de trato (agrupa lançamentos do mesmo dia)
+// Início do ciclo do lote (dt_abertura). Formou lote novo = ciclo novo: trato antes disso é do lote antigo e não entra na conta do lote novo.
+// Fecha o ciclo do lote: o lote antigo fica registrado em l.ciclos (início, fim, cabeças, peso). O novo começa em 'novoIni'.
+function _fecharCiclo(l,novoIni){
+  var ini=l.dt_abertura?String(l.dt_abertura).substring(0,10):''; if(ini&&ini>=novoIni) return;
+  if(!l.ciclos) l.ciclos=[];
+  l.ciclos.push({ini:ini, fim:_somaDias(novoIni,-1), qtd:l.qtd, peso:l.peso, fechado_em:TD, por:(CU&&CU.n)||''});
+}
+function _iniCiclo(lote){ var lo=_loteObjCons(lote); return lo&&lo.dt_abertura?String(lo.dt_abertura).substring(0,10):''; }
 function _consumoReal(lote,prod){
-  var b=_lbCons(lote), pps=_ppsProd(prod), dias={};
+  var b=_lbCons(lote), pps=_ppsProd(prod), dias={}, ic=_iniCiclo(lote);
   (S.rT||[]).forEach(function(r){ if(r.tipo!=='trato'||r._apagado)return; if(_lbCons(r.lote||r.co)!==b)return; if((r.prod||r.pr||'')!==prod)return;
-    var d=(r.dt||'').substring(0,10); if(d.length!==10)return;
+    var d=(r.dt||'').substring(0,10); if(d.length!==10)return; if(ic&&d<ic)return;
     dias[d]=(dias[d]||0)+(parseFloat(r.kg_fornecido)||((parseFloat(r.q||r.qtd)||0)*pps)); });
   var ds=Object.keys(dias).sort(); if(ds.length<2) return null;
   var de=ds[ds.length-2], ate=ds[ds.length-1];
@@ -2341,7 +2349,7 @@ function _cnAbrir(){
   _cnMontar();
   var h='<div style="background:#fff;border:1.5px solid #1B5E20;border-radius:12px;padding:12px;margin-bottom:10px">'
     +'<div style="font-size:13px;font-weight:800;color:#1B5E20">Consumo dos lotes de agora</div>'
-    +'<div style="font-size:11px;color:#666;margin:2px 0 8px">Cabeças × peso × % do fabricante. Domingo sem trato. Ajuste sacos e frequência antes de enviar.</div>';
+    +'<div style="font-size:11px;color:#666;margin:2px 0 8px">Cabeças × peso × % do fabricante. Domingo sem trato. Ajuste sacos e frequência antes de enviar.</div>'+_cnCicloHTML();
   _cnLinhas.forEach(function(x,i){
     var ori=x.ori?('Valendo hoje: '+x.ori.sacos+' saco(s) '+_freqTxt(x.ori.freq).toLowerCase()+' = '+_fmtN(parseFloat(x.ori.sacos)*x.pps/(parseInt(x.ori.freq)||1),0)+' kg/dia · feita em '+fd(x.ori.dt)):'Valendo hoje: sem orientação';
     h+='<div style="border-top:1px solid #eee;padding:9px 0">'
@@ -2359,6 +2367,33 @@ function _cnAbrir(){
     +'<div style="font-size:10.5px;color:#888;margin-top:4px">Zerar o resto: encerra orientações de lotes que não estão aqui e volta todo % autorizado ao do fabricante.</div>'
     +'<button onclick="_cnBotao()" style="width:100%;margin-top:8px;padding:8px;border:1px solid #ccc;border-radius:8px;background:#fff;font-size:12px;cursor:pointer">Fechar</button></div>';
   cn.innerHTML=h;
+}
+// Ciclo novo pra todos os lotes de uma vez (quando a formação foi gravada sem marcar "novo ciclo")
+function _cnCicloHTML(){
+  var ls=(S.LOTES||[]).filter(function(l){ return (parseFloat(l.qtd)||0)>0; });
+  var ics=ls.map(function(l){ return l.dt_abertura?String(l.dt_abertura).substring(0,10):''; }), mx=ics.slice().sort().pop()||'';
+  var sug=(typeof _pesLotesPrev!=='undefined'&&_pesLotesPrev&&_pesLotesPrev.data)||'';
+  var todos=ics.every(function(d){ return d&&d===ics[0]; });
+  var txt=todos&&ics[0]?'Lotes formados em <b>'+ics[0].split('-').reverse().join('/')+'</b>. A conta de consumo começa nessa data.':'Os lotes ainda contam desde o ciclo antigo. Marque a data em que formou os lotes novos: o lote antigo fica registrado até o dia anterior e a conta recomeça.';
+  return '<div style="background:#F1F8E9;border-radius:10px;padding:9px 10px;margin-bottom:8px;font-size:11.5px">'+txt
+    +'<div style="display:flex;gap:6px;margin-top:6px;align-items:center"><input type="date" id="cn-ciclo-dt" value="'+(todos&&ics[0]?ics[0]:sug)+'" style="flex:1;padding:6px;border:1px solid #cdd6cd;border-radius:8px;font-size:12px">'
+    +'<button onclick="_cnCicloTodos()" style="padding:7px 10px;border:1.5px solid #1B5E20;border-radius:8px;background:#fff;color:#1B5E20;font-size:12px;font-weight:800;cursor:pointer">Marcar ciclo novo</button></div></div>';
+}
+function _cnCicloTodos(){
+  var iso=(document.getElementById('cn-ciclo-dt')||{}).value||''; if(!/^\d{4}-\d{2}-\d{2}$/.test(iso)){ alert('Escolha a data em que formou os lotes.'); return; }
+  var ls=(S.LOTES||[]).filter(function(l){ return (parseFloat(l.qtd)||0)>0; });
+  if(!confirm('Ciclo novo em '+iso.split('-').reverse().join('/')+' para: '+ls.map(function(l){return l.nome;}).join(', ')+'.\n\nO lote antigo fica registrado até o dia anterior. Trato antes dessa data deixa de entrar na conta do lote novo.')) return;
+  ls.forEach(function(l){
+    var ini=l.dt_abertura?String(l.dt_abertura).substring(0,10):''; if(ini===iso) return;
+    // cabeças do lote antigo: o nome gravado no último trato antes da data, ex. "Lote 2 (64 animais)"
+    var b=_lbCons(l.nome), qAnt=null, dAnt='';
+    (S.rT||[]).forEach(function(r){ if(r._apagado||r.tipo!=='trato'||_lbCons(r.lote||r.co)!==b) return; var d=String(r.dt||'').substring(0,10); var m=String(r.lote||r.co||'').match(/\((\d+)\s*animais\)/i);
+      if(m&&d<iso&&d>=dAnt){ dAnt=d; qAnt=parseInt(m[1],10); } });
+    if(!(ini&&ini>=iso)){ if(!l.ciclos) l.ciclos=[]; l.ciclos.push({ini:ini, fim:_somaDias(iso,-1), qtd:qAnt, peso:null, fechado_em:TD, por:(CU&&CU.n)||'', obs:'marcado depois da formação; peso do lote antigo não ficou guardado'}); }
+    l.dt_abertura=iso;
+  });
+  salvar(); var fim=function(){ try{ rPan(); }catch(e){} _cnAbrir(); alert('✅ Ciclo novo em '+iso.split('-').reverse().join('/')+'. A conta de consumo dos lotes recomeça nessa data.'); };
+  if(S.cfgGS) salvarNuvem(fim); else fim();
 }
 function _cnRes(x){ var kgd=x.sacos*x.pps/(x.freq||1), pct=x.massa?kgd/x.massa*100:0;
   return '= '+_fmtN(kgd,1)+' kg/dia · '+_fmtN(pct,3)+'% PV ('+(x.kg>0?_fmtN(kgd/x.kg*100,0):'—')+'% do que precisa)'+(x.freq===1?' · sábado '+(x.sacos*2)+' sacos (domingo sem trato)':''); }
@@ -2563,9 +2598,9 @@ function _agLotes(){
   return out;
 }
 function _agTratos(lote,prod){
-  var b=_lbCons(lote), pps=_ppsProd(prod), m={};
+  var b=_lbCons(lote), pps=_ppsProd(prod), m={}, ic=_iniCiclo(lote);
   (S.rT||[]).forEach(function(r){ if(r.tipo!=='trato'||r._apagado)return; if(_lbCons(r.lote||r.co)!==b||(r.prod||r.pr||'')!==prod)return;
-    var d=(r.dt||'').substring(0,10); if(d.length!==10)return;
+    var d=(r.dt||'').substring(0,10); if(d.length!==10)return; if(ic&&d<ic)return;
     var kg=parseFloat(r.kg_fornecido)||((parseFloat(r.q||r.qtd)||0)*pps);
     if(!m[d])m[d]={kg:0}; m[d].kg+=kg; });
   Object.keys(m).forEach(function(d){ m[d].sacos=Math.round(m[d].kg/pps*10)/10; });
@@ -2574,6 +2609,7 @@ function _agTratos(lote,prod){
 // Quanto tinha que ir no dia d (null = não era dia de trato)
 function _agEsperado(lote,prod,d,tr){
   if(_dow(d)===DIA_FOLGA) return null;
+  var _ic=_iniCiclo(lote); if(_ic&&d<_ic) return null;
   var ori=_orientAtiva(lote,prod), pps=_ppsProd(prod), ds=Object.keys(tr).sort(), x=null, kg=0, i, px;
   if(ori){
     var od=String(ori.dt||'').substring(0,10); if(_dow(od)===DIA_FOLGA) od=_somaDias(od,1);
@@ -2649,12 +2685,13 @@ function rAgenda(){
 // Agenda "Por lote": cada lote com os dias em que colocou produto (últimos 14 dias)
 function _agPorLote(x){
   var dnS=['dom','seg','ter','qua','qui','sex','sáb'], fd=function(d){ return d.substring(8,10)+'/'+d.substring(5,7); }, esc=function(t){ return String(t||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;'); };
-  var linhas=[], kg=0, sac=0, ini=_somaDias(TD,-13);
-  for(var k=0;k<14;k++){ var d=_somaDias(TD,-k); if(x.tr[d]){ kg+=x.tr[d].kg; sac+=x.tr[d].sacos; }
+  var linhas=[], kg=0, sac=0, ini=_somaDias(TD,-13), ic=_iniCiclo(x.lote); if(ic&&ic>ini) ini=ic;
+  var nd=Math.max(1,Math.round((new Date(TD+'T12:00:00')-new Date(ini+'T12:00:00'))/864e5)+1);
+  for(var k=0;k<nd;k++){ var d=_somaDias(TD,-k); if(x.tr[d]){ kg+=x.tr[d].kg; sac+=x.tr[d].sacos; }
     if(_dow(d)===DIA_FOLGA) continue; var it=_agItem(x.lote,x.prod,d,x.tr); if(it) linhas.push({d:d,it:it}); }
-  var ult=Object.keys(x.tr).sort().pop()||'', semDias=ult?Math.round((new Date(TD+'T12:00:00')-new Date(ult+'T12:00:00'))/864e5):null;
+  var ult=Object.keys(x.tr).sort().pop()||'', semDias=ult?Math.round((new Date(TD+'T12:00:00')-new Date(ult+'T12:00:00'))/864e5):(ic?Math.round((new Date(TD+'T12:00:00')-new Date(ic+'T12:00:00'))/864e5):null);
   var ch=_pvChave(x.lote,x.prod), al=(typeof _consAl!=='undefined'&&_consAl)?_consAl[ch]:null, ori=_orientAtiva(x.lote,x.prod);
-  var lo=_loteObjCons(x.lote), coc=lo?_cochoContagem(lo.nome,_somaDias(TD,-6),TD):null;
+  var lo=_loteObjCons(x.lote), coc=lo?_cochoContagem(lo.nome,(ic&&ic>_somaDias(TD,-6))?ic:_somaDias(TD,-6),TD):null;
   // resumo da linha: o que importa hoje
   var st, cor;
   var hoje=_dow(TD)===DIA_FOLGA?null:_agItem(x.lote,x.prod,TD,x.tr);
@@ -2674,13 +2711,14 @@ function _agPorLote(x){
   if(ori) cab='<span style="color:#1B5E20">orientado '+_fmtN(ori.sacos,0)+' saco'+(parseFloat(ori.sacos)>1?'s':'')+' '+_freqTxt(ori.freq).toLowerCase()+' · vale até '+fd(_consVence(ori.dt))+'</span>';
   else if(raw&&parseFloat(raw.sacos)>0&&_consVencida(raw.dt)) cab='<span style="color:#C62828">orientação venceu '+fd(_consVence(raw.dt))+' · voltou ao fabricante</span>';
   else cab='<span style="color:#888">sem orientação · % do fabricante</span>';
-  var massa=lo?(parseFloat(lo.qtd)||0)*(parseFloat(lo.peso)||0):0, pct=massa?kg/14/massa*100:0;
+  var massa=lo?(parseFloat(lo.qtd)||0)*(parseFloat(lo.peso)||0):0, pct=massa?kg/nd/massa*100:0;
   h+='<div style="background:#F7F9F6;border-radius:10px;padding:8px 10px;margin:6px 0 4px">'
+    +(ic?'<div style="font-size:11px;color:#1B5E20;font-weight:700;margin-bottom:2px">Lote formado em '+fd(ic)+' · '+(lo?lo.qtd+' cab · '+lo.peso+' kg':'')+(lo&&lo.ciclos&&lo.ciclos.length?' · ciclo anterior até '+fd(lo.ciclos[lo.ciclos.length-1].fim):'')+'</div>':'')
     +'<div style="font-size:11.5px">'+x.prod+' · '+cab+'</div>'
     +(al?'<div style="font-size:11.5px;margin-top:3px">Real <b>'+_fmtN(al.realPct,2)+'% PV</b> ('+_fmtN(al.real.kgDia,0)+' kg/dia) · '+(al.orientado?'orientado':'previsto')+' <b>'+_fmtN(al.prevPct,2)+'%</b> · tratos de '+fd(al.real.de)+' a '+fd(al.real.ate)+'</div>':'');
   h+=linhas.length?linhas.map(function(l){ return '<div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:3px 0"><span>'+dnS[_dow(l.d)]+' '+fd(l.d)+'</span><span style="color:'+l.it.st.c+';font-weight:700">'+l.it.st.t+'</span></div>'; }).join('')
     :'<div style="font-size:12px;color:#999;padding:3px 0">Nenhum trato nos últimos 14 dias.</div>';
-  h+='<div style="font-size:11px;color:#666;margin-top:2px">Últimos 14 dias ('+fd(ini)+' a '+fd(TD)+'): '+_fmtN(sac,0)+' saco'+(sac===1?'':'s')+(massa?' · '+_fmtN(pct,3)+'% PV':'')+'</div>'
+  h+='<div style="font-size:11px;color:#666;margin-top:2px">'+(ic&&ini===ic?'Desde a formação':'Últimos 14 dias')+' ('+fd(ini)+' a '+fd(TD)+', '+nd+' dia'+(nd>1?'s':'')+'): '+_fmtN(sac,0)+' saco'+(sac===1?'':'s')+(massa?' · '+_fmtN(pct,3)+'% PV':'')+'</div>'
     +'<div style="display:flex;gap:6px;margin-top:6px"><span onclick="_orientAbrir(\''+esc(ch)+'\')" style="font-size:11.5px;font-weight:700;color:#1B5E20;border:1px solid #A5D6A7;border-radius:20px;padding:4px 10px;cursor:pointer">orientar este lote</span>'
     +(ori?'<span onclick="_orientEncerrar(\''+esc(ch)+'\')" style="font-size:11.5px;font-weight:700;color:#C62828;border:1px solid #FFCDD2;border-radius:20px;padding:4px 10px;cursor:pointer">encerrar orientação</span>':'')+'</div></div>';
   return h+'</div>';
@@ -2780,17 +2818,24 @@ function _bolDados(qual){
       (S.mFeno||[]).forEach(function(m){ var dt=(m.dt||'').substring(0,10); if(!m||m.mov!=='saida'||!m.lote||dt<j.ini||dt>x.vendido||_lbCons(m.lote)!==lo)return;
         if(!f)f={kg:0,un:0}; f.kg+=parseFloat(m.kg)||0; f.un+=parseFloat(m.q)||0; });
     }
+    // lote formado de novo dentro da semana: conta só a partir do início do ciclo novo
+    var _ic=l.dt_abertura?String(l.dt_abertura).substring(0,10):'', iniL=j.ini;
+    if(!x.vendido && _ic && _ic>j.ini && _ic<=j.fimDados){ iniL=_ic; s=null; f=null;
+      (S.rT||[]).forEach(function(r){ var dt=(r.dt||'').substring(0,10); if(r._apagado||r.tipo!=='trato'||dt<iniL||dt>j.fimDados||_lbCons(r.lote||r.co)!==lo)return;
+        var q=parseFloat(r.q||r.qtd)||0, pr0=r.pr||r.prod||''; if(!s)s={kg:0,sacos:0}; s.sacos+=q; s.kg+=parseFloat(r.kg_fornecido)||q*_ppsProd(pr0); });
+      (S.mFeno||[]).forEach(function(m){ var dt=(m.dt||'').substring(0,10); if(!m||m.mov!=='saida'||!m.lote||dt<iniL||dt>j.fimDados||_lbCons(m.lote)!==lo)return;
+        if(!f)f={kg:0,un:0}; f.kg+=parseFloat(m.kg)||0; f.un+=parseFloat(m.q)||0; }); }
     var vendSem=(l.vendas||[]).filter(function(v){ var d=(v.dt||'').substring(0,10); return d>=j.ini&&d<=j.fimDados; });
     var qVendSem=vendSem.reduce(function(a,v){return a+(parseInt(v.qtd)||0);},0);
     var cab = x.vendido ? (parseFloat(l.qtd)||qVendSem) : (parseFloat(l.qtd)||0)+qVendSem;   // cabeças no início da semana
-    var diasL = x.vendido ? Math.max(1,Math.min(j.dias,_diffDias(j.ini,x.vendido)+1)) : j.dias;
+    var diasL = x.vendido ? Math.max(1,Math.min(j.dias,_diffDias(j.ini,x.vendido)+1)) : (iniL!==j.ini ? Math.max(1,_diffDias(iniL,j.fimDados)+1) : j.dias);
     if(!x.vendido) totCab+=parseFloat(l.qtd)||0;
     vendSem.forEach(function(v){ vendas.push({lote:lo, qtd:parseInt(v.qtd)||0, dt:(v.dt||'').substring(0,10), total:!v.parcial}); });
     if(x.vendido&&!vendSem.length) vendas.push({lote:lo, qtd:cab, dt:x.vendido, total:true});
     var pr=_ultProdLote(l.nome), prevKg=0;
     if(pr){ var ori=_orientAtiva(lo,pr); if(ori) prevKg=parseFloat(ori.sacos)*_ppsProd(pr)/(parseInt(ori.freq)||1);
       else { var pp=_pvPrevisto(lo,pr).pct; if(pp&&l.peso) prevKg=(pp/100)*parseFloat(l.peso)*cab; } }
-    var perdaKg=_perdaLote(l.nome,j.ini,x.vendido||j.fimDados); if(s&&perdaKg>0){ s=Object.assign({},s); s.kg=Math.max(0,s.kg-perdaKg); } // v7.70: jogado fora não foi comido
+    var perdaKg=_perdaLote(l.nome,iniL,x.vendido||j.fimDados); if(s&&perdaKg>0){ s=Object.assign({},s); s.kg=Math.max(0,s.kg-perdaKg); } // v7.70: jogado fora não foi comido
     var kgDia=s?s.kg/diasL:0, dif=(prevKg>0&&s)?(kgDia-prevKg)/prevKg:null;
     // v7.64: previsto em SACOS. Orientado: conta os tratos da agenda na semana. Sem orientação: % do peso, conferido em 14 dias.
     var prevSac=null, prevPctB=null, conforme=null, oriB=pr?_orientAtiva(lo,pr):null, fimL=x.vendido||j.fimDados;
@@ -6553,7 +6598,7 @@ function _pesLotesMontar(f, animais){
   var semArea=linhas.filter(function(x){ return !(S.rT||[]).some(function(r){ return r.tipo==='mudanca_pasto' && r.lote===x.nome && r.destino; }); }).map(function(x){ return x.nome; });
   if(semArea.length) h+='<div style="font-size:11px;color:#E65100;margin-top:6px">Sem área no mapa: '+semArea.join(', ')+'. Depois de gravar, lance a mudança de pasto desse lote.</div>';
   if(semApp.length) h+='<div style="font-size:11px;color:#E65100;margin-top:4px">Sem lote no app, não grava: '+semApp.join(', ')+'.</div>';
-  h+='<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;margin-top:10px"><input type="checkbox" id="pl-ciclo" style="margin-top:2px"><span>Começar novo ciclo em <b>'+_dataBR(dUlt)+'</b> (os relatórios dos lotes passam a contar desta data)</span></label>'
+  h+='<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;margin-top:10px"><input type="checkbox" id="pl-ciclo" checked style="margin-top:2px"><span>Começar novo ciclo em <b>'+_dataBR(dUlt)+'</b> (os relatórios dos lotes passam a contar desta data)</span></label>'
     +'<div style="display:flex;gap:8px;margin-top:10px"><button onclick="document.getElementById(\'pes-lotes-form\').innerHTML=\'\'" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #ccc;background:#fff;font-weight:800;cursor:pointer">Cancelar</button>'
     +'<button onclick="pesLotesGravar()" style="flex:1;padding:10px;border-radius:10px;border:none;background:#1B5E20;color:#fff;font-weight:800;cursor:pointer">Gravar no app</button></div>';
   el.innerHTML=h;
@@ -6580,6 +6625,7 @@ function pesLotesGravar(){
     var tot=(x.peso||0)*x.qtd+fo.soma, nP=x.qtd+fo.comPeso; x.qtd+=fo.n; if(nP>0) x.peso=Math.round(tot/nP); });
   P.linhas.forEach(function(x){
     var l=S.LOTES[x.idx]; if(!l) return;
+    if(ciclo && P.data) _fecharCiclo(l,P.data);   // guarda o lote antigo (início, fim, cabeças, peso) antes de mudar
     l.qtd=x.qtd; if(x.peso) l.peso=x.peso;
     if(ciclo && P.data){ if(!l.id) l.id='L'+Date.now()+'_'+x.idx; l.dt_abertura=P.data; }
   });
@@ -8673,6 +8719,7 @@ function _cochoContagem(lote,ini,fim){
 function _consCocho(){
   var fim=TD, ini=_somaDias(TD,-6), h='';
   (S.LOTES||[]).filter(function(l){return l.qtd>0;}).forEach(function(l){
+    var ini=_somaDias(TD,-6), _ic=l.dt_abertura?String(l.dt_abertura).substring(0,10):''; if(_ic&&_ic>ini) ini=_ic;
     var c=_cochoContagem(l.nome,ini,fim); if(c.cheio<2) return;
     var lo=_lbCons(l.nome), pr=_ultProdLote(l.nome), kg=0;
     (S.rT||[]).forEach(function(r){ var dt=(r.dt||'').substring(0,10); if(r._apagado||r.tipo!=='trato'||dt<ini||dt>fim||_lbCons(r.lote||r.co)!==lo)return; var q=parseFloat(r.q||r.qtd)||0; kg+=parseFloat(r.kg_fornecido)||q*_ppsProd(r.pr||r.prod||''); });
