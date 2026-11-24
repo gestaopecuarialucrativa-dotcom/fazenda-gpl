@@ -1682,7 +1682,7 @@ function rHomeMapa(){
     pin.style.cssText = 'position:absolute;left:'+cx+'%;top:'+cy+'%;transform:translate(-50%,-100%);z-index:10;pointer-events:auto;background:none;border:none;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation';
     var nomeLote = lote ? lote.nome : '';
     // Cor por módulo (igual mapa principal); pasto avulso = marrom
-    var _coresH = {1:{bg:'#1B5E20',bd:'#4CAF50',tx:'#A5D6A7'},2:{bg:'#B71C1C',bd:'#EF5350',tx:'#FFCDD2'},3:{bg:'#4A148C',bd:'#CE93D8',tx:'#E1BEE7'},4:{bg:'#827717',bd:'#F9A825',tx:'#FFE082'}};
+    var _coresH = {1:{bg:'#1B5E20',bd:'#4CAF50',tx:'#A5D6A7'},2:{bg:'#B71C1C',bd:'#EF5350',tx:'#FFCDD2'},3:{bg:'#4A148C',bd:'#CE93D8',tx:'#E1BEE7'},4:{bg:'#827717',bd:'#F9A825',tx:'#FFE082'},5:{bg:'#0D47A1',bd:'#42A5F5',tx:'#BBDEFB'}};
     var _corH = (a.tipo==='modulo') ? (_coresH[a.modulo]||_coresH[1]) : {bg:'#5D4037',bd:'#A1887F',tx:'#D7CCC8'};
     pin.innerHTML = '<div style="background:'+_corH.bg+';border:2px solid '+_corH.bd+';border-radius:9px;padding:5px 9px;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,.5);min-width:44px">'
       +'<div style="font-size:15px;font-weight:900;color:#fff;line-height:1.2">'+qtd+'</div>'
@@ -3861,6 +3861,7 @@ function _feedNormArea(v){
   s=s.replace(/^M(\d{1,2})\/P(\d{1,2})$/i,function(_,m,p){return 'M'+String(parseInt(m)).padStart(2,'0')+'P'+String(parseInt(p)).padStart(2,'0');});
   s=s.replace(/^M(\d{1,2})P(\d{1,2})$/i,function(_,m,p){return 'M'+String(parseInt(m)).padStart(2,'0')+'P'+String(parseInt(p)).padStart(2,'0');});
   s=s.replace(/^PA\s*(\d{1,2})$/i,function(_,n){return 'PA'+String(parseInt(n)).padStart(2,'0');});
+  if(typeof MAPA_AREAS!=='undefined'){ var _mp=s.match(/^M(\d{2})P(\d{2})$/); if(_mp && !MAPA_AREAS.some(function(a){return a.id===s;})){ var _al=MAPA_AREAS.find(function(a){return a.tipo==='modulo'&&a.modulo===parseInt(_mp[1],10)&&a.piquete===parseInt(_mp[2],10);}); if(_al) return _al.id; } }
   return s;
 }
 function feedEditarMov(idx){
@@ -6325,7 +6326,7 @@ function _pesLotesMontar(f, animais){
   animais.forEach(function(a){
     var n=parseInt(String(a.lote||''),10); if(isNaN(n))return;
     if(a.data && a.data>dUlt) dUlt=a.data;
-    if(n===14||n===15||n===16){ fora[n]=(fora[n]||0)+1; return; }
+    if(n===14||n===15||n===16){ var fo=fora[n]=fora[n]||{n:0,soma:0,comPeso:0}; fo.n++; var pf=parseFloat(a.peso); if(pf>0){ fo.soma+=pf; fo.comPeso++; } return; }
     var alvo=(n===11||n===12||n===13)?6:n;
     var g=G[alvo]=G[alvo]||{n:0,soma:0,comPeso:0,extra:0};
     g.n++; if(alvo!==n) g.extra++;
@@ -6339,7 +6340,7 @@ function _pesLotesMontar(f, animais){
     var l=S.LOTES[idx];
     linhas.push({idx:idx,nome:l.nome,antesQ:l.qtd||0,antesP:l.peso||0,qtd:g.n,peso:peso,extra:g.extra});
   });
-  _pesLotesPrev={linhas:linhas,data:dUlt,id:f.id};
+  _pesLotesPrev={linhas:linhas,data:dUlt,id:f.id,fora:fora};
   var ua=function(q,p){ return ((q||0)*(p||0)/450).toFixed(1); };
   var nomes={14:'enfermaria',15:'compra',16:'novilha'};
   var h='<div style="font-size:12px;color:#555;margin-bottom:6px">Formação salva em <b>'+_dataBR(f.id)+'</b> ('+(f.datas||'')+'). Confira antes de gravar.</div>'
@@ -6348,8 +6349,15 @@ function _pesLotesMontar(f, animais){
       +'<td>'+x.antesQ+' · '+x.antesP+' kg<div style="font-size:10px;color:#999">'+ua(x.antesQ,x.antesP)+' UA</div></td>'
       +'<td><b>'+x.qtd+' · '+(x.peso||'—')+' kg</b><div style="font-size:10px;color:#999">'+ua(x.qtd,x.peso)+' UA'+(x.extra?' · com '+x.extra+' vaca/reprodutor/bezerro':'')+'</div></td></tr>'; }).join('')
     +'</table>';
-  var fl=Object.keys(fora).map(function(k){ return fora[k]+' '+nomes[k]; });
-  if(fl.length) h+='<div style="font-size:11px;color:#888;margin-top:6px">Não entram: '+fl.join(', ')+' (ficam no Lote Compra, PA04, que você ajusta à mão).</div>';
+  // quem ficou de fora (enfermaria, compra, novilha): o consultor escolhe juntar num lote ou deixar fora
+  var opts='<option value="">Deixar fora</option>'+linhas.map(function(x,i){ return '<option value="'+i+'">Juntar no '+x.nome+'</option>'; }).join('');
+  Object.keys(fora).forEach(function(k){ var fo=fora[k];
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px"><span style="flex:1"><b>'+fo.n+' '+nomes[k]+'</b>'+(fo.comPeso?' · '+Math.round(fo.soma/fo.comPeso)+' kg':'')+'</span>'
+      +'<select id="pl-fora-'+k+'" style="padding:6px;border:1px solid #cdd6cd;border-radius:8px;font-size:12px">'+opts+'</select></div>'; });
+  if(Object.keys(fora).length) h+='<div style="font-size:10px;color:#999;margin-top:4px">O que ficar fora não muda nenhum lote (o Lote Compra você ajusta à mão).</div>';
+  // lote do app sem área no mapa (sem mudança de pasto lançada)
+  var semArea=linhas.filter(function(x){ return !(S.rT||[]).some(function(r){ return r.tipo==='mudanca_pasto' && r.lote===x.nome && r.destino; }); }).map(function(x){ return x.nome; });
+  if(semArea.length) h+='<div style="font-size:11px;color:#E65100;margin-top:6px">Sem área no mapa: '+semArea.join(', ')+'. Depois de gravar, lance a mudança de pasto desse lote.</div>';
   if(semApp.length) h+='<div style="font-size:11px;color:#E65100;margin-top:4px">Sem lote no app, não grava: '+semApp.join(', ')+'.</div>';
   h+='<label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;margin-top:10px"><input type="checkbox" id="pl-ciclo" style="margin-top:2px"><span>Começar novo ciclo em <b>'+_dataBR(dUlt)+'</b> (os relatórios dos lotes passam a contar desta data)</span></label>'
     +'<div style="display:flex;gap:8px;margin-top:10px"><button onclick="document.getElementById(\'pes-lotes-form\').innerHTML=\'\'" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid #ccc;background:#fff;font-weight:800;cursor:pointer">Cancelar</button>'
@@ -6359,6 +6367,10 @@ function _pesLotesMontar(f, animais){
 function pesLotesGravar(){
   var P=_pesLotesPrev; if(!P||!P.linhas.length){ alert('Nada para gravar.'); return; }
   var ciclo=document.getElementById('pl-ciclo'); ciclo=!!(ciclo&&ciclo.checked);
+  // junta quem ficou de fora no lote escolhido (soma cabeças e recalcula o peso médio)
+  Object.keys(P.fora||{}).forEach(function(k){ var sel=document.getElementById('pl-fora-'+k); if(!sel||sel.value==='') return;
+    var x=P.linhas[parseInt(sel.value,10)], fo=P.fora[k]; if(!x) return;
+    var tot=(x.peso||0)*x.qtd+fo.soma, nP=x.qtd+fo.comPeso; x.qtd+=fo.n; if(nP>0) x.peso=Math.round(tot/nP); });
   P.linhas.forEach(function(x){
     var l=S.LOTES[x.idx]; if(!l) return;
     l.qtd=x.qtd; if(x.peso) l.peso=x.peso;
@@ -8094,9 +8106,10 @@ var MAPA_AREAS = [
   {id:'PA02',label:'PA 02',tipo:'pasto',ha:24.15, x:32.0,y:8.0},
   {id:'PA03',label:'PA 03',tipo:'pasto',ha:13.56, x:27.0,y:22.0},
   {id:'PA04',label:'PA 04',tipo:'pasto',ha:6.23,  x:41.0,y:30.0},
-  {id:'PA05',label:'PA 05',tipo:'pasto',ha:6.46,  x:48.0,y:22.0},
-  {id:'PA06',label:'PA 06',tipo:'pasto',ha:7.96,  x:48.0,y:35.0},
-  {id:'PA07',label:'PA 07',tipo:'pasto',ha:10.93, x:55.0,y:27.0},
+  // MODULO 5 (antes PA05/PA06/PA07 — ids mantidos para o histórico continuar valendo)
+  {id:'PA05',label:'M5/P2',tipo:'modulo',modulo:5,piquete:2,ha:6.46,  x:48.0,y:22.0},
+  {id:'PA06',label:'M5/P3',tipo:'modulo',modulo:5,piquete:3,ha:7.96,  x:48.0,y:35.0},
+  {id:'PA07',label:'M5/P1',tipo:'modulo',modulo:5,piquete:1,ha:10.93, x:55.0,y:27.0},
   {id:'PA08',label:'PA 08',tipo:'pasto',ha:6.69,  x:61.0,y:18.0},
   {id:'PA09',label:'PA 09',tipo:'pasto',ha:8.33,  x:70.0,y:12.0},
   {id:'PA10',label:'PA 10',tipo:'pasto',ha:7.17,  x:82.0,y:20.0},
@@ -8152,7 +8165,8 @@ function _renderPinsNoContainer(contId, resumoId){
       1:{bg:'#1B5E20',bd:'#4CAF50',bgV:'rgba(27,94,32,0.25)'},
       2:{bg:'#B71C1C',bd:'#EF5350',bgV:'rgba(183,28,28,0.25)'},
       3:{bg:'#4A148C',bd:'#CE93D8',bgV:'rgba(74,20,140,0.25)'},
-      4:{bg:'#827717',bd:'#F9A825',bgV:'rgba(130,119,23,0.25)'}
+      4:{bg:'#827717',bd:'#F9A825',bgV:'rgba(130,119,23,0.25)'},
+      5:{bg:'#0D47A1',bd:'#42A5F5',bgV:'rgba(13,71,161,0.25)'}
     };
     var cor = a.tipo==='modulo'?(cores[a.modulo]||cores[1]):{bg:'#5D4037',bd:'#A1887F',bgV:'rgba(93,64,55,0.25)'};
     var lbl = a.label.replace('MOD:0','M').replace('MOD:','M').replace('/P:0','/P').replace('/P:','/P');
