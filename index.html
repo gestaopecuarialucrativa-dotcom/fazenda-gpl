@@ -3901,7 +3901,7 @@ function rPan(){try{rConsAlertas();}catch(_eCA){console.error('rConsAlertas',_eC
     _s('ps-cn',lc.length+' pend.');
     try{ _panPagLinha(td,lv.length,tc,lc.length); }catch(_ePg){ console.error('pag',_ePg); }
     try{ _panPastosLinha(); }catch(_ePs){ console.error('pastos',_ePs); }
-    try{ _cicloAutoFormacao(); }catch(_eCi){}
+    /* correção automática de ciclo desligada: a data agora vem só da importação da formação */
     _s('ps-av',lt.length);
     if(le.length){
       var m=(le.reduce(function(a,r){return a+(r.es||0);},0)/le.length).toFixed(1);
@@ -6689,7 +6689,10 @@ function pesLotesGravar(){
   var ciclo=document.getElementById('pl-ciclo'); ciclo=!!(ciclo&&ciclo.checked);
   // junta quem ficou de fora no lote escolhido (soma cabeças e recalcula o peso médio)
   var OUT=_pesLotesOutrosCalc(), outNomes=[];
-  Object.keys(OUT).forEach(function(i){ var l=S.LOTES[i], r=OUT[i]; if(!l) return; l.qtd=r.n; if(r.comPeso) l.peso=Math.round(r.soma/r.comPeso); outNomes.push(l.nome+' '+r.n); });
+  Object.keys(OUT).forEach(function(i){ var l=S.LOTES[i], r=OUT[i]; if(!l) return;
+    if(ciclo && P.data) _fecharCiclo(l,P.data);
+    l.qtd=r.n; if(r.comPeso) l.peso=Math.round(r.soma/r.comPeso); outNomes.push(l.nome+' '+r.n);
+    if(ciclo && P.data){ var _ia=l.dt_abertura?String(l.dt_abertura).substring(0,10):''; if(!(_ia&&_ia>P.data)){ if(!l.id) l.id='L'+Date.now()+'_o'+i; l.dt_abertura=P.data; } } });
   Object.keys(P.fora||{}).forEach(function(k){ var sel=document.getElementById('pl-fora-'+k); if(!sel||sel.value===''||sel.value.charAt(0)==='o') return;
     var x=P.linhas[parseInt(sel.value,10)], fo=P.fora[k]; if(!x) return;
     var tot=(x.peso||0)*x.qtd+fo.soma, nP=x.qtd+fo.comPeso; x.qtd+=fo.n; if(nP>0) x.peso=Math.round(tot/nP); });
@@ -6697,7 +6700,7 @@ function pesLotesGravar(){
     var l=S.LOTES[x.idx]; if(!l) return;
     if(ciclo && P.data) _fecharCiclo(l,P.data);   // guarda o lote antigo (início, fim, cabeças, peso) antes de mudar
     l.qtd=x.qtd; if(x.peso) l.peso=x.peso;
-    if(ciclo && P.data){ if(!l.id) l.id='L'+Date.now()+'_'+x.idx; l.dt_abertura=P.data; }
+    if(ciclo && P.data){ var _ia=l.dt_abertura?String(l.dt_abertura).substring(0,10):''; if(!(_ia&&_ia>P.data)){ if(!l.id) l.id='L'+Date.now()+'_'+x.idx; l.dt_abertura=P.data; } }
   });
   salvar();
   var fim=function(ok){
