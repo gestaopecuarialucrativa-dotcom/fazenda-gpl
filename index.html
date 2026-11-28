@@ -10173,24 +10173,33 @@ function rHistRotacao(){
   var SVG_CHV='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
   var SVG_MAP='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1B5E20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>';
   // grid de cards 2 colunas
+  // nov/2026: só fatos — ocupação e descanso. Quem decide mudar é a altura do capim.
+  var _todasMud=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
+  function _nArea(v){ try{ return _feedNormArea(v); }catch(e){ return v; } }
+  function _descansoAntes(piq,entrada){        // dias que o piquete ficou vazio antes deste lote entrar
+    if(!piq||!entrada) return null;
+    var alvo=_nArea(piq), ult='';
+    _todasMud.forEach(function(r){ var d=(r.dt||r.ts||'').substring(0,10); if(d&&d<entrada&&_nArea(r.origem)===alvo&&d>ult) ult=d; });
+    return ult?Math.max(0,Math.round((new Date(entrada+'T12:00:00')-new Date(ult+'T12:00:00'))/864e5)):null;
+  }
+  function _caixa(n,txt){ return '<div style="flex:1;background:#E8F5E9;border-radius:8px;padding:6px 4px;text-align:center"><div style="font-size:18px;font-weight:900;color:#1B5E20;line-height:1.1">'+n+'</div><div style="font-size:9px;color:#5f6b5f;line-height:1.25;margin-top:2px">'+txt+'</div></div>'; }
   var cards=lotes.map(function(L){
     var piqLabel=labelArea(L.atual.piq);
     var diasAt=L.atual.dias;
-    var acima=diasAt>L.med*1.5&&L.med>0;
-    var cor=acima?'#E65100':'#2E7D32';
-    var tag=acima?'<span style="font-size:8px;background:#FFF3E0;color:#E65100;padding:1px 6px;border-radius:8px;font-weight:700;margin-left:4px">acima</span>':'';
-    return '<div onclick="_rotExpandir(this,\''+L.nome+'\')" style="background:#fff;border-radius:12px;border-left:4px solid '+cor+';padding:10px 11px;cursor:pointer">'
-      +'<div style="font-weight:900;font-size:14px;color:#1B5E20">'+L.nome+'</div>'
-      +'<div style="font-size:11px;color:#555;margin-top:4px;display:flex;align-items:center;gap:4px">'+SVG_PIN+piqLabel+' &middot; <b style="color:'+cor+'">'+diasAt+'d</b>'+tag+'</div>'
-      +'<div style="display:flex;gap:5px;margin-top:8px">'
-        +'<div style="flex:1;background:#E8F5E9;border-radius:7px;padding:5px;text-align:center"><div style="font-size:14px;font-weight:900;color:#1B5E20">'+(L.med||'--')+'<span style="font-size:8px;font-weight:600;color:#555">d</span></div><div style="font-size:8px;color:#666">MEDIA</div></div>'
-        +'<div style="flex:1;background:#E8F5E9;border-radius:7px;padding:5px;text-align:center"><div style="font-size:14px;font-weight:900;color:#1B5E20">'+L.nPiq+'</div><div style="font-size:8px;color:#666">PIQUETES</div></div>'
+    var desc=_descansoAntes(L.atual.piq,L.atual.entrada);
+    var nMud=Math.max(0,L.nPiq-1);
+    return '<div onclick="_rotExpandir(this,\''+L.nome+'\')" style="background:#fff;border-radius:12px;border:1px solid #e0e7e0;padding:11px 12px;cursor:pointer">'
+      +'<div style="font-weight:900;font-size:14px;color:#1B5E20">'+L.nome+' <span style="font-weight:600;color:#555;font-size:12px">· '+piqLabel+'</span></div>'
+      +'<div style="display:flex;gap:6px;margin-top:8px">'
+        +_caixa(diasAt,'dias neste piquete')
+        +_caixa(L.med||'—','dias por piquete (média)')
+        +_caixa(desc===null?'—':desc,'dias que o piquete descansou antes')
       +'</div>'
-      +'<div style="font-size:9px;color:#2E7D32;font-weight:700;margin-top:7px;display:flex;align-items:center;gap:3px">ver trilha '+SVG_CHV+'</div>'
+      +'<div style="font-size:10px;color:#777;margin-top:7px">'+(L.atual.entrada?'Entrou em '+L.atual.entrada.split('-').reverse().join('/')+' · ':'')+nMud+(nMud===1?' mudança':' mudanças')+' de pasto · <b style="color:#2E7D32">ver por onde passou ›</b></div>'
       +'<div class="rot-trilha" data-lote="'+L.nome+'" style="display:none;margin-top:10px;border-top:1px solid #e8f5e9;padding-top:8px"></div>'
       +'</div>';
   }).join('');
-  var gridStyle=filtro?'margin-bottom:10px':'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px';
+  var gridStyle='display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:10px';
   // tabela de classificacao
   var st=_rotacaoStats();
   function tabRank(titulo,itens,nomeCampo,sanfona){
@@ -10200,9 +10209,7 @@ function rHistRotacao(){
     function linhaItem(p,i,filho){
       var nm=p[nomeCampo]||p.label||p.nome; if(filho) nm=p.label||nm;
       var tag='';
-      if(p.status){ tag=p.status.st==='vazio'
-        ?'<span style="font-size:9px;color:#2E7D32;font-weight:700;display:inline-flex;align-items:center;gap:2px">'+SVG_OK+' vazio ha '+p.status.dias+'d</span>'
-        :'<span style="font-size:9px;color:#1565C0">ocupado ha '+p.status.dias+'d</span>'; }
+      if(p.status){ tag='<div style="font-size:9px;color:#888;font-weight:500">'+(p.status.st==='vazio'?'vazio há ':'com gado há ')+p.status.dias+(p.status.dias===1?' dia':' dias')+'</div>'; }
       var podeAbrir=sanfona&&p.ehModulo&&p.itens&&p.itens.length;
       var seta=podeAbrir?'<span style="color:#1B5E20;font-size:11px">&#9658;</span> ':(filho?'<span style="color:#ccc">&#9492; </span>':'');
       var oc=podeAbrir?' onclick="feedRotToggle(this,\''+p.k+'\')" style="cursor:pointer"':'';
@@ -10210,10 +10217,9 @@ function rHistRotacao(){
       return '<tr class="rot-row" data-k="'+(p.k||p.id||'')+'"'+oc+' style="border-bottom:1px solid #f0f0f0;'+bg+'">'
         +'<td style="padding:6px 4px;text-align:center;color:#999;font-size:11px">'+(filho?'':(i+1))+'</td>'
         +'<td style="padding:6px 4px;font-size:'+(filho?'11':'12')+'px;font-weight:600;'+(filho?'padding-left:14px;color:#555':'')+'">'+''+seta+nm+' '+tag+'</td>'
-        +'<td style="padding:6px 4px;text-align:center;font-size:13px;font-weight:800;color:#1B5E20">'+p.dias+'</td>'
-        +'<td style="padding:6px 4px;text-align:center;font-size:11px;color:#666">'+p.pass+'</td>'
-        +'<td style="padding:6px 4px;text-align:center;font-size:11px;color:#666">'+p.media+'</td>'
-        +'<td style="padding:6px 4px;text-align:center;font-size:12px;font-weight:700;color:#1565C0">'+(p.descanso===null?'--':p.descanso)+'</td>'
+        +'<td style="padding:6px 4px;text-align:center;font-size:12px;color:#333">'+p.pass+'</td>'
+        +'<td style="padding:6px 4px;text-align:center;font-size:12px;font-weight:700;color:#1B5E20">'+p.media+' d</td>'
+        +'<td style="padding:6px 4px;text-align:center;font-size:12px;font-weight:700;color:#1B5E20">'+(p.descanso===null||p.descanso===undefined?'—':p.descanso+' d')+'</td>'
         +'</tr>';
     }
     var linhas=byDias.map(function(p,i){
@@ -10226,21 +10232,23 @@ function rHistRotacao(){
     }).join('');
     return '<div class="card" style="margin-top:10px;padding:12px">'
       +'<div style="font-size:13px;font-weight:800;color:#1B5E20;margin-bottom:6px;display:flex;align-items:center;gap:6px">'+SVG_MAP+titulo+'</div>'
-      +'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;min-width:340px">'
-      +'<tr style="border-bottom:2px solid #1B5E20"><th style="padding:5px 4px;font-size:9px;color:#999">#</th>'
+      +'<div><table style="width:100%;border-collapse:collapse;table-layout:fixed">'
+      +'<colgroup><col style="width:20px"><col><col style="width:54px"><col style="width:54px"><col style="width:60px"></colgroup>'
+      +'<tr style="border-bottom:2px solid #1B5E20"><th style="padding:5px 2px;font-size:9px;color:#999">#</th>'
       +'<th style="padding:5px 4px;font-size:9px;color:#999;text-align:left">Local</th>'
-      +'<th style="padding:5px 4px;font-size:9px;color:#999">Dias</th>'
-      +'<th style="padding:5px 4px;font-size:9px;color:#999">Passag.</th>'
-      +'<th style="padding:5px 4px;font-size:9px;color:#999">Media</th>'
-      +'<th style="padding:5px 4px;font-size:9px;color:#999">Descanso</th></tr>'
+      +'<th style="padding:5px 4px;font-size:9px;color:#777">Vezes<br>com gado</th>'
+      +'<th style="padding:5px 4px;font-size:9px;color:#777">Fica<br>por vez</th>'
+      +'<th style="padding:5px 4px;font-size:9px;color:#777">Descansa<br>(média)</th></tr>'
       +linhas+'</table></div>'
-      +(sanfona?'<div style="font-size:9px;color:#aaa;margin-top:5px">Toque no modulo para ver os piquetes.</div>':'')
-      +'<div style="font-size:9px;color:#aaa;margin-top:3px">Ordenado por total de dias. Descanso = media historica de dias vazio entre passagens.</div>'
+      +(sanfona?'<div style="font-size:10px;color:#888;margin-top:5px">Toque no módulo para ver os piquetes.</div>':'')
+      +'<div style="font-size:10px;color:#888;margin-top:3px">Ordem: de quem teve gado mais dias no total pra quem teve menos. "Fica por vez" = média de dias com gado em cada entrada. "Descansa" = média de dias vazio entre uma saída e a próxima entrada.</div>'
       +'</div>';
   }
   var out='<div style="'+gridStyle+'">'+cards+'</div>';
-  out+=tabRank('Classificacao por Pasto / Piquete',st.pastos,'label',false);
-  out+=tabRank('Classificacao por Modulo',st.modulos,'nome',true);
+  // descanso do módulo = média do descanso dos piquetes dele (o módulo inteiro quase nunca fica vazio)
+  (st.modulos||[]).forEach(function(m){ if(m.ehModulo&&m.itens&&m.itens.length){ var v=m.itens.map(function(f){return f.descanso;}).filter(function(x){return x!==null&&x!==undefined;}); m.descanso=v.length?Math.round(v.reduce(function(a,b){return a+b;},0)/v.length):null; } });
+  out+=tabRank('Piquetes e pastos',st.pastos,'label',false);
+  out+=tabRank('Módulos',st.modulos,'nome',true);
   div.innerHTML=out;
 }
 
@@ -10276,8 +10284,8 @@ function _rotExpandir(card,nomeLote){
   trilha.forEach(function(t,idx){
     var nome=labelA(t.piq);
     var ultimo=idx===trilha.length-1;
-    var corDot=t.atual?'#2E7D32':(t.dias<=7?'#A5D6A7':t.dias<=21?'#FFE082':'#EF9A9A');
-    var corNum=t.atual?'#1B5E20':(t.dias<=7?'#1B5E20':t.dias<=21?'#E65100':'#B71C1C');
+    var corDot=t.atual?'#2E7D32':'#A5D6A7';
+    var corNum='#1B5E20';
     html+='<div style="display:flex;gap:8px">'
       +'<div style="display:flex;flex-direction:column;align-items:center">'
       +'<div style="width:'+(t.atual?14:10)+'px;height:'+(t.atual?14:10)+'px;border-radius:50%;background:'+corDot+';flex-shrink:0"></div>'
@@ -10882,22 +10890,24 @@ function gerarPDFLotes(){
 
   var topo='<div style="display:flex;gap:10px;flex-wrap:wrap;margin:16px 0">'
     +bn(perfis.length,'Lotes')
-    +bn(totalAnimais,'Total de animais')
+    +bn(totalAnimais,'Cabe\u00e7as')
     +bn(pesoMedGeral>0?pesoMedGeral+' kg':'\u2014','Peso m\u00e9dio')
-    +bn(lotacaoMedia+(lotacaoMedia!=='\u2014'?' UA/ha':''),'Lota\u00e7\u00e3o m\u00e9dia')
+    +bn(Math.round(perfis.reduce(function(a,p){return a+(p.qtd>0&&p.peso>0?p.qtd*p.peso/450:0);},0)),'UA no total')
     +'</div>';
 
   var cards=perfis.map(function(p){
-    var diasCor=p.temDt?p.cD:'#bbb';
-    var entrada=p.temDt?('Entrada '+p.dtEnt.split('-').reverse().join('/')):'sem data de entrada';
+    var diasCor=p.temDt?'#1B5E20':'#bbb';
+    var entrada=p.temDt?('Entrou em '+p.dtEnt.split('-').reverse().join('/')):'sem data de entrada';
+    var uaL=p.qtd>0&&p.peso>0?p.qtd*p.peso/450:0;
     return '<div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-left:4px solid #2E7D32;break-inside:avoid">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div style="font-size:16px;font-weight:900;color:#1B5E20">'+p.nm+'</div><div style="font-size:11px;background:#E8F5E9;color:#1B5E20;padding:2px 10px;border-radius:14px;font-weight:700">'+p.qtd+' animais</div></div>'
       +'<div style="font-size:12px;color:#333;font-weight:700">'+p.areaNm+(p.ha>0?' \u00b7 '+p.ha+' ha':'')+'</div>'
       +'<div style="font-size:10px;color:#888;margin-bottom:8px">'+entrada+'</div>'
       +'<div style="display:flex;gap:6px">'
-      +  mini(p.diasTxt+(p.temDt?'d':''),'NO PASTO',diasCor)
+      +  mini(p.diasTxt,'DIAS AQUI',diasCor)
       +  mini(p.peso>0?p.peso+' kg':'\u2014','PESO M\u00c9DIO')
-      +  mini(p.txLot,'UA/HA')
+      +  mini(uaL>0?Math.round(uaL)+' UA':'\u2014','TAMANHO')
+      +  mini(uaL>0&&p.txLot!=='\u2014'?String(p.txLot).replace('.',','):'\u2014','UA/HA NO PIQUETE')
       +'</div>'
       +'</div>';
   }).join('');
@@ -11495,138 +11505,52 @@ function gerarPDFRotacao(){
     return {lote:lt, trilha:trilha, atualPiq:labelArea(ult.destino), diasAtual:diasAt, media:med, nPiq:trilha.length, entrada:ult.saida};
   });
 
-  // ---- médias para leitura forçado/subutilizado ----
-  var avgPastejo = st.pastos.reduce(function(s,p){return s+p.dias;},0)/st.pastos.length;
-  var descV = st.pastos.filter(function(p){return p.descanso!=null;}).map(function(p){return p.descanso;});
-  var avgDesc = descV.length?descV.reduce(function(a,b){return a+b;},0)/descV.length:30;
-
-  function bn(v,l){ return '<div style="flex:1;min-width:120px;background:#fff;border-radius:14px;padding:14px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.07);border-top:3px solid #2E7D32"><div style="font-size:24px;font-weight:900;color:#1B5E20;line-height:1">'+v+'</div><div style="font-size:9px;color:#666;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:5px">'+l+'</div></div>'; }
-  function mini(v,l,c){ return '<div style="flex:1;min-width:64px;background:#E8F5E9;border-radius:10px;padding:8px 5px;text-align:center"><div style="font-size:16px;font-weight:900;color:'+(c||'#1B5E20')+';line-height:1">'+v+'</div><div style="font-size:8px;color:#555;font-weight:700;margin-top:2px">'+l+'</div></div>'; }
-
-  // ---- ALERTA DE AÇÃO ----
-  var prontos=st.pastos.filter(function(p){return p.status&&p.status.st==='vazio'&&p.status.dias>=Math.round(avgDesc);}).sort(function(a,b){return b.status.dias-a.status.dias;}).slice(0,5);
-  var forcados=st.pastos.filter(function(p){return p.dias>avgPastejo && (p.descanso==null||p.descanso<avgDesc);}).sort(function(a,b){return b.dias-a.dias;}).slice(0,4);
-  var loteAcima=lotes.filter(function(L){return L.media>0&&L.diasAtual>L.media*1.5;});
-  function chip(txt,bg,fg){ return '<span style="display:inline-block;background:'+bg+';color:'+fg+';padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;margin:3px 4px 0 0">'+txt+'</span>'; }
-  var alertaItens='';
-  if(prontos.length) alertaItens+='<div style="margin-bottom:6px"><span style="font-size:11px;font-weight:700;color:#2E7D32">Prontos pra receber gado:</span> '+prontos.map(function(p){return chip(p.label+' \u00b7 '+p.status.dias+'d',' #E8F5E9','#1B5E20');}).join('')+'</div>';
-  if(forcados.length) alertaItens+='<div style="margin-bottom:6px"><span style="font-size:11px;font-weight:700;color:#E65100">Sendo for\u00e7ados (pouco descanso):</span> '+forcados.map(function(p){return chip(p.label,'#FFF3E0','#E65100');}).join('')+'</div>';
-  if(loteAcima.length) alertaItens+='<div><span style="font-size:11px;font-weight:700;color:#E65100">Lotes acima do ritmo:</span> '+loteAcima.map(function(L){return chip(L.lote+' \u00b7 '+L.diasAtual+'d no '+L.atualPiq,'#FFF3E0','#E65100');}).join('')+'</div>';
-  var alerta = alertaItens?('<div style="background:#fff;border-radius:14px;padding:14px 16px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,.07);border-left:4px solid #FFB300"><div style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">O que precisa de aten\u00e7\u00e3o</div>'+alertaItens+'</div>'):'';
-
-  // ---- TRILHA DE CADA LOTE ----
+  // nov/2026: PDF só com fatos (ocupação, média, descanso). Sem "forçado", "subutilizado", "acima do ritmo".
+  var _atuaisNm=(S.LOTES||[]).filter(function(l){return (l.status||'ativo')!=='vendido';}).map(function(l){return l.nome;});
+  lotes=lotes.filter(function(L){ return _atuaisNm.indexOf(L.lote)>=0; });
+  var _todasMud=(S.rT||[]).filter(function(r){return r.tipo==='mudanca_pasto'&&!r._apagado;});
+  function _nArea(v){ try{ return _feedNormArea(v); }catch(e){ return v; } }
+  function _descansoAntes(piqLabel,entrada){
+    if(!entrada) return null;
+    var ar=MAPA_AREAS.find(function(a){return a.label===piqLabel;}); var alvo=_nArea(ar?ar.id:piqLabel), ult='';
+    _todasMud.forEach(function(r){ var d=(r.dt||r.ts||'').substring(0,10); if(d&&d<entrada&&_nArea(r.origem)===alvo&&d>ult) ult=d; });
+    return ult?Math.max(0,Math.round((new Date(entrada+'T12:00:00')-new Date(ult+'T12:00:00'))/864e5)):null;
+  }
+  var _th='padding:6px 6px;font-size:10px;color:#666;font-weight:700;text-align:center;border-bottom:2px solid #1B5E20';
+  var _td='padding:6px 6px;font-size:12px;text-align:center;border-bottom:1px solid #eef0ec';
+  var cx='background:#fff;border-radius:14px;padding:14px 16px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,.07);break-inside:avoid';
+  var tit='font-size:13px;font-weight:800;color:#1B5E20;margin-bottom:8px';
+  // 1) onde está cada lote
+  var linhasLote=lotes.map(function(L){
+    var d=_descansoAntes(L.atualPiq,L.entrada);
+    return '<tr><td style="'+_td+';text-align:left;font-weight:700;color:#1B5E20">'+L.lote+'</td><td style="'+_td+'">'+L.atualPiq+'</td><td style="'+_td+';font-weight:700">'+L.diasAtual+'</td><td style="'+_td+'">'+(L.media||'—')+'</td><td style="'+_td+'">'+(d===null?'—':d+' d')+'</td></tr>';
+  }).join('');
+  var blocoLotes='<div style="'+cx+'"><div style="'+tit+'">Onde está cada lote</div>'
+    +'<table style="width:100%;border-collapse:collapse"><tr><th style="'+_th+';text-align:left">Lote</th><th style="'+_th+'">Piquete</th><th style="'+_th+'">Dias aqui</th><th style="'+_th+'">Média de dias<br>por piquete</th><th style="'+_th+'">Piquete descansou<br>antes de ele entrar</th></tr>'+linhasLote+'</table></div>';
+  // 2) módulos e pastos (descanso do módulo = média dos piquetes)
+  var mods=(st.modulos||[]).map(function(m){ var o={}; for(var k in m) o[k]=m[k];
+    if(m.ehModulo&&m.itens&&m.itens.length){ var v=m.itens.map(function(f){return f.descanso;}).filter(function(x){return x!==null&&x!==undefined;}); o.descanso=v.length?Math.round(v.reduce(function(a,b){return a+b;},0)/v.length):null; }
+    return o; }).sort(function(a,b){return b.dias-a.dias;});
+  var linhasMod=mods.map(function(m){
+    var nm=m.nome||m.label||m.k;
+    var st2=m.status?((m.status.st==='vazio'?'vazio há ':'com gado há ')+m.status.dias+' d'):'';
+    return '<tr><td style="'+_td+';text-align:left;font-weight:700;color:#1B5E20">'+nm+(st2&&!m.ehModulo?'<div style="font-size:9px;color:#888;font-weight:400">'+st2+'</div>':'')+'</td><td style="'+_td+'">'+m.pass+'</td><td style="'+_td+'">'+m.media+' d</td><td style="'+_td+'">'+(m.descanso===null||m.descanso===undefined?'—':m.descanso+' d')+'</td></tr>';
+  }).join('');
+  var blocoMod='<div style="'+cx+'"><div style="'+tit+'">Módulos e pastos</div>'
+    +'<table style="width:100%;border-collapse:collapse"><tr><th style="'+_th+';text-align:left">Local</th><th style="'+_th+'">Vezes com gado</th><th style="'+_th+'">Fica por vez</th><th style="'+_th+'">Descansa (média)</th></tr>'+linhasMod+'</table>'
+    +'<div style="font-size:10px;color:#777;margin-top:6px;line-height:1.45">"Fica por vez" = média de dias com gado em cada entrada. "Descansa" = média de dias vazio entre uma saída e a próxima entrada (no módulo, a média dos piquetes).</div></div>';
+  // 3) por onde passou cada lote
   var trilhaCards=lotes.map(function(L){
-    var atencao=(L.media>0&&L.diasAtual>L.media*1.5);
-    var corA=atencao?'#E65100':'#2E7D32';
-    var tag=atencao?'<span style="font-size:9px;font-weight:700;color:#E65100;background:#FFF3E0;padding:2px 8px;border-radius:9px">acima do ritmo</span>':'<span style="font-size:9px;font-weight:700;color:#2E7D32;background:#E8F5E9;padding:2px 8px;border-radius:9px">no ritmo</span>';
     var chips=L.trilha.map(function(t,i){
-      var bg=t.atual?'#2E7D32':(t.dias<=21?'#E8F5E9':'#FFF3E0');
-      var fg=t.atual?'#fff':(t.dias<=21?'#1B5E20':'#E65100');
-      var seta=i>0?'<span style="color:#bbb;font-size:11px">\u2192</span>':'';
-      return seta+'<span style="display:inline-block;background:'+bg+';color:'+fg+';padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;margin:2px 1px">'+t.piq+' \u00b7 '+t.dias+'d'+(t.atual?' \u2713':'')+'</span>';
+      var seta=i>0?'<span style="color:#bbb;font-size:11px">→</span>':'';
+      return seta+'<span style="display:inline-block;background:'+(t.atual?'#1B5E20':'#E8F5E9')+';color:'+(t.atual?'#fff':'#1B5E20')+';padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;margin:2px 1px">'+t.piq+' · '+t.dias+'d'+(t.atual?' agora':'')+'</span>';
     }).join('');
-    var enc=L.trilha.filter(function(t){return !t.atual && t.dias>0;});
-    var partes=enc.map(function(t){return t.piq+' ('+t.dias+' dias)';});
-    var atual=L.trilha[L.trilha.length-1];
-    var frase='O '+L.lote+' passou por '+(partes.length?partes.join(', ')+', e est\u00e1':'est\u00e1')+' no '+atual.piq+' h\u00e1 '+atual.dias+' dias.';
-    return '<div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-left:4px solid '+corA+';break-inside:avoid;margin-bottom:12px">'
-      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><div style="font-size:16px;font-weight:900;color:#1B5E20">'+L.lote+'</div>'+tag+'</div>'
-      +'<div style="display:flex;flex-wrap:wrap;align-items:center;margin:8px 0">'+chips+'</div>'
-      +'<div style="background:#f5f7f4;border-radius:8px;padding:9px 11px;font-size:11px;color:#555;line-height:1.5;margin:6px 0"><b style="color:#1B5E20">Hist\u00f3rico:</b> '+frase+'</div>'
-      +'<div style="display:flex;gap:6px">'+mini(L.diasAtual+'d','NESTE PIQUETE',corA)+mini(L.media+'d','M\u00c9DIA /PIQUETE')+mini(L.nPiq,'PIQUETES')+'</div>'
+    var nMud=Math.max(0,L.nPiq-1);
+    return '<div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.07);border-left:4px solid #2E7D32;break-inside:avoid;margin-bottom:12px">'
+      +'<div style="font-size:15px;font-weight:900;color:#1B5E20">'+L.lote+' <span style="font-size:11px;font-weight:600;color:#777">· '+nMud+(nMud===1?' mudança':' mudanças')+' de pasto</span></div>'
+      +'<div style="display:flex;flex-wrap:wrap;align-items:center;margin:8px 0 0">'+chips+'</div>'
       +'</div>';
   }).join('');
-
-  // ---- STATUS DOS PASTOS (pills por grupo: ocupado / descansando) ----
-  var _ocupados=st.pastos.filter(function(p){return p.status&&p.status.st==='ocupado';})
-    .sort(function(a,b){return b.status.dias-a.status.dias;});
-  var _descansando=st.pastos.filter(function(p){return !p.status||p.status.st==='vazio';})
-    .sort(function(a,b){return b.status.dias-a.status.dias;});
-  // pill de pasto ocupado (verde escuro; laranja se forçado)
-  var _forcados=st.pastos.filter(function(p){return p.dias>avgPastejo&&(p.descanso==null||p.descanso<avgDesc);}).map(function(p){return p.label;});
-  function _pill(p,modo){
-    var label=p.label;
-    var dias=p.status?p.status.dias:0;
-    if(modo==='ocup'){
-      var forc=_forcados.indexOf(label)>=0;
-      var bg=forc?'#FFF3E0':'#E8F5E9';
-      var border=forc?'1.5px solid #E65100':'1.5px solid #2E7D32';
-      var txtCol=forc?'#E65100':'#1B5E20';
-      var dotCol=forc?'#E65100':'#2E7D32';
-      return '<span style="background:'+bg+';border:'+border+';border-radius:20px;padding:4px 10px;font-size:11px;font-weight:700;color:'+txtCol+';display:inline-flex;align-items:center;gap:4px;margin:3px 2px">'
-        +'<span style="width:6px;height:6px;border-radius:50%;background:'+dotCol+';display:inline-block;flex-shrink:0"></span>'
-        +label+' \u00b7 '+dias+'d'+(forc?' \u26a0':'')+'</span>';
-    } else {
-      return '<span style="background:#F1F8E9;border:1px solid #AED581;border-radius:20px;padding:3px 9px;font-size:10px;color:#558B2F;margin:2px 2px">'+label+' \u00b7 '+dias+'d</span>';
-    }
-  }
-  var _pillsOcup=_ocupados.map(function(p){return _pill(p,'ocup');}).join('');
-  var _pillsDesc=_descansando.slice(0,12).map(function(p){return _pill(p,'desc');}).join('')
-    +(_descansando.length>12?'<span style="font-size:10px;color:#aaa;margin-left:4px">+'+(_descansando.length-12)+' mais</span>':'');
-  var statusBars=''; // mantida por compatibilidade (não usada abaixo)
-  var statusBloco='<div style="background:#fff;border-radius:14px;padding:14px 16px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,.07)">'
-    +'<div style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Status dos pastos agora</div>'
-    +'<div style="font-size:9px;font-weight:700;color:#2E7D32;margin-bottom:5px;display:flex;align-items:center;gap:5px">'
-    +'<span style="width:8px;height:8px;border-radius:50%;background:#2E7D32;display:inline-block"></span>'
-    +'COM ANIMAIS ('+_ocupados.length+')</div>'
-    +'<div style="display:flex;flex-wrap:wrap;margin-bottom:12px">'+(_pillsOcup||'<span style=\\"font-size:11px;color:#aaa\\">nenhum</span>')+'</div>'
-    +'<div style="font-size:9px;font-weight:700;color:#7CB342;margin-bottom:5px;display:flex;align-items:center;gap:5px">'
-    +'<span style="width:8px;height:8px;border-radius:50%;background:#9CCC65;display:inline-block"></span>'
-    +'DESCANSANDO ('+_descansando.length+')</div>'
-    +'<div style="display:flex;flex-wrap:wrap">'+(_pillsDesc||'<span style=\\"font-size:11px;color:#aaa\\">nenhum</span>')+'</div>'
-    +'</div>';
-
-  // ---- RANK ----
-  function rankItem(p,modo){
-    var tag='';
-    if(modo==='pastejo' && p.dias>avgPastejo && (p.descanso==null||p.descanso<avgDesc)) tag=' <span style="font-size:9px;font-weight:700;color:#E65100;background:#FFF3E0;padding:1px 7px;border-radius:8px">for\u00e7ado</span>';
-    if(modo==='descanso' && p.status&&p.status.st==='vazio' && p.status.dias>avgDesc && p.dias<avgPastejo) tag=' <span style="font-size:9px;font-weight:700;color:#7CB342;background:#F1F8E9;padding:1px 7px;border-radius:8px">subutilizado \u00b7 '+p.pass+'x</span>';
-    var val=modo==='pastejo'?(p.dias+'d pastejo'):((p.status?p.status.dias:0)+'d descanso');
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f0f0"><span style="font-size:12px;font-weight:700;color:#1B5E20">'+p.label+tag+'</span><span style="font-size:12px;font-weight:800;color:#2E7D32">'+val+'</span></div>';
-  }
-  var maisPastejo=st.pastos.slice().sort(function(a,b){return b.dias-a.dias;}).slice(0,6).map(function(p){return rankItem(p,'pastejo');}).join('');
-  var maisDescanso=st.pastos.filter(function(p){return p.status&&p.status.st==='vazio';}).sort(function(a,b){return b.status.dias-a.status.dias;}).slice(0,6).map(function(p){return rankItem(p,'descanso');}).join('');
-  var rankBloco='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0">'
-    +'<div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.07)"><div style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Mais pastejados</div>'+(maisPastejo||'<div style="font-size:11px;color:#999">\u2014</div>')+'</div>'
-    +'<div style="background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.07)"><div style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Mais descansaram</div>'+(maisDescanso||'<div style="font-size:11px;color:#999">\u2014</div>')+'</div>'
-    +'</div>';
-
-
-  // ---- RANK DINAMICO DE PASTOS (cards com passagens + status) ----
-  var SVG_UP='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>';
-  var SVG_DW='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
-  function rankCard(p, modo){
-    var ocup=p.status&&p.status.st==='ocupado';
-    var dias=modo==='pastejo'?p.dias:(p.status?p.status.dias:0);
-    var forcado=modo==='pastejo'&&p.dias>avgPastejo&&(p.descanso==null||p.descanso<avgDesc);
-    var subutilizado=modo==='descanso'&&p.status&&p.status.st==='vazio'&&p.status.dias>avgDesc&&p.dias<avgPastejo;
-    var cor=forcado?'#E65100':subutilizado?'#7CB342':'#1B5E20';
-    var bg=forcado?'#FFF3E0':subutilizado?'#F1F8E9':'#E8F5E9';
-    var pill=forcado?'<span style="font-size:8px;background:#E65100;color:#fff;padding:1px 7px;border-radius:8px;font-weight:700;margin-left:4px">forcado</span>'
-            :subutilizado?'<span style="font-size:8px;background:#7CB342;color:#fff;padding:1px 7px;border-radius:8px;font-weight:700;margin-left:4px">subutilizado</span>':'';
-    var svgArr=forcado?SVG_UP:subutilizado?SVG_DW:'';
-    var label=modo==='pastejo'?(p.dias+'d pastejo'):((p.status?p.status.dias:0)+'d descanso');
-    return '<div style="background:#fff;border-radius:12px;padding:10px 11px;border-left:4px solid '+cor+';box-shadow:0 1px 4px rgba(0,0,0,.06)">'
-      +'<div style="display:flex;justify-content:space-between;align-items:center">'
-      +'<span style="font-size:12px;font-weight:900;color:#1B5E20">'+p.label+pill+'</span>'
-      +'<span style="font-size:13px;font-weight:800;color:'+cor+';display:flex;align-items:center;gap:2px">'+svgArr+label+'</span>'
-      +'</div>'
-      +'<div style="margin-top:5px;display:flex;gap:5px">'
-      +'<div style="flex:1;background:'+bg+';border-radius:6px;padding:4px;text-align:center"><div style="font-size:11px;font-weight:900;color:'+cor+'">'+p.pass+'x</div><div style="font-size:7px;color:#666">PASSAGENS</div></div>'
-      +(modo==='pastejo'&&p.descanso!=null?'<div style="flex:1;background:#f5f5f5;border-radius:6px;padding:4px;text-align:center"><div style="font-size:11px;font-weight:900;color:#555">'+p.descanso+'d</div><div style="font-size:7px;color:#666">DESC.MED</div></div>':'')
-      +(modo==='descanso'&&p.dias?'<div style="flex:1;background:#f5f5f5;border-radius:6px;padding:4px;text-align:center"><div style="font-size:11px;font-weight:900;color:#555">'+p.dias+'d</div><div style="font-size:7px;color:#666">TOTAL PAST.</div></div>':'')
-      +'</div>'
-      +'</div>';
-  }
-  var topPastejo=st.pastos.slice().sort(function(a,b){return b.dias-a.dias;}).slice(0,6);
-  var topDescanso=st.pastos.filter(function(p){return p.status&&p.status.st==='vazio';}).sort(function(a,b){return b.status.dias-a.status.dias;}).slice(0,6);
-  var rankDinamicoBloco='<div style="margin:12px 0">'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
-    +'<div><div style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Mais pastejados</div>'
-    +'<div style="display:flex;flex-direction:column;gap:7px">'+topPastejo.map(function(p){return rankCard(p,'pastejo');}).join('')+'</div></div>'
-    +'<div><div style="font-size:11px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Mais descansaram</div>'
-    +'<div style="display:flex;flex-direction:column;gap:7px">'+topDescanso.map(function(p){return rankCard(p,'descanso');}).join('')+'</div></div>'
-    +'</div></div>';
 
   var w=window.open('','_blank');
   w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Rota\u00e7\u00e3o dos Lotes \u2014 GPL</title>'
@@ -11639,13 +11563,11 @@ function gerarPDFRotacao(){
     +'@media print{button{display:none!important}body{background:#fff}}'
     +'</style></head><body>'
     +'<div class="cap" style="display:flex;align-items:center;gap:16px"><img src="'+LOGO_GPL_ESC+'" alt="GPL" style="height:52px;width:auto;flex-shrink:0"><div><div style="font-size:11px;letter-spacing:2px;opacity:.85;font-weight:700">GEST\u00c3O PECU\u00c1RIA LUCRATIVA</div><div style="font-size:22px;font-weight:900;margin-top:2px">Rota\u00e7\u00e3o dos Lotes</div><div style="font-size:11px;opacity:.9;margin-top:3px">'+faz+' \u00b7 '+dtHoje+'</div></div></div>'
-    +alerta
-    +'<div style="font-size:12px;font-weight:800;color:#1B5E20;margin:14px 0 6px">Rank dos pastos</div>'
-    +rankDinamicoBloco
-    +statusBloco
-    +'<div style="font-size:12px;font-weight:800;color:#1B5E20;margin:14px 0 4px">A viagem de cada lote</div>'
+    +(de||ate?'<div style="font-size:11px;color:#555;margin:8px 0">Per\u00edodo: '+(de?de.split('-').reverse().join('/'):'in\u00edcio')+' a '+(ate?ate.split('-').reverse().join('/'):'hoje')+'</div>':'')
+    +blocoLotes
+    +blocoMod
+    +'<div style="font-size:13px;font-weight:800;color:#1B5E20;margin:16px 0 6px">Por onde passou cada lote</div>'
     +'<div class="grid2">'+trilhaCards+'</div>'
-    +'<p class="nota">"For\u00e7ado" = pasto pastejado acima da m\u00e9dia e com pouco descanso (risco de degradar). "Subutilizado" = pasto descansando h\u00e1 muito tempo e pouco usado (capacidade sobrando). Passagens = quantas vezes o pasto recebeu gado. Limites relativos \u00e0 m\u00e9dia da pr\u00f3pria fazenda.</p>'
     +'<button onclick="window.print()" style="background:#1B5E20;color:#fff;padding:10px 24px;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-top:12px">Imprimir / Salvar PDF</button>'
     +_pdfRodape()
     +'</body></html>');
