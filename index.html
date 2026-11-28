@@ -1330,19 +1330,20 @@ select:focus,input:focus{outline:2px solid #2d7a1f;border-color:#2d7a1f}
 <div id="pg-historico" class="pg" style="display:none;padding-bottom:20px">
 
 <div style="display:flex;gap:0;margin-bottom:12px;background:#f0f0f0;border-radius:10px;padding:3px">
-  <div class="tgo on" id="htab-lotes"   onclick="sHistTab('lotes')"   style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>Lotes</div>
-  <div class="tgo"    id="htab-rotacao" onclick="sHistTab('rotacao')" style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Rotação</div>
-  <div class="tgo"    id="htab-pastos"  onclick="sHistTab('pastos')"  style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 22V12"/><path d="M5 12S2 9 2 6a5 5 0 0 1 10 0c0 3-3 6-3 6H5z"/><path d="M14 12s3-3 3-6a5 5 0 0 1 10 0c0 3-3 6-3 6h-4z"/></svg>Pastos</div>
-  <div class="tgo"    id="htab-consumo" onclick="sHistTab('consumo')" style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>Consumo</div>
-  <div class="tgo"    id="htab-cocho"   onclick="sHistTab('cocho')"   style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M3 6h18M3 12h18M9 18h6"/><path d="M5 6v12M19 6v12"/></svg>Cocho</div>
-  <div class="tgo" id="htab-feno" onclick="sHistTab('feno')" style="flex:1;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:8px 4px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10"/><path d="M12 2v10l4 4"/><path d="M2 12h10"/></svg>Feno</div>
+  <div class="tgo on" id="htab-lotes"   onclick="sHistTab('lotes')"   style="flex:1;min-width:0;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:9px 2px;white-space:nowrap">Lotes</div>
+  <div class="tgo"    id="htab-rotacao" onclick="sHistTab('rotacao')" style="flex:1;min-width:0;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:9px 2px;white-space:nowrap">Rotação</div>
+  <div class="tgo"    id="htab-pastos"  onclick="sHistTab('pastos')"  style="flex:1;min-width:0;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:9px 2px;white-space:nowrap">Pastos</div>
+  <div class="tgo"    id="htab-consumo" onclick="sHistTab('consumo')" style="flex:1;min-width:0;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:9px 2px;white-space:nowrap">Consumo</div>
+  <div class="tgo"    id="htab-cocho"   onclick="sHistTab('cocho')"   style="flex:1;min-width:0;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:9px 2px;white-space:nowrap">Cocho</div>
+  <div class="tgo" id="htab-feno" onclick="sHistTab('feno')" style="flex:1;min-width:0;font-size:12px;text-align:center;cursor:pointer;border-radius:8px;padding:9px 2px;white-space:nowrap">Feno</div>
 </div>
 
 <div id="htab-lotes-content">
   <button onclick="novoLote()" style="width:100%;margin-bottom:12px;padding:13px;background:#4CAF50;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer">➕ Criar novo lote</button>
   <!-- Gráfico de dias por pasto -->
   <div class="card" style="margin-bottom:10px">
-    <div class="stit" style="margin-bottom:10px"> Dias no Pasto Atual</div>
+    <div class="stit" style="margin-bottom:4px">Tamanho de cada lote</div>
+    <div style="font-size:11px;color:#888;margin-bottom:10px">UA = cabeças × peso médio ÷ 450. O maior é o que mais come pasto.</div>
     <div id="hist-grafico-dias" style="padding:4px 0"></div>
   </div>
   <!-- Taxa de lotação por piquete -->
@@ -9702,9 +9703,8 @@ function rHistLotes(){
           :'<div style="display:flex;align-items:center;gap:6px;margin-top:2px"><span style="font-size:11px;color:#E65100;font-weight:600">Sem data de entrada</span><button onclick="editarDataEntrada(\''+nm+'\',\''+areaId+'\',\'\')" style="font-size:10px;background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;border-radius:5px;padding:1px 7px;cursor:pointer">Registrar</button></div>')
       +  '</div>'
       +  '<div style="text-align:center;min-width:52px">'
-      +    '<div style="font-size:32px;font-weight:900;line-height:1;color:'+cD+'">'+diasTxt+'</div>'
-      +    '<div style="font-size:10px;color:#888;font-weight:600;margin-top:2px">DIAS</div>'
-      +    '<div style="margin-top:4px"><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:'+cD+'"></span></div>'
+      +    '<div style="font-size:32px;font-weight:900;line-height:1;color:'+(temDt?'#1B5E20':'#bbb')+'">'+diasTxt+'</div>'
+      +    '<div style="font-size:10px;color:#888;font-weight:600;margin-top:2px">DIAS AQUI</div>'
       +  '</div>'
       +'</div>'
       +'<div style="display:flex;gap:8px">'
@@ -9714,15 +9714,20 @@ function rHistLotes(){
       +'<button onclick="editarPesoHistLote(this)" data-lote-nm="'+encodeURIComponent(nm)+'" style="margin-top:5px;font-size:10px;background:#fff;border:1px solid #A5D6A7;color:#1B5E20;border-radius:6px;padding:3px 10px;cursor:pointer">Editar</button>'
       +'</div>'
       +'<div style="flex:1;background:#E8F5E9;border-radius:10px;padding:10px;text-align:center">'
-      +'<div style="font-size:9px;font-weight:700;color:#555;margin-bottom:3px">LOTAÇÃO</div>'
-      +'<div style="font-size:22px;font-weight:900;color:#1B5E20;line-height:1.1">'+txLot+(txLot!=='—'?'<span style="font-size:11px"> UA/ha</span>':'')+'</div>'
-      +'<div style="font-size:9px;color:#999;margin-top:6px">animais ÷ hectare</div>'
+      +'<div style="font-size:9px;font-weight:700;color:#555;margin-bottom:3px">TAMANHO</div>'
+      +'<div style="font-size:22px;font-weight:900;color:#1B5E20;line-height:1.1">'+(ua>0?Math.round(ua)+'<span style="font-size:11px"> UA</span>':'—')+'</div>'
+      +'<div style="font-size:9px;color:#999;margin-top:6px">cab × peso ÷ 450</div>'
+      +'</div>'
+      +'<div style="flex:1;background:#E8F5E9;border-radius:10px;padding:10px;text-align:center">'
+      +'<div style="font-size:9px;font-weight:700;color:#555;margin-bottom:3px">NO PIQUETE</div>'
+      +'<div style="font-size:22px;font-weight:900;color:#1B5E20;line-height:1.1">'+(txLot!=='—'&&ua>0?String(txLot).replace('.',','):'—')+(txLot!=='—'&&ua>0?'<span style="font-size:11px"> UA/ha</span>':'')+'</div>'
+      +'<div style="font-size:9px;color:#999;margin-top:6px">UA ÷ hectare</div>'
       +'</div>'
       +'</div>'
-      +'<div style="margin-top:8px;font-size:11px;color:#65766a">Início do ciclo: <b style="color:#1b2c1b">'+(lote.dt_abertura?_isoBR(lote.dt_abertura):'desde sempre')+'</b> <span onclick="editInicioCiclo(\''+nm+'\',\''+(lote.faz||'')+'\')" style="color:#2E7D32;font-weight:700;cursor:pointer;text-decoration:underline">editar</span></div>'
+      +'<div style="margin-top:8px;font-size:11px;color:#65766a">Início do ciclo: <b style="color:#1b2c1b">'+(lote.dt_abertura?_isoBR(lote.dt_abertura):'sem data')+'</b> <span onclick="editInicioCiclo(\''+nm+'\',\''+(lote.faz||'')+'\')" style="color:#2E7D32;font-weight:700;cursor:pointer;text-decoration:underline">editar</span></div>'
       +'<button onclick="editarNomeLote(\''+encodeURIComponent(nm)+'\',\''+(lote.faz||'')+'\')" style="width:100%;margin-top:10px;padding:10px;background:#fff;border:1.5px solid #A5D6A7;color:#1B5E20;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Editar nome do lote</button>'
       +_baixasLoteResumo(lote)
-      +'<button onclick="registrarBaixaAnimal(\''+encodeURIComponent(nm)+'\',\''+(lote.faz||'')+'\')" style="width:100%;margin-top:8px;padding:10px;background:#fff;border:1.5px solid #E57373;color:#C62828;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer">Registrar morte / doação</button>'
+      +'<button onclick="registrarBaixaAnimal(\''+encodeURIComponent(nm)+'\',\''+(lote.faz||'')+'\')" style="width:100%;margin-top:8px;padding:10px;background:#fff;border:1.5px solid #E8C873;color:#8a5a00;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer">Registrar morte / doação</button>'
       +'<button onclick="darBaixaLote(\''+nm+'\',\''+(lote.faz||'')+'\')" style="width:100%;margin-top:8px;padding:10px;background:#fff;border:1.5px solid #FF8F00;color:#8a5a00;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Dar baixa (lote vendido)</button>'
       +'</div>';
   });
@@ -9949,45 +9954,23 @@ function _rGraficoDias(lotes, aloc, movs, hoje){
     return {nm:nm, areaNm:areaNm, dias:dias, temDt:!!dtEnt, qtd:qtd, semAlerta:AREAS_SEM_ALERTA_DIAS[areaId]||''};
   });
 
-  // Max dias para escala
-  var maxDias = Math.max.apply(null, dados.map(function(d){return d.dias||0;}));
-  if(maxDias===0) maxDias=1;
-
-  var bars = dados.map(function(d){
-    if(!d.temDt){
-      return '<div style="margin-bottom:8px">'
-        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">'
-        +  '<div style="font-size:11px;font-weight:700;color:#333">'+d.nm+'</div>'
-        +  '<div style="font-size:11px;color:#E65100">⚠️ sem registro · '+d.areaNm+'</div>'
-        +'</div>'
-        +'<div style="background:#f0f0f0;border-radius:6px;height:18px;display:flex;align-items:center;padding-left:8px">'
-        +  '<span style="font-size:10px;color:#aaa;font-weight:600">registre a entrada no mapa</span>'
-        +'</div>'
-        +'</div>';
-    }
-    var pct = Math.max(4, Math.round((d.dias/maxDias)*100));
-    var cor = d.semAlerta?'#78909C':d.dias<=3?'#2E7D32':d.dias<=7?'#558B2F':d.dias<=14?'#F57F17':'#B71C1C';
-    var em  = d.semAlerta?'⚪':d.dias<=3?'🟢':d.dias<=7?'🟡':d.dias<=14?'🟠':'🔴';
-    if(d.semAlerta) d.areaNm+=' ('+d.semAlerta+')';
-    return '<div style="margin-bottom:8px">'
-      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">'
-      +  '<div style="font-size:11px;font-weight:700;color:#333">'+d.nm+'</div>'
-      +  '<div style="font-size:11px;color:#555">'+em+' '+d.dias+'d · '+d.areaNm+'</div>'
+  // nov/2026: ranking pelo tamanho do lote (UA), sem cor de alerta — quem decide mudar é a altura do capim
+  var pesoDe={}; lotes.forEach(function(l){ pesoDe[l.nome]=parseFloat(l.peso)||0; });
+  dados.forEach(function(d){ d.ua=d.qtd>0&&pesoDe[d.nm]>0 ? d.qtd*pesoDe[d.nm]/450 : 0; });
+  dados.sort(function(a,b){ return b.ua-a.ua; });
+  var maxUA=Math.max.apply(null, dados.map(function(d){return d.ua;})); if(!(maxUA>0)) maxUA=1;
+  gdiv.innerHTML = dados.map(function(d){
+    var pct=d.ua>0?Math.max(4,Math.round(d.ua/maxUA*100)):0;
+    var onde=d.areaNm+(d.semAlerta?' ('+d.semAlerta+')':'')+(d.temDt?' há '+d.dias+(d.dias===1?' dia':' dias'):'');
+    return '<div style="margin-bottom:9px">'
+      +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px">'
+      +  '<div style="font-size:12px;font-weight:700;color:#333">'+d.nm+'</div>'
+      +  '<div style="font-size:13px;font-weight:800;color:#1B5E20">'+(d.ua>0?Math.round(d.ua)+' UA':'<span style="font-size:11px;color:#999;font-weight:600">sem peso/cabeças</span>')+'</div>'
       +'</div>'
-      +'<div style="background:#e0e0e0;border-radius:6px;height:18px;position:relative;overflow:hidden">'
-      +  '<div style="width:'+pct+'%;background:'+cor+';height:100%;border-radius:6px;transition:width .4s;display:flex;align-items:center;padding-left:6px">'
-      +    (pct>20?'<span style="font-size:10px;color:#fff;font-weight:700">'+d.dias+' dias</span>':'')
-      +  '</div>'
-      +'</div>'
+      +'<div style="background:#EEF2EC;border-radius:6px;height:12px;overflow:hidden"><div style="width:'+pct+'%;background:#2E7D32;height:100%;border-radius:6px"></div></div>'
+      +'<div style="font-size:10px;color:#888;margin-top:2px">'+d.qtd+' cab · '+onde+'</div>'
       +'</div>';
-  }).join('');;
-
-  // Legenda
-  var leg = '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:10px;color:#666">'
-    +'<span>🟢 0–3d ideal</span><span>🟡 4–7d ok</span><span>🟠 8–14d atenção</span><span>🔴 15+d crítico</span>'
-    +'</div>';
-
-  gdiv.innerHTML = leg + bars;
+  }).join('');
 }
 
 
@@ -10477,26 +10460,6 @@ function _rkpGraficos(comHist){
         +'<div style="display:none;margin:4px 0 0 70px;padding-left:8px;border-left:2px solid #e0e7e0">'+det+'</div>'
         +'</div>';
     }).join('');
-    // Tamanho de cada lote (UA) — o maior é o que mais come pasto
-    var ondeLote={};
-    MAPA_AREAS.forEach(function(a){ var l=aloc[a.id]; if(l){ (ondeLote[l]=ondeLote[l]||[]).push(a.label); } });
-    var lotesUA=lotesG.map(function(l){ return {nome:l.nome, ua:_uaLote(l), cab:l.qtd||0}; }).filter(function(l){ return l.ua>0; })
-      .sort(function(a,b){ return b.ua-a.ua; });
-    if(lotesUA.length){
-      var maxUA=lotesUA[0].ua;
-      out+='<div style="margin-bottom:14px">'
-        +'<div style="font-size:11px;font-weight:700;color:#1B5E20;margin-bottom:8px">🐂 Tamanho de cada lote (UA) <span style="font-weight:400;color:#999">· o maior é o que mais come pasto</span></div>'
-        +lotesUA.map(function(l){
-          var pct=Math.max(6,Math.round(l.ua/maxUA*100));
-          var onde=ondeLote[l.nome]?ondeLote[l.nome].join(', '):'sem pasto marcado';
-          return '<div style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:8px">'
-            +'<div style="width:76px;font-size:11px;font-weight:700;color:#333;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+l.nome+'</div>'
-            +'<div style="flex:1;background:#F0F0F0;border-radius:8px;height:22px;overflow:hidden"><div style="width:'+pct+'%;background:#2E7D32;height:100%;border-radius:8px"></div></div>'
-            +'<div style="width:96px;text-align:right;font-size:12px;font-weight:800;color:#2E7D32;flex-shrink:0">'+_numBR(l.ua,0)+' UA</div><span style="width:14px;flex-shrink:0"></span></div>'
-            +'<div style="font-size:9px;color:#999;margin:2px 0 0 84px">'+l.cab+' cab · '+onde+'</div></div>';
-        }).join('')
-        +'</div>';
-    }
     out+='<div style="margin-bottom:14px">'
       +'<div style="font-size:11px;font-weight:700;color:#1B5E20;margin-bottom:8px">🧩 Carga por módulo <span style="font-weight:400;color:#999">· toque pra ver os piquetes</span></div>'
       +linhasMod
@@ -11811,7 +11774,8 @@ function _consumoPerfis(){
     return {lote:ln, sacos:o.sacos, kg:o.kg, ini:ini, fim:fim, dias:dias,
       cab:cab, kgDia:kgDia, kgCab:kgCab, custoLote:custoLote, custoCab:custoCab,
       pesoMed:pesoMed, gCabDia:gCabDia, pvDia:pvDia, custoCabDia:custoCabDia, prods:prods};
-  }).sort(function(a,b){ var na=parseInt((String(a.lote).match(/\d+/)||[9999])[0],10), nb=parseInt((String(b.lote).match(/\d+/)||[9999])[0],10); return na!==nb?na-nb:String(a.lote).localeCompare(String(b.lote)); });
+  }).filter(Boolean).sort(function(a,b){ var na=parseInt((String(a.lote).match(/\d+/)||[9999])[0],10), nb=parseInt((String(b.lote).match(/\d+/)||[9999])[0],10); return na!==nb?na-nb:String(a.lote).localeCompare(String(b.lote)); });
+  // ↑ nov/2026: filtra os lotes sem dado ANTES de ordenar (antes travava a aba Consumo quando algum lote não tinha registro)
 
   perfis = perfis.filter(Boolean);
   return perfis;
