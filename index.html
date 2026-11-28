@@ -10413,67 +10413,96 @@ function _rkpGraficos(comHist){
   var aloc=S.MAPA_ALOC||{};
   var lotesG=S.LOTES||[];
   function _numBR(v,casas){ return (v||0).toLocaleString('pt-BR',{minimumFractionDigits:casas,maximumFractionDigits:casas}); }
+  // dias vazio de cada área: vem das mudanças de pasto lançadas (saída do último lote → hoje)
+  var _vz={};
+  try{ (_rotacaoStats().pastos||[]).forEach(function(x){ if(x.status&&x.status.st==='vazio') _vz[x.id]=x.status.dias; }); }catch(e){}
+  function _diasVz(id){ if(_vz[id]!=null) return _vz[id]; try{ var n=_feedNormArea(id); if(_vz[n]!=null) return _vz[n]; }catch(e){} return null; }
+  function _uaLote(lo){ return lo&&lo.qtd>0&&lo.peso>0 ? lo.qtd*lo.peso/450 : 0; }
   var mods={};
   MAPA_AREAS.filter(function(a){return a.tipo==='modulo';}).forEach(function(a){
     var mk=a.modulo;
-    if(!mods[mk]) mods[mk]={num:mk, ha:0, ua:0, ocup:0, tot:0, piquetes:[]};
+    if(!mods[mk]) mods[mk]={num:mk, ha:0, ua:0, ocup:0, tot:0, piquetes:[], diasVz:null};
     mods[mk].ha+=(a.ha||0);
     mods[mk].tot++;
     var lnm=aloc[a.id];
     var loP=lnm?lotesG.find(function(l){return l.nome===lnm;}):null;
-    var uaP=loP?(loP.qtd*loP.peso/450):0;
+    var uaP=_uaLote(loP);
     if(loP){ mods[mk].ua += uaP; mods[mk].ocup++; }
-    mods[mk].piquetes.push({label:a.label, ha:a.ha||0, lote:lnm||'', uaHa:(a.ha>0&&uaP>0)?(uaP/a.ha):0});
+    var dv=loP?null:_diasVz(a.id);
+    if(dv!=null && (mods[mk].diasVz==null || dv<mods[mk].diasVz)) mods[mk].diasVz=dv;   // saída mais recente do módulo
+    mods[mk].piquetes.push({label:a.label, ha:a.ha||0, lote:lnm||'', uaLote:uaP, diasVz:dv, uaHa:(a.ha>0&&uaP>0)?(uaP/a.ha):0});
   });
   var modList=Object.keys(mods).map(function(k){return mods[k];}).sort(function(a,b){return a.num-b.num;});
   var pastosAvulsos=MAPA_AREAS.filter(function(a){return a.tipo==='pasto';}).map(function(a){
     var lnm=aloc[a.id];
     var loP=lnm?lotesG.find(function(l){return l.nome===lnm;}):null;
-    var uaP=loP?(loP.qtd*loP.peso/450):0;
-    return {id:a.id, label:a.label, ha:a.ha||0, lote:lnm||'', uaHa:(a.ha>0&&uaP>0)?(uaP/a.ha):0};
+    var uaP=_uaLote(loP);
+    return {id:a.id, label:a.label, ha:a.ha||0, lote:lnm||'', uaLote:uaP, diasVz:loP?null:_diasVz(a.id), uaHa:(a.ha>0&&uaP>0)?(uaP/a.ha):0};
   });
+  function _txtVz(d){ return d==null?'vazio':(d===1?'1 dia vazio':d+' dias vazio'); }
   if(modList.length || pastosAvulsos.length){
     var maxUaHa2=0;
     modList.forEach(function(m){ var u=m.ha>0?m.ua/m.ha:0; if(u>maxUaHa2) maxUaHa2=u; });
     pastosAvulsos.forEach(function(p){ if(p.uaHa>maxUaHa2) maxUaHa2=p.uaHa; });
     if(maxUaHa2<=0) maxUaHa2=1;
     function _corFaixa(uaHa){ return uaHa<=0?'#BDBDBD':(uaHa<1.5?'#F9A825':'#2E7D32'); }
-    function _barraGrande(labelEsq, uaHa, subLabel, chevron){
+    function _barraGrande(labelEsq, uaHa, subLabel, chevron, diasVz){
       var pct=Math.round((uaHa/maxUaHa2)*100);
       if(uaHa>0 && pct<6) pct=6;
       var cor=_corFaixa(uaHa);
       // Valor UA/ha fica FIXO à direita, fora da barra — sempre legível mesmo com barra curta
-      var val=uaHa>0?(_numBR(uaHa,2)+' UA/ha'):'vazio';
-      var corVal=uaHa>0?cor:'#999';
+      var val=uaHa>0?(_numBR(uaHa,2)+' UA/ha'):_txtVz(diasVz);
+      var corVal=uaHa>0?cor:(diasVz!=null?'#8a5a00':'#999');
       return '<div style="display:flex;align-items:center;gap:8px">'
         +'<div style="width:56px;font-size:11px;font-weight:700;color:#333;flex-shrink:0">'+labelEsq+'</div>'
         +'<div style="flex:1;background:#F0F0F0;border-radius:8px;height:22px;position:relative;overflow:hidden">'
         +  '<div style="width:'+(uaHa>0?pct:6)+'%;background:'+cor+';height:100%;border-radius:8px"></div>'
         +'</div>'
-        +'<div style="width:88px;text-align:right;font-size:12px;font-weight:800;color:'+corVal+';flex-shrink:0;white-space:nowrap">'+val+'</div>'
+        +'<div style="width:96px;text-align:right;font-size:12px;font-weight:800;color:'+corVal+';flex-shrink:0;white-space:nowrap">'+val+'</div>'
         +(chevron?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;transition:transform .15s"><polyline points="6 9 12 15 18 9"/></svg>':'<span style="width:14px;flex-shrink:0"></span>')
         +'</div>'
         +(subLabel?'<div style="font-size:9px;color:#999;margin:2px 0 0 64px">'+subLabel+'</div>':'');
     }
     var linhasMod=modList.map(function(m){
       var uaHa=m.ha>0?m.ua/m.ha:0;
-      var sub=m.ocup+'/'+m.tot+' piquetes ocupados · média do módulo';
+      var sub=m.ocup+'/'+m.tot+' piquetes ocupados · '+(uaHa<=0&&m.diasVz!=null?'último gado saiu há '+m.diasVz+(m.diasVz===1?' dia':' dias'):'média do módulo');
       var det=m.piquetes.map(function(pq){
         return '<div style="font-size:11px;color:#555;padding:4px 0">'+pq.label+' · '+(pq.ha?_numBR(pq.ha,1):'0')+'ha · '
-          +(pq.lote?pq.lote+' · <b>Lotação instantânea:</b> '+_numBR(pq.uaHa,2)+' UA/ha':'<span style="color:#aaa">vazio</span>')+'</div>';
+          +(pq.lote?pq.lote+(pq.uaLote>0?' · '+_numBR(pq.uaLote,0)+' UA':'')+' · <b>Lotação instantânea:</b> '+_numBR(pq.uaHa,2)+' UA/ha'
+            :'<span style="color:'+(pq.diasVz!=null?'#8a5a00':'#aaa')+'">'+(pq.diasVz!=null?'vazio há '+pq.diasVz+(pq.diasVz===1?' dia':' dias'):'vazio')+'</span>')+'</div>';
       }).join('');
       return '<div style="margin-bottom:8px">'
-        +'<div onclick="_rkpToggle(this)" style="cursor:pointer">'+_barraGrande('Módulo '+m.num, uaHa, sub, true)+'</div>'
+        +'<div onclick="_rkpToggle(this)" style="cursor:pointer">'+_barraGrande('Módulo '+m.num, uaHa, sub, true, uaHa>0?null:m.diasVz)+'</div>'
         +'<div style="display:none;margin:4px 0 0 70px;padding-left:8px;border-left:2px solid #e0e7e0">'+det+'</div>'
         +'</div>';
     }).join('');
+    // Tamanho de cada lote (UA) — o maior é o que mais come pasto
+    var ondeLote={};
+    MAPA_AREAS.forEach(function(a){ var l=aloc[a.id]; if(l){ (ondeLote[l]=ondeLote[l]||[]).push(a.label); } });
+    var lotesUA=lotesG.map(function(l){ return {nome:l.nome, ua:_uaLote(l), cab:l.qtd||0}; }).filter(function(l){ return l.ua>0; })
+      .sort(function(a,b){ return b.ua-a.ua; });
+    if(lotesUA.length){
+      var maxUA=lotesUA[0].ua;
+      out+='<div style="margin-bottom:14px">'
+        +'<div style="font-size:11px;font-weight:700;color:#1B5E20;margin-bottom:8px">🐂 Tamanho de cada lote (UA) <span style="font-weight:400;color:#999">· o maior é o que mais come pasto</span></div>'
+        +lotesUA.map(function(l){
+          var pct=Math.max(6,Math.round(l.ua/maxUA*100));
+          var onde=ondeLote[l.nome]?ondeLote[l.nome].join(', '):'sem pasto marcado';
+          return '<div style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:8px">'
+            +'<div style="width:76px;font-size:11px;font-weight:700;color:#333;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+l.nome+'</div>'
+            +'<div style="flex:1;background:#F0F0F0;border-radius:8px;height:22px;overflow:hidden"><div style="width:'+pct+'%;background:#2E7D32;height:100%;border-radius:8px"></div></div>'
+            +'<div style="width:96px;text-align:right;font-size:12px;font-weight:800;color:#2E7D32;flex-shrink:0">'+_numBR(l.ua,0)+' UA</div><span style="width:14px;flex-shrink:0"></span></div>'
+            +'<div style="font-size:9px;color:#999;margin:2px 0 0 84px">'+l.cab+' cab · '+onde+'</div></div>';
+        }).join('')
+        +'</div>';
+    }
     out+='<div style="margin-bottom:14px">'
       +'<div style="font-size:11px;font-weight:700;color:#1B5E20;margin-bottom:8px">🧩 Carga por módulo <span style="font-weight:400;color:#999">· toque pra ver os piquetes</span></div>'
       +linhasMod
       +'</div>';
     if(pastosAvulsos.length){
       var linhasAv=pastosAvulsos.map(function(p){
-        return '<div style="margin-bottom:8px">'+_barraGrande(p.label, p.uaHa, p.ha?_numBR(p.ha,1)+'ha'+(p.lote?' · '+p.lote:''):'', false)+'</div>';
+        return '<div style="margin-bottom:8px">'+_barraGrande(p.label, p.uaHa, (p.ha?_numBR(p.ha,1)+'ha':'')+(p.lote?' · '+p.lote+(p.uaLote>0?' · <b style="color:#1B5E20">'+_numBR(p.uaLote,0)+' UA</b>':''):''), false, p.diasVz)+'</div>';
       }).join('');
       out+='<div style="margin-bottom:14px">'
         +'<div style="font-size:11px;font-weight:700;color:#1B5E20;margin-bottom:8px">🌾 Pastos avulsos</div>'
